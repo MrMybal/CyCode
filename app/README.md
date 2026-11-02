@@ -3,7 +3,8 @@
 Native C++20 IDE foundation using CyUI and Dear ImGui, with SDL3 windowing/rendering,
 a syntax-aware text editor, cancellable ripgrep search, Git, native plugins, clangd
 completion/diagnostics, definition/reference navigation and a CyToolsCore MCP
-companion. Project license: undecided.
+companion. Project license: [GNU GPL v3 only](../LICENSE), SPDX `GPL-3.0-only`.
+Copyright (c) 2026 Cyberalien; see [COPYRIGHT](../COPYRIGHT).
 Images open in dockable read-only tabs with background decoding, transparency,
 zoom/pan, actual-pixel view and reload. PNG, JPEG, static WebP, GIF first frame,
 BMP, TGA, composited PSD, Radiance HDR and binary PGM/PPM are supported.

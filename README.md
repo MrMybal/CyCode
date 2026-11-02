@@ -35,7 +35,9 @@ The current implementation includes:
 
 This is an active development milestone. It does not yet cover all Rider features.
 Windows x64 has been tested locally; Linux/macOS execution remains unverified.
-The project license has not been selected.
+CyCode is licensed under [GNU GPL v3 only](LICENSE) (`GPL-3.0-only`).
+Copyright (c) 2026 Cyberalien; see [COPYRIGHT](COPYRIGHT) and
+[third-party notices](app/THIRD_PARTY_NOTICES.md).
 
 ## Version 0.2.0
 
@@ -49,7 +51,7 @@ not validated for this milestone.
 The official [CyUI repository](https://github.com/MrMybal/CyUI) is currently private.
 CyUI is MIT-licensed: [license at the pinned revision](https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE)
 or [included local copy](app/licenses/CyUI.txt). This license applies to CyUI;
-CyCode's own license remains undecided.
+CyCode's original code is covered by the GPL v3 notice above.
 
 ## Build
 

@@ -1,6 +1,7 @@
 # Third-party notices
 
-CyCode's own license has not been selected. No project-wide MIT grant is implied.
+CyCode's original source is licensed under [GNU GPL v3 only](../LICENSE)
+(`GPL-3.0-only`), Copyright (c) 2026 Cyberalien. See [COPYRIGHT](../COPYRIGHT).
 Dependencies retain their original licenses. Copies are in licenses/ or the
 corresponding runtime package, as detailed below.
 
@@ -48,12 +49,12 @@ external prerequisites, not redistributed runtimes. Public binary distribution
 still requires a complete transitive license/notice audit of these packages.
 The private Python environment also includes the dependencies declared by the real
 CyToolsCore/MCP wheels. Their installed dist-info metadata and license files are
-preserved by pip. They are not replaced by CyCode's future project license.
+preserved by pip. They are not replaced by CyCode's project license.
 The private environment and SDK wheel are not committed to this repository.
 
 CyUI's repository is currently private; its GitHub license link requires repository
 access. The MIT license is also included locally so reading it does not require
-GitHub access. This does not assign a license to CyCode itself.
+GitHub access. CyUI retains its MIT license within the GPL-licensed application.
 
 The Windows 0.2.0 archive contains the IDE/CLI, documentation, notices and the
 locked ripgrep executable under tools/, with its three upstream notices. It does

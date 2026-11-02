@@ -2,9 +2,19 @@
 
 This is the first CyCode development milestone. Windows x64 was executed locally.
 Linux/macOS builds and clean-machine installation have not been executed. A core CI
-matrix is configured but has not run on GitHub. The project license is still undecided.
+matrix is configured but has not run on GitHub. The project license is GPL-3.0-only;
+the full text and project copyright notice are in the root LICENSE and COPYRIGHT.
 
 ## Executed checks
+
+- GPL licensing update: the identical complete SPDX GPL v3 text is installed as
+  LICENSE in both projects, with separate GPL-3.0-only project copyright notices.
+  Windows builds passed; CyCode's 2 affected headless UI/image tests and all 10
+  Reader working-tree tests passed without opening native windows. Reader build
+  output and CMake install both contain exact LICENSE/COPYRIGHT copies. The
+  CyCode ZIP contains both files and declares GPL-3.0-only in its manifest.
+  The shared editor pin advances to Reader's GPL licensing commit; its editor/
+  sources are unchanged by that commit.
 
 - Release 0.2.0: Windows x64/MSVC Release compilation, all 42 CTests and all
   20 real CyToolsCore/official MCP integration tests passed with the rebuilt CLI.

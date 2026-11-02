@@ -1,7 +1,9 @@
 # CyCode — premier socle de développement
 
 Lancer **CyCode.exe**. Le programme ouvre une interface native C++ utilisant CyUI.
-La licence du projet reste à choisir avant une éventuelle publication open source.
+CyCode est sous [GNU GPL v3 uniquement](LICENSE) (`GPL-3.0-only`).
+Copyright (c) 2026 Cyberalien ; voir [COPYRIGHT](COPYRIGHT).
+Les dépendances conservent leurs propres licences.
 
 Version **0.2.0** : [notes de version](CHANGELOG.md) et
 [téléchargements GitHub](https://github.com/MrMybal/CyCode/releases).

@@ -1199,9 +1199,13 @@
     "en": "Licenses",
     "fr": "Licences"
   },
-  "CyCode: license to be selected before publication. CyUI, Dear ImGui, TextEditor, CyToolsCore and nlohmann/json: MIT. SDL3: zlib.": {
-    "en": "CyCode: license to be selected before publication. CyUI, Dear ImGui, TextEditor, CyToolsCore and nlohmann/json: MIT. SDL3: zlib.",
-    "fr": "CyCode : licence a choisir avant publication. CyUI, Dear ImGui, TextEditor, CyToolsCore et nlohmann/json : MIT. SDL3 : zlib."
+  "CyCode: GPL-3.0-only. Copyright (c) 2026 Cyberalien. This program comes without any warranty. See LICENSE and COPYRIGHT.": {
+    "en": "CyCode: GPL-3.0-only. Copyright (c) 2026 Cyberalien. This program comes without any warranty. See LICENSE and COPYRIGHT.",
+    "fr": "CyCode : GPL-3.0-only. Copyright (c) 2026 Cyberalien. Ce programme est fourni sans aucune garantie. Voir LICENSE et COPYRIGHT."
+  },
+  "CyUI, Dear ImGui, TextEditor, CyToolsCore and nlohmann/json: MIT. SDL3: zlib.": {
+    "en": "CyUI, Dear ImGui, TextEditor, CyToolsCore and nlohmann/json: MIT. SDL3: zlib.",
+    "fr": "CyUI, Dear ImGui, TextEditor, CyToolsCore et nlohmann/json : MIT. SDL3 : zlib."
   },
   "Open third-party notices": {
     "en": "Open third-party notices",

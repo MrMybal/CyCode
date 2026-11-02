@@ -138,8 +138,8 @@ CodeLLDB backend was exercised for native debugging. setup_debugger.py also inst
 official NetCoreDbg 3.2.0-1092 for managed debugging, with platform SHA-256 hashes in
 the same lock file. Upstream provides Windows x64, Linux x64/arm64 and macOS arm64
 archives for this release. Other architectures need an installed adapter; only
-Windows x64 is validated here. Licenses remain in app/licenses; no CyCode project
-license has been selected.
+Windows x64 is validated here. Dependency licenses remain in app/licenses;
+CyCode's original source is licensed under GPL-3.0-only (see the root LICENSE).
 
 The native `terminal` and `debugger` CTests use owned fixtures. The debugger test
 reports a skip if no adapter is installed in a core-only environment. GUI scripts:

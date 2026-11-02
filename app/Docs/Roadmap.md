@@ -96,7 +96,9 @@ are executed. See [MSBuild](MSBuild.md) for the supported scope.
 
 ## Public distribution
 
-- Select the project license; publish accessible fixed CyUI/CyToolsCore dependencies.
+- Project license selected: GPL-3.0-only. Provide recipients access to the exact
+  corresponding source, including pinned CyUI/shared-editor dependencies and build
+  scripts, alongside binary distributions. Dependency licenses remain applicable.
 - Run actual Windows/Linux/macOS build and runtime matrices, including Unicode/IME,
   filesystem differences, DPI and portable icon/font coverage.
 - Installers, updates/rollback, clean-machine validation, signing and contribution docs.

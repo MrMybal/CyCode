@@ -2015,8 +2015,9 @@ void Application::optionsPanel() {
     cyui::divider();
     cyui::sectionTitle(tr("Licenses"));
     ImGui::TextWrapped("CyUI (MIT): https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE");
-    ImGui::TextWrapped("%s", tr("CyCode: license to be selected before publication. CyUI, Dear ImGui, "
-                                "TextEditor, CyToolsCore and nlohmann/json: MIT. SDL3: zlib."));
+    ImGui::TextWrapped("%s", tr("CyCode: GPL-3.0-only. Copyright (c) 2026 Cyberalien. "
+                                "This program comes without any warranty. See LICENSE and COPYRIGHT."));
+    ImGui::TextWrapped("%s", tr("CyUI, Dear ImGui, TextEditor, CyToolsCore and nlohmann/json: MIT. SDL3: zlib."));
     ImGui::TextWrapped("%s", tr("libvterm and CodeLLDB: MIT. LLVM: Apache 2.0 with LLVM exceptions. Embedded Python: PSF."));
     ImGui::TextWrapped("%s", "NetCoreDbg: MIT (Samsung). app/licenses/NetCoreDbg.txt");
     ImGui::TextWrapped("%s", tr("csharp-ls: MIT. Private .NET SDK: included Microsoft terms and component notices."));

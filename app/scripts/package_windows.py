@@ -50,7 +50,7 @@ def main():
 
     include(build / 'CyCode.exe', 'CyCode.exe')
     include(cli, 'cycode_cli.exe')
-    for name in ['README.md', 'LISEZ-MOI.md', 'CHANGELOG.md', 'app/CyTool.json',
+    for name in ['LICENSE', 'COPYRIGHT', 'README.md', 'LISEZ-MOI.md', 'CHANGELOG.md', 'app/CyTool.json',
                  'app/README.md', 'app/THIRD_PARTY_NOTICES.md', 'app/tool.py', 'app/contracts.py',
                  'app/locales/ui.json', 'app/include/cycode/PluginAPI.h']:
         include(ROOT / name)
@@ -89,9 +89,12 @@ Linux/macOS binaries are not provided by this release.
 Source commit: {revision}
 CyUI: https://github.com/MrMybal/CyUI (currently private)
 CyUI MIT license: app/licenses/CyUI.txt; official link in app/THIRD_PARTY_NOTICES.md.
-CyCode project license: undecided. See app/THIRD_PARTY_NOTICES.md.
+CyCode project license: GPL-3.0-only. See LICENSE, COPYRIGHT and app/THIRD_PARTY_NOTICES.md.
+Corresponding source: https://github.com/MrMybal/CyCode/tree/{revision}
+Pinned dependency sources are identified in manifest.json and the app/*source.lock.json
+files. Binary recipients must also have access to those sources and build scripts.
 '''.encode('utf-8')
-    manifest = {'version': version, 'platform': 'windows-x64', 'sourceCommit': revision,
+    manifest = {'version': version, 'license': 'GPL-3.0-only', 'platform': 'windows-x64', 'sourceCommit': revision,
                 'cyui': json.loads((ROOT / 'app/cyui-source.lock.json').read_text(encoding='utf-8')),
                 'sharedEditor': json.loads((ROOT / 'app/editor-source.lock.json').read_text(encoding='utf-8')),
                 'files': [{'path': name, 'sha256': sha256(data)} for name, data in sorted(entries.items())]}

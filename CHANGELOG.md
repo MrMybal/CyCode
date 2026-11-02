@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- License CyCode's original source under GNU GPL v3 only (`GPL-3.0-only`), as
+  selected by the owner. Include the complete license and copyright notice in
+  Windows archives, and update EN/FR UI and documentation. Dependency licenses
+  remain unchanged. CyCodeReader and its shared editor source use GPL-3.0-only too.
+
 ## 0.2.0 — 2026-11-03
 
 - Migrate IDE views to explicit CyUI modules: Code/CodeEditor, Diff, Commands,
@@ -17,4 +24,4 @@ Windows/MSVC native and headless UI tests cover this milestone. Native GPU image
 display and clean-machine installation have not been validated. Linux/macOS execution,
 complete Rider parity and a distributable MCP/language-toolchain bundle remain pending.
 The optional MCP runtime requires the actual CyToolsCore wheel and local setup.
-CyCode's own license is still undecided; the repository remains private.
+At the time of this release, CyCode's own license had not yet been selected.
