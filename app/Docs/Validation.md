@@ -7,7 +7,7 @@ the full text and project copyright notice are in the root LICENSE and COPYRIGHT
 
 ## Executed checks
 
-- GPL licensing update: the identical complete SPDX GPL v3 text is installed as
+- GPL licensing update: the identical complete GNU GPL v3 text is installed as
   LICENSE in both projects, with separate GPL-3.0-only project copyright notices.
   Windows builds passed; CyCode's 2 affected headless UI/image tests and all 10
   Reader working-tree tests passed without opening native windows. Reader build
