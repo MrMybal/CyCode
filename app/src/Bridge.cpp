@@ -4,6 +4,9 @@
 #include <iomanip>
 #include <random>
 #include <sstream>
+#include <future>
+#include <vector>
+#include <algorithm>
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
@@ -73,6 +76,7 @@ Bridge::Bridge(Engine &engine, const std::filesystem::path &path) : engine_(engi
 }
 Bridge::~Bridge() {
     stopping_ = true;
+    engine_.dispatch("project.cancel");
     if (thread_.joinable())
         thread_.join();
     if (listener_ != -1)
@@ -84,7 +88,9 @@ Bridge::~Bridge() {
 #endif
 }
 void Bridge::serve() {
+    std::vector<std::future<void>> clients;
     while (!stopping_) {
+        std::erase_if(clients,[](auto &client) { if (client.wait_for(std::chrono::seconds(0))!=std::future_status::ready) return false;try { client.get(); } catch (...) {} return true; });
         fd_set readable;
         FD_ZERO(&readable);
         FD_SET(static_cast<NativeSocket>(listener_), &readable);
@@ -94,6 +100,17 @@ void Bridge::serve() {
         auto client = accept(static_cast<NativeSocket>(listener_), nullptr, nullptr);
         if (client == static_cast<NativeSocket>(-1))
             continue;
+        // IPC connections are bounded; CyToolsCore still owns jobs, identities,
+        // permissions and scheduling. A cancellation/status request must remain
+        // receivable while one native compiler call is executing.
+        if (clients.size()>=8) { serveClient(static_cast<std::intptr_t>(client),true);continue; }
+        try { clients.push_back(std::async(std::launch::async,[this,client] { serveClient(static_cast<std::intptr_t>(client)); })); }
+        catch (...) { closeSocket(client); }
+    }
+    for (auto &client : clients) try { client.get(); } catch (...) {}
+}
+void Bridge::serveClient(std::intptr_t socket,bool controlOnly) {
+        const auto client=static_cast<NativeSocket>(socket);
 #ifdef _WIN32
         DWORD millis = 1000;
         setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char *>(&millis), sizeof(millis));
@@ -112,7 +129,9 @@ void Bridge::serve() {
         std::string request;
         char buffer[8192];
         try {
+            const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
             while (request.find('\n') == std::string::npos && !stopping_) {
+                if (std::chrono::steady_clock::now()>deadline) throw std::runtime_error("Native request read timed out");
                 int count = static_cast<int>(recv(client, buffer, sizeof(buffer), 0));
                 if (count <= 0)
                     throw std::runtime_error("Incomplete native request");
@@ -123,6 +142,7 @@ void Bridge::serve() {
             auto input = Json::parse(request);
             if (input.value("token", std::string{}) != token_)
                 throw std::runtime_error("Access denied");
+            if (controlOnly && input.value("method","")!="project.cancel") throw std::runtime_error("Native connection capacity reached; retry later");
             response = {
                 {"result", engine_.dispatch(input.at("method"), input.value("params", Json::object()))}};
         } catch (const std::exception &e) {
@@ -145,6 +165,5 @@ void Bridge::serve() {
             at += sent;
         }
         closeSocket(client);
-    }
 }
 } // namespace cycode

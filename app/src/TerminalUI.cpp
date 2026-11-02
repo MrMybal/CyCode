@@ -2,7 +2,7 @@
 #include "cycode/EditorTheme.h"
 #include <algorithm>
 #include <cmath>
-#include <cyui/CyUI.h>
+#include <cyui/Core.h>
 #include <imgui_internal.h>
 
 namespace cycode {

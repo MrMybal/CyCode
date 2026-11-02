@@ -1,10 +1,201 @@
-# Validation — 2026-11-02
+# Validation — 2026-11-03
 
 This is the first CyCode development milestone. Windows x64 was executed locally.
 Linux/macOS builds and clean-machine installation have not been executed. A core CI
 matrix is configured but has not run on GitHub. The project license is still undecided.
 
 ## Executed checks
+
+- Release 0.2.0: Windows x64/MSVC Release compilation, all 42 CTests and all
+  20 real CyToolsCore/official MCP integration tests passed with the rebuilt CLI.
+  Windows executable metadata, the UI version badge, native workspace metadata,
+  CLI `--version` and MCP descriptor now report 0.2.0. The allow-listed Windows
+  ZIP was extracted in an isolated directory: every manifest SHA-256 was checked,
+  then CLI version/workspace inspection, file listing, document reads and actual
+  packaged-ripgrep search passed with a minimal Windows PATH and no private runtime.
+  Gitleaks 8.30.1 source/history/dependency and ZIP scans found no secrets, without
+  suppressing rules. A checksum-manifest false positive on the PluginAPI.h hash
+  was removed by using separate `path` and `sha256` fields. The CyUI MIT link was
+  verified against its pinned private GitHub revision; the license is also local.
+  No IDE window was launched. OpenGL image display and clean-machine installation
+  remain unverified. The GitHub Actions matrix requires the currently absent
+  `CYCODE_READER_READ_TOKEN` secret; local tests are not a claim of passing CI.
+
+- Image previews: Windows x64/MSVC build passed all 42 CTests, including the
+  new `images` test and existing code/Git/project regressions. Real fixtures cover
+  PNG alpha, progressive JPEG, lossless WebP, GIF first frame, BMP, TGA,
+  composited PSD, Radiance HDR and binary PGM/PPM. Tests exercise asynchronous
+  cancellation, Unicode paths, corrupt/oversized inputs, actual app image tabs,
+  wheel/pan/100% controls, failed/successful reload, deferred texture retirement,
+  text-command routing and explicit external-file read grants without workspace
+  write access. View checks run headlessly in six themes, EN/FR and three DPI
+  levels. The injected renderer verifies texture handoff/lifetimes; actual OpenGL
+  display and multi-monitor image windows were not executed. Decoder-only WebP,
+  Images/Canvas and the single ImGui/editor link graph were verified. Core-only
+  fetch still downloads only JSON/libvterm. Gitleaks scanned 215 publishable
+  source files with zero findings. See [Images](Images.md) for format scope.
+- Modular CyUI migration: clean Windows x64/MSVC GUI build at the Reader and
+  CyUI commits recorded in the source locks. All 41 CTests passed, including the
+  actual app's headless module integration test; the independent UI-free core
+  build passed all 36 CTests. The actual CyToolsCore runtime/official MCP suite
+  passed all 20 tests with the newly built CLI. No native IDE window was launched.
+  The UI integration exercises typing through CodeEditor into Engine, Undo/Redo,
+  explicit Save all, shader/log syntax selection, diagnostics/filter identities,
+  shared log severity mapping, action dispatch, Ctrl/Cmd+F/Escape and actual
+  Inspector draft/cancel/commit gestures. Drawing checks cover Git review/conflict
+  versions, refactoring with/without wrapping, build logs, settings, diagnostics
+  and documentation in six themes, two densities, 100/150/200% DPI and EN/FR.
+  Link-graph inspection confirms one ImGui library, one TextEditor backend and
+  only the selected CyUI modules; core-only has no SDL/ImGui/CyUI targets.
+  The initial shell lacked Windows SDK resource compiler paths; final CTests
+  use the full MSVC environment. Gitleaks found zero leaks in the publishable
+  source snapshot. Native screenshots/multi-monitor acceptance and Linux/macOS
+  execution remain unverified for this migration. See [migration details](CyUI-Migration.md).
+- Reader separation: the IDE compiles against the independent CyCodeReader editor/
+  module, preserving one source for file services, syntax, themes, icons and widget
+  adapters. Its core-only suite now has 36 tests (Reader documents moved out); all
+  36 native and 20 official MCP regressions passed. Reader has its own build/tests,
+  native/data extensions, strict encodings and CyToolsCore/MCP document service.
+  See https://github.com/MrMybal/CyCodeReader for that repository's evidence and
+  remaining scope. No GUI was launched and no old root executable restored.
+  Gitleaks scanned 192 publishable CyCode files after extraction: zero leaks.
+  Private Reader access in CI needs the CYCODE_READER_READ_TOKEN read-only secret;
+  cross-platform CI/desktop acceptance is not inferred from workflow configuration.
+- Code-action milestone: all 37 core-only CTests and four headless editor CTests
+  passed. Actual clangd typo fixes, TypeScript imports, Java import organization
+  and Rust visibility rewrites prepare/apply/undo without saving disk sources.
+  Native fixtures verify lazy resolution, newly discovered targets, atomic
+  multi-file changes, stale/forged/evicted tickets, backend restart, protected
+  fields, disk conflicts and rejected command/resource/overlapping edits.
+  Percent-encoded Windows URI aliases match diagnostics. Edits invalidate action
+  diagnostic context while retaining displayed diagnostics and fast completion.
+  An asynchronous fake-server check was adjusted to wait for the actual new
+  diagnostic publication; older context must remain unavailable during that gap.
+- All 20 official MCP/CyTools integration tests passed on the final core. The new
+  TypeScript import-fix test checks actual proposals, strict output schemas,
+  read-only preparation/preview, denied application, forged/stale ticket rejection
+  and writer apply/undo with unchanged disk bytes.
+- Code-action milestone Gitleaks scan: 224 publishable source files, about 2.21 MB,
+  zero leaks. The private source snapshot includes untracked additions and excludes
+  runtime/data/downloaded dependencies. Windows initially held the CLI executable
+  during the MCP run; its final link succeeded after that run released the file.
+- Both desktop targets compile with the Code actions panel and Rider Alt+Enter /
+  Visual Studio and VS Code Ctrl+. bindings. No desktop application was launched,
+  no root executable restored and no protection setting changed. Full graphical
+  acceptance remains pending the existing protection issue below. The four ImGui
+  tests run without an OS window; these results do not establish desktop or
+  Linux/macOS acceptance. Executable commands, resource operations and full
+  server-specific action coverage remain pending.
+- Interactive-snippet milestone: all 32 core-only CTests and four headless editor
+  CTests passed. The shared parser checks numbered/forward/nested defaults,
+  linked mirrors, choices/escapes, Unicode byte spans, final carets, indentation
+  remapping and bounds. Actual clangd returns two function-argument placeholders;
+  the native issued-item fixture combines imports with mirrored field offsets.
+  Actual ImGui typing covers Tab/Shift+Tab, choices, nested replacement, empty
+  fields, Unicode, multiline edits, Escape, undo/redo, read-only changes and reload.
+  Exact-text checks verify that files without a final newline keep that property
+  through load, replace, undo and redo.
+- All 19 official MCP/CyTools integration tests passed. The new read-only actual
+  clangd test validates the snippet output schema, UTF-8 field spans after an emoji,
+  unmodified live/disk source and denied application without workspace.write.
+- Snippet-milestone Gitleaks scan: 221 publishable source files, about 2.14 MB,
+  no leaks; private runtime/data/dependencies excluded.
+- Both desktop targets compile. No GUI application was launched or root executable
+  restored. Complete desktop visual acceptance remains pending the protection
+  issue described below; Linux/macOS remain unverified. Snippet variables,
+  transforms, a user catalogue and stacked snippet sessions remain pending.
+- Completion/import milestone: 31 core-only CTests and three headless editor
+  CTests passed. Actual TypeScript, Java and Rust servers produce imports;
+  C++/C#/JS/TS/HTML/CSS/Rust/Java acceptance prepares/applies/undoes live edits.
+  Issued-session tests cover forged/evicted/stale tickets, restart epochs,
+  delayed obsolete resolve replies, protected insertion changes, disk conflicts,
+  UTF-16/insert-replace ranges, indentation, overlap rejection and list bounds.
+  The real ImGui widget test creates no OS window and verifies Ctrl+Space/Enter,
+  native acceptance interception, one undo/redo for symbol/import, tabs and an
+  emoji caret. The CMake regression initially lacked rc.exe in the invoking
+  environment and passed with the official Visual Studio vcvars environment.
+- All 18 official MCP/CyTools integration tests passed. New coverage reads an
+  actual TypeScript auto-import preview as a read-only identity, denies apply,
+  then applies/undoes as a writer and verifies unchanged source bytes on disk.
+- Completion-milestone Gitleaks scan: 215 publishable source files, about
+  2.09 MB, no leaks. Private runtime/data/dependencies are excluded.
+- CyCode and Reader source compiled in runtime/build-vs after the shared widget
+  change. No application window was opened, no root GUI executable was restored
+  and no security protection setting was changed. The complete desktop accept
+  flow remains unexecuted under the existing protection-related limitation;
+  headless widget/native/MCP results do not establish desktop or cross-platform
+  acceptance. At that milestone interactive snippets remained pending; the newer
+  milestone above adds them. Commit characters and C++ automatic includes remain
+  pending. See [Languages](Languages.md).
+- Code information milestone: all 27 core-only CTests passed. Two new suites
+  cover display-content normalization and actual clangd documentation/signatures.
+  Existing Rust/Java/JS/TS/HTML/CSS tests now check documentation and supported
+  signature contexts. C# checks real overloads and preserves the provider's missing
+  active index. Lifecycle tests reject stale hover/signature replies; command tests
+  verify Rider and Visual Studio/VS Code shortcuts. This count excludes the two
+  GUI editor/syntax tests that were unchanged from the earlier milestone.
+- All 17 official MCP/CyTools tests passed. The new read-only information test
+  checks actual documentation, second-argument selection after a UTF-16 emoji,
+  malformed surrogate positions, stale revisions and write-permission rejection.
+- Final information-milestone Gitleaks scan: 210 publishable source files,
+  about 2.01 MB, no leaks. The scan excludes private data/runtime/dependencies.
+- The new Code information UI compiled successfully in runtime/build-vs. It has
+  not been launched or visually validated because the existing executable-removal
+  investigation remains unresolved. No root executable was restored and no
+  protection settings were changed. verify_information.py prepares hidden tests
+  for all three keymaps and preserves that distinction.
+
+- Project tasks milestone: all 27 native CTests passed after the Windows javac
+  UTF-8 diagnostic fix. Actual Cargo/npm/standalone-Java configure/build/run,
+  Cargo/npm tests, Unicode paths/arguments, compiler diagnostics, unsaved-buffer
+  refusal and stale-artifact clearing were exercised. A subsequent Cargo native
+  acceptance also passed real DAP source breakpoints, locals, step and stop.
+- All 16 official MCP/CyTools integration tests passed. The new project test
+  checks read-only inspection, process-permission rejection, actual npm build/
+  test/terminal run, SDK job cancellation and explicit project cancellation.
+  A spawned descendant must not survive; the next exclusive task must complete.
+- Gitleaks 8.30.1 scanned a private snapshot of 205 publishable source files
+  (about 1.95 MB), including untracked source additions: no leaks found.
+- Current project-panel GUI acceptance is **incomplete**. A minimal hidden IDE
+  session produced a report, but the Cargo shortcut scenario exited with code 0
+  before its report and the root CyCode.exe disappeared. Kaspersky is installed;
+  a new 19,826,534-byte quarantine entry at 12:06 corresponds in time/size to the
+  19,825,152-byte executable plus metadata, but the entry's protected contents
+  could not be read. The detection name has been requested from the user. Further
+  GUI launches/restoration stopped; neither protection settings nor exclusions
+  were changed. The six-theme project-panel and GUI Cargo-debug scenarios in
+  verify_project_tasks.py are implemented but are not reported as passed.
+
+- Multilingual milestone: all 24 native CTests passed, including actual Rust,
+  Java, JavaScript, TypeScript, HTML and CSS servers. Acceptance checks live-buffer
+  completion, formatting, document symbols and shutdown; TypeScript adds type
+  diagnostics, cross-file definition/references and rename/apply/undo across three
+  files, including an initially unopened target. Rust/Java add definition/reference,
+  rename/apply/undo and semantic-token checks; CSS adds selector rename. Lifecycle
+  fault tests reject stale LSP edit versions and invalid readiness configuration.
+  Java also passed from a fresh per-instance configuration without OSGi caches.
+- All 15 official MCP/CyTools integration tests passed. The web test rejects
+  unauthorized server activation, then validates TypeScript completion and an
+  unsaved string-to-number type change through the official MCP SDK.
+- Hidden GUI acceptance passed Ctrl+Space/Enter insertion for all six additional
+  language entry points, with source files unchanged on disk. Reader parsed eight
+  documents (including JSX/TSX and HTML script/style), in graphite and light-grey.
+  Seven resulting language/Reader captures were visually inspected. Shared C++/C#
+  semantic captures and the Reader's six-theme/edit/save/detach/two-instance suite
+  also passed. No visible application windows were opened for these checks.
+  See [Languages](Languages.md) for runtime prerequisites and remaining workflows.
+
+- CyCodeReader uses the actual shared editor library. Native document acceptance
+  exercises Unicode paths, tabs, BOM, mixed/no-op/CRLF/CR line endings, Save As,
+  exclusive creation, overwrite-baseline rejection, external edits/deletions,
+  binary/invalid-UTF-8/oversize refusal and temporary-file cleanup. Hidden desktop
+  acceptance exercises real editing undo/redo, Ctrl+S/F/N, Save As, closing and
+  overwrite confirmations, native detachment and two independent processes. The
+  OS hidden flags are asserted, including the detached native window. All six theme
+  captures were visually inspected. Scripted file selections use the production
+  result handler; interactive native file dialogs are not claimed as automated
+  acceptance. The current combined build passes all 24 native CTest suites.
+  See [Reader](https://github.com/MrMybal/CyCodeReader).
 
 - Semantic coloration uses actual clangd and Roslyn results through shared Engine
   documents and negotiated LSP legends. Native acceptance checks aliases, methods,
@@ -268,8 +459,9 @@ every frame. File rows are clipped to the visible portion of the explorer.
   Semantic requests are capped at 32 outstanding per backend, with a 15-second
   C++ deadline or 60 seconds for C# including project loading, and LSP
   cancellation on expiry. There is no immediate user cancellation/streaming control yet.
-- Core cancellation is cooperative. It retains reservations until native operations
-  stop; immediate build cancellation/streaming is not provided.
+- Core cancellation retains reservations until native operations stop. Cargo/npm/
+  standalone-Java tasks terminate their owned native process trees; streaming and
+  equivalent immediate controls for CMake/MSBuild/Unreal remain pending.
 - Native CMake/Unreal process deadlines are 180 seconds with 8 MiB output. Large
   first Unreal builds may require a longer configurable deadline, still pending.
 - Native multi-window behaviour was exercised on Windows. Linux/macOS GUI execution

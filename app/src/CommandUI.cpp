@@ -2,7 +2,7 @@
 #include "cycode/FileIcons.h"
 #include <algorithm>
 #include <cctype>
-#include <cyui/CyUI.h>
+#include <cyui/Core.h>
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
 #include <sstream>
@@ -39,7 +39,14 @@ void Application::shortcuts() {
     if (ImGui::IsPopupOpen(ImGuiID(0), ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel)) {
         keymap_.cancel(); lastShiftTap_ = -1; return;
     }
+    // Core view filters own Ctrl/Cmd+F in their panel. Dear ImGui maps the
+    // primary macOS modifier to Ctrl when ConfigMacOSXBehaviors is enabled.
     const bool input = ImGui::GetActiveID() != 0 && ImGui::GetCurrentContext()->InputTextState.ID == ImGui::GetActiveID();
+    if (window && viewFilters_.contains(window->RootWindow->ID) && io.KeyCtrl && !io.KeyShift && !io.KeyAlt &&
+        ImGui::IsKeyPressed(ImGuiKey_F, ImGuiInputFlags_None, ImGuiKeyOwner_Any)) {
+        if (!input) viewFilters_.at(window->RootWindow->ID)->focus();
+        return;
+    }
     if (terminalFocused_ && !input) {
         if (io.KeyAlt && !io.KeyCtrl && !io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_F12, false)) executeCommand("view.terminal");
         return; // The focused PTY owns Ctrl+C, Ctrl+F, Tab and shell editing keys.
@@ -92,10 +99,29 @@ void Application::shortcuts() {
     }
 }
 bool Application::commandEnabled(const std::string &id) const {
+    if (id=="code.actions") {
+        if (smoke_ || codeActionsFuture_.valid() || refactorFuture_.valid() || codeActionParameters().is_null()) return false;
+        const auto server=languageState_.value("servers",Json::object()).value(languageBackend(active_),Json::object());
+        return !server.value("ready",false) || server.value("methods",Json::object()).value("codeActions",false);
+    }
     const auto command = findCommand(id);
     if (!command) return false;
     if (command->context != CommandContext::global && active_.empty()) return false;
+    for (const auto &tab : tabs_) if (tab->path==active_ && tab->image && command->context!=CommandContext::global &&
+        id!="file.close" && id!="navigate.nextTab" && id!="navigate.previousTab" && id!="vcs.diff") return false;
+    const std::map<std::string,std::string> languageCommands={{"navigate.definition","definition"},{"navigate.references","references"},
+        {"code.documentation","hover"},{"code.parameters","signature"},
+        {"navigate.members","documentSymbols"},{"refactor.rename","rename"},{"refactor.format","format"},{"refactor.formatSelection","rangeFormat"}};
+    if (languageCommands.contains(id)) {
+        const auto server=languageState_.value("servers",Json::object()).value(languageBackend(active_),Json::object());
+        if (server.value("ready",false) && !server.value("methods",Json::object()).value(languageCommands.at(id),false)) return false;
+        if (!server.value("enabled",false)) return false;
+    }
     if (id == "build.run" || id == "build.configure") return !taskFuture_.valid() && !unrealAnalysisFuture_.valid();
+    if (id=="code.documentation" || id=="code.parameters") return !smoke_ && LanguageService::supports(active_);
+    if (id == "project.cancel") return taskFuture_.valid() && taskMethod_.starts_with("project.");
+    if (id == "project.test") return projectActive_ && projectState_.value("kind","")!="java" && !taskFuture_.valid();
+    if (id == "project.install" || id == "project.script") return projectActive_ && projectState_.value("kind","")=="npm" && !taskFuture_.valid();
     if (id.starts_with("msbuild.")) return msbuildActive_ && !taskFuture_.valid();
     if (id == "unreal.prepare") return unreal_.value("available", false) && !unrealAnalysisFuture_.valid() && !taskFuture_.valid();
     if (id == "navigate.back") return !historyBack_.empty();
@@ -109,7 +135,9 @@ bool Application::commandEnabled(const std::string &id) const {
     }
     if (id.starts_with("debug.") || id == "run.start") {
         if (smoke_ || debugFuture_.valid() || pendingDebugBuild_) return false;
+        if (projectActive_ && (id=="run.start" || id=="debug.start") && taskFuture_.valid()) return false;
         const auto phase = debugState_.value("state","idle");
+        if (projectActive_ && id=="debug.start" && phase!="stopped" && projectState_.value("kind","")!="cargo") return false;
         if (id == "debug.start") return phase != "starting" && phase != "running";
         if (id == "debug.stop") return phase == "stopped" || phase == "running" || phase == "starting";
         if (id == "debug.pause") return phase == "running";
@@ -165,7 +193,7 @@ void Application::executeCommand(const std::string &id) {
         else if (id == "debug.breakpoint") toggleBreakpoint(active_,tab->editor.GetMainCursorPosition().line+1);
         else if (id == "debug.terminal") { terminalId_ = debugState_.at("terminalId"); showPanel("Terminal","terminal"); focusTerminal_ = true; terminalScrollBottom_ = true; }
         else if (id.starts_with("debug.")) debugTask(id);
-        else if (id == "run.start") debugTask("debug.run",debugParameters());
+        else if (id == "run.start") { if (projectActive_) task("project.launch"); else debugTask("debug.run",debugParameters()); }
         else if (id == "view.terminal") {
             if (terminalFocused_) { panels_["terminal"] = false; terminalFocused_ = false; focusTab_ = active_; }
             else { showPanel("Terminal", "terminal"); focusTerminal_ = true; if (engine_->terminals().list().at("sessions").empty()) newTerminal(); }
@@ -173,6 +201,7 @@ void Application::executeCommand(const std::string &id) {
         else if (id == "terminal.new") newTerminal();
         else if (id == "file.new") newFile_ = true;
         else if (id == "file.open") chooseSolution();
+        else if (id == "file.openImage") chooseImage();
         else if (id == "file.folder") chooseFolder();
         else if (id == "file.window") newWindow(entry_);
         else if (id == "file.openWindow") chooseSolution(true);
@@ -194,6 +223,8 @@ void Application::executeCommand(const std::string &id) {
         else if (id == "refactor.apply") changeTask("changes.apply", {{"id", refactorPlan_.at("id")}});
         else if (id == "navigate.definition") navigate(false);
         else if (id == "navigate.references") navigate(true);
+        else if (id == "code.documentation" || id == "code.parameters") requestInformation(id=="code.parameters");
+        else if (id=="code.actions") requestCodeActions();
         else if (id == "navigate.back" || id == "navigate.forward") navigationHistory(id == "navigate.forward");
         else if (id == "navigate.line") { linePopup_ = true; lineNumber_ = static_cast<int>(tab->editor.GetMainCursorPosition().line + 1); }
         else if (id == "navigate.nextTab" || id == "navigate.previousTab") {
@@ -205,6 +236,8 @@ void Application::executeCommand(const std::string &id) {
         else if (id.starts_with("msbuild.")) { showPanel("MSBuild","msbuild"); task(id); }
         else if (id == "unreal.prepare") prepareUnreal();
         else if (id == "project.refresh") refreshFiles();
+        else if (id == "project.cancel") engine_->dispatch("project.cancel");
+        else if (id == "project.test" || id == "project.install" || id == "project.script") task(id);
         else if (id == "vcs.refresh") refreshGit();
         else if (id == "vcs.diff" || id == "vcs.blame") { showPanel("Version control","vcs"); vcsTask(id,{{"path",active_}}); }
         else if (id.starts_with("vcs.")) {
@@ -321,11 +354,11 @@ void Application::keymapOptions() {
     }
     ImGui::TextWrapped("%s", tr("Choose a command to change its shortcuts. Separate alternatives with ; and chord steps with a comma. An empty value disables the shortcut."));
     ImGui::SetNextItemWidth(-1);
-    ImGui::InputTextWithHint("##keymap-filter", tr("Filter commands..."), &keymapFilter_);
+    cyui::filterBox("##keymap-filter", shortcutsFilter_, {"Filter (Ctrl/Cmd+F)...", 0, false});
     if (ImGui::BeginTable("##commands", 3, ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable, ImVec2(0, cyui::dp(210)))) {
         ImGui::TableSetupColumn(tr("Command")); ImGui::TableSetupColumn(tr("Shortcut")); ImGui::TableSetupColumn(tr("Context")); ImGui::TableHeadersRow();
         for (const auto &command : commands()) {
-            if (!keymapFilter_.empty() && fuzzyScore(keymapFilter_, std::string(tr(command.title.c_str())) + " " + command.id) < 0) continue;
+            if (!shortcutsFilter_.matches(command.title, command.id + " " + keymap_.hint(command.id))) continue;
             ImGui::PushID(command.id.c_str()); ImGui::TableNextRow(); ImGui::TableNextColumn();
             if (ImGui::Selectable(tr(command.title.c_str()), command.id == keymapEditId_, ImGuiSelectableFlags_SpanAllColumns)) {
                 keymapEditId_ = command.id; keymapEditText_.clear();

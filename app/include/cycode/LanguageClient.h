@@ -18,7 +18,8 @@ class LanguageClient {
     bool start(const std::filesystem::path &root, const std::string &executable,
                const std::filesystem::path &compilationDatabase = {});
     bool startServer(const std::filesystem::path &root, const std::vector<std::string> &argv,
-                     Json configuration = Json::object(), bool waitForWorkspace = false);
+                     Json configuration = Json::object(), bool waitForWorkspace = false,
+                     Json environment = Json::object());
     // Reuse the bounded framed-JSON child transport for DAP, without LSP messages.
     bool startRaw(const std::filesystem::path &root, const std::string &executable);
     bool startRaw(const std::filesystem::path &root, const std::vector<std::string> &argv,
@@ -41,6 +42,7 @@ class LanguageClient {
     const Json &diagnostics() const {
         return diagnostics_;
     }
+    const Json &diagnosticVersions() const { return diagnosticVersions_; }
     size_t diagnosticGeneration() const {
         return diagnosticGeneration_;
     }
@@ -49,15 +51,17 @@ class LanguageClient {
     void invalidateSemantic() { ++semanticGeneration_; }
     static std::string uri(const std::filesystem::path &);
     static std::filesystem::path fromUri(const std::string &);
+    static std::string uriKey(const std::string &);
     static size_t utf16Length(const std::string &);
 
   private:
     struct Child;
     bool startImpl(const std::filesystem::path &, const std::vector<std::string> &, Json, bool raw,
                    const Json &environment = Json::object());
-    Json configuration_, workspaceFolders_, capabilities_ = Json::object();
+    Json configuration_, initializationOptions_, workspaceFolders_, capabilities_ = Json::object();
     size_t semanticGeneration_ = 0;
     bool waitForWorkspace_ = false, workspaceReady_ = false;
+    std::string workspaceReadyNotification_;
     Json workspaceLoadToken_;
     std::unique_ptr<Child> child_;
     bool enqueue(Json);
@@ -76,6 +80,7 @@ class LanguageClient {
     std::deque<Json> incoming_;
     std::map<int, std::function<void(const Json &)>> callbacks_;
     Json diagnostics_ = Json::object();
+    Json diagnosticVersions_=Json::object();
     size_t diagnosticGeneration_ = 0;
     std::string error_;
 };

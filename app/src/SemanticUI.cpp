@@ -2,41 +2,11 @@
 #include "cycode/EditorTheme.h"
 #include "cycode/EditorLanguage.h"
 #include <algorithm>
-#include <cyui/CyUI.h>
+#include <cyui/Core.h>
 #include <imgui_stdlib.h>
 
 namespace cycode {
 template<class T> static bool completed(std::future<T> &future) { return future.valid() && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }
-void Application::styleChangePreview() {
-    const auto &p = cyui::palette();
-    const auto beforeBackground = cyui::mix(p.bg0, p.error, .08f);
-    const auto afterBackground = cyui::mix(p.bg0, p.success, .10f);
-    const auto beforeGutter = cyui::mix(p.bg0, p.error, .18f);
-    const auto afterGutter = cyui::mix(p.bg0, p.success, .20f);
-    auto colours = editorPalette(theme_);
-    for (auto role : {TextEditor::Color::text, TextEditor::Color::keyword, TextEditor::Color::declaration,
-                      TextEditor::Color::number, TextEditor::Color::string, TextEditor::Color::comment,
-                      TextEditor::Color::preprocessor, TextEditor::Color::function, TextEditor::Color::macro,
-                      TextEditor::Color::attribute, TextEditor::Color::identifier, TextEditor::Color::knownIdentifier,
-                      TextEditor::Color::lineNumber, TextEditor::Color::currentLineNumber}) {
-        auto &colour = colours[static_cast<size_t>(role)];
-        colour = readableText(colour,{p.bg0,beforeBackground,afterBackground,beforeGutter,afterGutter});
-    }
-    for (auto editor : {&beforePreview_, &afterPreview_}) { editor->SetPalette(colours); editor->ClearMarkers(); }
-    std::int64_t delta = 0; size_t marked = 0;
-    for (const auto &edit : refactorPreview_.at("edits")) {
-        const auto start = edit.at("range").at("start").at("line").get<std::int64_t>();
-        const auto end = edit.at("range").at("end").at("line").get<std::int64_t>();
-        if (marked++ < 500) {
-            // TextEditor's marker colours are backgrounds, including the gutter.
-            beforePreview_.AddMarker(static_cast<size_t>(start), beforeGutter, beforeBackground, tr("Before"), tr("Changed line"));
-            afterPreview_.AddMarker(static_cast<size_t>(std::max<std::int64_t>(0, start + delta)), afterGutter, afterBackground, tr("After"), tr("Changed line"));
-        }
-        const auto text = edit.at("newText").get<std::string>();
-        delta += static_cast<std::int64_t>(std::count(text.begin(), text.end(), '\n')) - (end - start);
-    }
-    previewTheme_ = theme_ + ":" + locale_;
-}
 void Application::changeTask(const std::string &method, Json params) {
     if (refactorFuture_.valid()) return;
     refactorOperation_ = method;
@@ -104,19 +74,26 @@ void Application::updateSemantic() {
         const auto method = refactorOperation_;
         if (method == "changes.preview") {
             refactorPreview_ = result;
-            beforePreview_.SetText(result.at("before").get<std::string>());
-            afterPreview_.SetText(result.at("after").get<std::string>());
+            beforePreviewCode_.setText(result.at("before").get<std::string>());
+            afterPreviewCode_.setText(result.at("after").get<std::string>());
+            refactorDiff_.setTexts(result.at("before"), result.at("after"), cyui::codeLanguageForPath(refactorFile_));
+            refactorDiffState_ = {};
+            for (auto *view : {&beforePreviewCode_, &afterPreviewCode_}) {
+                configureCodeEditor(*view); view->setLanguageForPath(refactorFile_);
+                view->setSyntaxEnabled(!LanguageService::supports(refactorFile_)); view->setReadOnly(true);
+            }
             for (auto editor : {&beforePreview_, &afterPreview_}) {
-                editor->SetLanguage(editorLanguage(refactorFile_,unreal_.value("available",false))); editor->SetReadOnlyEnabled(true);
+                if (LanguageService::supports(refactorFile_)) editor->SetLanguage(editorLanguage(refactorFile_,unreal_.value("available",false))); editor->SetReadOnlyEnabled(true);
+                Syntax syntax; syntax.update(*editor,refactorFile_,editor->GetText());
                 editor->SetShowMiniMapEnabled(false); editor->SetWordWrapEnabled(true);
                 editor->SetShowWhitespacesEnabled(false); editor->SetShowCurrentLineHighlightEnabled(false);
                 editor->SetCaretsVisible(false); editor->SetLineSpacing(1.15f);
             }
-            styleChangePreview();
-        } else if (method == "language.format" || method == "language.rename") {
+
+        } else if (method == "language.format" || method == "language.rename" || method=="language.codeActionPrepare") {
             refactorPlan_ = result; refactorPreview_ = nullptr;
             if (result.at("files").empty()) { cyui::notify(tr("No changes required"), cyui::Tone::neutral); return; }
-            if (method == "language.format") changeTask("changes.apply", {{"id", result.at("id")}});
+            if (method == "language.format" || (method=="language.codeActionPrepare" && codeActionApply_)) changeTask("changes.apply", {{"id", result.at("id")}});
             else { showPanel("Refactoring", "refactoring"); selectChangeFile(result.at("files")[0].at("path")); }
         } else if (method == "changes.apply" || method == "changes.undo") {
             refactorPlan_ = result;
@@ -154,12 +131,14 @@ void Application::refactorPanel() {
         ImGui::EndCombo();
     }
     if (refactorPreview_.is_object()) {
-        if (previewTheme_ != theme_ + ":" + locale_) styleChangePreview();
+        ImGui::Checkbox(tr("Wrap lines"), &previewWrap_);
+        if (!previewWrap_) cyui::diffViewer("##change-preview", refactorDiffState_, refactorDiff_);
+        else
         if (ImGui::BeginTable("##change-preview", 2, ImGuiTableFlags_Resizable)) {
             ImGui::TableNextColumn(); ImGui::TextUnformatted(tr("Before"));
-            { cyui::ScopedFont mono(cyui::monoFont()); beforePreview_.Render("##before-preview"); }
+            { cyui::ScopedFont mono(cyui::monoFont()); beforePreviewCode_.draw("##before-preview"); }
             ImGui::TableNextColumn(); ImGui::TextUnformatted(tr("After"));
-            { cyui::ScopedFont mono(cyui::monoFont()); afterPreview_.Render("##after-preview"); }
+            { cyui::ScopedFont mono(cyui::monoFont()); afterPreviewCode_.draw("##after-preview"); }
             ImGui::EndTable();
         }
     }

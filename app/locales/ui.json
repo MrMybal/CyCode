@@ -1619,6 +1619,22 @@
     "en": "Build diagnostics",
     "fr": "Erreurs de compilation"
   },
+  "Enable": {
+    "en": "Enable",
+    "fr": "Activer"
+  },
+  "Disable": {
+    "en": "Disable",
+    "fr": "Desactiver"
+  },
+  "Language server is not installed": {
+    "en": "Language server is not installed",
+    "fr": "Serveur de langage non installe"
+  },
+  "Diagnostics from enabled language servers appear here.": {
+    "en": "Diagnostics from enabled language servers appear here.",
+    "fr": "Les diagnostics des serveurs de langage actifs apparaissent ici."
+  },
   "Connected": {
     "en": "Connected",
     "fr": "Connecte"
@@ -1643,9 +1659,9 @@
     "en": "csharp-ls: MIT. Private .NET SDK: included Microsoft terms and component notices.",
     "fr": "csharp-ls : MIT. SDK .NET prive : conditions Microsoft et notices des composants incluses."
   },
-  "Workspace, live documents, C++/C#, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. MCP sessions use CyToolsCore jobs and permissions.": {
-    "en": "Workspace, live documents, C++/C#, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. MCP sessions use CyToolsCore jobs and permissions.",
-    "fr": "Espace de travail, documents, C++/C#, recherche, Git, CMake/MSBuild/Unreal, terminal, debogueur et extensions. Les sessions MCP utilisent les taches et permissions CyToolsCore."
+  "Workspace, live documents, language services, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. MCP sessions use CyToolsCore jobs and permissions.": {
+    "en": "Workspace, live documents, language services, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. MCP sessions use CyToolsCore jobs and permissions.",
+    "fr": "Espace de travail, documents, services de langage, recherche, Git, CMake/MSBuild/Unreal, terminal, debogueur et extensions. Les sessions MCP utilisent les taches et permissions CyToolsCore."
   },
   "Debug engine": {
     "en": "Debug engine",
@@ -1658,5 +1674,425 @@
   "Managed debug output appears here. Run without debugging supports terminal input.": {
     "en": "Managed debug output appears here. Run without debugging supports terminal input.",
     "fr": "La sortie du debogage .NET est dans la console de debogage. Executer sans debogage permet la saisie dans le terminal."
+  },
+  "New file": {
+    "en": "New file",
+    "fr": "Nouveau fichier"
+  },
+  "Save as...": {
+    "en": "Save as...",
+    "fr": "Enregistrer sous..."
+  },
+  "Open files...": {
+    "en": "Open files...",
+    "fr": "Ouvrir des fichiers..."
+  },
+  "Open files": {
+    "en": "Open files",
+    "fr": "Fichiers ouverts"
+  },
+  "Untitled": {
+    "en": "Untitled",
+    "fr": "Sans titre"
+  },
+  "Reload from disk": {
+    "en": "Reload from disk",
+    "fr": "Recharger depuis le disque"
+  },
+  "Find / replace": {
+    "en": "Find / replace",
+    "fr": "Rechercher / remplacer"
+  },
+  "Go to line": {
+    "en": "Go to line",
+    "fr": "Aller a la ligne"
+  },
+  "Switch file / actions": {
+    "en": "Switch file / actions",
+    "fr": "Changer de fichier / actions"
+  },
+  "Word wrap": {
+    "en": "Word wrap",
+    "fr": "Retour a la ligne automatique"
+  },
+  "Minimap": {
+    "en": "Minimap",
+    "fr": "Minicarte"
+  },
+  "Show whitespace": {
+    "en": "Show whitespace",
+    "fr": "Afficher les espaces"
+  },
+  "Syntax": {
+    "en": "Syntax",
+    "fr": "Coloration"
+  },
+  "Plain text": {
+    "en": "Plain text",
+    "fr": "Texte brut"
+  },
+  "Code editor": {
+    "en": "Code editor",
+    "fr": "Editeur de code"
+  },
+  "Lines": {
+    "en": "Lines",
+    "fr": "Lignes"
+  },
+  "Open or drop code files to begin.": {
+    "en": "Open or drop code files to begin.",
+    "fr": "Ouvrez ou deposez des fichiers de code pour commencer."
+  },
+  "Save changes before continuing?": {
+    "en": "Save changes before continuing?",
+    "fr": "Enregistrer les modifications avant de continuer ?"
+  },
+  "Replace existing file?": {
+    "en": "Replace existing file?",
+    "fr": "Remplacer le fichier existant ?"
+  },
+  "Type a file name or action...": {
+    "en": "Type a file name or action...",
+    "fr": "Saisissez un nom de fichier ou une action..."
+  },
+  "Close a document before opening more files.": {
+    "en": "Close a document before opening more files.",
+    "fr": "Fermez un document avant d ouvrir plus de fichiers."
+  },
+  "This file is already open in another tab.": {
+    "en": "This file is already open in another tab.",
+    "fr": "Ce fichier est deja ouvert dans un autre onglet."
+  },
+  "File changed on disk. Reload it or save a copy.": {
+    "en": "File changed on disk. Reload it or save a copy.",
+    "fr": "Le fichier a change sur le disque. Rechargez-le ou enregistrez une copie."
+  },
+  "Read-only": {
+    "en": "Read-only",
+    "fr": "Lecture seule"
+  },
+  "Project tasks": {
+    "en": "Project tasks",
+    "fr": "Taches du projet"
+  },
+  "Project system": {
+    "en": "Project system",
+    "fr": "Systeme de projet"
+  },
+  "Project directory": {
+    "en": "Project directory",
+    "fr": "Dossier du projet"
+  },
+  "Run project tests": {
+    "en": "Run project tests",
+    "fr": "Executer les tests du projet"
+  },
+  "Install npm dependencies": {
+    "en": "Install npm dependencies",
+    "fr": "Installer les dependances npm"
+  },
+  "Run npm script": {
+    "en": "Run npm script",
+    "fr": "Executer le script npm"
+  },
+  "Cancel task": {
+    "en": "Cancel task",
+    "fr": "Annuler la tache"
+  },
+  "Task cancelled": {
+    "en": "Task cancelled",
+    "fr": "Tache annulee"
+  },
+  "Cargo package": {
+    "en": "Cargo package",
+    "fr": "Paquet Cargo"
+  },
+  "Binary target": {
+    "en": "Binary target",
+    "fr": "Cible executable"
+  },
+  "Detected targets": {
+    "en": "Detected targets",
+    "fr": "Cibles detectees"
+  },
+  "Select a binary target": {
+    "en": "Select a binary target",
+    "fr": "Choisir une cible executable"
+  },
+  "Offline Cargo mode": {
+    "en": "Offline Cargo mode",
+    "fr": "Mode Cargo hors ligne"
+  },
+  "npm script": {
+    "en": "npm script",
+    "fr": "Script npm"
+  },
+  "Java source directory": {
+    "en": "Java source directory",
+    "fr": "Dossier des sources Java"
+  },
+  "Java main class": {
+    "en": "Java main class",
+    "fr": "Classe principale Java"
+  },
+  "Select a main class": {
+    "en": "Select a main class",
+    "fr": "Choisir une classe principale"
+  },
+  "No Cargo, npm or standalone Java project": {
+    "en": "No Cargo, npm or standalone Java project",
+    "fr": "Aucun projet Cargo, npm ou Java autonome"
+  },
+  "Open Cargo.toml, package.json, a Java source file or its folder.": {
+    "en": "Open Cargo.toml, package.json, a Java source file or its folder.",
+    "fr": "Ouvrez Cargo.toml, package.json, un fichier Java ou son dossier."
+  },
+  "Standalone Java: compilation and Run. Maven, Gradle and Java debugging are not connected.": {
+    "en": "Standalone Java: compilation and Run. Maven, Gradle and Java debugging are not connected.",
+    "fr": "Java autonome : compilation et execution. Maven, Gradle et le debogage Java ne sont pas raccordes."
+  },
+  "Project metadata changed; configure or build again.": {
+    "en": "Project metadata changed; configure or build again.",
+    "fr": "Les metadonnees du projet ont change ; configurez ou compilez de nouveau."
+  },
+  "Debugging is available here for Cargo targets.": {
+    "en": "Debugging is available here for Cargo targets.",
+    "fr": "Le debogage est disponible ici pour les cibles Cargo."
+  },
+  "Code information": {
+    "en": "Code information",
+    "fr": "Informations sur le code"
+  },
+  "Quick documentation": {
+    "en": "Quick documentation",
+    "fr": "Documentation rapide"
+  },
+  "Parameter information": {
+    "en": "Parameter information",
+    "fr": "Informations sur les parametres"
+  },
+  "Copy information": {
+    "en": "Copy information",
+    "fr": "Copier les informations"
+  },
+  "Request documentation or parameter information at the cursor.": {
+    "en": "Request documentation or parameter information at the cursor.",
+    "fr": "Demandez la documentation ou les parametres a la position du curseur."
+  },
+  "No information at this position.": {
+    "en": "No information at this position.",
+    "fr": "Aucune information a cette position."
+  },
+  "Overload": {
+    "en": "Overload",
+    "fr": "Surcharge"
+  },
+  "Active parameter": {
+    "en": "Active parameter",
+    "fr": "Parametre actif"
+  },
+  "Information truncated": {
+    "en": "Information truncated",
+    "fr": "Informations tronquees"
+  },
+  "Completion with imports requires a single cursor.": {
+    "en": "Completion with imports requires a single cursor.",
+    "fr": "La completion avec imports necessite un seul curseur."
+  },
+  "Completion context changed. Request suggestions again.": {
+    "en": "Completion context changed. Request suggestions again.",
+    "fr": "Le contexte a change. Relancez les suggestions."
+  },
+  "Snippet parameter": {
+    "en": "Snippet parameter",
+    "fr": "Parametre du snippet"
+  },
+  "Snippet choices": {
+    "en": "Snippet choices",
+    "fr": "Choix du snippet"
+  },
+  "Tab: next | Shift+Tab: previous | Esc: finish": {
+    "en": "Tab: next | Shift+Tab: previous | Esc: finish",
+    "fr": "Tab : suivant | Maj+Tab : precedent | Echap : terminer"
+  },
+  "Quick fixes and context actions": {
+    "en": "Quick fixes and context actions",
+    "fr": "Corrections rapides et actions contextuelles"
+  },
+  "Code actions": {
+    "en": "Code actions",
+    "fr": "Actions sur le code"
+  },
+  "Refresh code actions": {
+    "en": "Refresh code actions",
+    "fr": "Actualiser les actions sur le code"
+  },
+  "All context actions": {
+    "en": "All context actions",
+    "fr": "Toutes les actions contextuelles"
+  },
+  "Quick fixes": {
+    "en": "Quick fixes",
+    "fr": "Corrections rapides"
+  },
+  "Refactorings": {
+    "en": "Refactorings",
+    "fr": "Refactorisations"
+  },
+  "Organize imports": {
+    "en": "Organize imports",
+    "fr": "Organiser les imports"
+  },
+  "Loading code actions": {
+    "en": "Loading code actions",
+    "fr": "Chargement des actions"
+  },
+  "Action": {
+    "en": "Action",
+    "fr": "Action"
+  },
+  "Kind": {
+    "en": "Kind",
+    "fr": "Catégorie"
+  },
+  "Apply correction": {
+    "en": "Apply correction",
+    "fr": "Appliquer la correction"
+  },
+  "Code action context changed. Refresh the list.": {
+    "en": "Code action context changed. Refresh the list.",
+    "fr": "Le contexte a changé. Actualisez la liste des actions."
+  },
+  "Request fixes or refactorings at the cursor or selection.": {
+    "en": "Request fixes or refactorings at the cursor or selection.",
+    "fr": "Demandez les corrections ou refactorisations au curseur ou sur la sélection."
+  },
+  "No code actions at this position.": {
+    "en": "No code actions at this position.",
+    "fr": "Aucune action à cette position."
+  },
+  "Code action list truncated": {
+    "en": "Code action list truncated",
+    "fr": "Liste des actions tronquée"
+  },
+  "Wrap lines": {
+    "en": "Wrap lines",
+    "fr": "Retour à la ligne"
+  },
+  "Source": {
+    "en": "Source",
+    "fr": "Source"
+  },
+  "Position": {
+    "en": "Position",
+    "fr": "Position"
+  },
+  "Follow": {
+    "en": "Follow",
+    "fr": "Suivre"
+  },
+  "Find All": {
+    "en": "Find All",
+    "fr": "Tout rechercher"
+  },
+  "Replace All": {
+    "en": "Replace All",
+    "fr": "Tout remplacer"
+  },
+  "Open image...": {
+    "en": "Open image...",
+    "fr": "Ouvrir une image..."
+  },
+  "Fit image": {
+    "en": "Fit image",
+    "fr": "Ajuster l’image"
+  },
+  "Zoom out": {
+    "en": "Zoom out",
+    "fr": "Dézoomer"
+  },
+  "Zoom in": {
+    "en": "Zoom in",
+    "fr": "Zoomer"
+  },
+  "Reload image": {
+    "en": "Reload image",
+    "fr": "Recharger l’image"
+  },
+  "Pixelated": {
+    "en": "Pixelated",
+    "fr": "Pixels nets"
+  },
+  "Image preview": {
+    "en": "Image preview",
+    "fr": "Aperçu de l’image"
+  },
+  "Cannot load image": {
+    "en": "Cannot load image",
+    "fr": "Impossible de charger l’image"
+  },
+  "Loading image...": {
+    "en": "Loading image...",
+    "fr": "Chargement de l’image..."
+  },
+  "Decoding in the background.": {
+    "en": "Decoding in the background.",
+    "fr": "Décodage en arrière-plan."
+  },
+  "GIF preview: first frame": {
+    "en": "GIF preview: first frame",
+    "fr": "Aperçu GIF : première image"
+  },
+  "HDR preview converted to 8-bit display": {
+    "en": "HDR preview converted to 8-bit display",
+    "fr": "Aperçu HDR converti pour un affichage 8 bits"
+  },
+  "Wheel: zoom | Middle mouse or Space+drag: pan | Double-click: fit": {
+    "en": "Wheel: zoom | Middle mouse or Space+drag: pan | Double-click: fit",
+    "fr": "Molette : zoom | Bouton central ou Espace+glisser : déplacement | Double-clic : ajuster"
+  },
+  "Cannot read image file": {
+    "en": "Cannot read image file",
+    "fr": "Impossible de lire le fichier image"
+  },
+  "Image file is empty or exceeds the 64 MiB input limit": {
+    "en": "Image file is empty or exceeds the 64 MiB input limit",
+    "fr": "Le fichier image est vide ou dépasse la limite de 64 Mio"
+  },
+  "Image dimensions exceed the preview limit (32768 per side, 64 megapixels)": {
+    "en": "Image dimensions exceed the preview limit (32768 per side, 64 megapixels)",
+    "fr": "Les dimensions dépassent la limite de l’aperçu (32768 par côté, 64 mégapixels)"
+  },
+  "Animated WebP preview is not supported yet": {
+    "en": "Animated WebP preview is not supported yet",
+    "fr": "L’aperçu WebP animé n’est pas encore pris en charge"
+  },
+  "Image dimensions exceed this GPU's texture limit": {
+    "en": "Image dimensions exceed this GPU's texture limit",
+    "fr": "Les dimensions dépassent la limite de texture de cette carte graphique"
+  },
+  "Image preview texture budget reached; close another image and reload": {
+    "en": "Image preview texture budget reached; close another image and reload",
+    "fr": "La limite mémoire des aperçus est atteinte ; fermez une autre image puis rechargez"
+  },
+  "The GPU could not allocate the image preview": {
+    "en": "The GPU could not allocate the image preview",
+    "fr": "La carte graphique n’a pas pu créer l’aperçu"
+  },
+  "Too many image previews queued": {
+    "en": "Too many image previews queued",
+    "fr": "Trop d’aperçus d’images en attente"
+  },
+  "Unsupported or invalid image (PNG, JPEG, WebP, GIF, BMP, TGA, PSD, HDR, PIC, PGM/PPM are supported)": {
+    "en": "Unsupported or invalid image (PNG, JPEG, WebP, GIF, BMP, TGA, PSD, HDR, PIC, PGM/PPM are supported)",
+    "fr": "Image invalide ou non prise en charge (formats : PNG, JPEG, WebP, GIF, BMP, TGA, PSD, HDR, PIC, PGM/PPM)"
+  },
+  "Select an image file": {
+    "en": "Select an image file",
+    "fr": "Sélectionnez un fichier image"
+  },
+  "The selected image path now points to another file": {
+    "en": "The selected image path now points to another file",
+    "fr": "Le chemin sélectionné pointe maintenant vers un autre fichier"
   }
 }

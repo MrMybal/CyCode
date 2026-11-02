@@ -2,11 +2,18 @@
 #include "cycode/Bridge.h"
 #include "cycode/Commands.h"
 #include "cycode/LanguageClient.h"
+#include "cycode/Syntax.h"
+#include "cycode/EditorSnippet.h"
+#include "cycode/ModuleModels.h"
 #include <SDL3/SDL.h>
 #include <TextEditor.h>
 #include <future>
 #include <memory>
+#include <set>
 namespace cycode {
+class ImageView;
+class ImageLoader;
+class ImageTextures;
 struct LaunchOptions {
     std::filesystem::path installation, workspace;
     std::string theme, language, openFile, keymap, terminalProfile;
@@ -14,6 +21,7 @@ struct LaunchOptions {
     bool smoke = false;
     bool showOptions = false;
     bool showCmake = false;
+    bool showProjectTasks = false;
     bool showUnreal = false;
     bool testSession = false;
     bool testWindows = false;
@@ -43,22 +51,45 @@ class Application {
         if (!testCompletion_.is_object()) return true;
         if (testCompletionPhase_ < 3) return false;
         if (testCompletion_.value("acceptFirst", false) && testCompletionPhase_ < 5) return false;
-        for (const auto &tab : tabs_) if (tab->path == active_) return tab->completionGeneration > 0 && !tab->completion.valid() && !tab->queuedCompletion.is_object();
+        for (const auto &tab : tabs_) if (tab->path == active_) return tab->completionGeneration > 0 && !tab->completion.valid() && !tab->completionAccept.valid() && !tab->queuedCompletion.is_object();
         return false;
     }
     Json testState() const;
     bool testCommandReady(const std::string &id) const { return commandEnabled(id); }
     void open(const std::string &, size_t line = 0, size_t column = 0, bool utf16 = false, bool activate = true);
     void openProject(const std::filesystem::path &);
+    // Explicit user-selected image: grants read access to this canonical file
+    // only, without extending workspace document permissions.
+    void openImageFile(const std::filesystem::path &);
     const std::string &theme() const {
         return theme_;
     }
 
   private:
+    friend struct ApplicationModuleTests;
+    friend struct ApplicationImageTests;
+    struct Tab;
+    bool openImage(const std::string &, bool activate);
+    void reloadImage(const std::shared_ptr<Tab> &);
+    void imagePanel(const std::shared_ptr<Tab> &);
+    void updateImages();
+    void chooseImage();
+    std::shared_ptr<ImageLoader> imageLoader_;
+    std::shared_ptr<ImageTextures> imageTextures_;
+    void optionsProperties();
+    void problemRows();
+    void viewFilter(const char *, cyui::TextFilter &);
+    std::map<ImGuiID, cyui::TextFilter *> viewFilters_;
+    std::map<std::string, cyui::TextFilter> menuFilters_;
     bool testHighlights_=false;
     struct Tab {
         std::string path, displayPath;
-        TextEditor editor;
+        std::shared_ptr<ImageView> image;
+        std::filesystem::path imageSource;
+        cyui::CodeEditor codeEditor;
+        TextEditor &editor = codeEditor.native();
+        EditorSnippet snippet;
+        Syntax syntax;
         std::uint64_t revision = 0;
         bool dirty = false;
         bool readOnly = false;
@@ -66,6 +97,12 @@ class Application {
         size_t runningCompletionGeneration = 0;
         std::uint64_t completionRevision = 0;
         std::future<Json> completion;
+        std::future<Json> completionAccept;
+        std::string completionSession;
+        std::vector<size_t> completionItems;
+        uint64_t acceptedRevision=0;
+        size_t acceptedGeneration=0;
+        TextEditor::DocPos acceptedPosition;
         Json queuedCompletion;
         TextEditor::DocPos completionPosition;
         TextEditor::DocPos queuedCompletionStart, queuedCompletionEnd, runningCompletionStart;
@@ -86,7 +123,7 @@ class Application {
     struct Dialog {
         std::mutex mutex;
         std::string path, error;
-        bool ready = false, newWindow = false;
+        bool ready = false, newWindow = false, image = false;
     };
     const char *tr(const char *) const;
     std::string label(const char *, const char *) const;
@@ -112,6 +149,7 @@ class Application {
     void outputPanel();
     void cmakePanel();
     void msbuildPanel();
+    void projectTasksPanel();
     void unrealPanel();
     void applyUnreal(const Json &);
     void prepareUnreal();
@@ -133,6 +171,14 @@ class Application {
     void rememberNavigation();
     void goToLine();
     void updateSemantic();
+    void requestInformation(bool signature);
+    void updateInformation();
+    Json informationParameters() const;
+    void informationPanel();
+    Json codeActionParameters() const;
+    void requestCodeActions();
+    void updateCodeActions();
+    void codeActionsPanel();
     void refactorPanel();
     void terminalPanel();
     void updateTerminal();
@@ -150,7 +196,6 @@ class Application {
     void beginFormat(bool selection);
     void changeTask(const std::string &, Json);
     void selectChangeFile(const std::string &);
-    void styleChangePreview();
     static TextEditor::Palette editorPalette(const std::string &);
     void update();
     void save(const std::shared_ptr<Tab> &);
@@ -189,6 +234,7 @@ class Application {
     std::future<ProcessResult> coreService_;
     std::filesystem::path coreDescriptor_;
     Json languageState_ = Json::object(), navigation_ = Json::object();
+    std::set<std::string> languageDecisions_;
     std::future<Json> navigationFuture_;
     std::vector<std::future<Json>> retiredCompletions_;
     std::string navigationPath_;
@@ -205,6 +251,8 @@ class Application {
                                    pluginInfo_ = Json::object();
     Json buildState_ = Json::object(), toolchains_ = Json::object();
     Json msbuildState_ = Json::object();
+    Json projectState_ = Json::object(), projectProfile_ = Json::object();
+    bool projectActive_ = false, focusProjectTasks_ = false;
     Json buildDiagnostics_ = Json::array();
     bool msbuildActive_ = false, msbuildRestore_ = false;
     std::string msbuildConfiguration_, msbuildPlatform_, msbuildProject_, msbuildTool_ = "automatic";
@@ -219,13 +267,26 @@ class Application {
     std::string vcsOperation_, vcsSection_ = "Changes", vcsBranch_, vcsNewBranch_, vcsRevision_ = "HEAD", vcsRemote_ = "origin", vcsRemoteUrl_, vcsStashMessage_, vcsPreviewTitle_;
     int vcsStashIndex_ = 0;
     bool vcsIncludeUntracked_ = false, vcsSetUpstream_ = false;
-    TextEditor vcsPreview_, vcsBase_, vcsOurs_, vcsTheirs_;
+    cyui::CodeEditor vcsPreviewCode_, vcsBaseCode_, vcsOursCode_, vcsTheirsCode_;
+    TextEditor &vcsPreview_ = vcsPreviewCode_.native(), &vcsBase_ = vcsBaseCode_.native(),
+               &vcsOurs_ = vcsOursCode_.native(), &vcsTheirs_ = vcsTheirsCode_.native();
+    cyui::DiffDocument vcsDiff_;
+    cyui::DiffState vcsDiffState_;
+    bool vcsIsDiff_ = false;
     std::future<Json> buildFuture_, detectionFuture_;
     std::shared_ptr<std::atomic<bool>> searchCancellation_;
-    std::string output_, lastError_, searchQuery_, pendingQuery_, fileFilter_, commitMessage_,
+    std::string output_, lastError_, searchQuery_, pendingQuery_, commitMessage_,
         buildSource_ = ".", buildDirectory_ = "build", configuration_ = "Debug", clangd_ = "clangd";
     std::string buildToolchain_ = "automatic", buildGenerator_ = "automatic", buildTarget_;
     bool buildEdited_ = false;
+    OutputLog outputLog_;
+    ProblemModel problems_;
+    Json problemBuild_, problemLanguage_;
+    cyui::TextFilter problemsFilter_, optionsFilter_, filesFilter_, shortcutsFilter_;
+    cyui::InspectorState optionsInspector_;
+    uint64_t optionsRevision_ = 1;
+    bool actionPaletteOpen_ = false;
+    cyui::CommandState actionPaletteState_;
     bool focusCmake_ = false;
     double lastBuildRefresh_ = 0;
     std::string theme_ = "graphite", locale_ = "en", paletteFilter_;
@@ -250,14 +311,27 @@ class Application {
     std::vector<HistoryPosition> historyBack_, historyForward_;
     bool historyMoving_ = false;
     std::future<Json> symbolFuture_, refactorFuture_;
+    std::future<Json> informationFuture_;
+    std::future<Json> codeActionsFuture_;
+    Json codeActionsState_=Json::object();
+    std::string codeActionsKey_,codeActionsError_;
+    int codeActionsFilter_=0,codeActionSelected_=-1;
+    bool codeActionApply_=false;
+    Json informationState_ = Json::object(), informationQuery_;
+    std::string informationMethod_, informationWanted_, informationSent_, informationError_;
+    double informationChanged_ = 0;
+    std::map<std::string, InformationDocument> informationDocuments_;
     Json symbolResults_ = Json::object(), symbolWantedParams_, refactorPlan_, refactorPreview_, renameParameters_;
     std::string symbolWantedKey_, symbolSentKey_, symbolWantedMethod_, symbolError_;
     double symbolChanged_ = 0;
     int symbolAttempts_ = 0;
     std::string refactorOperation_, refactorFile_, refactorName_;
     bool renameOpen_ = false;
-    std::string previewTheme_;
-    TextEditor beforePreview_, afterPreview_;
+    cyui::DiffDocument refactorDiff_;
+    cyui::DiffState refactorDiffState_;
+    bool previewWrap_ = false;
+    cyui::CodeEditor beforePreviewCode_, afterPreviewCode_;
+    TextEditor &beforePreview_ = beforePreviewCode_.native(), &afterPreview_ = afterPreviewCode_.native();
     std::future<Json> terminalFuture_;
     std::string terminalId_, terminalProfile_ = "default", terminalOperation_;
     bool terminalFocused_ = false, focusTerminal_ = false, terminalScrollBottom_ = true, terminalSelecting_ = false;

@@ -56,6 +56,9 @@ std::string toolPath(const std::string &name) {
     constexpr char separator = ':';
 #endif
     auto root = installationRoot();
+    // Release archives keep their explicitly packaged tools outside the private
+    // development runtime. Environment overrides still take precedence.
+    if (!root.empty()) candidates.push_back(root / "tools" / filename);
     if (name == "codelldb" && !root.empty()) candidates.push_back(root / "runtime/tools/codelldb/extension/adapter" / filename);
     if (name == "netcoredbg" && !root.empty()) candidates.push_back(root / "runtime/tools/netcoredbg/netcoredbg" / filename);
     if (!root.empty()) { candidates.push_back(root / "runtime/tools" / filename); candidates.push_back(root / "runtime/tools" / name / filename); }

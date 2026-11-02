@@ -12,8 +12,18 @@ int main() {
             require(map.press("ctrl+f", 3, false, true).command == "search.document", "Find from a tool window");
             require(map.press("ctrl+s", 4, false, true).command == "file.save", "Save from a tool window");
             require(map.press("ctrl+f", 5, true, false).command.empty(), "No document means no document search");
+            require(map.press("ctrl+shift+space",6,true,true).command=="code.parameters","Explicit parameter information");
+            const auto action=std::string(profile)=="rider" ? "alt+enter" : "ctrl+period";
+            require(map.press(action,6.1,true,true).command=="code.actions","Code actions shortcut");
+            require(map.press(action,6.2,false,true).command.empty(),"Code actions must not run while typing in a tool window");
+            if (std::string(profile)!="rider") {
+                map.press("ctrl+k",7,true,true);
+                require(map.press("ctrl+i",7.2,true,true).command=="code.documentation","VS/VS Code quick information chord");
+            }
         }
         map.load("rider");
+        require(map.press("ctrl+q",.01,true,true).command=="code.documentation","Rider quick documentation");
+        require(map.press("ctrl+p",.02,true,true).command=="code.parameters","Rider parameter information");
         require(map.press("ctrl+n", .1, false, false).command == "search.types", "Rider type navigation");
         require(map.press("shift+f6", .2, true, true).command == "refactor.rename", "Rider rename");
         require(map.press("ctrl+alt+l", .3, true, true).command == "refactor.format", "Rider formatting overrides widget binding");

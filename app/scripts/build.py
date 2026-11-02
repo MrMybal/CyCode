@@ -5,22 +5,37 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+from editor_dependency import ensure_editor
 
 ROOT = Path(__file__).resolve().parents[2]
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--core-only', action='store_true')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--core-only', action='store_true')
+    mode.add_argument('--reader-only', action='store_true', help='Deprecated: CyCodeReader now has its own repository/build')
     parser.add_argument('--configuration', default='Release')
-    parser.add_argument('--cyui', type=Path, default=ROOT.parent / 'CyImgui_Interface')
+    parser.add_argument('--cyui', type=Path, help='Clean checkout at app/cyui-source.lock.json (default: pinned cache)')
+    parser.add_argument('--editor-root', type=Path, help='Development checkout of CyCodeReader (default: pinned dependency)')
+    parser.add_argument('--no-install', action='store_true', help='Keep all build outputs in runtime; do not copy a root executable')
     args = parser.parse_args()
-    if not args.core_only:
+    if args.reader_only:
+        raise SystemExit('CyCodeReader moved to https://github.com/MrMybal/CyCodeReader. Run python scripts/build.py in that checkout.')
+    editor=ensure_editor(args.editor_root)
+    if not args.core_only and not args.reader_only:
         from fetch_runtime_tools import ensure_runtime_tools
         ensure_runtime_tools()
         from setup_debugger import ensure_debugger
         ensure_debugger()
         from setup_csharp import ensure_csharp
         ensure_csharp()
+        from setup_languages import ensure_languages
+        ensure_languages()
+        if shutil.which('node'):
+            from setup_web import ensure_web
+            ensure_web()
+        else:
+            print('Node.js 20+ is required for web language services; syntax coloring remains available.',flush=True)
     environment = dict(os.environ)
     cmake = shutil.which('cmake')
     ninja = shutil.which('ninja')
@@ -52,7 +67,8 @@ def main():
     log = build / 'build.log'
     generator = ['-G', 'Visual Studio 17 2022', '-A', 'x64'] if sys.platform == 'win32' else ['-G', 'Ninja', f'-DCMAKE_MAKE_PROGRAM={ninja or "ninja"}']
     commands = [[cmake, '-S', str(ROOT / 'app'), '-B', str(build), *generator,
-                 f'-DCMAKE_BUILD_TYPE={args.configuration}', f'-DCYUI_DIR={args.cyui}',
+                 f'-DCMAKE_BUILD_TYPE={args.configuration}', f'-DCYUI_DIR={args.cyui or ""}',
+                 f'-DCYCODE_EDITOR_ROOT={editor}',
                  f'-DCYCODE_BUILD_GUI={"OFF" if args.core_only else "ON"}', '-DBUILD_TESTING=ON'],
                 [cmake, '--build', str(build), '--config', args.configuration, '--parallel', '4']]
     with log.open('w', encoding='utf-8') as stream:
@@ -66,10 +82,12 @@ def main():
                 print('\n'.join(errors[:30] or lines[-25:]))
                 return result.returncode
     ctest = str(Path(cmake).with_name('ctest.exe' if sys.platform == 'win32' else 'ctest'))
-    subprocess.run([ctest, '--test-dir', str(build), '-C', args.configuration, '--output-on-failure'], env=environment, check=True)
-    if not args.core_only:
-        executable = 'CyCode.exe' if sys.platform == 'win32' else 'CyCode'
-        shutil.copy2(build / args.configuration / executable if sys.platform == 'win32' else build / executable, ROOT / executable)
+    tests = [ctest, '--test-dir', str(build), '-C', args.configuration, '--output-on-failure']
+    subprocess.run(tests, env=environment, check=True)
+    if not args.core_only and not args.no_install:
+        for name in ['CyCode']:
+            executable = name + ('.exe' if sys.platform == 'win32' else '')
+            shutil.copy2(build / args.configuration / executable if sys.platform == 'win32' else build / executable, ROOT / executable)
     print(f'Build complete. Full log: {log}')
     return 0
 

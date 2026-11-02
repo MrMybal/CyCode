@@ -1,7 +1,8 @@
 #include "cycode/Application.h"
 #include "cycode/EditorLanguage.h"
+#include "cycode/EditorTheme.h"
 #include <algorithm>
-#include <cyui/CyUI.h>
+#include <cyui/Core.h>
 #include <imgui_stdlib.h>
 
 namespace cycode {
@@ -17,12 +18,24 @@ void Application::updateVcs() {
         auto result = vcsFuture_.get();
         if (vcsOperation_ == "vcs.conflicts") {
             vcsConflict_ = std::move(result); vcsSection_ = "Conflicts";
-            vcsBase_.SetText(vcsConflict_.at("versions").at("base").is_null() ? "" : vcsConflict_.at("versions").at("base").get<std::string>());
-            vcsOurs_.SetText(vcsConflict_.at("versions").at("ours").is_null() ? "" : vcsConflict_.at("versions").at("ours").get<std::string>());
-            vcsTheirs_.SetText(vcsConflict_.at("versions").at("theirs").is_null() ? "" : vcsConflict_.at("versions").at("theirs").get<std::string>());
+            vcsBaseCode_.setText(vcsConflict_.at("versions").at("base").is_null() ? "" : vcsConflict_.at("versions").at("base").get<std::string>());
+            vcsOursCode_.setText(vcsConflict_.at("versions").at("ours").is_null() ? "" : vcsConflict_.at("versions").at("ours").get<std::string>());
+            vcsTheirsCode_.setText(vcsConflict_.at("versions").at("theirs").is_null() ? "" : vcsConflict_.at("versions").at("theirs").get<std::string>());
             open(vcsConflict_.at("path"));
+            for (auto *view : {&vcsBaseCode_, &vcsOursCode_, &vcsTheirsCode_}) {
+                configureCodeEditor(*view); view->setLanguageForPath(vcsConflict_.at("path").get<std::string>());
+                view->setReadOnly(true); view->setSyntaxEnabled(!LanguageService::supports(vcsConflict_.at("path").get<std::string>()));
+            }
+            for (auto editor : {&vcsBase_,&vcsOurs_,&vcsTheirs_}) {
+                const auto path=vcsConflict_.at("path").get<std::string>();
+                if (LanguageService::supports(path)) editor->SetLanguage(editorLanguage(path,unreal_.value("available",false)));
+                Syntax syntax; syntax.update(*editor,path,editor->GetText());
+            }
         } else if (vcsOperation_ == "vcs.diff" || vcsOperation_ == "vcs.show" || vcsOperation_ == "vcs.blame" || vcsOperation_ == "vcs.log") {
-            vcsPreviewTitle_ = vcsOperation_; vcsPreview_.SetText(result.value("output","")); vcsSection_ = "Review";
+            vcsPreviewTitle_ = vcsOperation_; vcsPreviewCode_.setText(result.value("output",""));
+            configureCodeEditor(vcsPreviewCode_); vcsPreviewCode_.setReadOnly(true);
+            vcsIsDiff_ = vcsOperation_ == "vcs.diff" || vcsOperation_ == "vcs.show";
+            if (vcsIsDiff_) { vcsDiff_.setUnified(result.value("output",""), cyui::codeLanguageForPath(result.value("path",active_))); vcsDiffState_ = {}; } vcsSection_ = "Review";
             if (result.value("exitCode",0)) error(tr("Task failed. See output."));
         } else {
             output_ += "\n> "+vcsOperation_+"\n"+result.value("output","");
@@ -163,14 +176,21 @@ void Application::gitPanel() {
                 ImGui::TextWrapped("%s",tr("Edit the working file in its normal tab. These three source versions are read-only."));
                 if (ImGui::BeginTable("##conflict-versions",3,ImGuiTableFlags_Resizable)) {
                     for (auto title : {"Base","Ours","Theirs"}) ImGui::TableSetupColumn(tr(title)); ImGui::TableHeadersRow(); ImGui::TableNextRow();
-                    int column = 0; for (auto editor : {&vcsBase_,&vcsOurs_,&vcsTheirs_}) { ImGui::TableSetColumnIndex(column++); editor->SetReadOnlyEnabled(true); editor->SetPalette(editorPalette(theme_)); editor->SetLanguage(editorLanguage("source.cpp",unreal_.value("available",false))); editor->SetShowMiniMapEnabled(false); editor->SetShowLineNumbersEnabled(true); ImGui::PushID(column); { cyui::ScopedFont mono(cyui::monoFont()); editor->Render("##conflict-code",{0,std::max(cyui::dp(100),ImGui::GetContentRegionAvail().y)}); } ImGui::PopID(); }
+                    int column = 0;
+                    for (auto *view : {&vcsBaseCode_, &vcsOursCode_, &vcsTheirsCode_}) {
+                        ImGui::TableSetColumnIndex(column++); view->native().SetShowMiniMapEnabled(false);
+                        ImGui::PushID(column); view->draw("##conflict-code", {0,std::max(cyui::dp(100),ImGui::GetContentRegionAvail().y)}); ImGui::PopID();
+                    }
                     ImGui::EndTable();
                 }
             }
             ImGui::EndTabItem();
         }
         if (!vcsPreviewTitle_.empty() && begin("Review")) {
-            cyui::textDim("%s",vcsPreviewTitle_.c_str()); vcsPreview_.SetReadOnlyEnabled(true); vcsPreview_.SetShowMiniMapEnabled(false); vcsPreview_.SetPalette(editorPalette(theme_)); { cyui::ScopedFont mono(cyui::monoFont()); vcsPreview_.Render("##git-review",{0,0}); } ImGui::EndTabItem();
+            cyui::textDim("%s",vcsPreviewTitle_.c_str());
+            if (vcsIsDiff_) cyui::diffViewer("##git-review", vcsDiffState_, vcsDiff_);
+            else { vcsPreview_.SetShowMiniMapEnabled(false); vcsPreviewCode_.draw("##git-review"); }
+            ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
     }

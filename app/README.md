@@ -4,9 +4,16 @@ Native C++20 IDE foundation using CyUI and Dear ImGui, with SDL3 windowing/rende
 a syntax-aware text editor, cancellable ripgrep search, Git, native plugins, clangd
 completion/diagnostics, definition/reference navigation and a CyToolsCore MCP
 companion. Project license: undecided.
+Images open in dockable read-only tabs with background decoding, transparency,
+zoom/pan, actual-pixel view and reload. PNG, JPEG, static WebP, GIF first frame,
+BMP, TGA, composited PSD, Radiance HDR and binary PGM/PPM are supported.
+See [image previews](Docs/Images.md) for controls, permissions and format limits.
 Type/symbol search, file structure, C++ rename previews and project-aware formatting
 use the same clangd service. Navigation can open registered Unreal/SDK sources in
 read-only tabs, with separate access checks from editable project documents.
+Shared language-server code actions provide issued fixes/refactorings, lazy
+resolution and preview/apply/undo through the native core and MCP. Alt+Enter /
+Ctrl+. opens the compiled GUI panel; its full desktop acceptance remains pending.
 Installed-tool detection, saved CMake profiles, target builds and compilation
 database synchronization with clangd are provided by the shared native core.
 Visual Studio solutions and Unreal .uproject files open directly. UnrealBuildTool
@@ -32,7 +39,22 @@ attach/detach are exercised on .NET 8. Roslyn language services are described in
 Git includes branches, remotes, fetch/pull/push, stashes, history/blame and a
 three-way text-conflict view with explicit resolution. See [Version control](Docs/VersionControl.md).
 
+Rust, Java, JavaScript/TypeScript (including JSX/TSX), HTML and CSS now have
+shared incremental syntax parsers and independent language servers. See
+[language support](Docs/Languages.md) for capabilities, prerequisites and remaining
+project/build/debug workflows. CyCodeReader shares their syntax parsers.
+Cargo, npm and standalone Java projects have native build/test/run tasks and an
+integrated target/script panel. Cargo binaries use the existing native debugger.
+See [Project tasks](Docs/ProjectTasks.md) for exact scope and remaining adapters.
+
 ## Build
+
+The companion [CyCodeReader](https://github.com/MrMybal/CyCodeReader) now has its
+own repository and build. It owns the shared editor, syntax palette and native
+file services consumed at the revision in editor-source.lock.json. The ordinary
+build produces only CyCode. Use --editor-root PATH with fetch_dependencies.py and
+build.py to select an explicit development checkout. --no-install retains outputs
+under runtime/ without copying a root executable.
 
 Requirements: Python 3.11+ for build scripts, CMake 3.24+, a C++20 compiler,
 Git. The build fetches a checksum-pinned ripgrep binary into runtime/tools.
@@ -41,17 +63,44 @@ the SDL3 platform development libraries. The native application runs without Pyt
 the optional integrated MCP service uses its private Python environment.
 The GUI requires an OpenGL 3.3 driver (3.2 on macOS).
 
-Keep a CyUI checkout beside CyCode, or pass its location explicitly:
+CyUI is resolved at the exact revision in app/cyui-source.lock.json. The default
+build uses a separate dependency cache; an explicit clean checkout must match that
+revision. See [modular CyUI integration](Docs/CyUI-Migration.md) for migrated views,
+module selection and remaining adapters:
+
+Official CyUI source: [MrMybal/CyUI](https://github.com/MrMybal/CyUI), currently
+private. [CyUI MIT license](https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE)
+is also included as [licenses/CyUI.txt](licenses/CyUI.txt).
 
 ```sh
 python app/scripts/fetch_dependencies.py
-python app/scripts/build.py --cyui /absolute/path/to/CyImgui_Interface
+python app/scripts/build.py --no-install
+# Optional matching checkout: --cyui /absolute/path/to/CyUI
 ```
+
+After a Windows Release build, create the allow-listed development ZIP with:
+
+```sh
+python app/scripts/package_windows.py --build runtime/build-vs
+```
+
+The package has a source/dependency manifest and SHA256SUMS.txt. It excludes the
+private development runtime, user settings and downloaded dependency source trees;
+only the verified ripgrep binary and its notices are copied to tools/. The IDE
+detects that directory before its development runtime/tools location. The Microsoft
+Visual C++ 2022 x64 runtime and an OpenGL 3.3 driver remain prerequisites. The MCP
+SDK, language servers and debugger adapters need separate local installation.
 
 Downloaded archives are pinned by revision and SHA-256 in dependencies.lock.json.
 The fetch script never modifies CyUI or CyToolsCore. Build output is under runtime/;
 the build script copies the desktop executable to the installation root.
 For core/CLI/plugin tests without CyUI: python app/scripts/build.py --core-only.
+
+GitHub Actions needs a repository secret named `CYCODE_READER_READ_TOKEN` with
+read access to the private CyCodeReader source repository. The default workflow
+token cannot read another private repository. This secret is currently absent;
+the local validation recorded for 0.2.0 does not establish that the CI matrix passes.
+Never commit the token or include it in a release archive.
 
 For the private MCP runtime, obtain the actual CyToolsCore 0.10.1 wheel:
 

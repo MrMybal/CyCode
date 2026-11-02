@@ -7,8 +7,10 @@
 #include "cycode/Debugger.h"
 #include "cycode/UnrealProject.h"
 #include "cycode/MsBuild.h"
+#include "cycode/ProjectTasks.h"
 #include <map>
 #include <mutex>
+#include <set>
 #include <nlohmann/json.hpp>
 #include <string>
 namespace cycode {
@@ -50,6 +52,10 @@ class Engine {
     Json gitAdvanced(const std::string &, const Json &);
     void refreshGitDocuments(Json &result);
     Json languageQuery(const std::string &, const Json &);
+    Json completionOperation(const std::string &, const Json &);
+    Json codeActionOperation(const std::string &, const Json &);
+    Json codeActionDescriptionLocked(const Json &,size_t,bool,const std::string &backend);
+    Json issueCompletion(const std::string &, uint64_t revision, uint64_t generation, uint64_t epoch, const Json &position, const Json &result);
     Json highlight(const Json &);
     Json symbolQuery(const std::string &, const Json &);
     Json prepareChange(const std::string &, const Json &);
@@ -69,6 +75,29 @@ class Engine {
         std::vector<FileChange> files;
         std::chrono::steady_clock::time_point created = std::chrono::steady_clock::now();
     };
+    Json storeChange(ChangePlan);
+    Json workspaceEditFilesLocked(const Json &);
+    Json workspaceChangeLocked(const std::string &,const Json &,const std::string &oldName={},bool onlyOpened=false);
+    struct ActionSession {
+        std::string path;
+        uint64_t revision,generation,epoch;
+        Json items;
+        bool resolvable=false;
+        size_t bytes=0;
+        std::chrono::steady_clock::time_point created=std::chrono::steady_clock::now();
+    };
+    std::map<std::string,ActionSession> codeActions_;
+    size_t nextAction_=1;
+    struct CompletionSession {
+        std::string path;
+        uint64_t revision, generation, epoch;
+        Json position, items;
+        std::set<size_t> resolved;
+        size_t bytes;
+        std::chrono::steady_clock::time_point created=std::chrono::steady_clock::now();
+    };
+    std::map<std::string,CompletionSession> completions_;
+    size_t nextCompletion_=1;
     std::map<std::string, ChangePlan> changes_;
     size_t nextChange_ = 1;
     struct ExternalSource { std::filesystem::path path; Document document; bool loaded = false; };
@@ -87,6 +116,7 @@ class Engine {
     UnrealProject unreal_;
     LanguageService language_;
     Terminals terminals_;
+    ProjectTasks projects_;
     Debugger debugger_;
 };
 } // namespace cycode

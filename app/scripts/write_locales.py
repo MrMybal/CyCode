@@ -237,11 +237,71 @@ translations = {
 }
 translations.update({'Initialize Git repository': 'Initialiser le depot Git', 'Changes': 'Modifications', 'Review': 'Apercu', 'Branches': 'Branches', 'Remotes': 'Depots distants', 'Stashes': 'Stashes', 'Conflicts': 'Conflits', 'Commit changes': 'Creer un commit', 'Git branches': 'Branches Git', 'Git history': 'Historique Git', 'Git remotes and sync': 'Depots distants et synchronisation Git', 'Git stashes': 'Stashes Git', 'Git conflicts': 'Conflits Git', 'Show file diff': 'Afficher les differences du fichier', 'Annotate file': 'Annoter le fichier', 'Resolve conflict': 'Resoudre le conflit', 'New branch name': 'Nom de la nouvelle branche', 'Create branch': 'Creer une branche', 'Start revision': 'Revision de depart', 'Branch': 'Branche', 'Upstream': 'Branche suivie', 'Track branch': 'Suivre la branche', 'Switch branch': 'Changer de branche', 'Rename branch': 'Renommer la branche', 'Delete merged branch': 'Supprimer la branche fusionnee', 'Merge revision': 'Fusionner la revision', 'Switching and merging require saved buffers and a clean tracked working tree.': 'Enregistrez les documents et creez un commit ou un stash avant de changer ou de fusionner une branche.', 'Commit': 'Commit', 'Author': 'Auteur', 'Date': 'Date', 'Message': 'Message', 'Remote name': 'Nom du depot distant', 'Remote URL': 'URL du depot distant', 'Add remote': 'Ajouter le depot distant', 'Update remote URL': 'Modifier l URL du depot distant', 'Remove remote': 'Retirer le depot distant', 'Set upstream on push': 'Definir la branche suivie au push', 'Fetch': 'Recuperer', 'Pull fast-forward': 'Mettre a jour sans fusion', 'Push': 'Envoyer', 'Uses configured Git credentials and hooks. Pull refuses divergent branches.': 'Utilise les identifiants et hooks Git configures. La mise a jour refuse les branches divergentes.', 'Stash message': 'Message du stash', 'Include untracked': 'Inclure les fichiers non suivis', 'Save stash': 'Creer un stash', 'Apply stash': 'Appliquer le stash', 'Pop stash': 'Appliquer et retirer le stash', 'Drop selected stash...': 'Supprimer le stash selectionne...', 'Drop stash?': 'Supprimer le stash ?', 'Drop stash': 'Supprimer le stash', 'Permanently remove this saved stash entry?': 'Supprimer definitivement ce stash enregistre ?', 'Choose Resolve conflict from a conflicted file in Changes.': 'Choisissez Resoudre le conflit sur un fichier en conflit dans Modifications.', 'Refresh conflict': 'Actualiser le conflit', 'Use ours in editor': 'Utiliser notre version', 'Use theirs in editor': 'Utiliser leur version', 'Save and mark resolved': 'Enregistrer et marquer resolu', 'Edit the working file in its normal tab. These three source versions are read-only.': 'Modifiez le fichier dans son onglet habituel. Les trois versions ci-dessous sont en lecture seule.', 'Base': 'Base', 'Ours': 'Notre version', 'Theirs': 'Leur version', 'libvterm and CodeLLDB: MIT. LLVM: Apache 2.0 with LLVM exceptions. Embedded Python: PSF.': 'libvterm et CodeLLDB : MIT. LLVM : Apache 2.0 avec exceptions LLVM. Python embarque : PSF.'})
 translations.update({'MSBuild': 'MSBuild', 'No MSBuild project': 'Aucun projet MSBuild', 'Open a .sln, .vcxproj or managed project.': 'Ouvrez un .sln, .vcxproj ou projet .NET.', 'MSBuild settings': 'Reglages MSBuild', 'This project uses MSBuild.': 'Ce projet utilise MSBuild.', 'Rebuild': 'Recompiler', 'Clean': 'Nettoyer', 'Restore packages': 'Restaurer les paquets', 'Solution / project': 'Solution / projet', 'Configuration / platform': 'Configuration / plateforme', 'Whole solution': 'Toute la solution', 'Build tool': 'Outil de compilation', 'Packages': 'Paquets', 'Restore before build': 'Restaurer avant compilation', 'Evaluate project': 'Evaluer le projet', 'Prepare code analysis': 'Preparer l analyse du code', 'Mapped configuration': 'Configuration du projet', 'Included in solution build': 'Inclus dans la compilation', 'Yes': 'Oui', 'No': 'Non', 'Use in debug profile': 'Utiliser pour le debogage', 'Rebuild MSBuild project': 'Recompiler le projet MSBuild', 'Clean MSBuild project': 'Nettoyer le projet MSBuild', 'Restore MSBuild packages': 'Restaurer les paquets MSBuild', 'Evaluate MSBuild project': 'Evaluer le projet MSBuild', 'Prepare MSBuild code analysis': 'Preparer l analyse MSBuild', 'Evaluation loads project imports and rules. Code analysis uses evaluated C++ include paths, definitions and language modes.': 'L evaluation charge les imports et regles du projet. L analyse utilise les includes, definitions et modes C++ evalues.'})
-translations.update({'Build diagnostics':'Erreurs de compilation'})
+translations.update({'Build diagnostics':'Erreurs de compilation', 'Enable':'Activer', 'Disable':'Desactiver', 'Language server is not installed':'Serveur de langage non installe', 'Diagnostics from enabled language servers appear here.':'Les diagnostics des serveurs de langage actifs apparaissent ici.'})
 translations.update({'Connected':'Connecte', 'Starting...':'Demarrage...', 'Idle':'En attente', 'Disabled':'Desactive', 'Diagnostics from C++ and C# language servers appear here.':'Les diagnostics des serveurs C++ et C# apparaissent ici.'})
 translations.update({'csharp-ls: MIT. Private .NET SDK: included Microsoft terms and component notices.':'csharp-ls : MIT. SDK .NET prive : conditions Microsoft et notices des composants incluses.',
-    'Workspace, live documents, C++/C#, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. MCP sessions use CyToolsCore jobs and permissions.':'Espace de travail, documents, C++/C#, recherche, Git, CMake/MSBuild/Unreal, terminal, debogueur et extensions. Les sessions MCP utilisent les taches et permissions CyToolsCore.'})
+    'Workspace, live documents, language services, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. MCP sessions use CyToolsCore jobs and permissions.':'Espace de travail, documents, services de langage, recherche, Git, CMake/MSBuild/Unreal, terminal, debogueur et extensions. Les sessions MCP utilisent les taches et permissions CyToolsCore.'})
 translations.update({'Debug engine':'Moteur de debogage','.NET host':'Hote .NET',
     'Managed debug output appears here. Run without debugging supports terminal input.':'La sortie du debogage .NET est dans la console de debogage. Executer sans debogage permet la saisie dans le terminal.'})
+translations.update({
+    'New file':'Nouveau fichier', 'Save as...':'Enregistrer sous...',
+    'Open files...':'Ouvrir des fichiers...', 'Open files':'Fichiers ouverts',
+    'Recent files':'Fichiers recents', 'Untitled':'Sans titre', 'Close file':'Fermer le fichier',
+    'Reload from disk':'Recharger depuis le disque', 'Find / replace':'Rechercher / remplacer',
+    'Find next':'Occurrence suivante', 'Go to line':'Aller a la ligne', 'Go':'Aller',
+    'Switch file / actions':'Changer de fichier / actions', 'Word wrap':'Retour a la ligne automatique',
+    'Minimap':'Minicarte', 'Show whitespace':'Afficher les espaces', 'Syntax':'Coloration',
+    'Automatic':'Automatique', 'Plain text':'Texte brut', 'Code editor':'Editeur de code', 'Lines':'Lignes',
+    'Filter files...':'Filtrer les fichiers...', 'Open or drop code files to begin.':'Ouvrez ou deposez des fichiers de code pour commencer.',
+    'Save changes before continuing?':'Enregistrer les modifications avant de continuer ?',
+    'Replace existing file?':'Remplacer le fichier existant ?', 'Type a file name or action...':'Saisissez un nom de fichier ou une action...',
+    'Close a document before opening more files.':'Fermez un document avant d ouvrir plus de fichiers.',
+    'This file is already open in another tab.':'Ce fichier est deja ouvert dans un autre onglet.',
+    'File changed on disk. Reload it or save a copy.':'Le fichier a change sur le disque. Rechargez-le ou enregistrez une copie.',
+    'Read-only':'Lecture seule'
+})
+translations.update({
+    'Project tasks':'Taches du projet', 'Project system':'Systeme de projet', 'Project directory':'Dossier du projet',
+    'Run project tests':'Executer les tests du projet', 'Install npm dependencies':'Installer les dependances npm',
+    'Run npm script':'Executer le script npm', 'Cancel task':'Annuler la tache', 'Task cancelled':'Tache annulee',
+    'Cargo package':'Paquet Cargo', 'Binary target':'Cible executable', 'Detected targets':'Cibles detectees',
+    'Select a binary target':'Choisir une cible executable', 'Offline Cargo mode':'Mode Cargo hors ligne',
+    'npm script':'Script npm', 'Java source directory':'Dossier des sources Java', 'Java main class':'Classe principale Java',
+    'Select a main class':'Choisir une classe principale',
+    'No Cargo, npm or standalone Java project':'Aucun projet Cargo, npm ou Java autonome',
+    'Open Cargo.toml, package.json, a Java source file or its folder.':'Ouvrez Cargo.toml, package.json, un fichier Java ou son dossier.',
+    'Standalone Java: compilation and Run. Maven, Gradle and Java debugging are not connected.':'Java autonome : compilation et execution. Maven, Gradle et le debogage Java ne sont pas raccordes.',
+    'Project metadata changed; configure or build again.':'Les metadonnees du projet ont change ; configurez ou compilez de nouveau.',
+    'Debugging is available here for Cargo targets.':'Le debogage est disponible ici pour les cibles Cargo.'
+})
+translations.update({
+    'Code information':'Informations sur le code', 'Quick documentation':'Documentation rapide',
+    'Parameter information':'Informations sur les parametres', 'Copy information':'Copier les informations',
+    'Request documentation or parameter information at the cursor.':'Demandez la documentation ou les parametres a la position du curseur.',
+    'No information at this position.':'Aucune information a cette position.', 'Overload':'Surcharge',
+    'Active parameter':'Parametre actif', 'Information truncated':'Informations tronquees'
+})
+translations.update({
+    'Completion with imports requires a single cursor.':'La completion avec imports necessite un seul curseur.',
+    'Completion context changed. Request suggestions again.':'Le contexte a change. Relancez les suggestions.'
+})
+translations.update({'Snippet parameter':'Parametre du snippet', 'Snippet choices':'Choix du snippet',
+    'Tab: next | Shift+Tab: previous | Esc: finish':'Tab : suivant | Maj+Tab : precedent | Echap : terminer'})
+translations.update({
+    'Quick fixes and context actions':'Corrections rapides et actions contextuelles',
+    'Code actions':'Actions sur le code', 'Refresh code actions':'Actualiser les actions sur le code',
+    'All context actions':'Toutes les actions contextuelles', 'Quick fixes':'Corrections rapides',
+    'Refactorings':'Refactorisations', 'Organize imports':'Organiser les imports',
+    'Loading code actions':'Chargement des actions', 'Action':'Action', 'Kind':'Catégorie',
+    'Apply correction':'Appliquer la correction',
+    'Code action context changed. Refresh the list.':'Le contexte a changé. Actualisez la liste des actions.',
+    'Request fixes or refactorings at the cursor or selection.':'Demandez les corrections ou refactorisations au curseur ou sur la sélection.',
+    'No code actions at this position.':'Aucune action à cette position.',
+    'Code action list truncated':'Liste des actions tronquée'
+})
+translations.update({'Wrap lines':'Retour à la ligne', 'Source':'Source', 'Position':'Position',
+    'Message':'Message', 'Follow':'Suivre', 'Find All':'Tout rechercher', 'Replace All':'Tout remplacer'})
+translations.update({'Open image...': 'Ouvrir une image...', 'Fit image': 'Ajuster l’image', 'Zoom out': 'Dézoomer', 'Zoom in': 'Zoomer', 'Reload image': 'Recharger l’image', 'Pixelated': 'Pixels nets', 'Image preview': 'Aperçu de l’image', 'Cannot load image': 'Impossible de charger l’image', 'Loading image...': 'Chargement de l’image...', 'Decoding in the background.': 'Décodage en arrière-plan.', 'GIF preview: first frame': 'Aperçu GIF : première image', 'HDR preview converted to 8-bit display': 'Aperçu HDR converti pour un affichage 8 bits', 'Wheel: zoom | Middle mouse or Space+drag: pan | Double-click: fit': 'Molette : zoom | Bouton central ou Espace+glisser : déplacement | Double-clic : ajuster', 'Cannot read image file': 'Impossible de lire le fichier image', 'Image file is empty or exceeds the 64 MiB input limit': 'Le fichier image est vide ou dépasse la limite de 64 Mio', 'Image dimensions exceed the preview limit (32768 per side, 64 megapixels)': 'Les dimensions dépassent la limite de l’aperçu (32768 par côté, 64 mégapixels)', 'Animated WebP preview is not supported yet': 'L’aperçu WebP animé n’est pas encore pris en charge', "Image dimensions exceed this GPU's texture limit": 'Les dimensions dépassent la limite de texture de cette carte graphique', 'Image preview texture budget reached; close another image and reload': 'La limite mémoire des aperçus est atteinte ; fermez une autre image puis rechargez', 'The GPU could not allocate the image preview': 'La carte graphique n’a pas pu créer l’aperçu', 'Too many image previews queued': 'Trop d’aperçus d’images en attente', 'Unsupported or invalid image (PNG, JPEG, WebP, GIF, BMP, TGA, PSD, HDR, PIC, PGM/PPM are supported)': 'Image invalide ou non prise en charge (formats : PNG, JPEG, WebP, GIF, BMP, TGA, PSD, HDR, PIC, PGM/PPM)'})
+translations.update({'Select an image file':'Sélectionnez un fichier image', 'The selected image path now points to another file':'Le chemin sélectionné pointe maintenant vers un autre fichier'})
 path = Path(__file__).resolve().parents[1] / 'locales/ui.json'
 path.write_text(json.dumps({key: {'en': key, 'fr': value} for key,value in translations.items()}, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')

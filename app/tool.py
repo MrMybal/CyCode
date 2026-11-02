@@ -7,6 +7,7 @@ from pathlib import Path
 import socket
 import sys
 import time
+import uuid
 from cytools_core import CyToolError, Runtime, load_manifest
 from cytools_core.transports.api import LocalClient
 from cytools_core.transports.cli import run_cli
@@ -19,6 +20,19 @@ class NativeClient:
 
     def call(self, method, parameters, cancellation=None):
         try:
+            project_operation=method.startswith('project.') and method not in ('project.inspect','project.cancel')
+            operation_id=uuid.uuid4().hex if project_operation else None
+            if operation_id:
+                parameters={**parameters,'operationId':operation_id}
+            def stop_if_cancelled():
+                if not cancellation or not operation_id:
+                    return
+                try:
+                    cancellation.check()
+                except Exception:
+                    # Match the executing call; a queued cancelled job must not
+                    # stop a different actor's build in the shared native service.
+                    self.call('project.cancel',{'operationId':operation_id})
             endpoint = json.loads(self.descriptor.read_text('utf-8'))
             if endpoint['protocol'] != 'cycode-native/1' or endpoint['host'] != '127.0.0.1':
                 raise ValueError('Unsupported native endpoint')
@@ -34,6 +48,7 @@ class NativeClient:
                     try:
                         chunk = connection.recv(65536)
                     except socket.timeout:
+                        stop_if_cancelled()
                         if time.monotonic() > deadline:
                             raise OSError('Native operation did not stop within its deadline')
                         continue
@@ -44,7 +59,13 @@ class NativeClient:
                         raise ValueError('Native response exceeds 20 MiB')
                 response = json.loads(data)
             if cancellation:
-                cancellation.check()
+                try:
+                    cancellation.check()
+                except Exception:
+                    terminal=response.get('result',{}).get('terminal',{}) if project_operation else {}
+                    if terminal.get('id'):
+                        self.call('terminal.close',{'id':terminal['id']})
+                    raise
             if 'error' in response:
                 raise CyToolError('NativeOperationFailed', response['error']['message'], recoverable=True)
             return response['result']

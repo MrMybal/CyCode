@@ -1,7 +1,8 @@
 #include "cycode/Application.h"
+#include "cycode/ImageFile.h"
 #include <SDL3/SDL_opengl.h>
 #include <algorithm>
-#include <cyui/CyUI.h>
+#include <cyui/Core.h>
 #include <filesystem>
 #include <fstream>
 #include <imgui_impl_opengl3.h>
@@ -82,6 +83,8 @@ int main(int argc, char **argv) {
                 options.showOptions = true;
             else if (args[i] == "--show-cmake")
                 options.showCmake = true;
+            else if (args[i] == "--show-project-tasks")
+                options.showProjectTasks = true;
             else if (args[i] == "--show-unreal")
                 options.showUnreal = true;
             else if (args[i] == "--test-windows")
@@ -110,8 +113,11 @@ int main(int argc, char **argv) {
             } else if (args[i] == "--smoke-frames") {
                 frameLimit = std::stoi(next());
                 options.smoke = true;
-            } else if (!args[i].starts_with('-'))
-                options.workspace = cycode::utf8Path(args[i]);
+            } else if (!args[i].starts_with('-')) {
+                const auto path=std::filesystem::absolute(cycode::utf8Path(args[i]));
+                if (cycode::imageFileExtension(args[i])) { options.workspace=path.parent_path();options.openFile=cycode::pathUtf8(path.filename()); }
+                else options.workspace=path;
+            }
         }
         automated = options.smoke || options.testSession;
         if (!capturePanel.empty() && (!automated || capture.empty())) throw std::runtime_error("Panel capture requires an automated capture session");
@@ -175,8 +181,10 @@ int main(int argc, char **argv) {
                         app.requestQuit();
                     if (e.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED)
                         cyui::applyDpi(SDL_GetWindowDisplayScale(window));
-                    if (e.type == SDL_EVENT_DROP_FILE && e.drop.data)
-                        app.openProject(cycode::utf8Path(e.drop.data));
+                    if (e.type == SDL_EVENT_DROP_FILE && e.drop.data) {
+                        if (cycode::imageFileExtension(e.drop.data)) app.openImageFile(cycode::utf8Path(e.drop.data));
+                        else app.openProject(cycode::utf8Path(e.drop.data));
+                    }
                 };
                 if (hasQueued) {
                     handle(queued);

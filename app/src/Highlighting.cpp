@@ -47,7 +47,7 @@ Json decodeHighlights(const std::string &text,const Json &reply) {
 }
 Json Engine::highlight(const Json &params) {
     const auto path=params.at("path").get<std::string>();
-    if (!LanguageService::supports(path)) throw std::runtime_error("Semantic highlighting supports C/C++ and C#");
+    if (!LanguageService::supports(path)) throw std::runtime_error("No language backend for this file type");
     std::string text; uint64_t revision, snapshot; std::future<Json> pending;
     {
         std::lock_guard lock(mutex_); const auto [document,full]=semanticDocumentLocked(path);

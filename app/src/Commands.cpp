@@ -8,6 +8,7 @@ namespace cycode {
 const std::vector<Command> &commands() {
     static const std::vector<Command> value = {
         {"file.new", "New file...", "File"}, {"file.open", "Open solution...", "File"},
+        {"file.openImage", "Open image...", "File"},
         {"file.folder", "Open workspace...", "File"}, {"file.window", "New window", "File"},
         {"file.openWindow", "Open solution in new window...", "File"},
         {"file.save", "Save", "File", CommandContext::document}, {"file.saveAll", "Save all", "File"},
@@ -34,6 +35,11 @@ const std::vector<Command> &commands() {
         {"search.everywhere", "Search Everywhere", "Search"}, {"search.actions", "Find action...", "Search"},
         {"search.types", "Go to type...", "Search"}, {"search.symbols", "Go to symbol...", "Search"},
         {"navigate.members", "File structure", "Navigate", CommandContext::document},
+        {"code.documentation", "Quick documentation", "Navigate", CommandContext::document},
+        {"code.parameters", "Parameter information", "Navigate", CommandContext::document},
+        {"code.actions", "Quick fixes and context actions", "Refactor", CommandContext::editor},
+        {"view.codeActions", "Code actions", "View"},
+        {"view.information", "Code information", "View"},
         {"refactor.rename", "Rename symbol", "Refactor", CommandContext::editor},
         {"refactor.format", "Format document", "Refactor", CommandContext::editor},
         {"refactor.formatSelection", "Format selection", "Refactor", CommandContext::editor},
@@ -47,6 +53,9 @@ const std::vector<Command> &commands() {
         {"navigate.nextTab", "Next document", "Navigate", CommandContext::document},
         {"navigate.previousTab", "Previous document", "Navigate", CommandContext::document},
         {"build.run", "Build project", "Build"}, {"build.configure", "Configure", "Build"},
+        {"project.test", "Run project tests", "Build"}, {"project.install", "Install npm dependencies", "Build"},
+        {"project.script", "Run npm script", "Build"}, {"project.cancel", "Cancel task", "Build"},
+        {"view.projectTasks", "Project tasks", "View"},
         {"msbuild.rebuild", "Rebuild MSBuild project", "Build"}, {"msbuild.clean", "Clean MSBuild project", "Build"},
         {"msbuild.restore", "Restore MSBuild packages", "Build"}, {"msbuild.evaluate", "Evaluate MSBuild project", "Build"},
         {"msbuild.prepare", "Prepare MSBuild code analysis", "Build"}, {"view.msbuild", "MSBuild", "View"},
@@ -133,6 +142,8 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
     add("navigate.nextTab", {"Ctrl+Tab"}); add("navigate.previousTab", {"Ctrl+Shift+Tab"});
     add("edit.indent", {"Ctrl+RightBracket"}); add("edit.unindent", {"Ctrl+LeftBracket"});
     if (profile == "rider") {
+        add("code.actions", {"Alt+Enter"});
+        add("code.documentation", {"Ctrl+Q"}); add("code.parameters", {"Ctrl+P", "Ctrl+Shift+Space"});
         add("vcs.changes", {"Ctrl+K"}); add("vcs.remotes", {"Ctrl+Shift+K"});
         add("debug.start", {"Shift+F9", "F5", "F9"}); add("run.start", {"Shift+F10"});
         add("debug.stop", {"Ctrl+F2"}); add("debug.next", {"F8"}); add("debug.stepIn", {"F7"}); add("debug.stepOut", {"Shift+F8"}); add("debug.breakpoint", {"Ctrl+F8"});
@@ -153,6 +164,8 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
         add("build.run", {"Ctrl+F9", "Ctrl+Shift+B"}); add("view.project", {"Alt+1"}); add("view.build", {"Alt+0"});
         add("view.vcs", {"Alt+9"}); add("view.fold", {"Ctrl+Minus"}); add("view.unfold", {"Ctrl+Equal"});
     } else if (profile == "visualstudio") {
+        add("code.actions", {"Ctrl+Period", "Alt+Enter"});
+        add("code.documentation", {"Ctrl+K, Ctrl+I"}); add("code.parameters", {"Ctrl+Shift+Space"});
         add("debug.start", {"F5"}); add("run.start", {"Ctrl+F5"}); add("debug.stop", {"Shift+F5"});
         add("debug.next", {"F10"}); add("debug.stepIn", {"F11"}); add("debug.stepOut", {"Shift+F11"}); add("debug.breakpoint", {"F9"});
         add("search.symbols", {"Ctrl+1, Ctrl+S"}); add("search.types", {"Ctrl+1, Ctrl+T"}); add("navigate.members", {"Ctrl+1, Ctrl+M"});
@@ -171,7 +184,9 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
         add("view.fold", {"Ctrl+M, Ctrl+M"}); add("view.unfoldAll", {"Ctrl+M, Ctrl+L"});
         add("view.keymap", {"Ctrl+K, Ctrl+S"});
     } else {
+        add("code.actions", {"Ctrl+Period"});
         add("debug.start", {"F5"}); add("run.start", {"Ctrl+F5"}); add("debug.stop", {"Shift+F5"});
+        add("code.documentation", {"Ctrl+K, Ctrl+I"}); add("code.parameters", {"Ctrl+Shift+Space"});
         add("debug.next", {"F10"}); add("debug.stepIn", {"F11"}); add("debug.stepOut", {"Shift+F11"}); add("debug.breakpoint", {"F9"});
         add("search.symbols", {"Ctrl+T"}); add("navigate.members", {"Ctrl+Shift+O"});
         add("refactor.rename", {"F2"}); add("refactor.format", {"Shift+Alt+F"}); add("refactor.formatSelection", {"Ctrl+K, Ctrl+F"});

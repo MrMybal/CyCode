@@ -6,9 +6,19 @@ corresponding runtime package, as detailed below.
 
 | Component | License | Source |
 |---|---|---|
-| CyUI | MIT | Owner's CyImgui_Interface checkout; public repository not configured |
+| CyUI | [MIT license](https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE) ([local copy](licenses/CyUI.txt)) | [Official repository](https://github.com/MrMybal/CyUI), pinned by app/cyui-source.lock.json |
 | Dear ImGui | MIT | https://github.com/ocornut/imgui |
-| TextEditor | MIT | https://github.com/goossens/ImGuiColorTextEdit |
+| TextEditor | MIT | CyUI snapshot of https://github.com/goossens/ImGuiColorTextEdit |
+| stb_image | MIT or Unlicense | https://github.com/nothings/stb (app/dependencies.lock.json) |
+| libwebp decoder | BSD-style and additional patent grant | https://github.com/webmproject/libwebp (app/dependencies.lock.json) |
+| Lexilla / Scintilla | Included permissive notices | https://github.com/ScintillaOrg/lexilla ; https://github.com/ScintillaOrg/scintilla |
+| SciTE language properties | Included permissive notice | CyUI third_party/SciTE-Properties-License.txt |
+| Tree-sitter and Rust/Java/JS/TS/HTML/CSS grammars | MIT | https://github.com/tree-sitter |
+| TypeScript | Apache-2.0 | https://github.com/microsoft/TypeScript |
+| typescript-language-server | MIT | https://github.com/typescript-language-server/typescript-language-server |
+| VS Code language servers (extracted) | MIT | https://github.com/hrsh7th/vscode-langservers-extracted |
+| Rust toolchain, rustfmt and rust-analyzer | MIT / Apache-2.0; included component terms | https://github.com/rust-lang |
+| Eclipse JDT LS | EPL-2.0 and included component terms | https://github.com/eclipse-jdtls/eclipse.jdt.ls |
 | SDL3 | zlib | https://github.com/libsdl-org/SDL |
 | nlohmann/json | MIT | https://github.com/nlohmann/json |
 | CyToolsCore | MIT | Owner's CyToolsCore wheel/check-out; public repository not configured |
@@ -22,15 +32,34 @@ corresponding runtime package, as detailed below.
 | Bundled LLDB/LLVM | Apache-2.0 with LLVM exceptions | https://github.com/llvm/llvm-project |
 | CodeLLDB's embedded Python | PSF and included third-party terms | https://github.com/python/cpython |
 
-Exact downloaded C++ source revisions/archive hashes: dependencies.lock.json.
-TextEditor retains its MIT notice. scripts/prepare_texteditor.py creates a build-local
+The IDE-only libvterm lock is dependencies.lock.json. Shared editor dependency
+revisions/hashes and widget patches now live in the CyCodeReader repository
+selected by editor-source.lock.json.
+TextEditor retains its MIT notice. CyCodeReader/editor/scripts/prepare_texteditor.py creates a build-local
 copy with CyCode's lexical color roles/context callback, versioned semantic display
 overlays and read-only token queries;
 the original downloaded source is preserved.
+The shared syntax parser's seven upstream MIT notices are copied to
+licenses/tree-sitter*.txt. Language tool archives are pinned in
+language-tools.lock.json and web npm package integrities in
+web-languages/package-lock.json. Their runtime archives/package trees preserve
+their upstream license files and transitive components. Node.js and Java are
+external prerequisites, not redistributed runtimes. Public binary distribution
+still requires a complete transitive license/notice audit of these packages.
 The private Python environment also includes the dependencies declared by the real
 CyToolsCore/MCP wheels. Their installed dist-info metadata and license files are
 preserved by pip. They are not replaced by CyCode's future project license.
 The private environment and SDK wheel are not committed to this repository.
+
+CyUI's repository is currently private; its GitHub license link requires repository
+access. The MIT license is also included locally so reading it does not require
+GitHub access. This does not assign a license to CyCode itself.
+
+The Windows 0.2.0 archive contains the IDE/CLI, documentation, notices and the
+locked ripgrep executable under tools/, with its three upstream notices. It does
+not redistribute the development runtime, private SDK/Python environment, language
+servers, debug adapters, fonts or dependency source trees. The Microsoft Visual
+C++ 2022 x64 runtime and an OpenGL driver are external prerequisites.
 
 The build installs a checksum-pinned official ripgrep binary in runtime/tools.
 Its exact version, archives and hashes are in runtime-tools.lock.json. The original
@@ -53,3 +82,14 @@ The optional managed debug adapter is the official NetCoreDbg 3.2.0-1092 release
 pinned with SHA-256 hashes in debugger-tools.lock.json. Its MIT license is copied
 to licenses/NetCoreDbg.txt; upstream package contents and component notices remain
 in runtime/tools/netcoredbg. No Microsoft Visual Studio debugger is redistributed.
+
+The selected Code module includes Lexilla/Scintilla and SciTE language properties.
+Their notices are preserved in app/licenses/Lexilla.txt, Scintilla.txt and
+SciTE-Properties.txt. CyUI and its bundled TextEditor notices are copied to
+app/licenses/CyUI.txt and TextEditor.txt. The common syntax implementation and
+its upstream snapshots remain in the pinned dependency, with no second copy here.
+
+Image previews include the pinned stb_image decoder (MIT or Unlicense, notice
+in licenses/stb.txt) and the decoder-only libwebp target (notices in
+licenses/libwebp-COPYING.txt, libwebp-PATENTS.txt and libwebp-AUTHORS.txt).
+The source archives remain under runtime/deps; they are not copied into app.

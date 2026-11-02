@@ -26,6 +26,10 @@ int main(int argc, char **argv) {
             arguments.emplace_back(argv[i]);
 #endif
         argc = static_cast<int>(arguments.size());
+        if (argc == 2 && arguments[1] == "--version") {
+            std::cout << "CyCode " << CYCODE_VERSION << '\n';
+            return 0;
+        }
         if (argc < 3) {
             std::cerr << "Usage: cycode_cli WORKSPACE METHOD [PARAMETERS_JSON]\n       cycode_cli WORKSPACE "
                          "--serve DESCRIPTOR\n";

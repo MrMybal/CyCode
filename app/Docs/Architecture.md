@@ -1,5 +1,26 @@
 # Architecture
 
+The desktop selects Core, Code/CodeEditor, Diff, Commands, Diagnostics,
+DocumentViews, Inspector and Images/Canvas from modular CyUI. The Engine/core/CLI have no UI
+dependency. See [CyUI migration](CyUI-Migration.md) for exact pins, view ownership,
+source adapters and limits.
+
+Image tabs use the app-owned `ImageLoader` worker, bounded native decoders and
+deferred OpenGL textures, rendered by CyUI::Images. They are separate from Engine
+text documents and retain the shared tab/docking lifecycle. See [Images](Images.md).
+
+CyCodeReader lives in its [own repository](https://github.com/MrMybal/CyCodeReader).
+Its editor/ source module provides the same cycode_editor and cycode_fileicons
+targets to the IDE, at the revision in app/editor-source.lock.json or an explicit
+CYCODE_EDITOR_ROOT development checkout. CyCode does not build the Reader app.
+The Reader hosts dockable file editors without an
+Engine, language server, build adapter or Core companion. cycode_files owns UTF-8
+validation, newline encoding, bounded reads, path conversion and guarded atomic
+saves used by both applications. The IDE retains workspace/revision permissions;
+Reader uses files selected directly by its user and keeps per-document disk
+baselines across directories. Its application-specific extensions are documented
+in the Reader repository.
+
 Interactive execution uses the shared native Terminals and Debugger services.
 Terminals owns bounded libvterm screens/history and real ConPTY/POSIX PTY process
 trees, with separate read/write/supervisor threads. Only visible grid rows are copied
@@ -19,6 +40,14 @@ executable adapters; solution inspection does not evaluate MSBuild. Explicit MSB
 evaluation reads real target properties/items, produces managed clangd metadata and
 tracks local solution/project/import inputs. Builds share the same native adapter
 with MCP; source diagnostics feed the Problems panel.
+
+ProjectTasks supplies Cargo metadata/compiler JSON, npm scripts and standalone
+javac compilation to both GUI and MCP. It owns one cancellable native task with
+bounded output/deadline and uses Terminals for persistent Run. The private IPC
+bridge accepts a bounded set of concurrent connections so cancellation remains
+receivable while a compiler is running. CyToolsCore continues to own scheduling,
+permissions and identities; matching native operation ids only correlate process
+cancellation. See [Project tasks](ProjectTasks.md).
 
 ```text
 CyUI / SDL3 desktop                 External MCP clients
@@ -43,13 +72,19 @@ reject stale revisions and external modifications before atomic replacement.
 Workspace paths are canonicalized and checked by path components, including symlink
 resolution. New files use exclusive creation. A task cleanup never removes source files.
 
+Documentation and signature requests use those same live document/revision guards.
+LanguageInfo normalizes display-only sections and UTF-16 signature parameter offsets
+into bounded UTF-8 labels. The GUI keeps one information request in flight and
+discards responses for obsolete cursors; it follows the visible panel with a small
+debounce. It never executes backend Markdown, HTML or documentation links.
+
 The desktop polls document metadata, copies text on changes, indexes project paths
 off the UI thread and delegates content search to ripgrep. Replacing a search cancels
 its native process, and generation IDs suppress obsolete results. Dirty buffers
 supersede disk text in literal searches. The current path index refresh is explicit;
 filesystem watching and persistent symbol indexing are future work.
 
-The text editor is an external MIT widget behind native document services. The GUI
+Every native text editor is owned by CyUI::CodeEditor behind native document services. The GUI
 build prepares a patched copy in its build directory using prepare_texteditor.py;
 the checksum-pinned downloaded source is unchanged. The small adapter adds function,
 macro and reflection-attribute roles, a context tokenizer and a read-only token query
@@ -162,3 +197,44 @@ CyUI is an external configurable checkout, not a vendored fork. Platform-specifi
 code includes process/IPC, Windows engine registration and the Unicode entry point;
 SDL3 supplies window/input/render integration. Portability of source is not a claim
 that Linux/macOS builds have run.
+
+The shared editor library owns per-document incremental Tree-sitter parsers for
+Rust/Java/JS/TS/TSX/HTML/CSS, with display spans separate from lexical and semantic
+overlays. Both applications and refactor/conflict previews use this same layer.
+The SDL-free core routes language requests to independent server owners for C++,
+C#, Rust, Java, TypeScript/JavaScript, HTML and CSS. Initialization options and
+workspace configuration are separate; the service respects advertised methods and
+maps LSP workspace-edit versions to native document revisions. See
+[language support](Languages.md) for runtime prerequisites and deliberate limits.
+
+CompletionEngine.cpp holds bounded issued-item sessions tied to document revision,
+workspace generation and backend epoch. Resolve receives only cached server items;
+prepare turns the primary edit and additional imports into the existing ChangePlan
+transaction after checking UTF-16 ranges, overlaps and disk baselines. The MCP
+surface is read-only until changes_apply. The build-local editor patch intercepts
+acceptance without inserting a partial symbol. The GUI prepares asynchronously,
+checks cursor/revision/generation again, applies the native plan and mirrors it as
+one tab-preserving undo transaction. A headless actual widget test verifies the
+acceptance hook; complete desktop acceptance remains separate.
+
+Snippet.cpp is an SDL-free bounded parser/expander linked by the core and editor.
+Completion preserves field byte offsets through indentation and additional imports.
+EditorSnippet converts them once to glyph coordinates and uses the widget's detailed
+transaction callback to track linked fields without rescanning document text for
+every keystroke. The build-local adapter adds validated multi-selections and a
+pre-key handler; ordinary multicursor edits supply atomic mirror typing. Finishing
+a session collapses only its recorded cursor history so undo/redo cannot revive
+temporary linked cursors. The widget's text extraction also preserves exact final
+newlines rather than implicitly appending one to nonempty files.
+
+CodeActions.cpp owns separate bounded issued-action sessions and lazy resolution.
+LanguageService adds overlapping published diagnostics to code-action context,
+matches decoded file URI identities and maps versioned edits to native revisions.
+LanguageClient invalidates diagnostic eligibility for actions on edits while
+retaining the last displayed diagnostics and fast completion; versionless
+publications remain advisory. New target overlays must be synchronized before a
+fresh query, preventing an edit from adopting an unrelated disk baseline. Shared
+workspace-edit parsing and ChangePlan validation serve rename and context actions.
+GUI and MCP use those same plans; no code-action command is executed. Only the
+pinned TypeScript server's verified empty acknowledgement is ignored. Resource
+operations and annotated/snippet action edits remain explicitly unavailable.

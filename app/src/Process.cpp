@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <map>
 #include <thread>
+#include <sstream>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -11,15 +12,9 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <unistd.h>
+extern char **environ;
 #endif
 namespace cycode {
-std::string pathUtf8(const std::filesystem::path &p) {
-    auto s = p.generic_u8string();
-    return {s.begin(), s.end()};
-}
-std::filesystem::path utf8Path(const std::string &s) {
-    return std::filesystem::u8path(s);
-}
 #ifdef _WIN32
 static std::wstring wide(const std::string &s) {
     int n =
@@ -50,12 +45,15 @@ static std::wstring quote(const std::string &s) {
 #endif
 ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesystem::path &cwd,
                          std::chrono::milliseconds timeout, std::size_t maxOutput,
-                         const std::atomic<bool> *cancellation) {
+                         const std::atomic<bool> *cancellation,
+                         const std::map<std::string,std::string> &overrides) {
     ProcessResult result;
     if (argv.empty()) {
         result.output = "Missing executable";
         return result;
     }
+    for (const auto &[name,value] : overrides) if (name.empty() || name.find('=')!=std::string::npos || name.find('\0')!=std::string::npos || value.find('\0')!=std::string::npos)
+        throw std::runtime_error("Invalid process environment override");
     auto commandArgs = argv;
     if (argv[0] == "rg" || argv[0] == "git") {
         auto resolved = toolPath(argv[0]);
@@ -113,6 +111,7 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
         }
         FreeEnvironmentStringsW(inherited);
     }
+    for (const auto &[name,value] : overrides) variables[wide(name)]=wide(name+"="+value);
     std::vector<wchar_t> environment;
     for (const auto &[key, value] : variables) {
         environment.insert(environment.end(), value.begin(), value.end());
@@ -185,6 +184,22 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
     for (const auto &arg : commandArgs)
         args.push_back(const_cast<char *>(arg.c_str()));
     args.push_back(nullptr);
+    std::vector<std::string> environmentValues;
+    std::vector<char *> environmentPointers;
+    std::string executable=commandArgs.front();
+    if (!overrides.empty()) {
+        std::map<std::string,std::string> variables;
+        for (auto entry=environ;entry && *entry;++entry) { const std::string value(*entry);const auto at=value.find('=');if (at!=std::string::npos) variables[value.substr(0,at)]=value.substr(at+1); }
+        for (const auto &[name,value] : overrides) variables[name]=value;
+        for (const auto &[name,value] : variables) environmentValues.push_back(name+"="+value);
+        for (auto &value : environmentValues) environmentPointers.push_back(value.data());
+        environmentPointers.push_back(nullptr);
+        if (executable.find('/')==std::string::npos) {
+            std::istringstream paths(variables["PATH"]);std::string directory;
+            while (std::getline(paths,directory,':')) { const auto candidate=std::filesystem::path(directory)/executable;
+                if (access(candidate.c_str(),X_OK)==0) { executable=candidate.string();break; } }
+        }
+    }
     pid_t pid = fork();
     if (pid == 0) {
         setpgid(0, 0);
@@ -199,7 +214,8 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
         }
         if (!cwd.empty() && chdir(cwd.c_str()) != 0)
             _exit(126);
-        execvp(args[0], args.data());
+        if (overrides.empty()) execvp(args[0], args.data());
+        else execve(executable.c_str(),args.data(),environmentPointers.data());
         _exit(127);
     }
     close(pipes[1]);

@@ -652,6 +652,62 @@ class NativeIntegration(unittest.TestCase):
                     self.assertEqual((self.workspace/'Program.cs').read_text('utf-8'),source)
         asyncio.run(scenario())
 
+    def test_web_official_mcp_and_permissions(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        text="const message = 'hello';\nmessage.toU\n"
+        (self.workspace/'main.ts').write_text(text,encoding='utf-8')
+        status=self.client.call('language.status',{})
+        if not status['servers']['typescript']['available']:
+            self.skipTest('Install web language servers with setup_languages.py --web')
+        self.assertFalse(status['servers']['typescript']['enabled'])
+        runtime=create_runtime(self.directory/'web-permissions');runtime.start()
+        try:
+            reader=runtime.authenticate(runtime.create_client('web reader')['token'])
+            session=runtime.create_session(reader,temporary=True)['sessionId']
+            with self.assertRaises(Exception):
+                runtime.submit(reader,session,'language_configure',{'language':'typescript'})
+        finally:
+            runtime.close()
+        self.assertFalse(self.client.call('language.status',{})['servers']['typescript']['enabled'])
+        async def scenario():
+            parameters=StdioServerParameters(command=sys.executable,
+                args=[str(APP/'tool.py'),'--data-dir',str(self.directory/'web-mcp'),'mcp'],
+                env={**os.environ,'CYCODE_BRIDGE':str(self.descriptor),'CYCODE_PERMISSIONS':'process.execute,workspace.write'})
+            async with stdio_client(parameters) as (read,write):
+                async with ClientSession(read,write) as session:
+                    await session.initialize()
+                    async def invoke(name,parameters):
+                        response=await session.call_tool('op_'+name,{'parameters':parameters})
+                        self.assertFalse(response.isError,response)
+                        job=json.loads(response.content[0].text)
+                        deadline=time.monotonic()+40
+                        while time.monotonic()<deadline:
+                            response=await session.call_tool('cy_get_job',{'jobId':job['jobId']})
+                            done=json.loads(response.content[0].text)
+                            if done['state'] in ('Completed','Failed','Cancelled'):
+                                self.assertEqual(done['state'],'Completed',done)
+                                return done['outputs']
+                            await asyncio.sleep(.06)
+                        self.fail('Web MCP job did not complete')
+                    doc=await invoke('documents_read',{'path':'main.ts'})
+                    await invoke('language_configure',{'language':'typescript'})
+                    completion=await invoke('language_complete',{'path':'main.ts','expectedRevision':doc['revision'],
+                        'position':{'line':1,'character':11}})
+                    self.assertIn('toUpperCase',json.dumps(completion))
+                    updated=text.replace("'hello'","42").replace('toU','toF')
+                    doc=await invoke('documents_replace',{'path':'main.ts','expectedRevision':doc['revision'],'text':updated})
+                    completion=await invoke('language_complete',{'path':'main.ts','expectedRevision':doc['revision'],
+                        'position':{'line':1,'character':11}})
+                    self.assertIn('toFixed',json.dumps(completion))
+                    status=await invoke('language_status',{})
+                    self.assertTrue(status['servers']['typescript']['ready'])
+                    self.assertTrue(status['servers']['typescript']['methods']['completion'])
+                    self.assertEqual(set(status['servers']),{'cpp','csharp','rust','java','typescript','html','css'})
+                    await invoke('language_configure',{'language':'typescript','enabled':False})
+        asyncio.run(scenario())
+        self.assertEqual((self.workspace/'main.ts').read_text('utf-8'),text)
+
     def test_csharp_official_mcp_and_permissions(self):
         from csharp_fixture import create_csharp_fixture, CONSUMER
         from mcp import ClientSession, StdioServerParameters
@@ -710,6 +766,270 @@ class NativeIntegration(unittest.TestCase):
                     await invoke('language_configure',{'enabled':False})
                     self.assertNotIn('OnlyInBuffer',(self.workspace/'Library/Counter.cs').read_text('utf-8'))
         asyncio.run(scenario())
+
+    def test_project_tasks_over_official_mcp(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        (self.workspace/'package.json').write_text(json.dumps({'name':'mcp-tasks','private':True,'scripts':{
+            'build':'node build.cjs','test':'node test.cjs','start':'node app.cjs','long':'node long.cjs'}}),'utf-8')
+        (self.workspace/'build.cjs').write_text("require('node:fs').writeFileSync('built','yes'); console.log('BUILD_OK');",'utf-8')
+        (self.workspace/'test.cjs').write_text("console.log('TEST_OK');",'utf-8')
+        (self.workspace/'app.cjs').write_text("console.log('RUN_OK '+process.argv[2]);",'utf-8')
+        (self.workspace/'long.cjs').write_text("require('node:fs').writeFileSync('started','yes'); require('node:child_process').spawn(process.execPath,['-e',\"setTimeout(()=>require('node:fs').writeFileSync('survived','bad'),4000)\"],{stdio:'ignore'}); setInterval(()=>{},1000);",'utf-8')
+        model=self.client.call('project.inspect',{})
+        if not model['tools']['npm']:
+            self.skipTest('Node.js/npm unavailable')
+        self.assertEqual(model['kind'],'npm')
+        self.assertFalse((self.workspace/'built').exists())
+        runtime=create_runtime(self.directory/'project-permissions');runtime.start()
+        try:
+            actor=runtime.authenticate(runtime.create_client('reader')['token'])
+            session=runtime.create_session(actor,temporary=True)['sessionId']
+            inspected=runtime.submit(actor,session,'project_inspect',{})
+            self.assertEqual(runtime.wait(actor,inspected['jobId'],timeout=10)['state'],'Completed')
+            for operation in ('configure','build','test','install','script','launch','debug_target','cancel'):
+                with self.assertRaises(Exception,msg=operation): runtime.submit(actor,session,'project_'+operation,{})
+        finally:
+            runtime.close()
+        async def scenario():
+            parameters=StdioServerParameters(command=sys.executable,
+                args=[str(APP/'tool.py'),'--data-dir',str(self.directory/'project-mcp'),'mcp'],
+                env={**os.environ,'CYCODE_BRIDGE':str(self.descriptor),'CYCODE_PERMISSIONS':'process.execute'})
+            async with stdio_client(parameters) as (read,write):
+                async with ClientSession(read,write) as session:
+                    await session.initialize()
+                    async def submit(name,inputs):
+                        response=await session.call_tool('op_'+name,{'parameters':inputs})
+                        self.assertFalse(response.isError,response)
+                        return json.loads(response.content[0].text)['jobId']
+                    async def done(identifier,expected='Completed'):
+                        deadline=time.monotonic()+20
+                        while time.monotonic()<deadline:
+                            response=await session.call_tool('cy_get_job',{'jobId':identifier})
+                            job=json.loads(response.content[0].text)
+                            if job['state'] in ('Completed','Failed','Cancelled'):
+                                self.assertEqual(job['state'],expected,job);return job.get('outputs',{})
+                            await asyncio.sleep(.04)
+                        self.fail('Project MCP task did not stop')
+                    built=await done(await submit('project_build',{}));self.assertIn('BUILD_OK',built['output'])
+                    tested=await done(await submit('project_test',{}));self.assertIn('TEST_OK',tested['output'])
+                    launched=await done(await submit('project_launch',{'args':['a & b é']}))
+                    terminal=launched['terminal']['id']
+                    deadline=time.monotonic()+8
+                    while time.monotonic()<deadline:
+                        output=await done(await submit('terminal_read',{'id':terminal}))
+                        if 'RUN_OK a & b é' in '\n'.join(output['lines']): break
+                        await asyncio.sleep(.04)
+                    self.assertIn('RUN_OK a & b é','\n'.join(output['lines']))
+                    await done(await submit('terminal_close',{'id':terminal}))
+                    for manual in (False,True):
+                        (self.workspace/'started').unlink(missing_ok=True)
+                        identifier=await submit('project_script',{'script':'long'})
+                        deadline=time.monotonic()+10
+                        while not (self.workspace/'started').exists() and time.monotonic()<deadline: await asyncio.sleep(.03)
+                        self.assertTrue((self.workspace/'started').exists())
+                        if manual:
+                            cancelled=await done(await submit('project_cancel',{}));self.assertTrue(cancelled['cancelled'])
+                            result=await done(identifier);self.assertTrue(result['cancelled'])
+                        else:
+                            response=await session.call_tool('cy_cancel_job',{'jobId':identifier})
+                            self.assertFalse(response.isError,response)
+                            await done(identifier,'Cancelled')
+                        # The next exclusive job cannot start until its cancelled
+                        # predecessor has terminated the native process tree.
+                        result=await done(await submit('project_test',{}));self.assertIn('TEST_OK',result['output'])
+                    await asyncio.sleep(4.3)
+                    self.assertFalse((self.workspace/'survived').exists(),'Cancelled subprocess tree survived')
+        asyncio.run(scenario())
+
+    def test_read_only_information_over_official_mcp(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        text='/// Combine two values.\nint combine(int left, int right) { return left + right; }\nint main() { const char* emoji = "🛠"; return combine(1, 2); }\n'
+        (self.workspace/'main.cpp').write_text(text,'utf-8')
+        def point(offset):
+            prefix=text[:offset];return {'line':prefix.count('\n'),'character':len(prefix.rsplit('\n',1)[-1].encode('utf-16-le'))//2}
+        async def scenario():
+            parameters=StdioServerParameters(command=sys.executable,args=[str(APP/'tool.py'),'--data-dir',str(self.directory/'information-mcp'),'mcp'],
+                env={**os.environ,'CYCODE_BRIDGE':str(self.descriptor),'CYCODE_PERMISSIONS':''})
+            async with stdio_client(parameters) as (read,write):
+                async with ClientSession(read,write) as session:
+                    await session.initialize()
+                    async def invoke(name,inputs,expected='Completed'):
+                        response=await session.call_tool('op_'+name,{'parameters':inputs});self.assertFalse(response.isError,response)
+                        identifier=json.loads(response.content[0].text)['jobId'];deadline=time.monotonic()+25
+                        while time.monotonic()<deadline:
+                            response=await session.call_tool('cy_get_job',{'jobId':identifier});job=json.loads(response.content[0].text)
+                            if job['state'] in ('Completed','Failed','Cancelled'):
+                                self.assertEqual(job['state'],expected,job);return job.get('outputs',{})
+                            await asyncio.sleep(.03)
+                        self.fail('Information query did not finish')
+                    doc=await invoke('documents_read',{'path':'main.cpp'})
+                    base={'path':'main.cpp','expectedRevision':doc['revision']}
+                    hover=await invoke('language_hover',{**base,'position':point(text.rfind('combine(')+2)})
+                    self.assertTrue(hover['available']);self.assertIn('combine',json.dumps(hover))
+                    self.assertEqual(hover['positionEncoding'],'utf-16')
+                    signature=await invoke('language_signature',{**base,'position':point(text.rfind('2);'))})
+                    active=signature['signatures'][signature['activeSignature']]
+                    self.assertEqual(active['activeParameter'],1)
+                    self.assertEqual(active['parameters'][1]['label'],'int right')
+                    await invoke('language_hover',{**base,'position':point(text.index('🛠')) | {'character':point(text.index('🛠'))['character']+1}},'Failed')
+                    await invoke('language_signature',{**base,'expectedRevision':doc['revision']+100,'position':point(text.rfind('2);'))},'Failed')
+                    denied=await session.call_tool('op_documents_replace',{'parameters':{**base,'text':''}});self.assertTrue(denied.isError)
+        asyncio.run(scenario())
+        self.assertEqual((self.workspace/'main.cpp').read_text('utf-8'),text)
+
+    def test_completion_import_transaction_over_official_mcp(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        source='// Unicode 🛠\n\tgre\n'
+        (self.workspace/'main.ts').write_text(source,'utf-8')
+        (self.workspace/'model.ts').write_text('export function greet(name: string): string { return name; }\n','utf-8')
+        (self.workspace/'tsconfig.json').write_text('{"compilerOptions":{"strict":true},"include":["*.ts"]}','utf-8')
+        self.client.call('language.configure',{'language':'typescript'})
+        async def scenario():
+            async def connect(permissions,action):
+                parameters=StdioServerParameters(command=sys.executable,args=[str(APP/'tool.py'),'--data-dir',str(self.directory/('completion-'+('writer' if permissions else 'reader'))),'mcp'],
+                    env={**os.environ,'CYCODE_BRIDGE':str(self.descriptor),'CYCODE_PERMISSIONS':permissions})
+                async with stdio_client(parameters) as (read,write):
+                    async with ClientSession(read,write) as session:
+                        await session.initialize()
+                        async def invoke(name,inputs,expected='Completed'):
+                            response=await session.call_tool('op_'+name,{'parameters':inputs});self.assertFalse(response.isError,response)
+                            identifier=json.loads(response.content[0].text)['jobId'];deadline=time.monotonic()+35
+                            while time.monotonic()<deadline:
+                                response=await session.call_tool('cy_get_job',{'jobId':identifier});job=json.loads(response.content[0].text)
+                                if job['state'] in ('Completed','Failed','Cancelled'):
+                                    self.assertEqual(job['state'],expected,job);return job.get('outputs',{})
+                                await asyncio.sleep(.03)
+                            self.fail('Completion job timed out')
+                        return await action(session,invoke)
+            async def prepare(session,invoke):
+                doc=await invoke('documents_read',{'path':'main.ts'})
+                deadline=time.monotonic()+25
+                while True:
+                    completion=await invoke('language_complete',{'path':'main.ts','expectedRevision':doc['revision'],'position':{'line':1,'character':4}})
+                    found=next((i for i,item in enumerate(completion['result']['items']) if item['label']=='greet'),None)
+                    if found is not None: break
+                    self.assertLess(time.monotonic(),deadline,completion);await asyncio.sleep(.1)
+                query={'sessionId':completion['sessionId'],'item':found,'expectedRevision':doc['revision']}
+                resolved=await invoke('language_completion_resolve',query);self.assertTrue(resolved['item']['additionalTextEdits'])
+                prepared=await invoke('language_completion_prepare',query)
+                self.assertGreaterEqual(prepared['plan']['editCount'],2)
+                preview=await invoke('changes_preview',{'id':prepared['plan']['id'],'path':'main.ts'})
+                self.assertIn('import { greet }',preview['after'])
+                self.assertEqual((await invoke('documents_read',{'path':'main.ts'}))['text'],source)
+                denied=await session.call_tool('op_changes_apply',{'parameters':{'id':prepared['plan']['id']}});self.assertTrue(denied.isError)
+                await invoke('language_completion_prepare',{**query,'sessionId':'forged'},'Failed')
+                await invoke('language_completion_prepare',{**query,'expectedRevision':doc['revision']+100},'Failed')
+                return query,prepared,preview
+            query,prepared,preview=await connect('',prepare)
+            async def apply(session,invoke):
+                await invoke('changes_apply',{'id':prepared['plan']['id']})
+                self.assertEqual((await invoke('documents_read',{'path':'main.ts'}))['text'],preview['after'])
+                self.assertEqual((self.workspace/'main.ts').read_text('utf-8'),source)
+                await invoke('language_completion_prepare',query,'Failed')
+                await invoke('changes_undo',{'id':prepared['plan']['id']})
+                self.assertEqual((await invoke('documents_read',{'path':'main.ts'}))['text'],source)
+            await connect('workspace.write',apply)
+        asyncio.run(scenario())
+        self.assertEqual((self.workspace/'main.ts').read_text('utf-8'),source)
+
+    def test_code_action_import_transaction_over_official_mcp(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        source="// Unicode 🛠\nconst answer = greet('hello');\n"
+        (self.workspace/'main.ts').write_text(source,'utf-8')
+        (self.workspace/'model.ts').write_text('export function greet(name: string): string { return name; }\n','utf-8')
+        (self.workspace/'tsconfig.json').write_text('{"compilerOptions":{"strict":true},"include":["*.ts"]}','utf-8')
+        self.client.call('language.configure',{'language':'typescript'})
+        async def scenario():
+            async def connect(permissions,action):
+                parameters=StdioServerParameters(command=sys.executable,args=[str(APP/'tool.py'),'--data-dir',str(self.directory/('actions-'+('writer' if permissions else 'reader'))),'mcp'],
+                    env={**os.environ,'CYCODE_BRIDGE':str(self.descriptor),'CYCODE_PERMISSIONS':permissions})
+                async with stdio_client(parameters) as (read,write):
+                    async with ClientSession(read,write) as session:
+                        await session.initialize()
+                        names={tool.name for tool in (await session.list_tools()).tools}
+                        self.assertTrue({'op_language_code_actions','op_language_code_action_prepare'}.issubset(names))
+                        async def invoke(name,inputs,expected='Completed'):
+                            response=await session.call_tool('op_'+name,{'parameters':inputs});self.assertFalse(response.isError,response)
+                            identifier=json.loads(response.content[0].text)['jobId'];deadline=time.monotonic()+35
+                            while time.monotonic()<deadline:
+                                response=await session.call_tool('cy_get_job',{'jobId':identifier});job=json.loads(response.content[0].text)
+                                if job['state'] in ('Completed','Failed','Cancelled'):
+                                    self.assertEqual(job['state'],expected,job);return job.get('outputs',{})
+                                await asyncio.sleep(.03)
+                            self.fail('Code action job timed out')
+                        return await action(session,invoke)
+            async def prepare(session,invoke):
+                doc=await invoke('documents_read',{'path':'main.ts'})
+                inputs={'path':'main.ts','expectedRevision':doc['revision'],'range':{'start':{'line':1,'character':15},'end':{'line':1,'character':20}},'only':['quickfix']}
+                deadline=time.monotonic()+30
+                while True:
+                    actions=await invoke('language_code_actions',inputs)
+                    selected=next((item['index'] for item in actions['actions'] if 'Add import' in item['title'] and item['available']),None)
+                    if selected is not None: break
+                    self.assertLess(time.monotonic(),deadline,actions);await asyncio.sleep(.1)
+                query={'sessionId':actions['sessionId'],'item':selected,'expectedRevision':doc['revision']}
+                plan=await invoke('language_code_action_prepare',query)
+                self.assertGreater(plan['editCount'],0)
+                preview=await invoke('changes_preview',{'id':plan['id'],'path':'main.ts'})
+                self.assertIn('import { greet }',preview['after'])
+                self.assertEqual((await invoke('documents_read',{'path':'main.ts'}))['text'],source)
+                denied=await session.call_tool('op_changes_apply',{'parameters':{'id':plan['id']}});self.assertTrue(denied.isError)
+                await invoke('language_code_action_prepare',{**query,'sessionId':'forged'},'Failed')
+                await invoke('language_code_action_prepare',{**query,'expectedRevision':doc['revision']+100},'Failed')
+                return query,plan,preview
+            query,plan,preview=await connect('',prepare)
+            async def apply(session,invoke):
+                await invoke('changes_apply',{'id':plan['id']})
+                self.assertEqual((await invoke('documents_read',{'path':'main.ts'}))['text'],preview['after'])
+                self.assertEqual((self.workspace/'main.ts').read_text('utf-8'),source)
+                await invoke('language_code_action_prepare',query,'Failed')
+                await invoke('changes_undo',{'id':plan['id']})
+                self.assertEqual((await invoke('documents_read',{'path':'main.ts'}))['text'],source)
+            await connect('workspace.write',apply)
+        asyncio.run(scenario())
+        self.assertEqual((self.workspace/'main.ts').read_text('utf-8'),source)
+
+    def test_snippet_metadata_over_read_only_official_mcp(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        source='// Unicode 🛠\nstruct Widget { int combine(int left, int right); };\nint main() { Widget widget; widget.com }'
+        (self.workspace/'main.cpp').write_text(source,'utf-8')
+        async def scenario():
+            parameters=StdioServerParameters(command=sys.executable,args=[str(APP/'tool.py'),'--data-dir',str(self.directory/'snippet-mcp'),'mcp'],
+                env={**os.environ,'CYCODE_BRIDGE':str(self.descriptor),'CYCODE_PERMISSIONS':''})
+            async with stdio_client(parameters) as (read,write):
+                async with ClientSession(read,write) as session:
+                    await session.initialize()
+                    async def invoke(name,inputs):
+                        response=await session.call_tool('op_'+name,{'parameters':inputs});self.assertFalse(response.isError,response)
+                        identifier=json.loads(response.content[0].text)['jobId'];deadline=time.monotonic()+25
+                        while time.monotonic()<deadline:
+                            response=await session.call_tool('cy_get_job',{'jobId':identifier});job=json.loads(response.content[0].text)
+                            if job['state'] in ('Completed','Failed','Cancelled'):
+                                self.assertEqual(job['state'],'Completed',job);return job['outputs']
+                            await asyncio.sleep(.03)
+                        self.fail('Snippet query timed out')
+                    doc=await invoke('documents_read',{'path':'main.cpp'})
+                    position={'line':2,'character':len(source.rsplit('\n',1)[1].split(' }')[0])}
+                    deadline=time.monotonic()+20
+                    while True:
+                        completion=await invoke('language_complete',{'path':'main.cpp','expectedRevision':doc['revision'],'position':position})
+                        selected=next((i for i,item in enumerate(completion['result']['items']) if 'combine' in item['label'] and item.get('insertTextFormat')==2),None)
+                        if selected is not None: break
+                        self.assertLess(time.monotonic(),deadline,completion);await asyncio.sleep(.1)
+                    prepared=await invoke('language_completion_prepare',{'sessionId':completion['sessionId'],'item':selected,'expectedRevision':doc['revision']})
+                    meta=prepared['snippet'];self.assertEqual(meta['positionEncoding'],'utf-8-bytes');self.assertEqual([f['index'] for f in meta['fields']],[1,2])
+                    preview=await invoke('changes_preview',{'id':prepared['plan']['id'],'path':'main.cpp'});encoded=preview['after'].encode('utf-8')
+                    for field,name in zip(meta['fields'],['left','right']):
+                        self.assertIn(name,encoded[field['ranges'][0]['start']:field['ranges'][0]['end']].decode('utf-8'))
+                    self.assertTrue(encoded[meta['final']:].startswith(b' }'))
+                    self.assertEqual((await invoke('documents_read',{'path':'main.cpp'}))['text'],source)
+                    denied=await session.call_tool('op_changes_apply',{'parameters':{'id':prepared['plan']['id']}});self.assertTrue(denied.isError)
+        asyncio.run(scenario());self.assertEqual((self.workspace/'main.cpp').read_text('utf-8'),source)
 
 if __name__ == '__main__':
     unittest.main()

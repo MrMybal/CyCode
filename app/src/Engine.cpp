@@ -1,6 +1,8 @@
 #include "cycode/Engine.h"
 #include "cycode/Solution.h"
 #include "cycode/TextEdits.h"
+#include "cycode/TextFile.h"
+#include "cycode/LanguageInfo.h"
 #include <algorithm>
 #include <fstream>
 #include <set>
@@ -13,41 +15,15 @@
 #include <unistd.h>
 #endif
 namespace cycode {
-static constexpr std::size_t maxFile = 4 * 1024 * 1024;
+static constexpr std::size_t maxFile = maxTextFileBytes;
 static std::string readFile(const std::filesystem::path &path) {
-    std::ifstream in(path, std::ios::binary);
-    if (!in)
-        throw std::runtime_error("Cannot read file");
-    in.seekg(0, std::ios::end);
-    auto length = in.tellg();
-    if (length < 0 || length > static_cast<std::streamoff>(maxFile))
-        throw std::runtime_error("Editor limit: 4 MiB per file");
-    in.seekg(0);
-    std::string text(static_cast<size_t>(length), '\0');
-    in.read(text.data(), length);
-    if (!in && length)
-        throw std::runtime_error("File changed during read");
-    return text;
+    return readTextFileBytes(path);
 }
 static void validateText(const std::string &text) {
-    if (text.find('\0') != std::string::npos)
-        throw std::runtime_error("Binary files cannot be edited as text");
-    if (text.size() > maxFile)
-        throw std::runtime_error("Editor limit: 4 MiB per file");
-    (void)Json(text).dump();
+    validateEditorText(text);
 }
 static std::string normalize(std::string text) {
-    std::string result;
-    result.reserve(text.size());
-    for (size_t i = 0; i < text.size(); ++i) {
-        if (text[i] == '\r') {
-            result += '\n';
-            if (i + 1 < text.size() && text[i + 1] == '\n')
-                ++i;
-        } else
-            result += text[i];
-    }
-    return result;
+    return normalizeEditorText(text);
 }
 Engine::Engine(std::filesystem::path root)
     : root_(workspaceRoot(root)), entry_(std::filesystem::canonical(root)), solution_(inspectSolution(root)),
@@ -55,7 +31,8 @@ Engine::Engine(std::filesystem::path root)
       msbuild_(root_,entry_,[this](const std::string &path) { return resolve(path); }),
       unreal_(root_, std::filesystem::canonical(root), solution_,
               [this](const std::string &path) { return resolve(path); }),
-      language_(root_), debugger_(root_, [this](const std::string &path) { return resolve(path); }, terminals_) {
+      language_(root_), projects_(root_,entry_,[this](const std::string &path) { return resolve(path); },terminals_),
+      debugger_(root_, [this](const std::string &path) { return resolve(path); }, terminals_) {
     if (!std::filesystem::is_directory(root_))
         throw std::runtime_error("Workspace must be a directory");
     addSdkRoots(Json::object());
@@ -137,9 +114,9 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
     const auto supplied = params.at("path").get<std::string>();
     const auto path = supplied.starts_with("sdk://") ? supplied : pathUtf8(resolve(supplied).lexically_relative(root_));
     if (!LanguageService::supports(path))
-        throw std::runtime_error("Language operations currently support C/C++ and C#");
+        throw std::runtime_error("No language backend for this file type");
     std::future<Json> reply;
-    std::uint64_t revision, generation;
+    std::uint64_t revision, generation, epoch;
     const auto &position = params.at("position");
     auto line = position.at("line").get<std::int64_t>();
     auto character = position.at("character").get<std::int64_t>();
@@ -151,6 +128,7 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
         auto &doc = *document;
         revision = doc.revision;
         generation = nextRevision_;
+        epoch = language_.epoch(path);
         if (params.at("expectedRevision").get<std::uint64_t>() != revision)
             throw std::runtime_error("RevisionConflict: document changed; read it again");
         size_t start = 0;
@@ -181,9 +159,12 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
                         {"position", position}};
         if (method == "language.references")
             request["context"] = {{"includeDeclaration", params.value("includeDeclaration", true)}};
+        if (method == "language.signature") request["context"] = {{"triggerKind",1},{"isRetrigger",false}};
         // Engine's mutex orders document changes and requests; the service owns the transport.
         reply = language_.request(method == "language.definition"   ? "textDocument/definition"
                                   : method == "language.references" ? "textDocument/references"
+                                  : method == "language.hover"      ? "textDocument/hover"
+                                  : method == "language.signature"  ? "textDocument/signatureHelp"
                                                                     : "textDocument/completion",
                                   std::move(request));
     }
@@ -192,10 +173,14 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
     const auto current = path.starts_with("sdk://")
         ? (externalSources_.contains(path) && externalSources_.at(path).loaded ? &externalSources_.at(path).document : nullptr)
         : (documents_.contains(path) ? &documents_.at(path) : nullptr);
-    if (!current || current->revision != revision || generation != nextRevision_)
+    if (!current || current->revision != revision || generation != nextRevision_ || language_.epoch(path)!=epoch)
         throw std::runtime_error("RevisionConflict: document changed during language request");
     if (method == "language.complete")
-        return {{"path", path}, {"revision", revision}, {"result", result}};
+        return issueCompletion(path,revision,generation,epoch,position,result);
+    if (method=="language.hover" || method=="language.signature") {
+        auto information=method=="language.hover" ? hoverInformation(result,current->text) : signatureInformation(result);
+        information["path"]=path;information["revision"]=revision;information["positionEncoding"]="utf-16";return information;
+    }
     Json locations = Json::array();
     std::set<std::string> unique;
     size_t outside = 0;
@@ -426,6 +411,12 @@ Json Engine::git(const std::string &method, const Json &params) {
             {"truncated", result.truncated}};
 }
 Json Engine::dispatch(const std::string &method, const Json &params) {
+    if (method=="project.inspect") return projects_.inspect(params);
+    if (method=="project.cancel") return projects_.cancel(params.value("operationId",""));
+    if (method.starts_with("project.")) {
+        { std::lock_guard lock(mutex_);for (const auto &[path,document] : documents_) if (document.dirty) throw std::runtime_error("UnsavedDocuments: save "+path+" before executing project tasks"); }
+        return projects_.execute(method,params);
+    }
     if (method == "msbuild.inspect") return msbuild_.inspect(params);
     if (method == "msbuild.tools") return msbuild_.tools(params.value("refresh",false));
     if (method.starts_with("msbuild.")) {
@@ -493,12 +484,22 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         return result;
     }
     if (method == "language.configure") {
-        language_.configureManaged(params.value("executable", ""),params.value("enabled",true),true);
+        const auto backend=params.value("language","csharp");
+        auto arguments=params.value("arguments",std::vector<std::string>{});
+        if (params.contains("executable")) {
+            if (!arguments.empty()) throw std::runtime_error("Use arguments or executable, not both");
+            const auto executable=params.at("executable").get<std::string>();
+            if (backend=="csharp") { language_.configureManaged(executable,params.value("enabled",true),true); return languageStatus(); }
+            if (!executable.empty()) arguments.push_back(executable);
+        }
+        language_.configureBackend(backend,arguments,params.value("settings",Json::object()),params.value("enabled",true),true);
         return languageStatus();
     }
     if (method == "language.status")
         return languageStatus();
-    if (method == "language.definition" || method == "language.references" || method == "language.complete")
+    if (method == "language.completionResolve" || method == "language.completionPrepare") return completionOperation(method,params);
+    if (method == "language.codeActions" || method == "language.codeActionPrepare") return codeActionOperation(method,params);
+    if (method == "language.definition" || method == "language.references" || method == "language.complete" || method == "language.hover" || method == "language.signature")
         return languageQuery(method, params);
     if (method == "workspace.describe") {
         std::lock_guard lock(mutex_);
@@ -512,10 +513,11 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
             project = "Cargo";
         else if (std::filesystem::exists(root_ / "package.json"))
             project = "Web";
+        else if (ProjectTasks::detect(root_)=="java") project = "Java";
         return {{"root", pathUtf8(root_)},
                 {"name", pathUtf8(root_.filename())},
                 {"projectType", project},
-                {"version", "0.1.0"},
+                {"version", CYCODE_VERSION},
                 {"solution", solution_}};
     }
     if (method == "workspace.files")
@@ -596,45 +598,8 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
             throw std::runtime_error("DiskConflict: file changed outside CyCode");
         if (!doc.dirty)
             return documentJson(key, doc);
-        std::string bytes = doc.text;
-        if (doc.crlf) {
-            std::string converted;
-            for (char c : bytes) {
-                if (c == '\n')
-                    converted += '\r';
-                converted += c;
-            }
-            bytes = std::move(converted);
-        }
-        if (doc.crOnly)
-            std::replace(bytes.begin(), bytes.end(), '\n', '\r');
-        if (doc.bom)
-            bytes = "\xef\xbb\xbf" + bytes;
-        // Write a sibling first, then replace atomically. Original survives failures.
-        auto temporary = full;
-        temporary +=
-            ".cycode-save-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
-        {
-            std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
-            out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
-            out.flush();
-            if (!out) {
-                std::filesystem::remove(temporary);
-                throw std::runtime_error("Cannot write temporary save file");
-            }
-        }
-#ifdef _WIN32
-        if (!ReplaceFileW(full.c_str(), temporary.c_str(), nullptr, REPLACEFILE_IGNORE_MERGE_ERRORS, nullptr,
-                          nullptr)) {
-            std::filesystem::remove(temporary);
-            throw std::runtime_error("Cannot atomically replace file");
-        }
-#else
-        std::error_code permissionsError;
-        std::filesystem::permissions(temporary, std::filesystem::status(full).permissions(),
-                                     permissionsError);
-        std::filesystem::rename(temporary, full);
-#endif
+        const auto bytes = encodeEditorText(doc.text, doc.bom, doc.crlf, doc.crOnly);
+        writeTextFileAtomic(full, bytes, doc.disk);
         doc.saved = doc.text;
         doc.dirty = false;
         doc.disk = bytes;

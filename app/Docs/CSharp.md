@@ -45,8 +45,10 @@ servers.cpp/servers.csharp and merged diagnostics. Completion returns standard L
 items; coordinates are zero-based UTF-16, including supplementary characters.
 The GUI filters Roslyn items against the typed prefix and tracks editor transactions
 after popup insertion, so accepting a suggestion immediately updates the shared live
-buffer and dirty revision. Snippet/import/command-bearing items are not inserted by
-this plain-text completion UI.
+buffer and dirty revision. The shared issued-item resolve/prepare path handles
+server-provided additional imports and interactive numbered snippet parameters.
+Symbol/import insertion forms one undoable editor transaction; linked fields use
+the shared snippet session. Arbitrary server commands remain unsupported. See [Languages](Languages.md).
 Server requests to apply workspace edits are refused: use the revision-checked
 preview/apply API. No C# server metadata URI grants arbitrary filesystem access.
 
@@ -67,11 +69,21 @@ evaluation, stepping and attach/detach. Select the built executable assembly fro
 MSBuild evaluated artifacts and use the ordinary Debugger panel and Rider bindings.
 See [Execution](Execution.md) for the tested .NET 8 scope and adapter limitations.
 
-Remaining work includes code actions/import insertion, snippets,
-completion resolve, hover/signature UI, metadata decompilation/source-generated views,
+The shared code-action service now routes advertised Roslyn edit-only fixes and
+lazy resolution through native previews, apply and undo. Server commands and
+resource operations remain unsupported; broader Roslyn action acceptance is pending.
+
+Remaining work includes complete Roslyn action coverage, snippet variables/transforms and a user catalogue,
+rich documentation rendering, metadata decompilation/source-generated views,
 Razor, test discovery and broader framework/SDK/project-load coverage. External
 project files outside the workspace remain outside editable document permissions.
 Windows is validated locally; Linux/macOS execution remains unverified.
+
+Documentation/signature requests and the Code information panel share the native
+language service and MCP. csharp-ls 0.28.0 omits its active parameter after the last
+comma; CyCode preserves that as unknown and still shows actual overloads/parameters.
+See [Languages](Languages.md). Current GUI acceptance remains pending; compilation
+and native/MCP results are recorded separately.
 
 Reproduce with scripts/build.py, private Python's test_mcp.py suite, then
 scripts/verify_csharp.py and scripts/verify_csharp.py --preview-only. Tests use

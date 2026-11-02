@@ -28,6 +28,14 @@ BUILD_PROJECT = schema({'profile': schema(BUILD_FIELDS, tuple(BUILD_FIELDS)), 'c
                         'compilationDatabase': schema({'path': STRING, 'origin': STRING, 'entries': {'type': 'integer', 'minimum': 0}, 'available': BOOL}, ('path', 'origin', 'entries', 'available')),
                         'message': STRING}, ('profile', 'configured', 'generator', 'configurations', 'targets', 'toolchains', 'compilationDatabase', 'message'))
 BUILD_RESULT = schema({**PROCESS['properties'], 'project': {'anyOf': [BUILD_PROJECT, {'type': 'null'}]}}, (*PROCESS['required'], 'project'))
+PROJECT_FIELDS = {'system':{'type':'string','enum':['automatic','cargo','npm','java']},'directory':PATH,
+    'configuration':{'type':'string','enum':['Debug','Release']},'package':STRING,'target':STRING,'script':STRING,
+    'mainClass':STRING,'sourceDirectory':PATH,'offline':BOOL,'args':{'type':'array','maxItems':128,'items':{'type':'string','maxLength':8192}}}
+PROJECT_MODEL = schema({'available':BOOL,'kind':STRING,'name':STRING,'profile':{'type':'object'},'tools':{'type':'object'},
+    'targets':ARRAY,'scripts':ARRAY,'sources':{'type':'array','items':STRING},'artifacts':ARRAY,'configured':BOOL,'stale':BOOL,'message':STRING},
+    ('available','kind','name','profile','tools','targets','scripts','sources','artifacts','configured','stale','message'))
+PROJECT_RESULT = schema({**PROCESS['properties'],'cancelled':BOOL,'project':PROJECT_MODEL,'diagnostics':ARRAY,'terminal':{'type':'object'},'program':STRING},
+    (*PROCESS['required'],'cancelled','project','diagnostics'))
 MSBUILD_FIELDS = {'entry':PATH,'configuration':{'type':'string','minLength':1,'maxLength':128},'platform':{'type':'string','minLength':1,'maxLength':128},
                   'project':{'type':'string','description':'Solution project ID or listed workspace-relative project path; empty builds the whole solution.'},
                   'tool':{'type':'string','enum':['automatic','msbuild','dotnet']}}
@@ -38,6 +46,15 @@ MSBUILD_MODEL = schema({'available':BOOL,'profile':schema({key:STRING for key in
 MSBUILD_RESULT = schema({**PROCESS['properties'],'project':MSBUILD_MODEL,'evaluation':{'type':['object','null']},'diagnostics':ARRAY},(*PROCESS['required'],'project'))
 POSITION = schema({'line': {'type': 'integer', 'minimum': 0}, 'character': {'type': 'integer', 'minimum': 0}}, ('line', 'character'))
 RANGE = schema({'start': POSITION, 'end': POSITION}, ('start', 'end'))
+INFO_SECTION = schema({'kind':{'type':'string','enum':['plaintext','markdown','code']},'language':STRING,
+                       'text':{'type':'string','maxLength':65536}},('kind','language','text'))
+INFO_SECTIONS = {'type':'array','maxItems':32,'items':INFO_SECTION}
+INFO_FIELDS = {'path':PATH,'revision':REVISION,'positionEncoding':{'const':'utf-16'},'available':BOOL,'truncated':BOOL}
+INFO_PARAMETER = schema({'label':STRING,'startByte':{'type':'integer','minimum':-1},'endByte':{'type':'integer','minimum':-1},
+    'documentation':INFO_SECTIONS},('label','startByte','endByte','documentation'))
+INFO_SIGNATURE = schema({'label':STRING,'documentation':INFO_SECTIONS,
+    'parameters':{'type':'array','maxItems':128,'items':INFO_PARAMETER},'activeParameter':{'type':'integer','minimum':-1,'description':'-1 means the server did not report an active parameter, or the signature has none.'}},
+    ('label','documentation','parameters','activeParameter'))
 LOCATIONS = schema({'path': PATH, 'revision': REVISION, 'positionEncoding': {'const': 'utf-16', 'type': 'string'},
                     'locations': {'type': 'array', 'items': schema({'path': PATH, 'range': RANGE, 'external': BOOL, 'displayPath': STRING}, ('path', 'range'))},
                     'outsideWorkspace': {'type': 'integer', 'minimum': 0}, 'truncated': BOOL},
@@ -45,10 +62,12 @@ LOCATIONS = schema({'path': PATH, 'revision': REVISION, 'positionEncoding': {'co
 LANGUAGE_INPUT = {'path': PATH, 'expectedRevision': REVISION, 'position': POSITION,
                   'includeExternal': BOOL,
                   'limit': {'type': 'integer', 'minimum': 1, 'maximum': 5000}}
-LANGUAGE_SERVER = schema({'ready':BOOL, 'running':BOOL, 'error':STRING, 'diagnostics':{'type':'object'}, 'name':STRING, 'enabled':BOOL,
+BACKENDS = ['cpp','csharp','rust','java','typescript','html','css']
+LANGUAGE_SERVER = schema({'ready':BOOL, 'running':BOOL, 'error':STRING, 'diagnostics':{'type':'object'}, 'name':STRING, 'enabled':BOOL, 'available':BOOL,
+                         'methods':schema({key:BOOL for key in ['completion','completionResolve','codeActions','codeActionResolve','hover','signature','definition','references','symbols','documentSymbols','rename','format','rangeFormat']}),
                          'semanticTokens':BOOL,'semanticGeneration':{'type':'integer','minimum':0}},
                          ('ready','running','error','diagnostics','name','enabled'))
-LANGUAGE_STATUS = schema({**LANGUAGE_SERVER['properties'], 'servers':schema({'cpp':LANGUAGE_SERVER,'csharp':LANGUAGE_SERVER},('cpp','csharp'))},
+LANGUAGE_STATUS = schema({**LANGUAGE_SERVER['properties'], 'servers':schema({key:LANGUAGE_SERVER for key in BACKENDS},BACKENDS)},
                         (*LANGUAGE_SERVER['required'],'servers'))
 SYMBOL = schema({'path': PATH, 'range': RANGE, 'external': BOOL, 'displayPath': STRING,
                  'name': STRING, 'kind': {'type': 'integer'}, 'container': STRING, 'detail': STRING},
@@ -59,6 +78,10 @@ SYMBOLS = schema({'symbols': {'type': 'array', 'items': SYMBOL}, 'outsideWorkspa
 CHANGE = schema({'id': STRING, 'title': STRING, 'state': {'type': 'string', 'enum': ['preview', 'applied', 'undone']},
                  'files': {'type': 'array', 'items': schema({'path': PATH, 'expectedRevision': REVISION, 'editCount': {'type': 'integer', 'minimum': 0}}, ('path', 'expectedRevision', 'editCount'))},
                  'editCount': {'type': 'integer', 'minimum': 0}}, ('id', 'title', 'state', 'files', 'editCount'))
+SNIPPET = schema({'positionEncoding':{'type':'string','const':'utf-8-bytes'},'final':{'type':'integer','minimum':0},
+                  'fields':{'type':'array','maxItems':128,'items':schema({'index':{'type':'integer','minimum':1,'maximum':65535},
+                      'ranges':{'type':'array','minItems':1,'maxItems':128,'items':schema({'start':{'type':'integer','minimum':0},'end':{'type':'integer','minimum':0},'parents':{'type':'array','maxItems':16,'items':{'type':'integer','minimum':0,'maximum':65535}}},('start','end','parents'))},
+                      'choices':{'type':'array','maxItems':64,'items':STRING}},('index','ranges','choices'))}},('positionEncoding','final','fields'))
 SOURCE_DOCUMENT = schema({**DOCUMENT['properties'], 'readOnly': {'type': 'boolean', 'const': True}, 'displayPath': STRING},
                          (*DOCUMENT['required'], 'readOnly', 'displayPath'))
 UNREAL_FIELDS = {'project': PATH, 'engineRoot': STRING, 'target': STRING,
@@ -84,6 +107,15 @@ DEBUG_STATE_FIELDS = {'state':{'type':'string','enum':['idle','starting','runnin
     'lastBreakpoint':{'type':'object'},'stopGeneration':{'type':'integer'},'exitCode':{'type':'integer'},'watches':ARRAY,'attached':BOOL,'runtime':{'type':'string','enum':['native','dotnet']}}
 DEBUG_STATE = schema(DEBUG_STATE_FIELDS,('state','reason','error','threads','frames','scopes','variables','output','generation','threadId','frameId','terminalId','breakpoints','verifiedBreakpoints','capabilities'))
 OPERATIONS = [
+    ('project_inspect','project.inspect','Inspect a Cargo, npm or standalone Java project and saved target profile without executing project code. Cargo target metadata appears after configure/build. Does not install packages.',schema(PROJECT_FIELDS),PROJECT_MODEL,[]),
+    ('project_configure','project.configure','Select and save a project task profile. Cargo evaluates actual format-version 1 workspace metadata; project rules/tool configuration are trusted executable inputs.',schema(PROJECT_FIELDS),PROJECT_RESULT,['process.execute']),
+    ('project_build','project.build','Build the selected Cargo binary/workspace, npm build script, or standalone Java sources. Refuses unsaved live buffers. Build outputs are persistent workspace files; executes trusted project rules.',schema(PROJECT_FIELDS),PROJECT_RESULT,['process.execute']),
+    ('project_test','project.test','Run actual Cargo tests or the npm test script, with bounded output and process-tree cancellation. Java test-framework providers are not connected.',schema(PROJECT_FIELDS),PROJECT_RESULT,['process.execute']),
+    ('project_install','project.install','Explicitly install this npm project dependencies using npm ci when a package-lock exists, otherwise npm install. Runs trusted project lifecycle scripts; may access package registries and write lock/dependency files.',schema(PROJECT_FIELDS),PROJECT_RESULT,['process.execute']),
+    ('project_script','project.script','Execute one existing npm script with bounded output/deadline. Use project_launch for interactive or long-running development servers.',schema(PROJECT_FIELDS),PROJECT_RESULT,['process.execute']),
+    ('project_launch','project.launch','Build and run a Cargo/standalone Java target, or start a selected npm script in a persistent integrated PTY. Returned terminal id supports terminal_read/write/close. Does not launch a browser.',schema(PROJECT_FIELDS),PROJECT_RESULT,['process.execute']),
+    ('project_debug_target','project.debug','Build the selected Cargo binary and return its actual executable path for the existing debug_configure/debug_launch operations. Does not start the debugger itself.',schema(PROJECT_FIELDS),PROJECT_RESULT,['process.execute']),
+    ('project_cancel','project.cancel','Cancel the active native project compilation/test/script process tree. Does not close a persistent run terminal; use terminal_close with its id.',schema(),schema({'cancelled':BOOL},('cancelled',)),['process.execute']),
     ('msbuild_inspect','msbuild.inspect','Inspect a .sln or direct MSBuild project, solution-to-project configurations and saved artifacts/index. Never evaluates project imports or builds targets.',schema(MSBUILD_FIELDS),MSBUILD_MODEL,[]),
     ('msbuild_tools','msbuild.tools','Detect Visual Studio MSBuild and installed .NET SDKs without loading project rules.',schema({'refresh':BOOL}),schema({'tools':ARRAY},('tools',)),[]),
     ('msbuild_build','msbuild.build','Build the selected trusted .sln/project with real MSBuild; solution project selection honors nesting/configuration mappings. Optional restore invokes package restore. Saves the successful local profile.',schema({**MSBUILD_FIELDS,'restore':BOOL}),MSBUILD_RESULT,['process.execute']),
@@ -146,15 +178,15 @@ OPERATIONS = [
     ('terminal_resize', 'terminal.resize', 'Resize a persistent PTY and its emulated screen.', schema({'id': STRING, 'columns': {'type': 'integer', 'minimum': 10, 'maximum': 400}, 'rows': {'type': 'integer', 'minimum': 2, 'maximum': 120}}, ('id','columns','rows')), schema({'id': STRING, 'ok': BOOL}, ('id','ok')), ['process.execute']),
     ('terminal_clear', 'terminal.clear', 'Clear retained scrollback without restarting the shell or changing files.', schema({'id': STRING}, ('id',)), schema({'id': STRING, 'ok': BOOL}, ('id','ok')), ['process.execute']),
     ('terminal_close', 'terminal.close', 'Terminate and remove one terminal and its process tree. Closing the panel only hides it; this operation ends the session.', schema({'id': STRING}, ('id',)), schema({'id': STRING, 'ok': BOOL}, ('id','ok')), ['process.execute']),
-    ('language_symbols', 'language.symbols', 'Search actual C++ or C# project symbols, optionally filtered to types. language defaults to cpp; csharp requires an enabled C# server. Index completeness depends on background analysis.',
-     schema({'query': {'type': 'string', 'maxLength': 256}, 'language':{'type':'string','enum':['cpp','csharp']}, 'typesOnly': BOOL, 'includeExternal': BOOL, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 1000}}), SYMBOLS, []),
-    ('language_document_symbols', 'language.documentSymbols', 'Read C/C++ or C# document structure, including nested members, from the live buffer. Accepts a workspace path or an opened SDK reference.',
+    ('language_symbols', 'language.symbols', 'Search actual configured project symbols, optionally filtered to types. language defaults to cpp; other backends require language_configure. Unsupported server methods are reported explicitly. Index completeness depends on background analysis.',
+     schema({'query': {'type': 'string', 'maxLength': 256}, 'language':{'type':'string','enum':BACKENDS}, 'typesOnly': BOOL, 'includeExternal': BOOL, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 1000}}), SYMBOLS, []),
+    ('language_document_symbols', 'language.documentSymbols', 'Read document structure, including nested members, from the live buffer. Accepts a workspace path or an opened SDK reference.',
      schema({'path': PATH, 'expectedRevision': REVISION, 'includeExternal': BOOL, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 1000}}, ('path', 'expectedRevision')), SYMBOLS, []),
     ('sources_read', 'sources.read', 'Read an immutable SDK source view. Requires a sdk:// reference issued by symbol navigation. Arbitrary external paths and files outside registered Unreal/compiler SDK source roots are rejected.',
      schema({'source': {'type': 'string', 'minLength': 1, 'maxLength': 4096, 'pattern': '^sdk://[0-9]+/.+$'}}, ('source',)), SOURCE_DOCUMENT, []),
-    ('language_rename', 'language.rename', 'Prepare a semantic C/C++ or C# rename preview across references. Does not edit buffers or save files. Unreal Blueprint assets and serialized reflection names are not migrated.',
+    ('language_rename', 'language.rename', 'Prepare a semantic rename preview across references. Does not edit buffers or save files. Unreal Blueprint assets and serialized reflection names are not migrated.',
      schema({'path': PATH, 'expectedRevision': REVISION, 'position': POSITION, 'newName': {'type': 'string', 'minLength': 1, 'maxLength': 256}}, ('path', 'expectedRevision', 'position', 'newName')), CHANGE, []),
-    ('language_format', 'language.format', 'Prepare C++ clang-format or C# Roslyn formatting edits. Does not apply changes or save files. A range limits formatting to the selection.',
+    ('language_format', 'language.format', 'Prepare formatting edits from the selected language server. Does not apply changes or save files. A range limits formatting to the selection.',
      schema({'path': PATH, 'expectedRevision': REVISION, 'range': RANGE, 'tabSize': {'type': 'integer', 'minimum': 1, 'maximum': 16}, 'insertSpaces': BOOL}, ('path', 'expectedRevision')), CHANGE, []),
     ('changes_preview', 'changes.preview', 'Read before/after text and concrete UTF-16 edits for one file in a prepared change. Preview IDs belong to the running IDE and expire; they are not filesystem paths.',
      schema({'id': STRING, 'path': PATH}, ('id', 'path')), schema({'id': STRING, 'path': PATH, 'before': STRING, 'after': STRING, 'edits': ARRAY}, ('id', 'path', 'before', 'after', 'edits')), []),
@@ -181,20 +213,38 @@ OPERATIONS = [
      schema({'path': PATH, 'text': {'type': 'string', 'maxLength': 4194304}, 'expectedRevision': REVISION}, ('path', 'text', 'expectedRevision')), DOCUMENT, ['workspace.write']),
     ('documents_save', 'documents.save', 'Atomically save a live buffer, preserving BOM and line endings. Rejects external disk changes.',
      schema({'path': PATH, 'expectedRevision': REVISION}, ('path', 'expectedRevision')), DOCUMENT, ['workspace.write']),
-    ('language_configure', 'language.configure', 'Enable, restart or disable the C# language server for this trusted workspace. Loads and evaluates MSBuild projects and imports. The optional executable is a server program or DLL; default uses the pinned managed runtime. Applies to the running IDE only.',
-     schema({'enabled':BOOL,'executable':STRING}), LANGUAGE_STATUS, ['process.execute']),
-    ('language_status', 'language.status', 'Inspect shared C++/clangd and C#/Roslyn servers and their published UTF-16 diagnostics. Does not start the C# server.',
+    ('language_configure', 'language.configure', 'Enable, restart or disable a language server in this trusted workspace. language defaults to csharp for compatibility. Servers may evaluate project metadata and toolchains. arguments is a full executable argv without a shell; executable is a legacy single program or C# DLL. settings contains server configuration; optional $initializationOptions separates initialize options. Empty options use the installed defaults. Applies to the running IDE only.',
+     schema({'language':{'type':'string','enum':BACKENDS},'enabled':BOOL,'executable':STRING,
+             'arguments':{'type':'array','maxItems':128,'items':{'type':'string','maxLength':8192}},'settings':{'type':'object'}}), LANGUAGE_STATUS, ['process.execute']),
+    ('language_status', 'language.status', 'Inspect all shared language servers, availability, advertised methods and published UTF-16 diagnostics. Does not enable a server.',
      schema(), LANGUAGE_STATUS, []),
-    ('language_highlight','language.highlight','Read semantic color classifications from the shared language server and current live document. Requires the expected revision; rejects concurrent document changes. Positions/lengths use UTF-16; glyphStart/glyphEnd are Unicode-codepoint indexes. supported=false means lexical fallback. Data is bounded to 50,000 tokens or 4 MiB and reports truncation. C# requires prior language_configure; inspection never enables it.',
+    ('language_highlight','language.highlight','Read semantic color classifications from the shared language server and current live document. Requires the expected revision; rejects concurrent document changes. Positions/lengths use UTF-16; glyphStart/glyphEnd are Unicode-codepoint indexes. supported=false means lexical fallback. Data is bounded to 50,000 tokens or 4 MiB and reports truncation. Other backends require prior language_configure; inspection never enables it.',
      schema({'path':PATH,'expectedRevision':REVISION},('path','expectedRevision')),
      schema({'path':PATH,'revision':REVISION,'supported':BOOL,'generation':{'type':'integer','minimum':0},'truncated':BOOL,
              'tokens':{'type':'array','maxItems':50000,'items':schema({'line':{'type':'integer','minimum':0},'character':{'type':'integer','minimum':0},'length':{'type':'integer','minimum':1},'glyphStart':{'type':'integer','minimum':0},'glyphEnd':{'type':'integer','minimum':1},'type':STRING,'modifiers':{'type':'array','items':STRING}},('line','character','length','glyphStart','glyphEnd','type','modifiers'))}},
             ('path','revision','supported','generation','truncated','tokens')),[]),
-    ('language_complete', 'language.complete', 'Request C++ or C# completion items from the shared server and live buffers. Returns standard LSP completion items; applying snippets, additional imports or resolve requests is not supported. C# project loading must first be enabled with language_configure.',
-     schema({'path':PATH,'expectedRevision':REVISION,'position':POSITION},('path','expectedRevision','position')),schema({'path':PATH,'revision':REVISION,'result':{'type':['object','array','null']}},('path','revision','result')), []),
-    ('language_definition', 'language.definition', 'Find C/C++ or C# definitions using live buffers and actual project references. Requires the current revision and a UTF-16 position. Outside-workspace locations are omitted by default; includeExternal permits only registered read-only SDK sources.',
+    ('language_complete', 'language.complete', 'Request completion items from live buffers. Returns an issued sessionId and materialized LSP items (max 2000, 4 MiB). Use an item index with language_completion_resolve or language_completion_prepare before changes_apply. Sessions expire after five minutes or eviction and reject changed revisions/workspace/server context. Other backends require language_configure.',
+     schema({'path':PATH,'expectedRevision':REVISION,'position':POSITION},('path','expectedRevision','position')),schema({'path':PATH,'revision':REVISION,'sessionId':STRING,'truncated':BOOL,'result':{'type':'object'}},('path','revision','sessionId','truncated','result')), []),
+    ('language_completion_resolve','language.completionResolve','Resolve an item issued by language_complete using the actual server. Read-only; requires a current session, item index and expectedRevision. Rejects unsupported resolve and protected insertion-field changes. Documentation is passive data; server commands are never executed.',
+     schema({'sessionId':STRING,'item':{'type':'integer','minimum':0},'expectedRevision':REVISION},('sessionId','item','expectedRevision')),
+     schema({'path':PATH,'revision':REVISION,'item':{'type':'object'},'resolved':BOOL},('path','revision','item','resolved')),[]),
+    ('language_completion_prepare','language.completionPrepare','Prepare one atomic live-buffer transaction for an issued completion plus its additional imports. Resolves lazy fields when supported (resolve defaults true). replace defaults true; false selects the insert range. Checks UTF-16 ranges, revisions, disk baseline and overlapping edits. Handles multiline indentation and bounded numbered snippets, mirrors, nested defaults and choices. snippet contains UTF-8 byte ranges in the resulting document for interactive fields; null for ordinary text. cursor is the resulting zero-based UTF-16 final caret. Variables/transforms and arbitrary commands are unsupported. Does not apply or save; use changes_preview/changes_apply.',
+     schema({'sessionId':STRING,'item':{'type':'integer','minimum':0},'expectedRevision':REVISION,'resolve':BOOL,'replace':BOOL},('sessionId','item','expectedRevision')),
+     schema({'path':PATH,'revision':REVISION,'plan':CHANGE,'cursor':POSITION,'snippet':{'anyOf':[SNIPPET,{'type':'null'}]}},('path','revision','plan','cursor','snippet')),[]),
+    ('language_code_actions','language.codeActions','List actual language-server fixes/refactorings for a live UTF-16 range and expectedRevision. Returns a bounded issued session (max 256 actions / 2 MiB, 8 sessions / 8 MiB, five-minute TTL). Includes disabled/unsupported reasons; no server commands run. Versioned diagnostics require the current LSP overlay version; unversioned latest diagnostics are advisory and their cache is invalidated on edits. Unopened literal-edit targets are synchronized before recomputing actions.',
+     schema({'path':PATH,'range':RANGE,'expectedRevision':REVISION,'only':{'type':'array','maxItems':16,'items':{'type':'string','minLength':1,'maxLength':128}}},('path','range','expectedRevision')),
+     schema({'path':PATH,'revision':REVISION,'sessionId':STRING,'truncated':BOOL,'actions':{'type':'array','maxItems':256,'items':schema({'index':{'type':'integer','minimum':0},'title':STRING,'kind':STRING,'preferred':BOOL,'available':BOOL,'needsResolve':BOOL,'reason':STRING},('index','title','kind','preferred','available','needsResolve','reason'))}},('path','revision','sessionId','truncated','actions')),[]),
+    ('language_code_action_prepare','language.codeActionPrepare','Resolve if needed and prepare an issued code action as a shared native change plan. Read-only: does not apply or save. Rejects stale revisions/workspace/server context, executable commands, annotated/snippet edits, resource operations, outside-workspace targets, disk conflicts and overlapping edits. Only the pinned TypeScript server empty acknowledgement is ignored. A newly discovered resolve target is synchronized and requires a fresh action query. Use changes_preview/apply/undo; applying requires workspace.write.',
+     schema({'sessionId':STRING,'item':{'type':'integer','minimum':0},'expectedRevision':REVISION,'resolve':BOOL},('sessionId','item','expectedRevision')),CHANGE,[]),
+    ('language_hover','language.hover','Read bounded symbol documentation from the actual language server at a zero-based UTF-16 position. Requires the current revision and rejects concurrent edits. Contents are display-only; Markdown/HTML and links are not executed. Inspection never enables a backend; unsupported methods fail explicitly.',
+     schema({'path':PATH,'expectedRevision':REVISION,'position':POSITION},('path','expectedRevision','position')),
+     schema({**INFO_FIELDS,'contents':INFO_SECTIONS,'range':{'anyOf':[RANGE,{'type':'null'}]}},(*INFO_FIELDS,'contents','range')),[]),
+    ('language_signature','language.signature','Read actual callable signatures, overloads, active parameter and documentation at a zero-based UTF-16 position. Signature parameter ranges startByte/endByte are UTF-8 offsets in the returned label, or -1 when unmapped. Bounded to 32 signatures, 128 parameters each and 64 KiB of text. Requires the current revision and an enabled supporting backend.',
+     schema({'path':PATH,'expectedRevision':REVISION,'position':POSITION},('path','expectedRevision','position')),
+     schema({**INFO_FIELDS,'signatures':{'type':'array','maxItems':32,'items':INFO_SIGNATURE},'activeSignature':{'type':'integer','minimum':-1}},(*INFO_FIELDS,'signatures','activeSignature')),[]),
+    ('language_definition', 'language.definition', 'Find definitions using live buffers and actual project references. Requires the current revision and a UTF-16 position. Outside-workspace locations are omitted by default; includeExternal permits only registered read-only SDK sources.',
      schema(dict(LANGUAGE_INPUT), ('path', 'expectedRevision', 'position')), LOCATIONS, []),
-    ('language_references', 'language.references', 'Find C/C++ or C# references using shared servers and unsaved buffers. Positions/ranges are zero-based UTF-16. Requires the current revision; results reflect the available project index, which may still be building.',
+    ('language_references', 'language.references', 'Find references using shared servers and unsaved buffers. Positions/ranges are zero-based UTF-16. Requires the current revision; results reflect the available project index, which may still be building.',
      schema({**LANGUAGE_INPUT, 'includeDeclaration': BOOL}, ('path', 'expectedRevision', 'position')), LOCATIONS, []),
     ('vcs_status', 'vcs.status', 'Inspect Git repository status.', schema(), schema({'provider': STRING, 'repository': BOOL, 'branch': STRING, 'files': ARRAY, 'message': STRING}, ('provider', 'repository', 'branch', 'files', 'message')), []),
     ('vcs_diff', 'vcs.diff', 'Read working tree or staged differences.', schema({'path': PATH, 'staged': BOOL}), PROCESS, []),
@@ -219,16 +269,16 @@ for _id, _method, _description, _inputs, _outputs, _permissions in OPERATIONS:
 def write_manifest():
     path = Path(__file__).with_name('CyTool.json')
     manifest = json.loads(path.read_text('utf-8'))
-    manifest.update(description='Native C++ IDE services, shared by CyUI and CyToolsCore MCP.', version='0.1.0',
+    manifest.update(description='Native C++ IDE services, shared by CyUI and CyToolsCore MCP.', version='0.2.0',
                     executable='python app/tool.py', standaloneExecutable='CyCode.exe', categories=['development'], tags=['IDE', 'C++', 'plugins'],
-                    capabilities=['jobs', 'cancellation', 'live-documents', 'text-search', 'cpp-navigation', 'cpp-symbols', 'cpp-refactoring', 'csharp-language', 'readonly-sdk-sources', 'terminal', 'dap-debugger', 'git', 'native-plugins', 'msbuild'],
+                    capabilities=['jobs', 'cancellation', 'live-documents', 'text-search', 'cpp-navigation', 'cpp-symbols', 'cpp-refactoring', 'csharp-language', 'multilingual-lsp', 'project-tasks', 'readonly-sdk-sources', 'terminal', 'dap-debugger', 'git', 'native-plugins', 'msbuild'],
                     concurrency={'policy': 'Concurrent', 'maxWorkers': 4}, distributionStatus='Development milestone; see app/Docs/Validation.md')
     for platform in manifest['platforms']:
         platform['status'] = 'Experimental'
     manifest['operations'] = [dict(id=op, name=op.replace('_', ' ').title(), description=description,
         inputSchema=inputs, outputSchema=outputs, resourceRequirements={'ramBytes': 16 * 1024 * 1024},
         supportedBackends=[], permissions=permissions, canRunAsync=True, canCancel=True, supportsProgress=False,
-        **({'exclusiveGroups': ['workspace-mutations']} if permissions and method not in ('terminal.list','terminal.read','debug.status','debug.profile') else {}))
+        **({'exclusiveGroups': ['workspace-mutations']} if permissions and method not in ('terminal.list','terminal.read','debug.status','debug.profile','project.cancel') else {}))
         for op, method, description, inputs, outputs, permissions in OPERATIONS]
     path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 

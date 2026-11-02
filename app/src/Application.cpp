@@ -1,9 +1,12 @@
 #include "cycode/Application.h"
+#include "cycode/Completion.h"
+#include "cycode/EditorCompletion.h"
 #include "cycode/EditorTheme.h"
 #include "cycode/EditorLanguage.h"
 #include "cycode/FileIcons.h"
+#include "cycode/ImageView.h"
 #include <algorithm>
-#include <cyui/CyUI.h>
+#include <cyui/Core.h>
 #include <fstream>
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
@@ -33,10 +36,17 @@ Application::Application(LaunchOptions options, SDL_Window *window)
     } catch (...) {
         translations_ = Json::object();
     }
+    for (const auto *locale : {"en", "fr"}) {
+        cyui::TranslationCatalog catalog;
+        for (const auto &[key, value] : translations_.items())
+            if (value.contains(locale)) catalog.emplace(key, value.at(locale).get<std::string>());
+        cyui::registerTranslations(locale, catalog);
+    }
     loadSettings();
     if (!options.keymap.empty()) { keymap_.load(options.keymap, keymapOverrides_.value(options.keymap, Json::object())); keymapProfile_ = options.keymap; }
     options_ = options.showOptions;
     focusCmake_ = options.showCmake;
+    focusProjectTasks_ = options.showProjectTasks;
     focusUnreal_ = options.showUnreal;
     testSession_ = options.testSession;
     if (!options.terminalProfile.empty()) terminalProfile_ = options.terminalProfile;
@@ -55,9 +65,10 @@ Application::Application(LaunchOptions options, SDL_Window *window)
         locale_ = options.language;
     cyui::Config config;
     config.themeKey = theme_.c_str();
-    config.dpiScale = SDL_GetWindowDisplayScale(window_);
+    config.dpiScale = window_ ? SDL_GetWindowDisplayScale(window_) : 1.f;
     config.squareWindows = true;
     cyui::apply(config);
+    cyui::setLocale(locale_.c_str());
     applyEditorTheme(theme_);
     cyui::loadFonts();
     ImGui::GetStyle().FontScaleMain = textScale_;
@@ -78,8 +89,10 @@ Application::~Application() {
     if (searchCancellation_)
         *searchCancellation_ = true;
     engine_->configureLanguage(clangd_, false, false);
+    for (const auto &tab : tabs_) for (auto *future : {&tab->completion,&tab->completionAccept,&tab->highlighting}) if (future->valid()) future->wait();
+    for (auto &future : retiredCompletions_) if (future.valid()) future.wait();
     for (auto *future : {&filesFuture_, &searchFuture_, &gitFuture_, &taskFuture_, &navigationFuture_,
-                         &buildFuture_, &detectionFuture_, &symbolFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
+                         &buildFuture_, &detectionFuture_, &symbolFuture_, &informationFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
         if (future->valid())
             future->wait();
     bridge_.reset();
@@ -92,6 +105,9 @@ Application::~Application() {
         } catch (const std::exception &) { /* A read-only settings directory must not prevent exit. */
         }
     }
+    tabs_.clear();
+    if (imageTextures_) imageTextures_->collect();
+    imageLoader_.reset();
     ImGui::GetIO().IniFilename = nullptr;
 }
 const char *Application::tr(const char *key) const {
@@ -147,9 +163,9 @@ void Application::saveSettings() {
     }
 }
 bool Application::busy() const {
-    for (const auto &tab : tabs_) if (tab->highlighting.valid()) return true;
+    for (const auto &tab : tabs_) if ((tab->image && tab->image->loading()) || tab->highlighting.valid() || tab->completionAccept.valid()) return true;
     return filesFuture_.valid() || searchFuture_.valid() || gitFuture_.valid() || taskFuture_.valid() ||
-           navigationFuture_.valid() || buildFuture_.valid() || detectionFuture_.valid() || unrealAnalysisFuture_.valid() || symbolFuture_.valid() || refactorFuture_.valid() || terminalFuture_.valid() || debugFuture_.valid() || vcsFuture_.valid();
+           navigationFuture_.valid() || buildFuture_.valid() || detectionFuture_.valid() || unrealAnalysisFuture_.valid() || symbolFuture_.valid() || informationFuture_.valid() || codeActionsFuture_.valid() || refactorFuture_.valid() || terminalFuture_.valid() || debugFuture_.valid() || vcsFuture_.valid();
 }
 Json Application::testState() const {
     Json result = {{"active", active_},
@@ -158,6 +174,7 @@ Json Application::testState() const {
                    {"languageReady", languageState_.value("ready", false)}};
     result["build"] = buildState_;
     result["msbuild"] = msbuildState_; result["msbuildActive"] = msbuildActive_;
+    result["projectTasks"] = projectState_; result["projectActive"] = projectActive_;
     result["buildDiagnostics"] = buildDiagnostics_;
     result["toolchains"] = toolchains_;
     result["solution"] = solution_;
@@ -179,7 +196,9 @@ Json Application::testState() const {
     result["ui"]["paletteQuery"] = paletteFilter_;
     result["ui"]["search"] = search_;
     result["symbols"] = symbolResults_;
+    result["information"] = {{"result",informationState_},{"error",informationError_},{"method",informationMethod_},{"query",informationQuery_}};
     result["refactoring"] = refactorPlan_;
+    result["codeActions"]=codeActionsState_;
     result["terminals"] = engine_->terminals().list();
     result["debug"] = engine_->debugger().status();
     result["vcs"] = {{"status",git_},{"details",vcsInfo_},{"history",vcsHistory_},{"conflict",vcsConflict_},{"section",vcsSection_},{"preview",vcsPreviewTitle_}};
@@ -192,10 +211,15 @@ Json Application::testState() const {
     result["hiddenWindow"] = bool(SDL_GetWindowFlags(window_) & SDL_WINDOW_HIDDEN);
     for (const auto &tab : tabs_)
         if (tab->path == active_) {
+            if (tab->image) {
+                result["image"]={{"path",tab->path},{"loading",tab->image->loading()},{"error",tab->image->error()}};
+                if (auto texture=tab->image->texture()) result["image"]["size"]={texture->data.width,texture->data.height};
+            }
             result["text"] = tab->editor.GetText();
             result["dirty"] = tab->dirty;
             result["readOnly"] = tab->readOnly;
             result["displayPath"] = tab->displayPath;
+            result["syntax"]={{"language",Syntax::language(tab->path)},{"spans",tab->syntax.spans()},{"truncated",tab->syntax.truncated()}};
             result["highlight"]={{"revision",tab->highlightRevision},{"generation",tab->highlightGeneration},{"count",tab->highlightCount},{"truncated",tab->highlightTruncated},{"error",tab->highlightError}};
             result["completionTest"] = {{"phase", testCompletionPhase_}, {"generation", tab->completionGeneration}, {"runningGeneration", tab->runningCompletionGeneration}, {"wordStart", {tab->runningCompletionStart.line, tab->runningCompletionStart.index}}, {"end", {tab->completionPosition.line, tab->completionPosition.index}}};
             result["completionTest"]["reply"] = tab->completionTrace;
@@ -219,8 +243,9 @@ void Application::setWorkspace(const std::filesystem::path &path) {
         for (const auto &tab : tabs_)
             if (tab->dirty)
                 throw std::runtime_error(tr("Save or close modified documents before switching workspace."));
+        for (const auto &tab : tabs_) if (tab->completionAccept.valid()) throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
         for (auto *future : {&filesFuture_, &searchFuture_, &gitFuture_, &taskFuture_, &navigationFuture_,
-                             &buildFuture_, &detectionFuture_, &symbolFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
+                             &buildFuture_, &detectionFuture_, &symbolFuture_, &informationFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
             if (future->valid())
                 throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
         engine_->configureLanguage(clangd_, false, false);
@@ -228,11 +253,19 @@ void Application::setWorkspace(const std::filesystem::path &path) {
     bridge_.reset();
     if (coreService_.valid())
         coreService_.get();
-    for (const auto &tab : tabs_) if (tab->highlighting.valid()) retiredCompletions_.push_back(std::move(tab->highlighting));
+    for (const auto &tab : tabs_) {
+        if (tab->highlighting.valid()) retiredCompletions_.push_back(std::move(tab->highlighting));
+        if (tab->completion.valid()) retiredCompletions_.push_back(std::move(tab->completion));
+    }
     tabs_.clear();
+    languageDecisions_.clear();
     historyBack_.clear(); historyForward_.clear(); recentFiles_.clear(); closedFiles_.clear(); keymap_.cancel(); closeAll_ = false;
     symbolResults_ = Json::object(); symbolWantedKey_.clear(); symbolSentKey_.clear(); refactorPlan_ = nullptr; refactorPreview_ = nullptr;
     panels_.try_emplace("refactoring", false);
+    panels_.try_emplace("information", false);
+    panels_.try_emplace("codeActions",false);codeActionsState_=Json::object();codeActionsKey_.clear();codeActionsError_.clear();codeActionSelected_=-1;
+    informationMethod_.clear(); informationWanted_.clear(); informationSent_.clear(); informationError_.clear();
+    informationState_ = Json::object(); informationQuery_ = nullptr;
     panels_.try_emplace("terminal", false);
     terminalId_.clear(); terminalFocused_ = false; focusTerminal_ = false;
     debugProfileLoaded_ = false; debugState_ = Json::object(); debugChildren_ = Json::object(); debugJumpKey_.clear(); debugCurrentPath_.clear(); pendingDebugBuild_ = false;
@@ -247,6 +280,7 @@ void Application::setWorkspace(const std::filesystem::path &path) {
     navigation_ = Json::object();
     buildState_ = Json::object();
     buildDiagnostics_ = Json::array();
+    problemBuild_ = problemLanguage_ = nullptr; problems_ = {};
     toolchains_ = Json::object();
     buildEdited_ = false;
     buildToolchain_ = "automatic";
@@ -260,6 +294,8 @@ void Application::setWorkspace(const std::filesystem::path &path) {
     applyUnreal(nextUnreal);
     msbuildState_ = Json::object(); msbuildActive_ = false;
     msbuildActive_ = nextMsbuild.value("available",false); if (msbuildActive_) applyBuild(nextMsbuild);
+    projectActive_ = !unreal_.value("available",false) && !msbuildActive_ && !ProjectTasks::detect(engine_->workspace()).empty();
+    projectState_ = Json::object(); projectProfile_ = Json::object();
     unrealLanguage_ = *editorLanguage("source.cpp",true);
     entry_ = !std::filesystem::is_directory(path)
                  ? std::filesystem::canonical(path)
@@ -322,7 +358,7 @@ void Application::setWorkspace(const std::filesystem::path &path) {
     refreshGit();
     refreshBuild(!smoke_, true);
     if (!smoke_ && unreal_.value("available", false)) prepareUnreal();
-    SDL_SetWindowTitle(window_,
+    if (window_) SDL_SetWindowTitle(window_,
                        ("CyCode  |  " + (solution_.is_object() ? solution_.at("name").get<std::string>()
                                                                : pathUtf8(engine_->workspace().filename())))
                            .c_str());
@@ -346,6 +382,7 @@ void Application::refreshFiles() {
     filesFuture_ = std::async(std::launch::async, [engine] { return engine->dispatch("workspace.files"); });
 }
 Json Application::buildParameters() const {
+    if (projectActive_) return projectProfile_;
     if (unreal_.value("available", false))
         return {{"project", unrealProject_},
                 {"engineRoot", unrealEngine_},
@@ -358,6 +395,11 @@ Json Application::buildParameters() const {
             {"generator", buildGenerator_},    {"target", buildTarget_}};
 }
 void Application::applyBuild(const Json &project) {
+    if (project.contains("kind")) {
+        projectState_ = project;
+        if (!buildEdited_ || projectProfile_.empty()) projectProfile_ = project.at("profile");
+        return;
+    }
     if (project.contains("profile") && project.at("profile").contains("entry")) {
         msbuildState_ = project;
         if (msbuildState_.at("tools").empty() && toolchains_.contains("tools")) msbuildState_["tools"] = toolchains_.at("tools");
@@ -381,13 +423,13 @@ void Application::refreshBuild(bool detectTools, bool initial) {
     auto engine = engine_;
     if (!buildFuture_.valid()) {
         auto parameters = !initial && buildEdited_ ? buildParameters() : Json::object();
-        const auto method = msbuildActive_ ? "msbuild.inspect" : "build.inspect";
+        const auto method = projectActive_ ? "project.inspect" : msbuildActive_ ? "msbuild.inspect" : "build.inspect";
         buildFuture_ = std::async(std::launch::async, [engine, parameters, method] {
             return engine->dispatch(method, parameters);
         });
         lastBuildRefresh_ = ImGui::GetTime();
     }
-    if (detectTools && !detectionFuture_.valid()) {
+    if (detectTools && !projectActive_ && !detectionFuture_.valid()) {
         const auto method = msbuildActive_ ? "msbuild.tools" : "toolchains.detect";
         detectionFuture_ = std::async(std::launch::async, [engine,method] {
             return engine->dispatch(method, {{"refresh", true}});
@@ -431,12 +473,14 @@ void Application::task(const std::string &method, Json params) {
             actualMethod = "unreal.build";
     }
     if (msbuildActive_) { if (method == "build.configure") actualMethod = "msbuild.restore"; if (method == "build.run") actualMethod = "msbuild.build"; }
+    if (projectActive_) { if (method == "build.configure") actualMethod = "project.configure"; if (method == "build.run") actualMethod = "project.build"; }
     if (actualMethod.starts_with("unreal."))
         params = buildParameters();
     if (method == "build.configure" || method == "build.run")
         params = buildParameters();
     if (actualMethod.starts_with("msbuild.")) { params = buildParameters(); if (msbuildRestore_ && (actualMethod == "msbuild.build" || actualMethod == "msbuild.rebuild")) params["restore"] = true; }
-    if (actualMethod == "msbuild.build" || actualMethod == "msbuild.rebuild") {
+    if (actualMethod.starts_with("project.")) params = projectProfile_;
+    if (actualMethod == "msbuild.build" || actualMethod == "msbuild.rebuild" || actualMethod.starts_with("project.")) {
         saveAll();
         if (std::any_of(tabs_.begin(),tabs_.end(),[](const auto &tab) { return tab->dirty; })) return;
     }
@@ -448,13 +492,20 @@ void Application::task(const std::string &method, Json params) {
     }
     auto engine = engine_;
     taskMethod_ = actualMethod;
+    showPanel("Build","build");
     output_ += "\n> " + actualMethod + "\n";
     taskFuture_ = std::async(std::launch::async, [engine, actualMethod, params] {
         return engine->dispatch(actualMethod, params);
     });
 }
 void Application::configureEditor(const std::shared_ptr<Tab> &tab) {
-    tab->editor.SetLanguage(unreal_.value("available", false) && cppFile(tab->path) ? &unrealLanguage_ : languageFor(tab->path));
+    configureCodeEditor(tab->codeEditor);
+    tab->codeEditor.setLanguageForPath(tab->displayPath);
+    // Rich project-aware lexical/semantic overlays keep their existing native hook.
+    tab->codeEditor.setSyntaxEnabled(!LanguageService::supports(tab->displayPath));
+    tab->snippet.attach(tab->editor);
+    if (LanguageService::supports(tab->displayPath)) tab->editor.SetLanguage(unreal_.value("available", false) && cppFile(tab->path) ? &unrealLanguage_ : languageFor(tab->displayPath));
+    tab->syntax.update(tab->editor,tab->path,tab->editor.GetText());
     tab->editor.SetTabSize(4);
     tab->editor.SetInsertSpacesOnTabs(true);
     tab->editor.SetShowMiniMapEnabled(false);
@@ -489,8 +540,9 @@ void Application::configureEditor(const std::shared_ptr<Tab> &tab) {
     completion.callback = [this, weak](TextEditor::AutoCompleteState &state) {
         auto tab = weak.lock();
         state.suggestions.clear(); state.suggestionsPromise = false;
-        if (!tab || tab->readOnly || !LanguageService::supports(tab->path))
+        if (!tab || tab->readOnly || tab->snippet.active() || !LanguageService::supports(tab->path))
             return;
+        tab->completionSession.clear();tab->completionItems.clear();
         if (cppFile(tab->path) && unreal_.value("available", false) && state.searchTerm.size() >= 2) {
             for (const auto &name : unrealLanguage_.identifiers) if (name.starts_with(state.searchTerm)) state.suggestions.push_back(name);
             for (const auto &name : unrealLanguage_.declarations) if (name.starts_with(state.searchTerm)) state.suggestions.push_back(name);
@@ -508,9 +560,24 @@ void Application::configureEditor(const std::shared_ptr<Tab> &tab) {
             {"expectedRevision", tab->revision},
             {"position", {{"line", position.line}, {"character", LanguageClient::utf16Length(prefix)}}}};
     };
+    completion.accept=[this,weak](size_t selected) {
+        auto tab=weak.lock();
+        if (!tab || tab->completionSession.empty()) return false; // Local Unreal fallback.
+        if (selected>=tab->completionItems.size() || tab->completionAccept.valid()) return true;
+        if (tab->editor.GetNumberOfCursors()!=1) { error(tr("Completion with imports requires a single cursor."));return true; }
+        if (tab->readOnly || tab->revision!=tab->completionRevision || tab->completionGeneration!=tab->runningCompletionGeneration || tab->editor.GetMainCursorPosition()!=tab->completionPosition) {
+            error(tr("Completion context changed. Request suggestions again."));return true;
+        }
+        tab->acceptedRevision=tab->revision;tab->acceptedGeneration=tab->completionGeneration;tab->acceptedPosition=tab->editor.GetMainCursorPosition();
+        auto engine=engine_;const Json parameters={{"sessionId",tab->completionSession},{"item",tab->completionItems[selected]},{"expectedRevision",tab->revision}};
+        tab->queuedCompletion=nullptr;
+        tab->completionAccept=std::async(std::launch::async,[engine,parameters] { return engine->dispatch("language.completionPrepare",parameters); });
+        return true;
+    };
     tab->editor.SetAutoCompleteConfig(&completion);
 }
 void Application::open(const std::string &path, size_t line, size_t column, bool utf16, bool activate) {
+    if (openImage(path,activate)) return;
     if (path.starts_with("debug://")) { openDebugSource(path,line,column); return; }
     try {
         auto doc = path.starts_with("sdk://") ? engine_->dispatch("sources.read", {{"source", path}})
@@ -525,15 +592,24 @@ void Application::open(const std::string &path, size_t line, size_t column, bool
             tab->path = canonical;
             tab->displayPath = doc.value("displayPath", canonical);
             tab->readOnly = doc.value("readOnly", false);
-            tab->editor.SetText(doc["text"].get<std::string>());
+            tab->codeEditor.setText(doc["text"].get<std::string>());
             tab->revision = doc["revision"];
             tab->dirty = doc["dirty"];
             configureEditor(tab);
             tabs_.push_back(tab);
+            const auto backend=languageBackend(tab->path);
+            if (!smoke_ && !backend.empty() && backend!="cpp" && backend!="csharp" && !languageDecisions_.contains(backend)) {
+                languageDecisions_.insert(backend);
+                const auto server=engine_->languageStatus().value("servers",Json::object()).value(backend,Json::object());
+                if (server.value("available",false) && !server.value("enabled",false))
+                    engine_->dispatch("language.configure",{{"language",backend}});
+            }
         } else if (tab->revision != doc["revision"].get<std::uint64_t>()) {
+            tab->snippet.cancel();
             const auto cursor = tab->editor.GetMainCursorPosition();
             tab->editor.SelectAll();
             tab->editor.ReplaceTextPreservingTabs(doc["text"].get<std::string>());
+            tab->syntax.update(tab->editor,tab->path,doc["text"].get_ref<const std::string &>());
             tab->editor.SetCursor(cursor);
             tab->revision = doc["revision"];
             tab->dirty = doc["dirty"];
@@ -579,6 +655,7 @@ void Application::changed(const std::shared_ptr<Tab> &tab) {
             {{"path", tab->path}, {"text", tab->editor.GetText()}, {"expectedRevision", tab->revision}});
         tab->revision = result["revision"];
         tab->dirty = result["dirty"];
+        tab->syntax.update(tab->editor,tab->path,result["text"].get_ref<const std::string &>());
         ++tab->completionGeneration;
         navigation_ = Json::object();
     } catch (const std::exception &e) {
@@ -610,12 +687,14 @@ void Application::closeTab(const std::string &path, bool discard) {
         pendingClose_ = path;
         return;
     }
-    if ((*found)->readOnly && path.starts_with("sdk://")) engine_->dispatch("sources.close", {{"source", path}});
+    if ((*found)->image) { }
+    else if ((*found)->readOnly && path.starts_with("sdk://")) engine_->dispatch("sources.close", {{"source", path}});
     else if (path.starts_with("debug://")) { }
     else engine_->dispatch("documents.close", {{"path", path}, {"discard", discard}});
     navigation_ = Json::object();
     if ((*found)->completion.valid())
         retiredCompletions_.push_back(std::move((*found)->completion));
+    if ((*found)->completionAccept.valid()) retiredCompletions_.push_back(std::move((*found)->completionAccept));
     if ((*found)->highlighting.valid()) retiredCompletions_.push_back(std::move((*found)->highlighting));
     tabs_.erase(found);
     closedFiles_.push_back(path);
@@ -624,6 +703,7 @@ void Application::closeTab(const std::string &path, bool discard) {
         active_ = tabs_.empty() ? "" : tabs_.front()->path;
 }
 void Application::update() {
+    updateImages();
     if (ready(unrealAnalysisFuture_)) {
         try {
             auto result = unrealAnalysisFuture_.get();
@@ -673,9 +753,11 @@ void Application::update() {
         auto &tab = *found;
         if (info["revision"] != tab->revision) {
             auto doc = engine_->dispatch("documents.read", {{"path", tab->path}});
+            tab->snippet.cancel();
             auto cursor = tab->editor.GetMainCursorPosition();
             tab->editor.SelectAll();
             tab->editor.ReplaceTextPreservingTabs(doc["text"].get<std::string>());
+            tab->syntax.update(tab->editor,tab->path,doc["text"].get_ref<const std::string &>());
             tab->editor.SetCursor(cursor);
             tab->revision = doc["revision"];
             tab->dirty = doc["dirty"];
@@ -686,11 +768,36 @@ void Application::update() {
         }
     }
     updateSemantic();
+    updateInformation();
+    updateCodeActions();
     updateHighlights();
     updateTerminal();
     updateDebug();
     updateVcs();
     for (const auto &tab : tabs_) {
+        if (ready(tab->completionAccept)) {
+            try {
+                const auto prepared=tab->completionAccept.get();
+                if (tab->revision!=tab->acceptedRevision || tab->completionGeneration!=tab->acceptedGeneration || tab->editor.GetMainCursorPosition()!=tab->acceptedPosition || tab->editor.GetNumberOfCursors()!=1)
+                    throw std::runtime_error(tr("Completion context changed. Request suggestions again."));
+                const auto &plan=prepared.at("plan");
+                if (!plan.at("files").empty()) {
+                    const auto preview=engine_->dispatch("changes.preview",{{"id",plan.at("id")},{"path",tab->path}});
+                    if (tab->editor.GetText()!=preview.at("before").get_ref<const std::string &>()) throw std::runtime_error(tr("Completion context changed. Request suggestions again."));
+                    engine_->dispatch("changes.apply",{{"id",plan.at("id")}});
+                    const auto doc=engine_->dispatch("documents.read",{{"path",tab->path}});
+                    if (doc.at("text")!=preview.at("after")) throw std::runtime_error(tr("Completion context changed. Request suggestions again."));
+                    const auto &cursor=prepared.at("cursor");
+                    applyEditorCompletion(tab->editor,preview.at("before"),doc.at("text"),cursor.at("line"),cursor.at("character"));
+                    tab->revision=doc.at("revision");tab->dirty=doc.at("dirty");
+                    tab->syntax.update(tab->editor,tab->path,doc.at("text"));
+                    tab->editor.ClearSemanticTokens();tab->highlightRevision=0;tab->highlightRetryAt=ImGui::GetTime()+.3;
+                    ++tab->completionGeneration;navigation_=Json::object();
+                }
+                tab->snippet.begin(prepared.at("snippet"));
+            } catch (const std::exception &e) { error(e.what()); }
+            tab->completionSession.clear();tab->completionItems.clear();tab->editor.SetAutoCompleteSuggestions({});
+        }
         if (ready(tab->completion)) {
             try {
                 auto reply = tab->completion.get();
@@ -701,41 +808,56 @@ void Application::update() {
                     Json items = response.is_array()    ? response
                                  : response.is_object() ? response.value("items", Json::array())
                                                         : Json::array();
+                    for (size_t i=0;i<items.size();++i) items[i]["cycodeItemIndex"]=i;
                     if (testSession_) tab->completionTrace = {{"count", items.size()}, {"first", items.empty() ? Json() : items[0]}};
-                    std::stable_sort(items.begin(), items.end(), [](const Json &a, const Json &b) { return a.value("sortText", a.value("label", std::string{})) < b.value("sortText", b.value("label", std::string{})); });
-                    std::vector<std::string> suggestions;
                     const auto typedPrefix = tab->editor.GetSectionText(tab->runningCompletionStart,tab->completionPosition);
+                    const bool rankPrefix=!LanguageService::supportsCpp(tab->path);
+                    std::stable_sort(items.begin(), items.end(), [&](const Json &a, const Json &b) {
+                        if (rankPrefix) {
+                            const auto left=fuzzyScore(typedPrefix,a.value("filterText",a.value("label",std::string{})));
+                            const auto right=fuzzyScore(typedPrefix,b.value("filterText",b.value("label",std::string{})));
+                            if (left!=right) return left>right;
+                        }
+                        return a.value("sortText", a.value("label", std::string{})) < b.value("sortText", b.value("label", std::string{}));
+                    });
+                    std::vector<std::string> suggestions;
+                    std::vector<size_t> indices;std::set<std::string> unique;
                     for (const auto &item : items) {
-                        if (!item.is_object() || item.value("insertTextFormat", 1) == 2 ||
-                            !item.value("additionalTextEdits",Json::array()).empty() || item.contains("command"))
+                        if (!item.is_object() || !completionCommandAllowed(item,languageBackend(tab->path)))
                             continue;
+                        // Selection/ranking and editor-only hints do not alter
+                        // the complete text edit. No completion command is run.
                         // Roslyn returns the member set; filtering is the client's job.
-                        if (LanguageService::supportsManaged(tab->path) &&
+                        if (!LanguageService::supportsCpp(tab->path) &&
                             fuzzyScore(typedPrefix,item.value("filterText",item.value("label",std::string{}))) < 0) continue;
                         auto text = item.value("insertText", item.value("label", std::string{}));
                         if (item.contains("textEdit")) {
                             const auto &edit = item.at("textEdit");
-                            const auto range = edit.value("range", edit.value("replace", Json()));
-                            const auto startText = tab->editor.GetSectionText({tab->runningCompletionStart.line, 0}, tab->runningCompletionStart);
-                            const auto endText = tab->editor.GetSectionText({tab->completionPosition.line, 0}, tab->completionPosition);
-                            if (!range.is_object() || range.at("start").at("line") != tab->runningCompletionStart.line || range.at("end").at("line") != tab->completionPosition.line || range.at("start").at("character") != LanguageClient::utf16Length(startText) || range.at("end").at("character") != LanguageClient::utf16Length(endText)) continue;
                             text = item["textEdit"].value("newText", text);
                         }
-                        if (!text.empty() && text.find('\n') == std::string::npos)
-                            suggestions.push_back(text);
+                        if (item.value("insertTextFormat",1)==2) {
+                            const auto plain=plainSnippet(text); if (!plain) continue; text=*plain;
+                        }
+                        if (text.find('\n')!=std::string::npos) text=item.value("label",std::string{});
+                        const auto details=item.value("labelDetails",Json::object());
+                        if (details.is_object() && details.contains("description") && details.at("description").is_string() && !details.at("description").get_ref<const std::string&>().empty()) text+="  — "+details.at("description").get<std::string>();
+                        for (auto &c : text) if (static_cast<unsigned char>(c)<32 || c==127) c=' ';
+                        if (text.size()>1024 || text.empty() || !unique.insert(text).second) continue;
+                        suggestions.push_back(text);indices.push_back(item.at("cycodeItemIndex"));
                         if (suggestions.size() >= 100)
                             break;
                     }
-                    suggestions.erase(std::unique(suggestions.begin(), suggestions.end()), suggestions.end());
+                    tab->completionSession=reply.at("sessionId");tab->completionItems=std::move(indices);
                     tab->lastSuggestions = suggestions;
                     tab->editor.SetAutoCompleteSuggestions(suggestions);
                 }
             } catch (const std::exception &e) {
                 if (testSession_) tab->completionTrace = {{"error", e.what()}};
+                tab->completionSession.clear();tab->completionItems.clear();
                 tab->editor.SetAutoCompleteSuggestions({});
             }
         }
-        if (!tab->completion.valid() && tab->queuedCompletion.is_object()) {
+        if (!tab->completion.valid() && !tab->completionAccept.valid() && tab->queuedCompletion.is_object()) {
             if (tab->editor.GetMainCursorPosition() != tab->queuedCompletionEnd) {
                 tab->queuedCompletion = nullptr; tab->editor.SetAutoCompleteSuggestions({}); continue;
             }
@@ -744,9 +866,9 @@ void Application::update() {
             // isIncomplete=false). Keep the widget's promise until the document's
             // first diagnostics publication, including an empty diagnostics list.
             const auto uri = LanguageClient::uri(engine_->workspace() / utf8Path(tab->path));
-            const bool managed = LanguageService::supportsManaged(tab->path);
-            const auto server = languageState_.value("servers",Json::object()).value(managed ? "csharp" : "cpp",Json::object());
-            if (!server.value("ready", false) || (!managed && (unrealAnalysisState_ == "preparing" || !server.value("diagnostics", Json::object()).contains(uri)))) continue;
+            const auto backend=languageBackend(tab->path);
+            const auto server = languageState_.value("servers",Json::object()).value(backend,Json::object());
+            if (!server.value("ready", false) || (backend=="cpp" && (unrealAnalysisState_ == "preparing" || !server.value("diagnostics", Json::object()).contains(uri)))) continue;
             auto parameters = std::move(tab->queuedCompletion);
             tab->queuedCompletion = nullptr;
             tab->completionRevision = tab->revision;
@@ -816,7 +938,7 @@ void Application::update() {
     if (ready(taskFuture_)) {
         try {
             auto result = taskFuture_.get();
-            if (taskMethod_.starts_with("msbuild.")) buildDiagnostics_ = result.value("diagnostics",Json::array());
+            if (taskMethod_.starts_with("msbuild.") || taskMethod_.starts_with("project.")) buildDiagnostics_ = result.value("diagnostics",Json::array());
             if (taskMethod_ == "unreal.generate" && result.value("exitCode", -1) == 0) {
                 solution_ = engine_->dispatch("workspace.describe").at("solution");
                 refreshFiles();
@@ -831,13 +953,22 @@ void Application::update() {
             }
             output_ += result.contains("output") ? result["output"].get<std::string>() : result.dump(2);
             output_ += "\n";
-            if (pendingDebugBuild_) { pendingDebugBuild_ = false; if (result.value("exitCode",-1) == 0) startDebug(false); }
-            if (result.value("exitCode", 0) != 0)
+            if (result.contains("terminal")) {
+                terminalId_ = result.at("terminal").at("id"); showPanel("Terminal","terminal"); focusTerminal_ = true; terminalScrollBottom_ = true;
+            }
+            if (taskMethod_=="project.debug" && result.contains("program")) {
+                debugProgram_ = result.at("program"); debugRuntime_ = "native"; debugCwd_ = projectProfile_.value("directory",".");
+                debugArgs_.clear(); for (const auto &arg : projectProfile_.value("args",Json::array())) debugArgs_ += arg.get<std::string>()+"\n";
+            }
+            if (pendingDebugBuild_) { pendingDebugBuild_ = false; if (result.value("exitCode",-1) == 0 && !result.value("cancelled",false)) startDebug(false); }
+            if (result.value("cancelled",false)) cyui::notify(tr("Task cancelled"),cyui::Tone::warning);
+            else if (result.value("exitCode", 0) != 0)
                 { error(tr("Task failed. See output.")); if (!buildDiagnostics_.empty()) showPanel("Problems","problems"); }
             else
                 cyui::notify(tr("Task completed"), cyui::Tone::success);
             refreshGit();
         } catch (const std::exception &e) {
+            pendingDebugBuild_ = false;
             error(e.what());
         }
     }
@@ -868,7 +999,8 @@ void Application::update() {
             dialog_->ready = false;
             if (!dialog_->path.empty())
                 try {
-                    if (dialog_->newWindow)
+                    if (dialog_->image) openImageFile(utf8Path(dialog_->path));
+                    else if (dialog_->newWindow)
                         newWindow(utf8Path(dialog_->path));
                     else
                         openProject(utf8Path(dialog_->path));
@@ -914,6 +1046,7 @@ void Application::chooseFolder() {
         dialog_->path.clear();
         dialog_->error.clear();
         dialog_->newWindow = false;
+        dialog_->image = false;
     }
     auto *state = new std::shared_ptr<Dialog>(dialog_);
     SDL_ShowOpenFolderDialog(
@@ -935,8 +1068,9 @@ void Application::chooseSolution(bool separate) {
         dialog_->path.clear();
         dialog_->error.clear();
         dialog_->newWindow = separate;
+        dialog_->image = false;
     }
-    static const SDL_DialogFileFilter filters[] = {{"Solutions / Unreal / MSBuild projects", "sln;uproject;vcxproj;csproj;fsproj;vbproj"},
+    static const SDL_DialogFileFilter filters[] = {{"Solutions / Unreal / Cargo / npm / Java", "sln;uproject;vcxproj;csproj;fsproj;vbproj;toml;json;java"},
                                                    {"Unreal project (.uproject)", "uproject"},
                                                    {"Visual Studio solution (.sln)", "sln"}};
     auto *state = new std::shared_ptr<Dialog>(dialog_);
@@ -1007,10 +1141,12 @@ void Application::menu() {
     if (!ImGui::BeginMainMenuBar()) return;
     for (const auto *category : {"File", "Edit", "Search", "Navigate", "Refactor", "Build", "Run", "View", "Project", "Version control"}) {
         if (!ImGui::BeginMenu(tr(category))) continue;
-        for (const auto &command : commands()) if (command.category == category) {
-            const auto hint = keymap_.hint(command.id);
-            if (ImGui::MenuItem(tr(command.title.c_str()), hint.empty() ? nullptr : hint.c_str(), false, commandEnabled(command.id))) executeCommand(command.id);
-        }
+        std::vector<cyui::FilterMenuItem> items;
+        for (const auto &command : commands()) if (command.category == category)
+            items.push_back({uiId("command/" + command.id), command.title, keymap_.hint(command.id), command.id,
+                             commandEnabled(command.id), false, {}});
+        const auto request = cyui::filterMenu(category, menuFilters_[category], items);
+        if (request) for (const auto &command : commands()) if (uiId("command/" + command.id) == request) { executeCommand(command.id); break; }
         ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
@@ -1022,7 +1158,7 @@ void Application::topBar() {
         cyui::textColoured(cyui::palette().accent, "CYCODE");
     }
     ImGui::SameLine();
-    cyui::badge("0.1", cyui::Tone::neutral);
+    cyui::badge(CYCODE_VERSION, cyui::Tone::neutral);
     ImGui::SameLine();
     cyui::toolbarSeparator();
     ImGui::SameLine();
@@ -1066,6 +1202,7 @@ void Application::statusBar() {
         if (tab->path == active_) {
             ImGui::SameLine();
             cyui::alignRight(cyui::dp(420));
+            if (tab->image) { cyui::textDim("%s",tr("Image preview")); continue; }
             auto pos = tab->editor.GetMainCursorPosition();
             cyui::textDim("%s  |  Ln %zu, Col %zu  |  UTF-8", tab->editor.GetLanguageName().c_str(),
                           pos.line + 1, pos.index + 1);
@@ -1089,7 +1226,7 @@ void Application::rail() {
 }
 void Application::layout(ImGuiID dock) {
     for (auto &[id, visible] : panels_)
-        visible = id != "refactoring" && id != "terminal" && id != "debugger";
+        visible = id != "refactoring" && id != "terminal" && id != "debugger" && id != "codeActions";
     ImGui::DockBuilderRemoveNode(dock);
     ImGui::DockBuilderAddNode(dock, ImGuiDockNodeFlags_DockSpace);
     ImGui::DockBuilderSetNodeSize(dock, ImGui::GetMainViewport()->WorkSize);
@@ -1104,9 +1241,12 @@ void Application::layout(ImGuiID dock) {
                                                             {"Unreal Engine", "unreal"},
                                                             {"CMake", "cmake"},
                                                             {"MSBuild", "msbuild"},
+                                                            {"Project tasks", "projectTasks"},
                                                             {"Version control", "vcs"},
                                                             {"Problems", "problems"},
                                                             {"References", "references"},
+                                                            {"Code information", "information"},
+                                                            {"Code actions", "codeActions"},
                                                             {"Refactoring", "refactoring"},
                                                             {"Terminal", "terminal"},
                                                             {"Debugger", "debugger"},
@@ -1206,7 +1346,7 @@ void Application::projectPanel() {
     if (cyui::iconButton(cyui::icon::refresh, tr("Refresh")))
         refreshFiles();
     ImGui::SetNextItemWidth(-1);
-    ImGui::InputTextWithHint("##filter", tr("Filter files..."), &fileFilter_);
+    viewFilter("##filter", filesFilter_);
     cyui::divider();
     if (solution_.is_object()) {
         cyui::textDim("%s", (solution_.at("name").get<std::string>() + ".sln").c_str());
@@ -1243,7 +1383,7 @@ void Application::projectPanel() {
         }
     }
     ImGui::BeginChild("##files");
-    if (solution_.is_object() && fileFilter_.empty()) {
+    if (solution_.is_object() && !filesFilter_.active()) {
         if (ImGui::TreeNodeEx(tr("Solution"), ImGuiTreeNodeFlags_DefaultOpen)) {
             solutionTree("");
             ImGui::TreePop();
@@ -1254,13 +1394,12 @@ void Application::projectPanel() {
     if (files_.empty())
         cyui::emptyState(tr(filesFuture_.valid() ? "Loading files..." : "No files"), tr("Open a workspace or refresh the file list."),
                          cyui::icon::folder);
-    else if (fileFilter_.empty()) {
+    else if (!filesFilter_.active()) {
         tree(tree_, "");
         revealPath_.clear();
     } else {
-        auto filter = lower(fileFilter_);
         for (const auto &path : files_)
-            if (lower(path).find(filter) != std::string::npos)
+            if (filesFilter_.matches(path, path))
                 if (fileSelectable(path, path, active_ == path, theme_))
                     open(path);
     }
@@ -1312,21 +1451,32 @@ void Application::editorPanel() {
                 active_ = tab->path;
             cyui::space(4);
             cyui::textFaint("  %s", tab->displayPath.c_str());
+            if (tab->image) imagePanel(tab);
+            else {
+            if (tab->snippet.active()) {
+                ImGui::SameLine();cyui::badge((std::string(tr("Snippet parameter"))+" "+std::to_string(tab->snippet.index())).c_str(),cyui::Tone::accent);
+                cyui::tooltip(tr("Tab: next | Shift+Tab: previous | Esc: finish"));
+                const auto choices=tab->snippet.choices();
+                if (!choices.empty()) {
+                    ImGui::SameLine();ImGui::SetNextItemWidth(cyui::dp(160));
+                    if (ImGui::BeginCombo(("##snippet-choice"+tab->path).c_str(),tr("Snippet choices"))) {
+                        for (size_t i=0;i<choices.size();++i) { ImGui::PushID(static_cast<int>(i));if (ImGui::Selectable(choices[i].c_str())) {
+                            try { tab->snippet.choose(i);changed(tab);tab->editor.SetFocus(); } catch (const std::exception &e) { error(e.what()); }
+                        }ImGui::PopID(); }
+                        ImGui::EndCombo();
+                    }
+                }
+            }
             if (tab->readOnly) { ImGui::SameLine(); cyui::badge(tr(tab->path.starts_with("debug://") ? "Read-only debugger source" : "Read-only SDK source"), cyui::Tone::neutral); }
             cyui::divider(4);
-            tab->editor.SetPalette(editorPalette(theme_));
-            tab->editor.SetFindButtonLabel(tr("Find"));
-            tab->editor.SetReplaceButtonLabel(tr("Replace"));
-            tab->editor.SetFindAllButtonLabel(tr("Find all"));
-            tab->editor.SetReplaceAllButtonLabel(tr("Replace all"));
-            cyui::ScopedFont mono(cyui::monoFont());
             const auto undoBefore = tab->editor.GetUndoIndex();
-            const bool renderedChange = tab->editor.Render(("##text" + tab->path).c_str());
+            const bool renderedChange = tab->codeEditor.draw(("##text" + tab->path).c_str());
             // Popup edits occur after the widget's Render change flag is computed.
             // Include their transactions so completion/replace reaches Engine now.
             if (renderedChange || tab->editor.GetUndoIndex() != undoBefore)
                 changed(tab);
             if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !(ImGui::GetActiveID() && ImGui::GetCurrentContext()->InputTextState.ID == ImGui::GetActiveID())) editorFocused_ = true;
+            }
         }
         if (ImGui::BeginPopupContextWindow("##document-actions", ImGuiPopupFlags_MouseButtonRight |
                                                                      ImGuiPopupFlags_NoOpenOverItems)) {
@@ -1390,11 +1540,20 @@ void Application::searchPanel() {
 void Application::outputPanel() {
     if (!beginPanel("Build", "build"))
         return;
+    if (projectActive_) {
+        cyui::textDim("%s",projectState_.value("name",projectState_.value("kind","")).c_str()); ImGui::SameLine();
+        { cyui::ScopedDisabled disabled(taskFuture_.valid()); if (cyui::button(tr("Build project"))) task("build.run"); }
+        ImGui::SameLine(); if (cyui::button(tr("Project tasks"))) showPanel("Project tasks","projectTasks");
+        if (taskFuture_.valid() && taskMethod_.starts_with("project.")) { ImGui::SameLine(); if (cyui::button(tr("Cancel task"))) engine_->dispatch("project.cancel"); }
+        ImGui::SameLine(); if (cyui::ghostButton(tr("Copy output"))) ImGui::SetClipboardText(output_.c_str());
+        outputLog_.synchronize(output_); cyui::logView("##output", outputLog_.state, outputLog_.buffer);
+        ImGui::End(); return;
+    }
     if (msbuildActive_) {
         cyui::textDim("%s | %s",msbuildConfiguration_.c_str(),msbuildPlatform_.c_str()); ImGui::SameLine();
         { cyui::ScopedDisabled disabled(taskFuture_.valid()); if (cyui::button(tr("Build project"))) task("build.run"); ImGui::SameLine(); if (cyui::button(tr("MSBuild settings"))) showPanel("MSBuild","msbuild"); }
         ImGui::SameLine(); if (cyui::ghostButton(tr("Copy output"))) ImGui::SetClipboardText(output_.c_str());
-        { cyui::ScopedFont mono(cyui::monoFont(),.9f); ImGui::InputTextMultiline("##output",&output_,{-1,-1},ImGuiInputTextFlags_ReadOnly); }
+        outputLog_.synchronize(output_); cyui::logView("##output", outputLog_.state, outputLog_.buffer);
         ImGui::End(); return;
     }
     ImGui::SetNextItemWidth(cyui::dp(100));
@@ -1429,10 +1588,7 @@ void Application::outputPanel() {
     if (cyui::ghostButton(tr(unreal_.value("available", false) ? "Unreal Engine" : "CMake settings")))
         showPanel(unreal_.value("available", false) ? "Unreal Engine" : "CMake",
                   unreal_.value("available", false) ? "unreal" : "cmake");
-    {
-        cyui::ScopedFont mono(cyui::monoFont(), .9f);
-        ImGui::InputTextMultiline("##output", &output_, ImVec2(-1, -1), ImGuiInputTextFlags_ReadOnly);
-    }
+    outputLog_.synchronize(output_); cyui::logView("##output", outputLog_.state, outputLog_.buffer);
     ImGui::End();
 }
 void Application::applyUnreal(const Json &value) {
@@ -1537,6 +1693,7 @@ void Application::unrealPanel() {
 void Application::cmakePanel() {
     if (!beginPanel("CMake", "cmake"))
         return;
+    if (projectActive_) { if (cyui::button(tr("Project tasks"))) showPanel("Project tasks","projectTasks"); ImGui::End(); return; }
     if (msbuildActive_) { cyui::textDim("%s",tr("This project uses MSBuild.")); if (cyui::button(tr("MSBuild settings"))) showPanel("MSBuild","msbuild"); ImGui::End(); return; }
     if (unreal_.value("available", false)) {
         cyui::textDim("%s", tr("This project uses UnrealBuildTool."));
@@ -1668,53 +1825,24 @@ void Application::problemsPanel() {
     if (!beginPanel("Problems", "problems"))
         return;
     const auto servers = languageState_.value("servers",Json::object());
-    for (const auto &server : servers) {
+    for (const auto &[key,server] : servers.items()) {
+        ImGui::PushID(key.c_str());
         const auto label = server.value("name","") + " : " + tr(server.value("ready",false) ? "Connected" : server.value("running",false) ? "Starting..." : server.value("enabled",false) ? "Idle" : "Disabled");
-        cyui::badge(label.c_str(),server.value("ready",false) ? cyui::Tone::success : cyui::Tone::neutral); ImGui::SameLine();
-    }
-    ImGui::SameLine();
-    if (cyui::button(tr("Restart language server"))) {
-        engine_->configureLanguage(clangd_, !smoke_, true);
-    }
-    size_t count = buildDiagnostics_.size();
-    if (!buildDiagnostics_.empty()) {
-        cyui::sectionTitle(tr("Build diagnostics"));
-        size_t index = 0;
-        for (const auto &diagnostic : buildDiagnostics_) {
-            const auto path = diagnostic.value("path",""); const auto label = (path.empty() ? diagnostic.value("displayPath","") : path)+":"+std::to_string(diagnostic.value("line",size_t(1)))+"  "+diagnostic.value("code","")+"  "+diagnostic.value("message","");
-            ImGui::PushID(int(index++)); { cyui::ScopedDisabled disabled(path.empty()); if (ImGui::Selectable(label.c_str())) open(path,diagnostic.value("line",size_t(1)),diagnostic.value("column",size_t(1))); }
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) { ImGui::BeginTooltip(); ImGui::PushTextWrapPos(cyui::dp(720)); ImGui::TextUnformatted(label.c_str()); ImGui::PopTextWrapPos(); ImGui::EndTooltip(); } ImGui::PopID();
+        cyui::badge(label.c_str(),server.value("ready",false) ? cyui::Tone::success : cyui::Tone::neutral);
+        ImGui::SameLine();
+        { cyui::ScopedDisabled disabled(smoke_ || !server.value("available",false));
+          if (cyui::button(tr(server.value("enabled",false) ? "Restart language server" : "Enable"))) {
+              languageDecisions_.insert(key);
+              try { engine_->dispatch("language.configure",{{"language",key}}); } catch (const std::exception &e) { error(e.what()); }
+          }
         }
-        cyui::divider();
+        if (server.value("enabled",false)) {
+            ImGui::SameLine();
+            if (cyui::button(tr("Disable"))) { languageDecisions_.insert(key); engine_->dispatch("language.configure",{{"language",key},{"enabled",false}}); }
+        } else if (!server.value("available",false)) { ImGui::SameLine(); ImGui::TextDisabled("%s",tr("Language server is not installed")); }
+        ImGui::PopID();
     }
-    const auto diagnostics = languageState_.value("diagnostics", Json::object());
-    for (const auto &[uri, entries] : diagnostics.items())
-        for (const auto &diagnostic : entries) {
-            ++count;
-            auto location = diagnostic["range"]["start"];
-            std::string source;
-            try { source = pathUtf8(engine_->resolve(pathUtf8(LanguageClient::fromUri(uri))).lexically_relative(engine_->workspace())); }
-            catch (const std::exception &) { continue; }
-            const auto code = diagnostic.value("code",Json());
-            const auto message = source+":"+std::to_string(location["line"].get<int>() + 1) + "  " +
-                           (code.is_string() ? code.get<std::string>() : code.is_number() ? code.dump() : "")+"  "+diagnostic.value("message", std::string{});
-            ImGui::PushID(uri.c_str()); ImGui::PushID(int(count));
-            if (ImGui::Selectable(message.c_str())) {
-                try {
-                    auto path = pathUtf8(engine_->resolve(pathUtf8(LanguageClient::fromUri(uri)))
-                                             .lexically_relative(engine_->workspace()));
-                    open(path, location["line"].get<size_t>() + 1, location["character"].get<size_t>() + 1,
-                         true);
-                } catch (const std::exception &e) {
-                    error(e.what());
-                }
-            }
-            if (ImGui::IsItemHovered()) { ImGui::BeginTooltip(); ImGui::PushTextWrapPos(cyui::dp(720)); ImGui::TextUnformatted(message.c_str()); ImGui::PopTextWrapPos(); ImGui::EndTooltip(); }
-            ImGui::PopID(); ImGui::PopID();
-        }
-    if (!count)
-        cyui::emptyState(tr("No diagnostics"), tr("Diagnostics from C++ and C# language servers appear here."),
-                         cyui::icon::check);
+    problemRows();
     auto message = languageState_.value("error", std::string{});
     if (!message.empty())
         ImGui::TextWrapped("%s", message.c_str());
@@ -1843,7 +1971,7 @@ void Application::mcpPanel() {
     }
     cyui::divider();
     cyui::textDim("%s", tr("Available services"));
-    ImGui::TextWrapped("%s", tr("Workspace, live documents, C++/C#, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. "
+    ImGui::TextWrapped("%s", tr("Workspace, live documents, language services, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. "
                                 "MCP sessions use CyToolsCore jobs and permissions."));
     ImGui::End();
 }
@@ -1851,36 +1979,10 @@ void Application::optionsPanel() {
     if (!options_)
         return;
     ImGui::SetNextWindowSize(cyui::dp(620, 500), ImGuiCond_FirstUseEver);
-    ImGui::Begin(label("Options", "options").c_str(), &options_);
-    if (cyui::beginProperties("##options", 160)) {
-        cyui::property(tr("Language"));
-        if (ImGui::BeginCombo("##locale", locale_ == "fr" ? "Francais" : "English")) {
-            if (ImGui::Selectable("English", locale_ == "en"))
-                locale_ = "en";
-            if (ImGui::Selectable("Francais", locale_ == "fr"))
-                locale_ = "fr";
-            ImGui::EndCombo();
-        }
-        cyui::property(tr("Theme"));
-        if (ImGui::BeginCombo("##theme", theme_.c_str())) {
-            if (ImGui::Selectable(tr("Graphite"), theme_ == "graphite")) {
-                theme_ = "graphite";
-                applyEditorTheme(theme_);
-            }
-            for (const auto &theme : cyui::builtInThemes())
-                if (ImGui::Selectable(theme.name.c_str(), theme.key == theme_)) {
-                    theme_ = theme.key;
-                    applyEditorTheme(theme_);
-                }
-            ImGui::EndCombo();
-        }
-        cyui::property(tr("Text size"));
-        if (ImGui::SliderFloat("##scale", &textScale_, .8f, 2.0f, "%.2f"))
-            ImGui::GetStyle().FontScaleMain = textScale_;
-        cyui::property("clangd");
-        ImGui::InputText("##clangd", &clangd_);
-        cyui::endProperties();
+    if (!ImGui::Begin(label("Options", "options").c_str(), &options_)) {
+        cancelPropertyDrafts(optionsInspector_); ImGui::End(); return;
     }
+    optionsProperties();
     keymapOptions();
     if (cyui::button(tr("Save preferences")))
         saveSettings();
@@ -1896,6 +1998,7 @@ void Application::optionsPanel() {
         try {
             std::ifstream in(root_ / "data/settings/configuration.json");
             auto value = Json::parse(in);
+            cancelPropertyDrafts(optionsInspector_); ++optionsRevision_;
             theme_ = value.at("theme");
             locale_ = value.at("language");
             textScale_ = std::clamp(value.at("textScale").get<float>() * (value.value("schemaVersion", 1) < 3 ? 1.15f : 1.0f), .8f, 2.0f);
@@ -1911,6 +2014,7 @@ void Application::optionsPanel() {
     }
     cyui::divider();
     cyui::sectionTitle(tr("Licenses"));
+    ImGui::TextWrapped("CyUI (MIT): https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE");
     ImGui::TextWrapped("%s", tr("CyCode: license to be selected before publication. CyUI, Dear ImGui, "
                                 "TextEditor, CyToolsCore and nlohmann/json: MIT. SDL3: zlib."));
     ImGui::TextWrapped("%s", tr("libvterm and CodeLLDB: MIT. LLVM: Apache 2.0 with LLVM exceptions. Embedded Python: PSF."));
@@ -1921,7 +2025,20 @@ void Application::optionsPanel() {
     ImGui::End();
 }
 void Application::palette() {
-    quickOpenVisible_ = false;
+    if (paletteOpen_ && paletteMode_ == "actions") {
+        actionPaletteOpen_ = true; paletteOpen_ = false;
+    }
+    std::vector<cyui::Command> actions;
+    const auto loadActions = [&] {
+        if (!actions.empty()) return;
+        for (const auto &command : commands()) actions.push_back({uiId("command/" + command.id),
+            command.title, keymap_.hint(command.id), command.category + " " + command.id, commandEnabled(command.id)});
+    };
+    if (actionPaletteOpen_) loadActions();
+    const auto requested = cyui::commandPalette("Find action...", actionPaletteOpen_, actionPaletteState_, actions, cyui::dp(850, 570));
+    if (requested) for (const auto &command : commands()) if (uiId("command/" + command.id) == requested) { executeCommand(command.id); break; }
+    quickOpenVisible_ = actionPaletteOpen_;
+    if (actionPaletteOpen_) { paletteFilter_ = actionPaletteState_.query; return; }
     if (paletteOpen_) {
         ImGui::OpenPopup("##quickopen"); paletteOpen_ = false; paletteFilter_.clear(); paletteSelection_ = 0;
         symbolWantedKey_.clear(); symbolSentKey_.clear(); symbolResults_ = Json::object(); symbolError_.clear(); symbolAttempts_ = 0;
@@ -1950,7 +2067,8 @@ void Application::palette() {
     }
     const bool wantSymbols = !smoke_ && (mode == "types" || mode == "symbols" || mode == "members" || (mode == "everywhere" && !query.empty()));
     if (wantSymbols) {
-        Json parameters = {{"query", query}, {"language",LanguageService::supportsManaged(active_) ? "csharp" : "cpp"}, {"typesOnly", mode == "types"}, {"includeExternal", true}, {"limit", 500}};
+        auto backend=languageBackend(active_); if (backend.empty()) backend="cpp";
+        Json parameters = {{"query", query}, {"language",backend}, {"typesOnly", mode == "types"}, {"includeExternal", true}, {"limit", 500}};
         std::string method = "language.symbols";
         if (mode == "members") {
             method = "language.documentSymbols";
@@ -1967,11 +2085,16 @@ void Application::palette() {
     struct Item { std::string id, title; int kind, score; Json location; };
     std::vector<Item> items;
     if (mode == "actions" || mode == "everywhere") {
-        for (const auto &command : commands()) {
+        loadActions();
+        const auto ranked = cyui::rankCommands(actions, query);
+        for (size_t commandIndex = 0; commandIndex < commands().size(); ++commandIndex) {
+            const auto &command = commands()[commandIndex];
             const auto name = std::string(tr(command.title.c_str()));
             auto title = std::string(tr(command.category.c_str())) + ": " + name;
             int score = std::max({fuzzyScore(query, name),fuzzyScore(query, title),fuzzyScore(query, command.id)});
             if (!query.empty() && (lower(query) == lower(name) || lower(query) == lower(command.id))) score += 10000;
+            const auto common = std::find(ranked.begin(), ranked.end(), commandIndex);
+            if (common != ranked.end()) score = std::max(score, 1000 - int(common - ranked.begin()));
             if (score >= 0) items.push_back({command.id, title, 1, score, nullptr});
         }
     }
@@ -2102,6 +2225,9 @@ void Application::windowTest() {
     }
 }
 void Application::frame() {
+    outputLog_.synchronize(output_);
+    cyui::setLocale(locale_.c_str());
+    if (!options_) cancelPropertyDrafts(optionsInspector_);
     update();
     shortcuts();
     if (testWindows_)
@@ -2128,9 +2254,12 @@ void Application::frame() {
     unrealPanel();
     cmakePanel();
     msbuildPanel();
+    projectTasksPanel();
     gitPanel();
     problemsPanel();
     referencesPanel();
+    informationPanel();
+    codeActionsPanel();
     refactorPanel();
     terminalPanel();
     debugPanel();
@@ -2146,6 +2275,7 @@ void Application::frame() {
         showPanel("CMake", "cmake");
         focusCmake_ = false;
     }
+    if (focusProjectTasks_) { showPanel("Project tasks","projectTasks"); focusProjectTasks_ = false; }
     if (focusUnreal_) {
         showPanel("Unreal Engine", "unreal");
         focusUnreal_ = false;

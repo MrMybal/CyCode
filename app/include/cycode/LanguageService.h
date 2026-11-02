@@ -1,22 +1,26 @@
 #pragma once
 #include "cycode/LanguageClient.h"
+#include "cycode/Languages.h"
 #include <future>
 #include <optional>
 
 namespace cycode {
-// Routes live documents to independent bounded C++ and C# server owners.
+// Routes live documents to independent bounded language-server owners.
 class LanguageService {
   public:
     explicit LanguageService(std::filesystem::path root, bool managed = false);
     ~LanguageService();
     void configure(std::string executable, bool enabled, bool prewarm);
     void configureManaged(std::string executable, bool enabled, bool prewarm = true);
+    void configureBackend(const std::string &backend, const std::vector<std::string> &argv,
+                          const Json &settings, bool enabled, bool prewarm=true);
     void setProject(const std::filesystem::path &entry);
     void setCompilationDatabase(std::filesystem::path directory, bool reload = false);
     void sync(const std::string &path, const std::string &text, std::uint64_t revision);
     void close(const std::string &path);
     std::future<Json> request(std::string method, Json params);
     Json status() const;
+    uint64_t epoch(const std::string &path) const;
     static bool supports(const std::string &path);
     static bool supportsCpp(const std::string &path);
     static bool supportsManaged(const std::string &path);
@@ -25,6 +29,7 @@ class LanguageService {
     static std::string managedHost();
 
   private:
+    LanguageService(std::filesystem::path root, std::string backend);
     struct Document {
         std::string text;
         std::uint64_t revision;
@@ -40,7 +45,11 @@ class LanguageService {
     void run();
     std::filesystem::path root_;
     bool managed_;
-    std::unique_ptr<LanguageService> managedService_;
+    std::string backend_;
+    std::map<std::string,std::unique_ptr<LanguageService>> children_;
+    std::vector<std::string> argv_;
+    Json settings_=Json::object();
+    Json environment_=Json::object();
     mutable std::mutex mutex_;
     std::condition_variable wake_;
     bool stopping_ = false, reconfigure_ = false, enabled_ = true, prewarm_ = false;
@@ -50,6 +59,7 @@ class LanguageService {
     std::map<std::string, std::optional<Document>> updates_;
     std::deque<std::shared_ptr<Query>> queries_;
     size_t outstanding_ = 0;
+    uint64_t epoch_ = 0;
     Json status_ = {{"ready", false}, {"running", false}, {"error", ""}, {"diagnostics", Json::object()}};
     std::thread worker_;
 };

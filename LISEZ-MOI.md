@@ -3,6 +3,17 @@
 Lancer **CyCode.exe**. Le programme ouvre une interface native C++ utilisant CyUI.
 La licence du projet reste à choisir avant une éventuelle publication open source.
 
+Version **0.2.0** : [notes de version](CHANGELOG.md) et
+[téléchargements GitHub](https://github.com/MrMybal/CyCode/releases).
+Extraire le ZIP complet dans un dossier accessible en écriture, puis lancer CyCode.exe.
+Le runtime Visual C++ 2022 x64 et un pilote OpenGL 3.3 sont nécessaires.
+Le paquet inclut la recherche ripgrep ; les serveurs de langage, compilateurs,
+débogueurs et le runtime MCP privé nécessitent leur installation séparée.
+
+La bibliothèque [CyUI](https://github.com/MrMybal/CyUI), encore privée, est sous
+[licence MIT](https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE).
+Une [copie locale de sa licence](app/licenses/CyUI.txt) est fournie.
+
 - **Fichier > Ouvrir une solution** : ouvrir directement un `.sln` ou `.uproject` ; un dossier reste possible.
 - **Ctrl+Alt+F** : retrouver un fichier ; **double Maj** : rechercher partout.
 - Profil **Rider** : **Ctrl+N** cherche un type, **Alt+Inser** crée un fichier,

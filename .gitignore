@@ -2,6 +2,9 @@
 /data/
 /.cycode/
 /CyCode.exe
+/CyCodeReader.exe
+/CyCode
+/CyCodeReader
 __pycache__/
 *.pyc
 .DS_Store
@@ -22,3 +25,4 @@ __pycache__/
 /.vs/
 /.idea/
 /gitleaks-report.*
+*.cycode-save-*

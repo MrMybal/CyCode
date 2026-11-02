@@ -1,0 +1,10 @@
+{
+  "name": "cycode-web-languages",
+  "private": true,
+  "version": "0.1.0",
+  "dependencies": {
+    "typescript": "5.9.3",
+    "typescript-language-server": "5.0.1",
+    "vscode-langservers-extracted": "4.10.0"
+  }
+}

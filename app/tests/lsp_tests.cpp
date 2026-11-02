@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
         const std::string name = "résumé #1.cpp";
         const auto source = root / utf8Path(name);
         const std::string header =
-            "#pragma once\nstruct Widget { int number; void print(); };\nint compute(const Widget&);\n";
+            "#pragma once\nstruct Widget { int number; void print(); int calculate(int left, int right); };\nint compute(const Widget&);\n";
         const std::string implementation =
             "#include \"widget.hpp\"\nint compute(const Widget& w) { return w.number; }\n";
         const std::string disk = "#include \"widget.hpp\"\nint main() { const char* s = \"🛠\"; Widget "
@@ -133,13 +133,26 @@ int main(int argc, char **argv) {
             doc = engine.dispatch(
                 "documents.replace",
                 {{"path", name}, {"text", completionText}, {"expectedRevision", doc["revision"]}});
-            auto completion = query("language.complete", completionText, " }")["result"];
-            const auto items = completion.is_array() ? completion : completion.value("items", Json::array());
+            auto completion = query("language.complete", completionText, " }");
+            const auto items = completion.at("result").at("items");
             bool found = false;
             for (const auto &item : items)
                 if (item.value("label", std::string{}).find("number") != std::string::npos)
                     found = true;
             require(found, "Shared service retains real member completion");
+            const auto selected=std::find_if(items.begin(),items.end(),[](const Json &item) { return item.value("label",std::string{}).find("number")!=std::string::npos; });
+            const auto prepared=engine.dispatch("language.completionPrepare",{{"sessionId",completion.at("sessionId")},{"item",std::distance(items.begin(),selected)},{"expectedRevision",doc.at("revision")}});
+            const auto preview=engine.dispatch("changes.preview",{{"id",prepared.at("plan").at("id")},{"path",name}});
+            require(preview.at("after").get<std::string>().find("widget.number")!=std::string::npos,"clangd resolved insertion preview");
+            engine.dispatch("changes.apply",{{"id",prepared.at("plan").at("id")}});engine.dispatch("changes.undo",{{"id",prepared.at("plan").at("id")}});
+            doc=engine.dispatch("documents.read",{{"path",name}});
+            const auto callText=std::string("#include \"widget.hpp\"\nvoid test() { Widget widget; widget.cal }\n");
+            doc=engine.dispatch("documents.replace",{{"path",name},{"text",callText},{"expectedRevision",doc.at("revision")}});
+            const auto calls=query("language.complete",callText," }");const auto &callItems=calls.at("result").at("items");
+            const auto callable=std::find_if(callItems.begin(),callItems.end(),[](const Json &item) { return item.value("label",std::string{}).find("calculate")!=std::string::npos; });
+            require(callable!=callItems.end(),"clangd callable completion missing");
+            const auto callPlan=engine.dispatch("language.completionPrepare",{{"sessionId",calls.at("sessionId")},{"item",std::distance(callItems.begin(),callable)},{"expectedRevision",doc.at("revision")}});
+            require(callPlan.at("snippet").is_object() && callPlan.at("snippet").at("fields").size()==2,"Actual clangd parameter placeholders missing: "+callPlan.dump());
             require(engine.languageStatus()["ready"].get<bool>(), "Shared service status");
             std::ifstream in(source, std::ios::binary);
             std::string actual((std::istreambuf_iterator<char>(in)), {});

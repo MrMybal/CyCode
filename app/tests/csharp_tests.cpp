@@ -46,6 +46,19 @@ int main() {
             auto query = [&](const std::string &method) { return engine.dispatch(method,{{"path","App/Consumer.cs"},{"expectedRevision",doc["revision"]},{"position",position(doc["text"],"Value")}}); };
             const auto definition = eventually([&] { return query("language.definition"); },[](const Json &j) { return !j.at("locations").empty(); });
             require(definition.at("locations")[0].at("path") == "Library/Counter.cs","Cross-project definition: "+definition.dump());
+            const auto hover=eventually([&] { return query("language.hover"); },[](const Json &j) { return j.at("available").get<bool>(); });
+            require(hover.dump().find("Value")!=std::string::npos,"C# field documentation missing: "+hover.dump());
+            const std::string signatureText="using Demo;\npublic class Consumer { public int Read(Counter c) { return System.Math.Max(1, 2); } }\n";
+            doc=engine.dispatch("documents.replace",{{"path","App/Consumer.cs"},{"expectedRevision",doc.at("revision")},{"text",signatureText}});
+            const auto signature=eventually([&] { return engine.dispatch("language.signature",{{"path","App/Consumer.cs"},{"expectedRevision",doc.at("revision")},{"position",position(signatureText,"2);")}}); },[](const Json &j) { return j.at("available").get<bool>(); });
+            const auto &activeSignature=signature.at("signatures")[signature.at("activeSignature").get<int>()];
+            require(activeSignature.at("parameters").size()==2,"C# method parameters missing");
+            // csharp-ls 0.28 omits the index after the final separator. Do not
+            // show the first parameter as active when the provider did not say so.
+            require(activeSignature.at("activeParameter")==-1,"C# missing active index was fabricated: "+signature.dump());
+            const auto firstArgument=engine.dispatch("language.signature",{{"path","App/Consumer.cs"},{"expectedRevision",doc.at("revision")},{"position",position(signatureText,"1,")}});
+            require(firstArgument.at("signatures")[firstArgument.at("activeSignature").get<int>()].at("activeParameter")==0,"C# reported first argument was lost");
+            doc=engine.dispatch("documents.replace",{{"path","App/Consumer.cs"},{"expectedRevision",doc.at("revision")},{"text",app}});
             const auto colors=engine.dispatch("language.highlight",{{"path","App/Consumer.cs"},{"expectedRevision",doc.at("revision")}});
             if (colors.at("supported").get<bool>()) require(!colors.at("tokens").empty(),"Advertised C# semantic color provider returned no tokens");
             else require(colors.at("tokens").empty(),"Unsupported C# color provider must retain lexical fallback");
@@ -68,6 +81,14 @@ int main() {
             doc = engine.dispatch("documents.replace",{{"path","App/Consumer.cs"},{"expectedRevision",doc["revision"]},{"text","using Demo;\npublic class Consumer { public int Read(Counter c) { return c.Un; } }\n"}});
             auto completion = eventually([&] { return engine.dispatch("language.complete",{{"path","App/Consumer.cs"},{"expectedRevision",doc["revision"]},{"position",position(doc["text"],"c.Un",4)}}); },[](const Json &j) { return j.dump().find("UnsavedMember") != std::string::npos; });
             require(!completion.at("result").is_null(),"Completion from unsaved referenced project");
+            const auto &items=completion.at("result").at("items");
+            const auto selected=std::find_if(items.begin(),items.end(),[](const Json &item) { return item.at("label").get<std::string>().starts_with("UnsavedMember"); });
+            require(selected!=items.end(),"Managed completion candidate missing");
+            const auto prepared=engine.dispatch("language.completionPrepare",{{"sessionId",completion.at("sessionId")},{"item",std::distance(items.begin(),selected)},{"expectedRevision",doc.at("revision")}});
+            const auto preview=engine.dispatch("changes.preview",{{"id",prepared.at("plan").at("id")},{"path","App/Consumer.cs"}});
+            require(preview.at("after").get<std::string>().find("c.UnsavedMember")!=std::string::npos,"Managed resolve insertion failed");
+            engine.dispatch("changes.apply",{{"id",prepared.at("plan").at("id")}});engine.dispatch("changes.undo",{{"id",prepared.at("plan").at("id")}});
+            doc=engine.dispatch("documents.read",{{"path","App/Consumer.cs"}});
             doc = engine.dispatch("documents.replace",{{"path","App/Consumer.cs"},{"expectedRevision",doc["revision"]},{"text","public  class Consumer{public   int Broken=\"bad\";}\n"}});
             auto diagnostics = eventually([&] { return engine.languageStatus(); },[](const Json &j) { return j.at("diagnostics").dump().find("CS0029") != std::string::npos; });
             require(diagnostics.at("servers").at("csharp").at("ready"),"Managed service state");

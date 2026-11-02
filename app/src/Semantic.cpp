@@ -130,7 +130,8 @@ Json Engine::symbolQuery(const std::string &method, const Json &params) {
             auto query = params.value("query", "");
             if (query.size() > 256) throw std::runtime_error("Symbol query exceeds 256 bytes");
             const auto backend = params.value("language","cpp");
-            if (backend != "cpp" && backend != "csharp") throw std::runtime_error("Unknown symbol search language");
+            const auto &backends=languageBackends();
+            if (std::find(backends.begin(),backends.end(),backend)==backends.end()) throw std::runtime_error("Unknown symbol search language");
             request = {{"query", query}, {"cycodeLanguage",backend}};
         }
         generation = nextRevision_;
@@ -173,7 +174,7 @@ Json Engine::symbolQuery(const std::string &method, const Json &params) {
 }
 Json Engine::prepareChange(const std::string &method, const Json &params) {
     const auto key = pathUtf8(resolve(params.at("path").get<std::string>()).lexically_relative(root_));
-    if (!LanguageService::supports(key)) throw std::runtime_error("Refactoring supports C/C++ and C# documents");
+    if (!LanguageService::supports(key)) throw std::runtime_error("No language backend for this file type");
     std::string before, oldName; std::uint64_t revision, generation;
     Json request;
     const bool rename = method == "language.rename";
@@ -186,8 +187,12 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
             (void)utf16Offset(before, params.at("position"));
             request["position"] = params.at("position");
             const auto name = params.at("newName").get<std::string>();
-            if (name.empty() || name.size() > 256 || (name[0] >= '0' && name[0] <= '9')) throw std::runtime_error("Invalid C++ identifier");
-            for (unsigned char c : name) if (c < 128 && !(std::isalnum(c) || c == '_')) throw std::runtime_error("Invalid C++ identifier");
+            if (name.empty() || name.size() > 256) throw std::runtime_error("Invalid identifier");
+            for (unsigned char c : name) if (c<33 || c==127) throw std::runtime_error("Invalid identifier");
+            if (LanguageService::supportsCpp(key) || LanguageService::supportsManaged(key)) {
+                if (name[0]>='0' && name[0]<='9') throw std::runtime_error("Invalid identifier");
+                for (unsigned char c : name) if (c<128 && !(std::isalnum(c) || c=='_')) throw std::runtime_error("Invalid identifier");
+            }
             (void)Json(name).dump();
         } else {
             const auto size = params.value("tabSize", 4);
@@ -211,14 +216,51 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
     Json edits;
     std::string title;
     if (rename) {
-        auto prepared = ask("textDocument/prepareRename", request);
+        // CSS supports rename without prepareRename. Its symbol range is the
+        // current selector identifier; the server still computes every edit.
+        Json prepared;
+        if (languageBackend(key)=="css") {
+            const auto offset=utf16Offset(before,request.at("position"));size_t a=offset,b=offset;
+            auto identifier=[](unsigned char c) { return c>=128 || std::isalnum(c) || c=='_' || c=='-'; };
+            while (a && identifier(before[a-1])) --a;
+            while (b<before.size() && identifier(before[b])) ++b;
+            if (a && (before[a-1]=='.' || before[a-1]=='#')) --a;
+            auto position=[&](size_t at) { const auto start=before.rfind('\n',at ? at-1 : 0);const auto lineStart=start==std::string::npos ? 0 : start+1;
+                return Json{{"line",std::count(before.begin(),before.begin()+at,'\n')},{"character",LanguageClient::utf16Length(before.substr(lineStart,at-lineStart))}}; };
+            prepared={{"start",position(a)},{"end",position(b)}};
+        } else prepared = ask("textDocument/prepareRename", request);
         if (prepared.is_null()) throw std::runtime_error("The selected symbol cannot be renamed");
         const auto range = prepared.value("range", prepared);
         const auto a = utf16Offset(before, range.at("start")), b = utf16Offset(before, range.at("end"));
         if (b <= a) throw std::runtime_error("The selected symbol has no renameable range");
         oldName = before.substr(a, b-a);
         request["newName"] = params.at("newName");
+        if (languageBackend(key)=="css" && (oldName.starts_with('.') || oldName.starts_with('#'))) {
+            auto name=request.at("newName").get<std::string>();
+            if (!name.starts_with('.') && !name.starts_with('#')) request["newName"]=oldName.substr(0,1)+name;
+        }
         edits = ask("textDocument/rename", request);
+        if (!LanguageService::supportsCpp(key) && !LanguageService::supportsManaged(key)) {
+            // A server may coalesce edits over whole method bodies. Acquire disk
+            // baselines and send live versions for previously unopened targets,
+            // then recompute the edits against those exact buffers. The first
+            // response is never applied to freshly read disk content.
+            bool synchronize=false;
+            {
+                std::lock_guard lock(mutex_);
+                if (generation!=nextRevision_) throw std::runtime_error("RevisionConflict: workspace changed during refactoring");
+                std::set<std::string> paths;
+                if (edits.is_object() && edits.contains("changes")) for (const auto &[uri,list] : edits.at("changes").items()) paths.insert(pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(uri))).lexically_relative(root_)));
+                if (edits.is_object() && edits.contains("documentChanges")) for (const auto &change : edits.at("documentChanges")) {
+                    if (!change.contains("textDocument")) throw std::runtime_error("File operations are not supported in refactor previews");
+                    paths.insert(pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(change.at("textDocument").at("uri")))).lexically_relative(root_)));
+                }
+                if (paths.size()>100) throw std::runtime_error("Refactoring exceeds the 100-document limit");
+                for (const auto &path : paths) if (!documents_.contains(path)) { openLocked(path);synchronize=true; }
+                generation=nextRevision_;
+            }
+            if (synchronize) edits=ask("textDocument/rename",request);
+        }
         title = "Rename " + oldName + " -> " + request.at("newName").get<std::string>();
     } else {
         auto formatted = ask(params.contains("range") ? "textDocument/rangeFormatting" : "textDocument/formatting", request);
@@ -227,6 +269,10 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
     }
     std::lock_guard lock(mutex_);
     if (generation != nextRevision_ || !documents_.contains(key) || documents_.at(key).revision != revision) throw std::runtime_error("RevisionConflict: workspace changed during refactoring");
+    return workspaceChangeLocked(title,edits,LanguageService::supportsCpp(key) || LanguageService::supportsManaged(key) ? oldName : "",rename && !LanguageService::supportsCpp(key) && !LanguageService::supportsManaged(key));
+}
+Json Engine::workspaceEditFilesLocked(const Json &supplied) {
+    auto edits=supplied;
     Json files = Json::object();
     if (edits.is_null()) edits = Json::object();
     if (!edits.is_object()) throw std::runtime_error("Invalid workspace edit from language server");
@@ -238,17 +284,37 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
         if (change.contains("kind") || !change.contains("textDocument")) throw std::runtime_error("This refactoring requires unsupported file operations");
         const auto &doc = change.at("textDocument");
         if (doc.contains("version") && !doc.at("version").is_null()) throw std::runtime_error("Versioned workspace edits are not supported by this adapter");
+        if (doc.contains("cycodeRevision")) {
+            const auto path=pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(doc.at("uri")))).lexically_relative(root_));
+            const auto found=documents_.find(path);
+            if (found==documents_.end() || found->second.revision!=doc.at("cycodeRevision")) throw std::runtime_error("RevisionConflict: workspace edit document changed");
+        }
         const auto uri = doc.at("uri").get<std::string>();
         if (files.contains(uri)) throw std::runtime_error("Duplicate document in workspace edit");
         files[uri] = change.at("edits");
     }
     if (files.size() > 100) throw std::runtime_error("Refactoring exceeds the 100-document limit");
+    Json canonical=Json::object();
+    for (auto i=files.begin();i!=files.end();++i) {
+        const auto path=pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(i.key()))).lexically_relative(root_));
+        if (canonical.contains(path)) throw std::runtime_error("Duplicate canonical document in workspace edit");
+        canonical[path]=i.value();
+    }
+    return canonical;
+}
+
+Json Engine::workspaceChangeLocked(const std::string &title,const Json &edits,const std::string &oldName,bool onlyOpened) {
+    const auto files=workspaceEditFilesLocked(edits);
     ChangePlan plan; plan.title = title; size_t total = 0; std::set<std::string> paths;
     for (auto i = files.begin(); i != files.end(); ++i) {
-        const auto path = pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(i.key()))).lexically_relative(root_));
+        const auto path = i.key();
         if (!paths.insert(path).second) throw std::runtime_error("Duplicate canonical document in refactoring");
+        if (onlyOpened && !documents_.contains(path))
+            throw std::runtime_error("Workspace symbol index changed; prepare the rename again");
         auto &doc = openLocked(path);
         if (rawSource(resolve(path)) != doc.disk) throw std::runtime_error("DiskConflict: source changed outside CyCode: " + path);
+        // JDT LS can coalesce replacements into a larger edit. All ranges,
+        // document revisions and disk bytes remain checked by the preview.
         auto edited = applyTextEdits(doc.text, i.value(), oldName);
         edited.text = normalized(edited.text);
         if (edited.text == doc.text) continue;
@@ -256,6 +322,9 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
         if (total > 16 * 1024 * 1024) throw std::runtime_error("Refactoring preview exceeds 16 MiB");
         plan.files.push_back({path, doc.text, std::move(edited.text), doc.disk, std::move(edited.edits), doc.revision});
     }
+    return storeChange(std::move(plan));
+}
+Json Engine::storeChange(ChangePlan plan) {
     for (auto i = changes_.begin(); i != changes_.end();) {
         if (std::chrono::steady_clock::now() - i->second.created > std::chrono::minutes(20)) i = changes_.erase(i); else ++i;
     }

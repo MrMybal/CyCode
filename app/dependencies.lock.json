@@ -1,27 +1,17 @@
 {
-  "imgui": {
-    "url": "https://codeload.github.com/ocornut/imgui/tar.gz/d682dc41f58b98c9343ffbaa7d94f07e9024b3ca",
-    "revision": "d682dc41f58b98c9343ffbaa7d94f07e9024b3ca",
-    "sha256": "9d74a9ff1c3e62a8823329c09f93e11fdb6f83c9cad9558a3cd562bed4aceced"
-  },
-  "texteditor": {
-    "url": "https://codeload.github.com/goossens/ImGuiColorTextEdit/tar.gz/12a5a01d85e541d63ae92616d7a2d9c6dedc2e9a",
-    "revision": "12a5a01d85e541d63ae92616d7a2d9c6dedc2e9a",
-    "sha256": "2cb9a017a3b4e01b9556c87b53bad72beebcb298c81ac4d029f010a6a367a4d3"
-  },
-  "SDL": {
-    "url": "https://www.libsdl.org/release/SDL3-3.4.18.tar.gz",
-    "revision": "3.4.18",
-    "sha256": "9c75cf16330322c217dedd2e0609f1124f1b54b8633e763467b4684d0f4334a3"
-  },
-  "json": {
-    "url": "https://codeload.github.com/nlohmann/json/tar.gz/refs/tags/v3.12.0",
-    "revision": "3.12.0",
-    "sha256": "4b92eb0c06d10683f7447ce9406cb97cd4b453be18d7279320f7b2f025c10187"
-  },
   "vterm": {
     "url": "https://www.leonerd.org.uk/code/libvterm/libvterm-0.3.3.tar.gz",
     "revision": "0.3.3",
     "sha256": "09156f43dd2128bd347cbeebe50d9a571d32c64e0cf18d211197946aff7226e0"
+  },
+  "stb": {
+    "url": "https://codeload.github.com/nothings/stb/tar.gz/d14d46f6b44456eb88beac58cba833a4135d4c89",
+    "revision": "d14d46f6b44456eb88beac58cba833a4135d4c89",
+    "sha256": "1b59a668a789a28a8fd4e01ff1413eec7eaeb28688bafdc66ec7068f4e7095e1"
+  },
+  "webp": {
+    "url": "https://codeload.github.com/webmproject/libwebp/tar.gz/4fa21912338357f89e4fd51cf2368325b59e9bd9",
+    "revision": "4fa21912338357f89e4fd51cf2368325b59e9bd9",
+    "sha256": "923f3382a47a2af185c3240c954cf004428b237bd7317413a95146d01eb4b94b"
   }
 }

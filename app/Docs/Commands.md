@@ -30,6 +30,12 @@ are idempotent. Chords time out after 1.5 seconds and cancel on Escape or focus 
 Caret movement, ordinary typing and completion are still supplied by the editor.
 Editor editing shortcuts do not modify a document while typing in another field.
 
+Interactive completion snippets have contextual Tab/Shift+Tab parameter navigation
+and Escape to finish, in all three profiles. Ctrl+Space leaves the snippet and
+requests a fresh completion. These contextual widget keys are currently fixed;
+the parameter badge shows them and a choice field offers its alternatives in a
+dropdown. See [Languages](Languages.md) for mirror behavior and current limits.
+
 The catalogue also provides document close/reopen, save, undo/redo, clipboard,
 duplication/deletion/movement, indentation, comments, selection growth, occurrences,
 case conversion, whitespace trimming, go to line, recent files, navigation history,
@@ -46,6 +52,12 @@ Semantic commands use actual language services:
 | Rename symbol | Shift+F6 | Ctrl+R, Ctrl+R | F2 |
 | Format document | Ctrl+Alt+L | Ctrl+K, Ctrl+D | Shift+Alt+F |
 | Format selection | Ctrl+Alt+Shift+L | Ctrl+K, Ctrl+F | Ctrl+K, Ctrl+F |
+| Quick fixes / context actions | Alt+Enter | Ctrl+. or Alt+Enter | Ctrl+. |
+
+Context actions use the live cursor/selection and actual server proposals. The
+Code actions panel offers filtering, arrow selection, Enter/Apply correction and
+Preview changes. Unsupported actions show a reason. Apply edits unsaved buffers;
+refactoring undo and explicit saving retain the native revision/disk guards.
 
 Rename opens a multi-file preview before applying; Apply refactoring and Undo
 refactoring are also executable through Find Action. Applying changes preserves the

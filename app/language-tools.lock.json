@@ -48,5 +48,95 @@
       }
     },
     "source": "https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json"
+  },
+  "rust": {
+    "version": "1.99.1 (58cf8f9c3 2026-10-13)",
+    "date": "2026-10-15",
+    "platforms": {
+      "win32-x64": {
+        "rustc": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rustc-1.99.1-x86_64-pc-windows-msvc.tar.xz",
+          "sha256": "7da83c2af1f209606b0160f25174d2867c7c7b73667c32c9e5fbcef4f5f45348"
+        },
+        "rust-std": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rust-std-1.99.1-x86_64-pc-windows-msvc.tar.xz",
+          "sha256": "4fe09430ded40b8b3092b49f0a651178eb1f8154ef4d1f1a73f2a3595b2d956f"
+        },
+        "cargo": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/cargo-1.99.1-x86_64-pc-windows-msvc.tar.xz",
+          "sha256": "4adb46c3707dee790682f7769d86983841148111695f561c843c33daa2af0c9b"
+        },
+        "rust-src": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rust-src-1.99.1.tar.xz",
+          "sha256": "e485a88c45db546b73571df7bebfcb4454ba4fb552c492e25fc5b00eeb5bf22d"
+        },
+        "rust-analyzer-preview": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rust-analyzer-1.99.1-x86_64-pc-windows-msvc.tar.xz",
+          "sha256": "e8d29f16781a71468dbff5c602dd48d6c544696c957752be783ed5a1edd954e4"
+        },
+        "rustfmt-preview": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rustfmt-1.99.1-x86_64-pc-windows-msvc.tar.xz",
+          "sha256": "1a4d309df5ecacbefe5798c092a03f9d00aa9e1cbc65673c4ace1367c7a25989"
+        }
+      },
+      "linux-x64": {
+        "rustc": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rustc-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "2ff05ff9c08a90861e7f6e4065b40a8b87463b4576186fd613871c3e37f2091f"
+        },
+        "rust-std": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rust-std-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "109b074225bf5b9ea3820890876bfdf4ed161adbfaf94b2b4b5984c85ee5d958"
+        },
+        "cargo": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/cargo-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "53f3521949404d595efb06a55c12c5658d4ed1c75566f33d3d514eaebe70bd8a"
+        },
+        "rust-src": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rust-src-1.99.1.tar.xz",
+          "sha256": "e485a88c45db546b73571df7bebfcb4454ba4fb552c492e25fc5b00eeb5bf22d"
+        },
+        "rust-analyzer-preview": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rust-analyzer-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "5f2613d62003fc8cbe788d4ae409359c91c241ba248adbefe032df8bb77357bf"
+        },
+        "rustfmt-preview": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rustfmt-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "e3b36c4c7ec3486c059d8067ff48787676612007123aad7a4e8ec12c48ee9ba2"
+        }
+      },
+      "darwin-arm64": {
+        "rustc": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rustc-1.99.1-aarch64-apple-darwin.tar.xz",
+          "sha256": "23948a0a9c162fd2952defb3fb0462c44e8fcfd1a4ab8a274a1e1bdb2cf810a3"
+        },
+        "rust-std": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rust-std-1.99.1-aarch64-apple-darwin.tar.xz",
+          "sha256": "fe79d6ab5a0321de26463999d8c112b8ad3eafbcbcf822d66a2300b45dde1031"
+        },
+        "cargo": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/cargo-1.99.1-aarch64-apple-darwin.tar.xz",
+          "sha256": "685e563d94db1f003ffa5f5831439eec02569b9950b69867953c8213269c1eaf"
+        },
+        "rust-src": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rust-src-1.99.1.tar.xz",
+          "sha256": "e485a88c45db546b73571df7bebfcb4454ba4fb552c492e25fc5b00eeb5bf22d"
+        },
+        "rust-analyzer-preview": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rust-analyzer-1.99.1-aarch64-apple-darwin.tar.xz",
+          "sha256": "c1ee8a54e685e13414e53fc46029d46db12613bc45c081f1a49020f1674ad6b4"
+        },
+        "rustfmt-preview": {
+          "url": "https://static.rust-lang.org/dist/2026-10-15/rustfmt-1.99.1-aarch64-apple-darwin.tar.xz",
+          "sha256": "8b80dda570f140ee9ced8799294e812bba847a025f185bae4cba85a2ba235570"
+        }
+      }
+    }
+  },
+  "jdtls": {
+    "version": "1.50.0",
+    "url": "https://download.eclipse.org/jdtls/milestones/1.50.0/jdt-language-server-1.50.0-202509041425.tar.gz",
+    "sha256": "3292c5c33888f95ab0ff718e777ee94ff5496b8635a23a8844b876ee090ebdea",
+    "javaMinimum": 21
   }
 }

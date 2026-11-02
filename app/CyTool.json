@@ -3,7 +3,7 @@
   "protocolVersion": "1.0",
   "id": "cy.code",
   "name": "CyCode",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Native C++ IDE services, shared by CyUI and CyToolsCore MCP.",
   "vendor": "Cyberalien",
   "author": "Cyberalien",
@@ -25,6 +25,8 @@
     "cpp-symbols",
     "cpp-refactoring",
     "csharp-language",
+    "multilingual-lsp",
+    "project-tasks",
     "readonly-sdk-sources",
     "terminal",
     "dap-debugger",
@@ -73,6 +75,1464 @@
     "maxWorkers": 4
   },
   "operations": [
+    {
+      "id": "project_inspect",
+      "name": "Project Inspect",
+      "description": "Inspect a Cargo, npm or standalone Java project and saved target profile without executing project code. Cargo target metadata appears after configure/build. Does not install packages.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "cargo",
+              "npm",
+              "java"
+            ]
+          },
+          "directory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ]
+          },
+          "package": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "mainClass": {
+            "type": "string"
+          },
+          "sourceDirectory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "offline": {
+            "type": "boolean"
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "object"
+          },
+          "tools": {
+            "type": "object"
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "scripts": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "available",
+          "kind",
+          "name",
+          "profile",
+          "tools",
+          "targets",
+          "scripts",
+          "sources",
+          "artifacts",
+          "configured",
+          "stale",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "project_configure",
+      "name": "Project Configure",
+      "description": "Select and save a project task profile. Cargo evaluates actual format-version 1 workspace metadata; project rules/tool configuration are trusted executable inputs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "cargo",
+              "npm",
+              "java"
+            ]
+          },
+          "directory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ]
+          },
+          "package": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "mainClass": {
+            "type": "string"
+          },
+          "sourceDirectory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "offline": {
+            "type": "boolean"
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "output": {
+            "type": "string"
+          },
+          "timedOut": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "profile": {
+                "type": "object"
+              },
+              "tools": {
+                "type": "object"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "scripts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "configured": {
+                "type": "boolean"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "kind",
+              "name",
+              "profile",
+              "tools",
+              "targets",
+              "scripts",
+              "sources",
+              "artifacts",
+              "configured",
+              "stale",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "terminal": {
+            "type": "object"
+          },
+          "program": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exitCode",
+          "output",
+          "timedOut",
+          "truncated",
+          "cancelled",
+          "project",
+          "diagnostics"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "process.execute"
+      ],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
+    {
+      "id": "project_build",
+      "name": "Project Build",
+      "description": "Build the selected Cargo binary/workspace, npm build script, or standalone Java sources. Refuses unsaved live buffers. Build outputs are persistent workspace files; executes trusted project rules.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "cargo",
+              "npm",
+              "java"
+            ]
+          },
+          "directory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ]
+          },
+          "package": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "mainClass": {
+            "type": "string"
+          },
+          "sourceDirectory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "offline": {
+            "type": "boolean"
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "output": {
+            "type": "string"
+          },
+          "timedOut": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "profile": {
+                "type": "object"
+              },
+              "tools": {
+                "type": "object"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "scripts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "configured": {
+                "type": "boolean"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "kind",
+              "name",
+              "profile",
+              "tools",
+              "targets",
+              "scripts",
+              "sources",
+              "artifacts",
+              "configured",
+              "stale",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "terminal": {
+            "type": "object"
+          },
+          "program": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exitCode",
+          "output",
+          "timedOut",
+          "truncated",
+          "cancelled",
+          "project",
+          "diagnostics"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "process.execute"
+      ],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
+    {
+      "id": "project_test",
+      "name": "Project Test",
+      "description": "Run actual Cargo tests or the npm test script, with bounded output and process-tree cancellation. Java test-framework providers are not connected.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "cargo",
+              "npm",
+              "java"
+            ]
+          },
+          "directory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ]
+          },
+          "package": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "mainClass": {
+            "type": "string"
+          },
+          "sourceDirectory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "offline": {
+            "type": "boolean"
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "output": {
+            "type": "string"
+          },
+          "timedOut": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "profile": {
+                "type": "object"
+              },
+              "tools": {
+                "type": "object"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "scripts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "configured": {
+                "type": "boolean"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "kind",
+              "name",
+              "profile",
+              "tools",
+              "targets",
+              "scripts",
+              "sources",
+              "artifacts",
+              "configured",
+              "stale",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "terminal": {
+            "type": "object"
+          },
+          "program": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exitCode",
+          "output",
+          "timedOut",
+          "truncated",
+          "cancelled",
+          "project",
+          "diagnostics"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "process.execute"
+      ],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
+    {
+      "id": "project_install",
+      "name": "Project Install",
+      "description": "Explicitly install this npm project dependencies using npm ci when a package-lock exists, otherwise npm install. Runs trusted project lifecycle scripts; may access package registries and write lock/dependency files.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "cargo",
+              "npm",
+              "java"
+            ]
+          },
+          "directory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ]
+          },
+          "package": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "mainClass": {
+            "type": "string"
+          },
+          "sourceDirectory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "offline": {
+            "type": "boolean"
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "output": {
+            "type": "string"
+          },
+          "timedOut": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "profile": {
+                "type": "object"
+              },
+              "tools": {
+                "type": "object"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "scripts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "configured": {
+                "type": "boolean"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "kind",
+              "name",
+              "profile",
+              "tools",
+              "targets",
+              "scripts",
+              "sources",
+              "artifacts",
+              "configured",
+              "stale",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "terminal": {
+            "type": "object"
+          },
+          "program": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exitCode",
+          "output",
+          "timedOut",
+          "truncated",
+          "cancelled",
+          "project",
+          "diagnostics"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "process.execute"
+      ],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
+    {
+      "id": "project_script",
+      "name": "Project Script",
+      "description": "Execute one existing npm script with bounded output/deadline. Use project_launch for interactive or long-running development servers.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "cargo",
+              "npm",
+              "java"
+            ]
+          },
+          "directory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ]
+          },
+          "package": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "mainClass": {
+            "type": "string"
+          },
+          "sourceDirectory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "offline": {
+            "type": "boolean"
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "output": {
+            "type": "string"
+          },
+          "timedOut": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "profile": {
+                "type": "object"
+              },
+              "tools": {
+                "type": "object"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "scripts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "configured": {
+                "type": "boolean"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "kind",
+              "name",
+              "profile",
+              "tools",
+              "targets",
+              "scripts",
+              "sources",
+              "artifacts",
+              "configured",
+              "stale",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "terminal": {
+            "type": "object"
+          },
+          "program": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exitCode",
+          "output",
+          "timedOut",
+          "truncated",
+          "cancelled",
+          "project",
+          "diagnostics"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "process.execute"
+      ],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
+    {
+      "id": "project_launch",
+      "name": "Project Launch",
+      "description": "Build and run a Cargo/standalone Java target, or start a selected npm script in a persistent integrated PTY. Returned terminal id supports terminal_read/write/close. Does not launch a browser.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "cargo",
+              "npm",
+              "java"
+            ]
+          },
+          "directory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ]
+          },
+          "package": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "mainClass": {
+            "type": "string"
+          },
+          "sourceDirectory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "offline": {
+            "type": "boolean"
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "output": {
+            "type": "string"
+          },
+          "timedOut": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "profile": {
+                "type": "object"
+              },
+              "tools": {
+                "type": "object"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "scripts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "configured": {
+                "type": "boolean"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "kind",
+              "name",
+              "profile",
+              "tools",
+              "targets",
+              "scripts",
+              "sources",
+              "artifacts",
+              "configured",
+              "stale",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "terminal": {
+            "type": "object"
+          },
+          "program": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exitCode",
+          "output",
+          "timedOut",
+          "truncated",
+          "cancelled",
+          "project",
+          "diagnostics"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "process.execute"
+      ],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
+    {
+      "id": "project_debug_target",
+      "name": "Project Debug Target",
+      "description": "Build the selected Cargo binary and return its actual executable path for the existing debug_configure/debug_launch operations. Does not start the debugger itself.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "cargo",
+              "npm",
+              "java"
+            ]
+          },
+          "directory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ]
+          },
+          "package": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "mainClass": {
+            "type": "string"
+          },
+          "sourceDirectory": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "offline": {
+            "type": "boolean"
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "output": {
+            "type": "string"
+          },
+          "timedOut": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "profile": {
+                "type": "object"
+              },
+              "tools": {
+                "type": "object"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "scripts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "configured": {
+                "type": "boolean"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "kind",
+              "name",
+              "profile",
+              "tools",
+              "targets",
+              "scripts",
+              "sources",
+              "artifacts",
+              "configured",
+              "stale",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "terminal": {
+            "type": "object"
+          },
+          "program": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exitCode",
+          "output",
+          "timedOut",
+          "truncated",
+          "cancelled",
+          "project",
+          "diagnostics"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "process.execute"
+      ],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
+    {
+      "id": "project_cancel",
+      "name": "Project Cancel",
+      "description": "Cancel the active native project compilation/test/script process tree. Does not close a persistent run terminal; use terminal_close with its id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "cancelled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cancelled"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "process.execute"
+      ],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
     {
       "id": "msbuild_inspect",
       "name": "Msbuild Inspect",
@@ -6472,7 +7932,7 @@
     {
       "id": "language_symbols",
       "name": "Language Symbols",
-      "description": "Search actual C++ or C# project symbols, optionally filtered to types. language defaults to cpp; csharp requires an enabled C# server. Index completeness depends on background analysis.",
+      "description": "Search actual configured project symbols, optionally filtered to types. language defaults to cpp; other backends require language_configure. Unsupported server methods are reported explicitly. Index completeness depends on background analysis.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6484,7 +7944,12 @@
             "type": "string",
             "enum": [
               "cpp",
-              "csharp"
+              "csharp",
+              "rust",
+              "java",
+              "typescript",
+              "html",
+              "css"
             ]
           },
           "typesOnly": {
@@ -6632,7 +8097,7 @@
     {
       "id": "language_document_symbols",
       "name": "Language Document Symbols",
-      "description": "Read C/C++ or C# document structure, including nested members, from the live buffer. Accepts a workspace path or an opened SDK reference.",
+      "description": "Read document structure, including nested members, from the live buffer. Accepts a workspace path or an opened SDK reference.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6860,7 +8325,7 @@
     {
       "id": "language_rename",
       "name": "Language Rename",
-      "description": "Prepare a semantic C/C++ or C# rename preview across references. Does not edit buffers or save files. Unreal Blueprint assets and serialized reflection names are not migrated.",
+      "description": "Prepare a semantic rename preview across references. Does not edit buffers or save files. Unreal Blueprint assets and serialized reflection names are not migrated.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6975,7 +8440,7 @@
     {
       "id": "language_format",
       "name": "Language Format",
-      "description": "Prepare C++ clang-format or C# Roslyn formatting edits. Does not apply changes or save files. A range limits formatting to the selection.",
+      "description": "Prepare formatting edits from the selected language server. Does not apply changes or save files. A range limits formatting to the selection.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -8828,15 +10293,38 @@
     {
       "id": "language_configure",
       "name": "Language Configure",
-      "description": "Enable, restart or disable the C# language server for this trusted workspace. Loads and evaluates MSBuild projects and imports. The optional executable is a server program or DLL; default uses the pinned managed runtime. Applies to the running IDE only.",
+      "description": "Enable, restart or disable a language server in this trusted workspace. language defaults to csharp for compatibility. Servers may evaluate project metadata and toolchains. arguments is a full executable argv without a shell; executable is a legacy single program or C# DLL. settings contains server configuration; optional $initializationOptions separates initialize options. Empty options use the installed defaults. Applies to the running IDE only.",
       "inputSchema": {
         "type": "object",
         "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "cpp",
+              "csharp",
+              "rust",
+              "java",
+              "typescript",
+              "html",
+              "css"
+            ]
+          },
           "enabled": {
             "type": "boolean"
           },
           "executable": {
             "type": "string"
+          },
+          "arguments": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          },
+          "settings": {
+            "type": "object"
           }
         },
         "required": [],
@@ -8862,6 +10350,55 @@
           },
           "enabled": {
             "type": "boolean"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "methods": {
+            "type": "object",
+            "properties": {
+              "completion": {
+                "type": "boolean"
+              },
+              "completionResolve": {
+                "type": "boolean"
+              },
+              "codeActions": {
+                "type": "boolean"
+              },
+              "codeActionResolve": {
+                "type": "boolean"
+              },
+              "hover": {
+                "type": "boolean"
+              },
+              "signature": {
+                "type": "boolean"
+              },
+              "definition": {
+                "type": "boolean"
+              },
+              "references": {
+                "type": "boolean"
+              },
+              "symbols": {
+                "type": "boolean"
+              },
+              "documentSymbols": {
+                "type": "boolean"
+              },
+              "rename": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "boolean"
+              },
+              "rangeFormat": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
           },
           "semanticTokens": {
             "type": "boolean"
@@ -8893,6 +10430,55 @@
                   },
                   "enabled": {
                     "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
                   },
                   "semanticTokens": {
                     "type": "boolean"
@@ -8933,6 +10519,495 @@
                   "enabled": {
                     "type": "boolean"
                   },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "rust": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "java": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "typescript": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "html": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "css": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
                   "semanticTokens": {
                     "type": "boolean"
                   },
@@ -8954,7 +11029,12 @@
             },
             "required": [
               "cpp",
-              "csharp"
+              "csharp",
+              "rust",
+              "java",
+              "typescript",
+              "html",
+              "css"
             ],
             "additionalProperties": false
           }
@@ -8987,7 +11067,7 @@
     {
       "id": "language_status",
       "name": "Language Status",
-      "description": "Inspect shared C++/clangd and C#/Roslyn servers and their published UTF-16 diagnostics. Does not start the C# server.",
+      "description": "Inspect all shared language servers, availability, advertised methods and published UTF-16 diagnostics. Does not enable a server.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -9014,6 +11094,55 @@
           },
           "enabled": {
             "type": "boolean"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "methods": {
+            "type": "object",
+            "properties": {
+              "completion": {
+                "type": "boolean"
+              },
+              "completionResolve": {
+                "type": "boolean"
+              },
+              "codeActions": {
+                "type": "boolean"
+              },
+              "codeActionResolve": {
+                "type": "boolean"
+              },
+              "hover": {
+                "type": "boolean"
+              },
+              "signature": {
+                "type": "boolean"
+              },
+              "definition": {
+                "type": "boolean"
+              },
+              "references": {
+                "type": "boolean"
+              },
+              "symbols": {
+                "type": "boolean"
+              },
+              "documentSymbols": {
+                "type": "boolean"
+              },
+              "rename": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "boolean"
+              },
+              "rangeFormat": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
           },
           "semanticTokens": {
             "type": "boolean"
@@ -9045,6 +11174,55 @@
                   },
                   "enabled": {
                     "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
                   },
                   "semanticTokens": {
                     "type": "boolean"
@@ -9085,6 +11263,495 @@
                   "enabled": {
                     "type": "boolean"
                   },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "rust": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "java": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "typescript": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "html": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "semanticTokens": {
+                    "type": "boolean"
+                  },
+                  "semanticGeneration": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ready",
+                  "running",
+                  "error",
+                  "diagnostics",
+                  "name",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "css": {
+                "type": "object",
+                "properties": {
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "diagnostics": {
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "type": "object",
+                    "properties": {
+                      "completion": {
+                        "type": "boolean"
+                      },
+                      "completionResolve": {
+                        "type": "boolean"
+                      },
+                      "codeActions": {
+                        "type": "boolean"
+                      },
+                      "codeActionResolve": {
+                        "type": "boolean"
+                      },
+                      "hover": {
+                        "type": "boolean"
+                      },
+                      "signature": {
+                        "type": "boolean"
+                      },
+                      "definition": {
+                        "type": "boolean"
+                      },
+                      "references": {
+                        "type": "boolean"
+                      },
+                      "symbols": {
+                        "type": "boolean"
+                      },
+                      "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "rename": {
+                        "type": "boolean"
+                      },
+                      "format": {
+                        "type": "boolean"
+                      },
+                      "rangeFormat": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
                   "semanticTokens": {
                     "type": "boolean"
                   },
@@ -9106,7 +11773,12 @@
             },
             "required": [
               "cpp",
-              "csharp"
+              "csharp",
+              "rust",
+              "java",
+              "typescript",
+              "html",
+              "css"
             ],
             "additionalProperties": false
           }
@@ -9134,7 +11806,7 @@
     {
       "id": "language_highlight",
       "name": "Language Highlight",
-      "description": "Read semantic color classifications from the shared language server and current live document. Requires the expected revision; rejects concurrent document changes. Positions/lengths use UTF-16; glyphStart/glyphEnd are Unicode-codepoint indexes. supported=false means lexical fallback. Data is bounded to 50,000 tokens or 4 MiB and reports truncation. C# requires prior language_configure; inspection never enables it.",
+      "description": "Read semantic color classifications from the shared language server and current live document. Requires the expected revision; rejects concurrent document changes. Positions/lengths use UTF-16; glyphStart/glyphEnd are Unicode-codepoint indexes. supported=false means lexical fallback. Data is bounded to 50,000 tokens or 4 MiB and reports truncation. Other backends require prior language_configure; inspection never enables it.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -9247,7 +11919,7 @@
     {
       "id": "language_complete",
       "name": "Language Complete",
-      "description": "Request C++ or C# completion items from the shared server and live buffers. Returns standard LSP completion items; applying snippets, additional imports or resolve requests is not supported. C# project loading must first be enabled with language_configure.",
+      "description": "Request completion items from live buffers. Returns an issued sessionId and materialized LSP items (max 2000, 4 MiB). Use an item index with language_completion_resolve or language_completion_prepare before changes_apply. Sessions expire after five minutes or eviction and reject changed revisions/workspace/server context. Other backends require language_configure.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -9298,18 +11970,928 @@
             "type": "integer",
             "minimum": 1
           },
+          "sessionId": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
           "result": {
-            "type": [
-              "object",
-              "array",
-              "null"
+            "type": "object"
+          }
+        },
+        "required": [
+          "path",
+          "revision",
+          "sessionId",
+          "truncated",
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "language_completion_resolve",
+      "name": "Language Completion Resolve",
+      "description": "Resolve an item issued by language_complete using the actual server. Read-only; requires a current session, item index and expectedRevision. Rejects unsupported resolve and protected insertion-field changes. Documentation is passive data; server commands are never executed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "item": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "sessionId",
+          "item",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "item": {
+            "type": "object"
+          },
+          "resolved": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "revision",
+          "item",
+          "resolved"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "language_completion_prepare",
+      "name": "Language Completion Prepare",
+      "description": "Prepare one atomic live-buffer transaction for an issued completion plus its additional imports. Resolves lazy fields when supported (resolve defaults true). replace defaults true; false selects the insert range. Checks UTF-16 ranges, revisions, disk baseline and overlapping edits. Handles multiline indentation and bounded numbered snippets, mirrors, nested defaults and choices. snippet contains UTF-8 byte ranges in the resulting document for interactive fields; null for ordinary text. cursor is the resulting zero-based UTF-16 final caret. Variables/transforms and arbitrary commands are unsupported. Does not apply or save; use changes_preview/changes_apply.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "item": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "resolve": {
+            "type": "boolean"
+          },
+          "replace": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sessionId",
+          "item",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "preview",
+                  "applied",
+                  "undone"
+                ]
+              },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace document reference; not a temporary input artifact."
+                    },
+                    "expectedRevision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "editCount": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "expectedRevision",
+                    "editCount"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "editCount": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "state",
+              "files",
+              "editCount"
+            ],
+            "additionalProperties": false
+          },
+          "cursor": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "character": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "line",
+              "character"
+            ],
+            "additionalProperties": false
+          },
+          "snippet": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "positionEncoding": {
+                    "type": "string",
+                    "const": "utf-8-bytes"
+                  },
+                  "final": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "fields": {
+                    "type": "array",
+                    "maxItems": 128,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 65535
+                        },
+                        "ranges": {
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 128,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "start": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "end": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "parents": {
+                                "type": "array",
+                                "maxItems": 16,
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 65535
+                                }
+                              }
+                            },
+                            "required": [
+                              "start",
+                              "end",
+                              "parents"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "choices": {
+                          "type": "array",
+                          "maxItems": 64,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "index",
+                        "ranges",
+                        "choices"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "positionEncoding",
+                  "final",
+                  "fields"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
         "required": [
           "path",
           "revision",
-          "result"
+          "plan",
+          "cursor",
+          "snippet"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "language_code_actions",
+      "name": "Language Code Actions",
+      "description": "List actual language-server fixes/refactorings for a live UTF-16 range and expectedRevision. Returns a bounded issued session (max 256 actions / 2 MiB, 8 sessions / 8 MiB, five-minute TTL). Includes disabled/unsupported reasons; no server commands run. Versioned diagnostics require the current LSP overlay version; unversioned latest diagnostics are advisory and their cache is invalidated on edits. Unopened literal-edit targets are synchronized before recomputing actions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "range": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "object",
+                "properties": {
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "character": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "line",
+                  "character"
+                ],
+                "additionalProperties": false
+              },
+              "end": {
+                "type": "object",
+                "properties": {
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "character": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "line",
+                  "character"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "only": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        "required": [
+          "path",
+          "range",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "actions": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "title": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "preferred": {
+                  "type": "boolean"
+                },
+                "available": {
+                  "type": "boolean"
+                },
+                "needsResolve": {
+                  "type": "boolean"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "index",
+                "title",
+                "kind",
+                "preferred",
+                "available",
+                "needsResolve",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "path",
+          "revision",
+          "sessionId",
+          "truncated",
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "language_code_action_prepare",
+      "name": "Language Code Action Prepare",
+      "description": "Resolve if needed and prepare an issued code action as a shared native change plan. Read-only: does not apply or save. Rejects stale revisions/workspace/server context, executable commands, annotated/snippet edits, resource operations, outside-workspace targets, disk conflicts and overlapping edits. Only the pinned TypeScript server empty acknowledgement is ignored. A newly discovered resolve target is synchronized and requires a fresh action query. Use changes_preview/apply/undo; applying requires workspace.write.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "item": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "resolve": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sessionId",
+          "item",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "preview",
+              "applied",
+              "undone"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace document reference; not a temporary input artifact."
+                },
+                "expectedRevision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "editCount": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "path",
+                "expectedRevision",
+                "editCount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "editCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "state",
+          "files",
+          "editCount"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "language_hover",
+      "name": "Language Hover",
+      "description": "Read bounded symbol documentation from the actual language server at a zero-based UTF-16 position. Requires the current revision and rejects concurrent edits. Contents are display-only; Markdown/HTML and links are not executed. Inspection never enables a backend; unsupported methods fail explicitly.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "character": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "line",
+              "character"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision",
+          "position"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "positionEncoding": {
+            "const": "utf-16"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "contents": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "plaintext",
+                    "markdown",
+                    "code"
+                  ]
+                },
+                "language": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string",
+                  "maxLength": 65536
+                }
+              },
+              "required": [
+                "kind",
+                "language",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "range": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "character": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "line",
+                      "character"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "character": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "line",
+                      "character"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "start",
+                  "end"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "revision",
+          "positionEncoding",
+          "available",
+          "truncated",
+          "contents",
+          "range"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "language_signature",
+      "name": "Language Signature",
+      "description": "Read actual callable signatures, overloads, active parameter and documentation at a zero-based UTF-16 position. Signature parameter ranges startByte/endByte are UTF-8 offsets in the returned label, or -1 when unmapped. Bounded to 32 signatures, 128 parameters each and 64 KiB of text. Requires the current revision and an enabled supporting backend.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "character": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "line",
+              "character"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision",
+          "position"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace document reference; not a temporary input artifact."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "positionEncoding": {
+            "const": "utf-16"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "signatures": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "documentation": {
+                  "type": "array",
+                  "maxItems": 32,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "plaintext",
+                          "markdown",
+                          "code"
+                        ]
+                      },
+                      "language": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string",
+                        "maxLength": 65536
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "language",
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "parameters": {
+                  "type": "array",
+                  "maxItems": 128,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "startByte": {
+                        "type": "integer",
+                        "minimum": -1
+                      },
+                      "endByte": {
+                        "type": "integer",
+                        "minimum": -1
+                      },
+                      "documentation": {
+                        "type": "array",
+                        "maxItems": 32,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "plaintext",
+                                "markdown",
+                                "code"
+                              ]
+                            },
+                            "language": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string",
+                              "maxLength": 65536
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "language",
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "startByte",
+                      "endByte",
+                      "documentation"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "activeParameter": {
+                  "type": "integer",
+                  "minimum": -1,
+                  "description": "-1 means the server did not report an active parameter, or the signature has none."
+                }
+              },
+              "required": [
+                "label",
+                "documentation",
+                "parameters",
+                "activeParameter"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "activeSignature": {
+            "type": "integer",
+            "minimum": -1
+          }
+        },
+        "required": [
+          "path",
+          "revision",
+          "positionEncoding",
+          "available",
+          "truncated",
+          "signatures",
+          "activeSignature"
         ],
         "additionalProperties": false
       },
@@ -9325,7 +12907,7 @@
     {
       "id": "language_definition",
       "name": "Language Definition",
-      "description": "Find C/C++ or C# definitions using live buffers and actual project references. Requires the current revision and a UTF-16 position. Outside-workspace locations are omitted by default; includeExternal permits only registered read-only SDK sources.",
+      "description": "Find definitions using live buffers and actual project references. Requires the current revision and a UTF-16 position. Outside-workspace locations are omitted by default; includeExternal permits only registered read-only SDK sources.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -9488,7 +13070,7 @@
     {
       "id": "language_references",
       "name": "Language References",
-      "description": "Find C/C++ or C# references using shared servers and unsaved buffers. Positions/ranges are zero-based UTF-16. Requires the current revision; results reflect the available project index, which may still be building.",
+      "description": "Find references using shared servers and unsaved buffers. Positions/ranges are zero-based UTF-16. Requires the current revision; results reflect the available project index, which may still be building.",
       "inputSchema": {
         "type": "object",
         "properties": {

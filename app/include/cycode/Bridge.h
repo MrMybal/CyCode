@@ -17,6 +17,7 @@ class Bridge {
 
   private:
     void serve();
+    void serveClient(std::intptr_t,bool controlOnly=false);
     Engine &engine_;
     std::filesystem::path descriptor_;
     std::string token_;

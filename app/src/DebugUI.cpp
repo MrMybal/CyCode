@@ -1,7 +1,7 @@
 #include "cycode/Application.h"
 #include "cycode/DebugRuntime.h"
 #include <algorithm>
-#include <cyui/CyUI.h>
+#include <cyui/Core.h>
 #include <imgui_stdlib.h>
 #include <sstream>
 namespace cycode {
@@ -31,6 +31,10 @@ void Application::debugTask(const std::string &method, Json params) {
 void Application::startDebug(bool build) {
     if (debugFuture_.valid() || taskFuture_.valid()) return;
     showPanel("Debugger","debugger");
+    if (projectActive_ && build) {
+        if (projectState_.value("kind","")!="cargo") { cyui::notify(tr("Debugging is available here for Cargo targets."),cyui::Tone::warning); return; }
+        pendingDebugBuild_ = true; task("project.debug"); if (!taskFuture_.valid()) pendingDebugBuild_ = false; return;
+    }
     if (debugProgram_.empty()) { cyui::notify(tr("Select an executable in the debug profile."),cyui::Tone::warning); return; }
     saveAll();
     if (std::any_of(tabs_.begin(),tabs_.end(),[](const auto &tab) { return tab->dirty; })) return;
@@ -100,7 +104,7 @@ void Application::updateDebug() {
             else if (debugOperation_ == "debug.source") {
                 auto text = result.value("content",""); if (text.size() > 4*1024*1024 || text.find('\0') != std::string::npos) throw std::runtime_error("Debug source exceeds editor limits");
                 auto tab = std::make_shared<Tab>(); tab->path = debugSourcePath_; tab->displayPath = debugSourcePath_.substr(debugSourcePath_.find('/',8)+1); tab->readOnly = true;
-                tab->editor.SetText(text); configureEditor(tab); tabs_.push_back(tab); active_ = focusTab_ = tab->path; tab->editor.SetFocus();
+                tab->codeEditor.setText(text); configureEditor(tab); tabs_.push_back(tab); active_ = focusTab_ = tab->path; tab->editor.SetFocus();
                 if (debugSourceLine_) { tab->editor.SetCursor({debugSourceLine_-1,debugSourceColumn_ ? debugSourceColumn_-1 : 0}); tab->editor.ScrollToLine(debugSourceLine_-1); }
             }
         } catch (const std::exception &e) { error(e.what()); }

@@ -1,6 +1,6 @@
 #include "cycode/Application.h"
 #include "cycode/DebugRuntime.h"
-#include <cyui/CyUI.h>
+#include <cyui/Core.h>
 #include <imgui_stdlib.h>
 namespace cycode {
 void Application::msbuildPanel() {

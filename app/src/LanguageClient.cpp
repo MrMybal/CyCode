@@ -1,6 +1,8 @@
 #include "cycode/LanguageClient.h"
 #include "cycode/Tools.h"
 #include <array>
+#include <algorithm>
+#include <cctype>
 #include <iomanip>
 #include <sstream>
 #ifdef _WIN32
@@ -85,6 +87,13 @@ std::filesystem::path LanguageClient::fromUri(const std::string &uri) {
 #endif
     return utf8Path(path);
 }
+std::string LanguageClient::uriKey(const std::string &uri) {
+    auto key=pathUtf8(fromUri(uri).lexically_normal());
+#ifdef _WIN32
+    std::transform(key.begin(),key.end(),key.begin(),[](unsigned char c) { return char(std::tolower(c)); });
+#endif
+    return key;
+}
 bool LanguageClient::start(const std::filesystem::path &root, const std::string &executable,
                            const std::filesystem::path &compilationDatabase) {
     waitForWorkspace_ = false;
@@ -92,9 +101,9 @@ bool LanguageClient::start(const std::filesystem::path &root, const std::string 
     if (!compilationDatabase.empty()) settings["compilationDatabasePath"] = pathUtf8(compilationDatabase);
     return startImpl(root, {executable, "--background-index", "--log=error", "--header-insertion=never", "--completion-style=detailed"}, settings, false);
 }
-bool LanguageClient::startServer(const std::filesystem::path &root, const std::vector<std::string> &argv, Json configuration, bool waitForWorkspace) {
+bool LanguageClient::startServer(const std::filesystem::path &root, const std::vector<std::string> &argv, Json configuration, bool waitForWorkspace, Json environment) {
     waitForWorkspace_ = waitForWorkspace;
-    return startImpl(root, argv, std::move(configuration), false);
+    return startImpl(root, argv, std::move(configuration), false, environment);
 }
 bool LanguageClient::startRaw(const std::filesystem::path &root, const std::string &executable) { waitForWorkspace_ = false; return startImpl(root, {executable}, Json::object(), true); }
 bool LanguageClient::startRaw(const std::filesystem::path &root, const std::vector<std::string> &argv, Json environment) { waitForWorkspace_ = false; return startImpl(root,argv,Json::object(),true,environment); }
@@ -107,11 +116,16 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     workspaceReady_ = false; workspaceLoadToken_ = nullptr;
     if (argv.empty() || argv.front().empty()) { error_ = "Language server executable is missing"; return false; }
     configuration_ = std::move(configuration);
+    workspaceReadyNotification_=configuration_.value("$workspaceReadyNotification","");
+    configuration_.erase("$workspaceReadyNotification");
+    if (!workspaceReadyNotification_.empty()) waitForWorkspace_=true;
+    initializationOptions_ = configuration_.value("$initializationOptions",configuration_);
+    configuration_.erase("$initializationOptions");
     workspaceFolders_ = Json::array({{{"uri",uri(root)},{"name",pathUtf8(root.filename())}}});
     raw_ = raw; incomingBytes_ = 0;
     child_ = std::make_unique<Child>();
     initialized_ = false;
-    diagnostics_ = Json::object();
+    diagnostics_ = Json::object();diagnosticVersions_=Json::object();
     ++diagnosticGeneration_;
     {
         std::lock_guard lock(mutex_);
@@ -251,12 +265,22 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
         {"processId", nullptr},
         {"rootUri", uri(root)},
         {"workspaceFolders",workspaceFolders_},
-        {"initializationOptions",configuration_},
+        {"initializationOptions",initializationOptions_},
         {"capabilities",
          {{"general", {{"positionEncodings", Json::array({"utf-16"})}}},
+          {"experimental",{{"serverStatusNotification",true}}},
           {"window",{{"workDoneProgress",true}}},
           {"workspace",{{"configuration",true},{"workspaceFolders",true},{"semanticTokens",{{"refreshSupport",true}}}}},
-          {"textDocument", {{"completion", {{"completionItem", {{"snippetSupport", false}}}}},
+          {"textDocument", {{"completion", {{"dynamicRegistration",false},{"insertTextMode",1},{"completionItem", {{"snippetSupport", true},{"insertReplaceSupport",true},{"insertTextModeSupport",{{"valueSet",Json::array({1,2})}}},{"resolveSupport",{{"properties",Json::array({"documentation","detail","additionalTextEdits","insertTextMode"})}}}}},{"completionList",{{"itemDefaults",Json::array({"commitCharacters","editRange","insertTextFormat","insertTextMode","data"})}}}}},
+                             {"hover",{{"dynamicRegistration",false},{"contentFormat",Json::array({"plaintext"})}}},
+                             {"signatureHelp",{{"dynamicRegistration",false},{"contextSupport",true},
+                                 {"signatureInformation",{{"documentationFormat",Json::array({"plaintext"})},
+                                     {"parameterInformation",{{"labelOffsetSupport",true}}},{"activeParameterSupport",true}}}}},
+                             {"publishDiagnostics",{{"relatedInformation",false},{"versionSupport",true}}},
+                             {"codeAction",{{"dynamicRegistration",false},{"isPreferredSupport",true},{"disabledSupport",true},{"dataSupport",true},
+                                 {"codeActionLiteralSupport",{{"codeActionKind",{{"valueSet",Json::array({"","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports","source.fixAll"})}}}}},
+                                 {"resolveSupport",{{"properties",Json::array({"edit"})}}},{"honorsChangeAnnotations",false}}},
+                             {"rename",{{"prepareSupport",true},{"dynamicRegistration",false}}},
                              {"semanticTokens",{{"dynamicRegistration",false},{"requests",{{"full",true}}},
                                  {"tokenTypes",Json::array({"namespace","type","class","enum","interface","struct","typeParameter","parameter","variable","property","enumMember","event","function","method","macro","keyword","modifier","comment","string","number","regexp","operator","decorator","bracket","label","unknown","concept"})},
                                  {"tokenModifiers",Json::array({"declaration","definition","readonly","static","deprecated","abstract","async","modification","documentation","defaultLibrary","deduced","virtual","dependentName","usedAsMutableReference","usedAsMutablePointer","constructorOrDestructor","userDefined","functionScope","classScope","fileScope","globalScope"})},
@@ -319,7 +343,7 @@ void LanguageClient::stop() {
     child_.reset();
     callbacks_.clear();
     initialized_ = false;
-    diagnostics_ = Json::object();
+    diagnostics_ = Json::object();diagnosticVersions_=Json::object();
     ++diagnosticGeneration_;
 }
 std::string LanguageClient::error() const {
@@ -337,7 +361,24 @@ bool LanguageClient::enqueue(Json message) {
     return true;
 }
 bool LanguageClient::notify(const std::string &method, Json params) {
-    return running_ && enqueue({{"jsonrpc", "2.0"}, {"method", method}, {"params", std::move(params)}});
+    const bool document=method=="textDocument/didOpen" || method=="textDocument/didChange" || method=="textDocument/didClose";
+    const auto uri=document ? params.at("textDocument").at("uri").get<std::string>() : "";
+    const bool sent=running_ && enqueue({{"jsonrpc", "2.0"}, {"method", method}, {"params", std::move(params)}});
+    if (sent && document) {
+        const auto key=uriKey(uri);
+        for (auto i=diagnosticVersions_.begin();i!=diagnosticVersions_.end();) {
+            bool matches=false;try { matches=uriKey(i.key())==key; } catch (const std::exception &) {}
+            if (matches) {
+                // Keep the last displayed publication during typing. In particular,
+                // C++ completion must not wait for fresh diagnostics on every key.
+                // Its eligibility as code-action context expires immediately.
+                if (method!="textDocument/didChange") diagnostics_.erase(i.key());
+                i=diagnosticVersions_.erase(i);
+            } else ++i;
+        }
+        if (method!="textDocument/didChange") ++diagnosticGeneration_;
+    }
+    return sent;
 }
 int LanguageClient::request(const std::string &method, Json params,
                             std::function<void(const Json &)> callback) {
@@ -373,8 +414,15 @@ void LanguageClient::poll() {
         } else if (message.value("method", std::string{}) == "textDocument/publishDiagnostics") {
             auto &params = message["params"];
             diagnostics_[params["uri"].get<std::string>()] = params["diagnostics"];
+            diagnosticVersions_[params["uri"].get<std::string>()]=params.value("version",Json());
             ++diagnosticGeneration_;
-        } else if (message.value("method",std::string{}) == "$/progress" && waitForWorkspace_) {
+        } else if (message.value("method",std::string{})==workspaceReadyNotification_ && waitForWorkspace_) {
+            const auto params=message.value("params",Json::object());
+            if (workspaceReadyNotification_=="experimental/serverStatus") {
+                workspaceReady_=workspaceReady_ || params.value("quiescent",false);
+                if (params.value("health","")=="error") { std::lock_guard lock(mutex_);error_=params.value("message","Rust workspace analysis failed"); }
+            } else if (workspaceReadyNotification_=="language/status" && params.value("type","")=="Started") workspaceReady_=true;
+        } else if (message.value("method",std::string{}) == "$/progress" && waitForWorkspace_ && workspaceReadyNotification_.empty()) {
             const auto params = message.value("params",Json::object()), value = params.value("value",Json::object());
             const auto kind = value.value("kind","");
             if (kind == "begin" && value.value("title","").starts_with("Loading ")) {
