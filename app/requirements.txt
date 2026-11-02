@@ -1,0 +1,2 @@
+# Install the CyToolsCore wheel or local checkout first.
+cytools-core[mcp]==0.10.1

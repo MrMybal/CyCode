@@ -1,0 +1,1662 @@
+{
+  "Run": {
+    "en": "Run",
+    "fr": "Executer"
+  },
+  "Debugger": {
+    "en": "Debugger",
+    "fr": "Debogueur"
+  },
+  "Name": {
+    "en": "Name",
+    "fr": "Nom"
+  },
+  "Value": {
+    "en": "Value",
+    "fr": "Valeur"
+  },
+  "Type": {
+    "en": "Type",
+    "fr": "Type"
+  },
+  "Enabled": {
+    "en": "Enabled",
+    "fr": "Actif"
+  },
+  "Line": {
+    "en": "Line",
+    "fr": "Ligne"
+  },
+  "Reload": {
+    "en": "Reload",
+    "fr": "Recharger"
+  },
+  "Local": {
+    "en": "Local",
+    "fr": "Variables locales"
+  },
+  "Locals": {
+    "en": "Locals",
+    "fr": "Variables locales"
+  },
+  "Static": {
+    "en": "Static",
+    "fr": "Variables statiques"
+  },
+  "Registers": {
+    "en": "Registers",
+    "fr": "Registres"
+  },
+  "Debug / Continue": {
+    "en": "Debug / Continue",
+    "fr": "Deboguer / Continuer"
+  },
+  "Run without debugging": {
+    "en": "Run without debugging",
+    "fr": "Executer sans debogage"
+  },
+  "Pause program": {
+    "en": "Pause program",
+    "fr": "Suspendre le programme"
+  },
+  "Stop debugging": {
+    "en": "Stop debugging",
+    "fr": "Arreter le debogage"
+  },
+  "Step over": {
+    "en": "Step over",
+    "fr": "Pas a pas principal"
+  },
+  "Step into": {
+    "en": "Step into",
+    "fr": "Pas a pas detaille"
+  },
+  "Step out": {
+    "en": "Step out",
+    "fr": "Sortir de la fonction"
+  },
+  "Toggle breakpoint": {
+    "en": "Toggle breakpoint",
+    "fr": "Basculer le point d’arret"
+  },
+  "Breakpoints": {
+    "en": "Breakpoints",
+    "fr": "Points d’arret"
+  },
+  "Condition": {
+    "en": "Condition",
+    "fr": "Condition"
+  },
+  "Hit condition": {
+    "en": "Hit condition",
+    "fr": "Condition de passage"
+  },
+  "Log message": {
+    "en": "Log message",
+    "fr": "Message de journal"
+  },
+  "Breakpoints changed. Reload before applying.": {
+    "en": "Breakpoints changed. Reload before applying.",
+    "fr": "Les points d’arret ont change. Rechargez-les avant d’appliquer."
+  },
+  "Apply breakpoint changes": {
+    "en": "Apply breakpoint changes",
+    "fr": "Appliquer les points d’arret"
+  },
+  "Read-only debugger source": {
+    "en": "Read-only debugger source",
+    "fr": "Source du debogueur en lecture seule"
+  },
+  "Program terminal": {
+    "en": "Program terminal",
+    "fr": "Terminal du programme"
+  },
+  "Pause or hit a breakpoint to inspect variables.": {
+    "en": "Pause or hit a breakpoint to inspect variables.",
+    "fr": "Suspendez le programme ou atteignez un point d’arret pour examiner les variables."
+  },
+  "Variables": {
+    "en": "Variables",
+    "fr": "Variables"
+  },
+  "Call stack": {
+    "en": "Call stack",
+    "fr": "Pile des appels"
+  },
+  "Watch": {
+    "en": "Watch",
+    "fr": "Expressions espionnes"
+  },
+  "C++ expression": {
+    "en": "C++ expression",
+    "fr": "Expression C++"
+  },
+  "C++ / C# expression": {
+    "en": "C++ / C# expression",
+    "fr": "Expression C++ / C#"
+  },
+  "Program / assembly": {
+    "en": "Program / assembly",
+    "fr": "Programme / assembly"
+  },
+  "Evaluate": {
+    "en": "Evaluate",
+    "fr": "Evaluer"
+  },
+  "Add watch": {
+    "en": "Add watch",
+    "fr": "Ajouter une expression espionne"
+  },
+  "Debug console": {
+    "en": "Debug console",
+    "fr": "Console de debogage"
+  },
+  "Program input/output is available in Program terminal.": {
+    "en": "Program input/output is available in Program terminal.",
+    "fr": "Les entrees et sorties du programme sont dans Terminal du programme."
+  },
+  "Launch configuration": {
+    "en": "Launch configuration",
+    "fr": "Configuration de lancement"
+  },
+  "Executable": {
+    "en": "Executable",
+    "fr": "Executable"
+  },
+  "Working directory": {
+    "en": "Working directory",
+    "fr": "Dossier de travail"
+  },
+  "Arguments (one per line)": {
+    "en": "Arguments (one per line)",
+    "fr": "Arguments (un par ligne)"
+  },
+  "Environment (KEY=VALUE)": {
+    "en": "Environment (KEY=VALUE)",
+    "fr": "Environnement (CLE=VALEUR)"
+  },
+  "Debug adapter": {
+    "en": "Debug adapter",
+    "fr": "Adaptateur de debogage"
+  },
+  "Build before debugging": {
+    "en": "Build before debugging",
+    "fr": "Compiler avant le debogage"
+  },
+  "Stop on entry": {
+    "en": "Stop on entry",
+    "fr": "Arreter au point d’entree"
+  },
+  "Integrated program terminal": {
+    "en": "Integrated program terminal",
+    "fr": "Terminal integre du programme"
+  },
+  "Save debug profile": {
+    "en": "Save debug profile",
+    "fr": "Enregistrer le profil de debogage"
+  },
+  "Reload profile": {
+    "en": "Reload profile",
+    "fr": "Recharger le profil"
+  },
+  "Attach to process ID": {
+    "en": "Attach to process ID",
+    "fr": "Attacher au processus (ID)"
+  },
+  "Attach": {
+    "en": "Attach",
+    "fr": "Attacher"
+  },
+  "Select an executable in the debug profile.": {
+    "en": "Select an executable in the debug profile.",
+    "fr": "Selectionnez un executable dans la configuration de lancement."
+  },
+  "idle": {
+    "en": "idle",
+    "fr": "Inactif"
+  },
+  "starting": {
+    "en": "starting",
+    "fr": "Demarrage"
+  },
+  "running": {
+    "en": "running",
+    "fr": "En execution"
+  },
+  "stopped": {
+    "en": "stopped",
+    "fr": "Suspendu"
+  },
+  "exited": {
+    "en": "exited",
+    "fr": "Termine"
+  },
+  "failed": {
+    "en": "failed",
+    "fr": "Echec"
+  },
+  "Terminal": {
+    "en": "Terminal",
+    "fr": "Terminal"
+  },
+  "New terminal": {
+    "en": "New terminal",
+    "fr": "Nouveau terminal"
+  },
+  "New terminal (Find action)": {
+    "en": "New terminal (Find action)",
+    "fr": "Nouveau terminal (Recherche d’action)"
+  },
+  "Close terminal and its processes": {
+    "en": "Close terminal and its processes",
+    "fr": "Fermer le terminal et ses processus"
+  },
+  "Clear scrollback": {
+    "en": "Clear scrollback",
+    "fr": "Effacer l’historique"
+  },
+  "Open a terminal to run commands in this workspace. Alt+F12 focuses the terminal.": {
+    "en": "Open a terminal to run commands in this workspace. Alt+F12 focuses the terminal.",
+    "fr": "Ouvrez un terminal pour executer des commandes dans ce projet. Alt+F12 active le terminal."
+  },
+  "Refactor": {
+    "en": "Refactor",
+    "fr": "Refactoriser"
+  },
+  "Refactoring": {
+    "en": "Refactoring",
+    "fr": "Refactorisation"
+  },
+  "Rename symbol": {
+    "en": "Rename symbol",
+    "fr": "Renommer le symbole"
+  },
+  "Format document": {
+    "en": "Format document",
+    "fr": "Formater le document"
+  },
+  "Format selection": {
+    "en": "Format selection",
+    "fr": "Formater la selection"
+  },
+  "Undo refactoring": {
+    "en": "Undo refactoring",
+    "fr": "Annuler la refactorisation"
+  },
+  "Apply refactoring": {
+    "en": "Apply refactoring",
+    "fr": "Appliquer la refactorisation"
+  },
+  "Go to type...": {
+    "en": "Go to type...",
+    "fr": "Aller a un type..."
+  },
+  "Go to symbol...": {
+    "en": "Go to symbol...",
+    "fr": "Aller a un symbole..."
+  },
+  "File structure": {
+    "en": "File structure",
+    "fr": "Structure du fichier"
+  },
+  "Types": {
+    "en": "Types",
+    "fr": "Types"
+  },
+  "Symbols": {
+    "en": "Symbols",
+    "fr": "Symboles"
+  },
+  "Members": {
+    "en": "Members",
+    "fr": "Membres"
+  },
+  "Searching symbols...": {
+    "en": "Searching symbols...",
+    "fr": "Recherche des symboles..."
+  },
+  "Results limited. Refine the symbol name.": {
+    "en": "Results limited. Refine the symbol name.",
+    "fr": "Resultats limites. Precisez le nom du symbole."
+  },
+  "Type a name; > actions, @ members, # symbols...": {
+    "en": "Type a name; > actions, @ members, # symbols...",
+    "fr": "Saisissez un nom ; > actions, @ membres, # symboles..."
+  },
+  "Read-only SDK source": {
+    "en": "Read-only SDK source",
+    "fr": "Source SDK en lecture seule"
+  },
+  "Preview changes": {
+    "en": "Preview changes",
+    "fr": "Apercu des modifications"
+  },
+  "Apply changes": {
+    "en": "Apply changes",
+    "fr": "Appliquer les modifications"
+  },
+  "No changes required": {
+    "en": "No changes required",
+    "fr": "Aucune modification necessaire"
+  },
+  "Refactoring undone": {
+    "en": "Refactoring undone",
+    "fr": "Refactorisation annulee"
+  },
+  "Changes applied to live buffers": {
+    "en": "Changes applied to live buffers",
+    "fr": "Modifications appliquees aux buffers"
+  },
+  "Changes are in live buffers. Save all to write them to disk.": {
+    "en": "Changes are in live buffers. Save all to write them to disk.",
+    "fr": "Les modifications sont dans les buffers. Enregistrez-les pour les ecrire sur disque."
+  },
+  "Rename a C++ symbol to preview changes across its references.": {
+    "en": "Rename a C++ symbol to preview changes across its references.",
+    "fr": "Renommez un symbole C++ pour examiner les modifications de ses references."
+  },
+  "Before": {
+    "en": "Before",
+    "fr": "Avant"
+  },
+  "After": {
+    "en": "After",
+    "fr": "Apres"
+  },
+  "Changed line": {
+    "en": "Changed line",
+    "fr": "Ligne modifiee"
+  },
+  "files": {
+    "en": "files",
+    "fr": "fichiers"
+  },
+  "edits": {
+    "en": "edits",
+    "fr": "modifications"
+  },
+  "Renames C++ references. Blueprint assets and serialized Unreal names are not modified.": {
+    "en": "Renames C++ references. Blueprint assets and serialized Unreal names are not modified.",
+    "fr": "Renomme les references C++. Les assets Blueprint et les noms Unreal serialises ne sont pas modifies."
+  },
+  "Editor": {
+    "en": "Editor",
+    "fr": "Editeur"
+  },
+  "Keyboard shortcuts": {
+    "en": "Keyboard shortcuts",
+    "fr": "Raccourcis clavier"
+  },
+  "Keymap profile": {
+    "en": "Keymap profile",
+    "fr": "Profil de raccourcis"
+  },
+  "Command": {
+    "en": "Command",
+    "fr": "Commande"
+  },
+  "Shortcut": {
+    "en": "Shortcut",
+    "fr": "Raccourci"
+  },
+  "Context": {
+    "en": "Context",
+    "fr": "Contexte"
+  },
+  "Global": {
+    "en": "Global",
+    "fr": "Global"
+  },
+  "Document": {
+    "en": "Document",
+    "fr": "Document"
+  },
+  "Filter commands...": {
+    "en": "Filter commands...",
+    "fr": "Filtrer les commandes..."
+  },
+  "Choose a command to change its shortcuts. Separate alternatives with ; and chord steps with a comma. An empty value disables the shortcut.": {
+    "en": "Choose a command to change its shortcuts. Separate alternatives with ; and chord steps with a comma. An empty value disables the shortcut.",
+    "fr": "Selectionnez une commande pour modifier ses raccourcis. Separez les variantes avec ; et les etapes avec une virgule. Une valeur vide desactive le raccourci."
+  },
+  "Apply shortcut": {
+    "en": "Apply shortcut",
+    "fr": "Appliquer le raccourci"
+  },
+  "Reset command": {
+    "en": "Reset command",
+    "fr": "Reinitialiser la commande"
+  },
+  "Reset profile": {
+    "en": "Reset profile",
+    "fr": "Reinitialiser le profil"
+  },
+  "Search Everywhere": {
+    "en": "Search Everywhere",
+    "fr": "Rechercher partout"
+  },
+  "Find action...": {
+    "en": "Find action...",
+    "fr": "Rechercher une action..."
+  },
+  "Recent files": {
+    "en": "Recent files",
+    "fr": "Fichiers recents"
+  },
+  "All": {
+    "en": "All",
+    "fr": "Tout"
+  },
+  "Files": {
+    "en": "Files",
+    "fr": "Fichiers"
+  },
+  "Actions": {
+    "en": "Actions",
+    "fr": "Actions"
+  },
+  "Type a name, or > for actions...": {
+    "en": "Type a name, or > for actions...",
+    "fr": "Saisissez un nom, ou > pour les actions..."
+  },
+  "No matching results": {
+    "en": "No matching results",
+    "fr": "Aucun resultat"
+  },
+  "Go to line...": {
+    "en": "Go to line...",
+    "fr": "Aller a la ligne..."
+  },
+  "Go": {
+    "en": "Go",
+    "fr": "Aller"
+  },
+  "Close file": {
+    "en": "Close file",
+    "fr": "Fermer le fichier"
+  },
+  "Close all files": {
+    "en": "Close all files",
+    "fr": "Fermer tous les fichiers"
+  },
+  "Reopen closed file": {
+    "en": "Reopen closed file",
+    "fr": "Rouvrir le fichier ferme"
+  },
+  "Cut": {
+    "en": "Cut",
+    "fr": "Couper"
+  },
+  "Copy": {
+    "en": "Copy",
+    "fr": "Copier"
+  },
+  "Paste": {
+    "en": "Paste",
+    "fr": "Coller"
+  },
+  "Select all": {
+    "en": "Select all",
+    "fr": "Tout selectionner"
+  },
+  "Duplicate selection or line": {
+    "en": "Duplicate selection or line",
+    "fr": "Dupliquer la selection ou la ligne"
+  },
+  "Delete line": {
+    "en": "Delete line",
+    "fr": "Supprimer la ligne"
+  },
+  "Move line up": {
+    "en": "Move line up",
+    "fr": "Monter la ligne"
+  },
+  "Move line down": {
+    "en": "Move line down",
+    "fr": "Descendre la ligne"
+  },
+  "Toggle line comment": {
+    "en": "Toggle line comment",
+    "fr": "Commenter ou decommenter les lignes"
+  },
+  "Comment lines": {
+    "en": "Comment lines",
+    "fr": "Commenter les lignes"
+  },
+  "Uncomment lines": {
+    "en": "Uncomment lines",
+    "fr": "Decommenter les lignes"
+  },
+  "Indent lines": {
+    "en": "Indent lines",
+    "fr": "Indenter les lignes"
+  },
+  "Unindent lines": {
+    "en": "Unindent lines",
+    "fr": "Desindenter les lignes"
+  },
+  "Extend selection": {
+    "en": "Extend selection",
+    "fr": "Etendre la selection"
+  },
+  "Shrink selection": {
+    "en": "Shrink selection",
+    "fr": "Reduire la selection"
+  },
+  "Add next occurrence": {
+    "en": "Add next occurrence",
+    "fr": "Ajouter la prochaine occurrence"
+  },
+  "Select all occurrences": {
+    "en": "Select all occurrences",
+    "fr": "Selectionner toutes les occurrences"
+  },
+  "Selection to uppercase": {
+    "en": "Selection to uppercase",
+    "fr": "Selection en majuscules"
+  },
+  "Selection to lowercase": {
+    "en": "Selection to lowercase",
+    "fr": "Selection en minuscules"
+  },
+  "Remove trailing whitespace": {
+    "en": "Remove trailing whitespace",
+    "fr": "Supprimer les espaces en fin de ligne"
+  },
+  "Replace in file": {
+    "en": "Replace in file",
+    "fr": "Remplacer dans le fichier"
+  },
+  "Find next": {
+    "en": "Find next",
+    "fr": "Occurrence suivante"
+  },
+  "Navigate back": {
+    "en": "Navigate back",
+    "fr": "Emplacement precedent"
+  },
+  "Navigate forward": {
+    "en": "Navigate forward",
+    "fr": "Emplacement suivant"
+  },
+  "Next document": {
+    "en": "Next document",
+    "fr": "Document suivant"
+  },
+  "Previous document": {
+    "en": "Previous document",
+    "fr": "Document precedent"
+  },
+  "Prepare Unreal code analysis": {
+    "en": "Prepare Unreal code analysis",
+    "fr": "Preparer l'analyse Unreal"
+  },
+  "Toggle word wrap": {
+    "en": "Toggle word wrap",
+    "fr": "Activer le retour a la ligne"
+  },
+  "Toggle line numbers": {
+    "en": "Toggle line numbers",
+    "fr": "Afficher les numeros de ligne"
+  },
+  "Toggle whitespace": {
+    "en": "Toggle whitespace",
+    "fr": "Afficher les espaces"
+  },
+  "Toggle minimap": {
+    "en": "Toggle minimap",
+    "fr": "Afficher la minimap"
+  },
+  "Fold region": {
+    "en": "Fold region",
+    "fr": "Replier le bloc"
+  },
+  "Unfold region": {
+    "en": "Unfold region",
+    "fr": "Deplier le bloc"
+  },
+  "Unfold all": {
+    "en": "Unfold all",
+    "fr": "Tout deplier"
+  },
+  "Refresh files": {
+    "en": "Refresh files",
+    "fr": "Actualiser les fichiers"
+  },
+  "Refresh version control": {
+    "en": "Refresh version control",
+    "fr": "Actualiser le controle de versions"
+  },
+  "Loading files...": {
+    "en": "Loading files...",
+    "fr": "Chargement des fichiers..."
+  },
+  "No matching suggestions": {
+    "en": "No matching suggestions",
+    "fr": "Aucune proposition correspondante"
+  },
+  "Preparing Unreal code analysis...": {
+    "en": "Preparing Unreal code analysis...",
+    "fr": "Preparation de l'analyse Unreal..."
+  },
+  "Unreal code analysis ready": {
+    "en": "Unreal code analysis ready",
+    "fr": "Analyse Unreal prete"
+  },
+  "Unreal analysis failed. See Build output.": {
+    "en": "Unreal analysis failed. See Build output.",
+    "fr": "Echec de l'analyse Unreal. Consultez la sortie de compilation."
+  },
+  "Retry Unreal analysis": {
+    "en": "Retry Unreal analysis",
+    "fr": "Relancer l'analyse Unreal"
+  },
+  "Includes, reflection macros and generated headers are being prepared in the background.": {
+    "en": "Includes, reflection macros and generated headers are being prepared in the background.",
+    "fr": "Les includes, macros de reflection et en-tetes generes sont prepares en arriere-plan."
+  },
+  "Go to file   Ctrl+Alt+F": {
+    "en": "Go to file   Ctrl+Alt+F",
+    "fr": "Ouvrir un fichier   Ctrl+Alt+F"
+  },
+  "Unreal Engine": {
+    "en": "Unreal Engine",
+    "fr": "Unreal Engine"
+  },
+  "No Unreal project": {
+    "en": "No Unreal project",
+    "fr": "Aucun projet Unreal"
+  },
+  "Open a .uproject or its .sln solution.": {
+    "en": "Open a .uproject or its .sln solution.",
+    "fr": "Ouvrez un .uproject ou sa solution .sln."
+  },
+  "Engine directory": {
+    "en": "Engine directory",
+    "fr": "Dossier du moteur"
+  },
+  "Platform": {
+    "en": "Platform",
+    "fr": "Plateforme"
+  },
+  "Targets": {
+    "en": "Targets",
+    "fr": "Cibles"
+  },
+  "Modules": {
+    "en": "Modules",
+    "fr": "Modules"
+  },
+  "Plugins": {
+    "en": "Plugins",
+    "fr": "Plugins"
+  },
+  "Refresh Unreal project": {
+    "en": "Refresh Unreal project",
+    "fr": "Actualiser le projet Unreal"
+  },
+  "Generate project files": {
+    "en": "Generate project files",
+    "fr": "Generer les fichiers de projet"
+  },
+  "Generate code index": {
+    "en": "Generate code index",
+    "fr": "Generer l'index du code"
+  },
+  "Select the matching Unreal engine directory.": {
+    "en": "Select the matching Unreal engine directory.",
+    "fr": "Selectionnez le dossier de la bonne version du moteur Unreal."
+  },
+  "This project uses UnrealBuildTool.": {
+    "en": "This project uses UnrealBuildTool.",
+    "fr": "Ce projet utilise UnrealBuildTool."
+  },
+  "Generate the code index for Unreal include paths, macros and symbol navigation. The engine SDK and generated headers are required.": {
+    "en": "Generate the code index for Unreal include paths, macros and symbol navigation. The engine SDK and generated headers are required.",
+    "fr": "Generez l'index du code pour les includes Unreal, macros et symboles. Le SDK du moteur et les en-tetes generes sont requis."
+  },
+  "Graphite": {
+    "en": "Graphite",
+    "fr": "Graphite"
+  },
+  "Open solution...": {
+    "en": "Open solution...",
+    "fr": "Ouvrir une solution..."
+  },
+  "New window": {
+    "en": "New window",
+    "fr": "Nouvelle fenetre"
+  },
+  "Open solution in new window...": {
+    "en": "Open solution in new window...",
+    "fr": "Ouvrir une solution dans une nouvelle fenetre..."
+  },
+  "Move to new window": {
+    "en": "Move to new window",
+    "fr": "Deplacer dans une nouvelle fenetre"
+  },
+  "Return to editor": {
+    "en": "Return to editor",
+    "fr": "Reancrer dans l'editeur"
+  },
+  "Solution": {
+    "en": "Solution",
+    "fr": "Solution"
+  },
+  "Workspace files": {
+    "en": "Workspace files",
+    "fr": "Fichiers du projet"
+  },
+  "Missing": {
+    "en": "Missing",
+    "fr": "Absent"
+  },
+  "External": {
+    "en": "External",
+    "fr": "Externe"
+  },
+  "Missing project files": {
+    "en": "Missing project files",
+    "fr": "Fichiers de projet absents"
+  },
+  "Open project file": {
+    "en": "Open project file",
+    "fr": "Ouvrir le fichier de projet"
+  },
+  "Open in new window": {
+    "en": "Open in new window",
+    "fr": "Ouvrir dans une nouvelle fenetre"
+  },
+  "Generated Unreal project files may be absent. Available source files remain accessible below.": {
+    "en": "Generated Unreal project files may be absent. Available source files remain accessible below.",
+    "fr": "Les fichiers de projet Unreal generes peuvent etre absents. Les sources presentes restent accessibles ci-dessous."
+  },
+  "CMake": {
+    "en": "CMake",
+    "fr": "CMake"
+  },
+  "CMake settings": {
+    "en": "CMake settings",
+    "fr": "Reglages CMake"
+  },
+  "Detect toolchains": {
+    "en": "Detect toolchains",
+    "fr": "Detecter les toolchains"
+  },
+  "Refresh CMake project": {
+    "en": "Refresh CMake project",
+    "fr": "Actualiser le projet CMake"
+  },
+  "Toolchain": {
+    "en": "Toolchain",
+    "fr": "Toolchain"
+  },
+  "Generator": {
+    "en": "Generator",
+    "fr": "Generateur"
+  },
+  "Configuration": {
+    "en": "Configuration",
+    "fr": "Configuration"
+  },
+  "Target": {
+    "en": "Target",
+    "fr": "Cible"
+  },
+  "All targets": {
+    "en": "All targets",
+    "fr": "Toutes les cibles"
+  },
+  "Automatic": {
+    "en": "Automatic",
+    "fr": "Automatique"
+  },
+  "Compilation database ready": {
+    "en": "Compilation database ready",
+    "fr": "Base de compilation prete"
+  },
+  "Configure for code analysis": {
+    "en": "Configure for code analysis",
+    "fr": "Configurer pour l'analyse du code"
+  },
+  "translation units": {
+    "en": "translation units",
+    "fr": "unites de compilation"
+  },
+  "Settings apply on configure.": {
+    "en": "Settings apply on configure.",
+    "fr": "Les reglages s'appliquent a la configuration."
+  },
+  "Navigate": {
+    "en": "Navigate",
+    "fr": "Navigation"
+  },
+  "Go to definition": {
+    "en": "Go to definition",
+    "fr": "Aller a la definition"
+  },
+  "Find references": {
+    "en": "Find references",
+    "fr": "Rechercher les references"
+  },
+  "References": {
+    "en": "References",
+    "fr": "References"
+  },
+  "Symbol navigation": {
+    "en": "Symbol navigation",
+    "fr": "Navigation dans le code"
+  },
+  "F12: definition. Shift+F12: references.": {
+    "en": "F12: definition. Shift+F12: references.",
+    "fr": "F12 : definition. Maj+F12 : references."
+  },
+  "No locations found": {
+    "en": "No locations found",
+    "fr": "Aucun emplacement trouve"
+  },
+  "Some locations are outside this workspace.": {
+    "en": "Some locations are outside this workspace.",
+    "fr": "Certains emplacements sont hors de cet espace de travail."
+  },
+  "Open a C/C++ document to navigate symbols.": {
+    "en": "Open a C/C++ document to navigate symbols.",
+    "fr": "Ouvrez un document C/C++ pour naviguer dans le code."
+  },
+  "Go to file   Ctrl+P": {
+    "en": "Go to file   Ctrl+P",
+    "fr": "Ouvrir un fichier   Ctrl+P"
+  },
+  "New file...": {
+    "en": "New file...",
+    "fr": "Nouveau fichier..."
+  },
+  "Workspace-relative path": {
+    "en": "Workspace-relative path",
+    "fr": "Chemin relatif au projet"
+  },
+  "Create": {
+    "en": "Create",
+    "fr": "Creer"
+  },
+  "Shared Core ready": {
+    "en": "Shared Core ready",
+    "fr": "Core partage pret"
+  },
+  "Core starting or unavailable": {
+    "en": "Core starting or unavailable",
+    "fr": "Core en demarrage ou indisponible"
+  },
+  "File": {
+    "en": "File",
+    "fr": "Fichier"
+  },
+  "Edit": {
+    "en": "Edit",
+    "fr": "Edition"
+  },
+  "View": {
+    "en": "View",
+    "fr": "Affichage"
+  },
+  "Build": {
+    "en": "Build",
+    "fr": "Compilation"
+  },
+  "Project": {
+    "en": "Project",
+    "fr": "Projet"
+  },
+  "Search": {
+    "en": "Search",
+    "fr": "Recherche"
+  },
+  "Version control": {
+    "en": "Version control",
+    "fr": "Gestion de versions"
+  },
+  "Problems": {
+    "en": "Problems",
+    "fr": "Problemes"
+  },
+  "Extensions": {
+    "en": "Extensions",
+    "fr": "Extensions"
+  },
+  "MCP": {
+    "en": "MCP",
+    "fr": "MCP"
+  },
+  "Options": {
+    "en": "Options",
+    "fr": "Options"
+  },
+  "Open workspace...": {
+    "en": "Open workspace...",
+    "fr": "Ouvrir un espace de travail..."
+  },
+  "Go to file...": {
+    "en": "Go to file...",
+    "fr": "Ouvrir un fichier..."
+  },
+  "Save all": {
+    "en": "Save all",
+    "fr": "Tout enregistrer"
+  },
+  "Exit": {
+    "en": "Exit",
+    "fr": "Quitter"
+  },
+  "Undo": {
+    "en": "Undo",
+    "fr": "Annuler"
+  },
+  "Redo": {
+    "en": "Redo",
+    "fr": "Retablir"
+  },
+  "Find in file": {
+    "en": "Find in file",
+    "fr": "Rechercher dans le fichier"
+  },
+  "Reset layout": {
+    "en": "Reset layout",
+    "fr": "Reinitialiser la disposition"
+  },
+  "Configure": {
+    "en": "Configure",
+    "fr": "Configurer"
+  },
+  "Build project": {
+    "en": "Build project",
+    "fr": "Compiler le projet"
+  },
+  "Save (Ctrl+S)": {
+    "en": "Save (Ctrl+S)",
+    "fr": "Enregistrer (Ctrl+S)"
+  },
+  "Build (Ctrl+B)": {
+    "en": "Build (Ctrl+B)",
+    "fr": "Compiler (Ctrl+B)"
+  },
+  "Search everywhere   Ctrl+P": {
+    "en": "Search everywhere   Ctrl+P",
+    "fr": "Rechercher partout   Ctrl+P"
+  },
+  "Ready": {
+    "en": "Ready",
+    "fr": "Pret"
+  },
+  "Working...": {
+    "en": "Working...",
+    "fr": "Traitement..."
+  },
+  "No repository": {
+    "en": "No repository",
+    "fr": "Aucun depot"
+  },
+  "Refresh": {
+    "en": "Refresh",
+    "fr": "Actualiser"
+  },
+  "Filter files...": {
+    "en": "Filter files...",
+    "fr": "Filtrer les fichiers..."
+  },
+  "No files": {
+    "en": "No files",
+    "fr": "Aucun fichier"
+  },
+  "Open a workspace or refresh the file list.": {
+    "en": "Open a workspace or refresh the file list.",
+    "fr": "Ouvrez un espace de travail ou actualisez la liste."
+  },
+  "A workspace for your code.": {
+    "en": "A workspace for your code.",
+    "fr": "Un espace de travail pour votre code."
+  },
+  "Find": {
+    "en": "Find",
+    "fr": "Rechercher"
+  },
+  "Replace": {
+    "en": "Replace",
+    "fr": "Remplacer"
+  },
+  "Find all": {
+    "en": "Find all",
+    "fr": "Tout rechercher"
+  },
+  "Replace all": {
+    "en": "Replace all",
+    "fr": "Tout remplacer"
+  },
+  "Find in workspace...": {
+    "en": "Find in workspace...",
+    "fr": "Rechercher dans l'espace de travail..."
+  },
+  "Case sensitive": {
+    "en": "Case sensitive",
+    "fr": "Respecter la casse"
+  },
+  "Regex": {
+    "en": "Regex",
+    "fr": "Expression reguliere"
+  },
+  "Search your project": {
+    "en": "Search your project",
+    "fr": "Rechercher dans le projet"
+  },
+  "Results include unsaved documents for literal searches.": {
+    "en": "Results include unsaved documents for literal searches.",
+    "fr": "La recherche de texte inclut les documents non enregistres."
+  },
+  "matches": {
+    "en": "matches",
+    "fr": "resultats"
+  },
+  "Results limited": {
+    "en": "Results limited",
+    "fr": "Resultats limites"
+  },
+  "Regex excludes modified buffers.": {
+    "en": "Regex excludes modified buffers.",
+    "fr": "Les expressions regulieres excluent les documents modifies."
+  },
+  "Diff": {
+    "en": "Diff",
+    "fr": "Differences"
+  },
+  "Staged diff": {
+    "en": "Staged diff",
+    "fr": "Differences preparees"
+  },
+  "History": {
+    "en": "History",
+    "fr": "Historique"
+  },
+  "No Git repository": {
+    "en": "No Git repository",
+    "fr": "Aucun depot Git"
+  },
+  "Open a folder containing a Git repository.": {
+    "en": "Open a folder containing a Git repository.",
+    "fr": "Ouvrez un dossier contenant un depot Git."
+  },
+  "Commit message": {
+    "en": "Commit message",
+    "fr": "Message du commit"
+  },
+  "Commit staged": {
+    "en": "Commit staged",
+    "fr": "Creer le commit"
+  },
+  "Status": {
+    "en": "Status",
+    "fr": "Etat"
+  },
+  "Stage": {
+    "en": "Stage",
+    "fr": "Preparer"
+  },
+  "Unstage": {
+    "en": "Unstage",
+    "fr": "Retirer"
+  },
+  "CMake source directory": {
+    "en": "CMake source directory",
+    "fr": "Dossier source CMake"
+  },
+  "Build directory": {
+    "en": "Build directory",
+    "fr": "Dossier de compilation"
+  },
+  "Copy output": {
+    "en": "Copy output",
+    "fr": "Copier la sortie"
+  },
+  "clangd connected": {
+    "en": "clangd connected",
+    "fr": "clangd connecte"
+  },
+  "Starting clangd...": {
+    "en": "Starting clangd...",
+    "fr": "Demarrage de clangd..."
+  },
+  "clangd stopped": {
+    "en": "clangd stopped",
+    "fr": "clangd arrete"
+  },
+  "Restart language server": {
+    "en": "Restart language server",
+    "fr": "Redemarrer le serveur de langage"
+  },
+  "No diagnostics": {
+    "en": "No diagnostics",
+    "fr": "Aucun diagnostic"
+  },
+  "C++ diagnostics appear here when clangd is connected.": {
+    "en": "C++ diagnostics appear here when clangd is connected.",
+    "fr": "Les diagnostics C++ apparaissent ici lorsque clangd est connecte."
+  },
+  "Plugin ABI": {
+    "en": "Plugin ABI",
+    "fr": "ABI des plugins"
+  },
+  "Native bridge ready": {
+    "en": "Native bridge ready",
+    "fr": "Passerelle native prete"
+  },
+  "Connect an assistant to inspect this workspace and its live documents.": {
+    "en": "Connect an assistant to inspect this workspace and its live documents.",
+    "fr": "Connectez un assistant pour consulter le projet et les documents ouverts."
+  },
+  "Enable editing, builds and plugin commands": {
+    "en": "Enable editing, builds and plugin commands",
+    "fr": "Autoriser les modifications, compilations et commandes des plugins"
+  },
+  "Copy MCP configuration": {
+    "en": "Copy MCP configuration",
+    "fr": "Copier la configuration MCP"
+  },
+  "Save MCP configuration": {
+    "en": "Save MCP configuration",
+    "fr": "Enregistrer la configuration MCP"
+  },
+  "Available services": {
+    "en": "Available services",
+    "fr": "Services disponibles"
+  },
+  "Workspace, live documents, search, Git, CMake and native plugin commands. MCP sessions use CyToolsCore jobs and permissions.": {
+    "en": "Workspace, live documents, search, Git, CMake and native plugin commands. MCP sessions use CyToolsCore jobs and permissions.",
+    "fr": "Projet, documents ouverts, recherche, Git, CMake et plugins natifs. Les sessions MCP utilisent les jobs et permissions CyToolsCore."
+  },
+  "Language": {
+    "en": "Language",
+    "fr": "Langue"
+  },
+  "Theme": {
+    "en": "Theme",
+    "fr": "Theme"
+  },
+  "Text size": {
+    "en": "Text size",
+    "fr": "Taille du texte"
+  },
+  "Save preferences": {
+    "en": "Save preferences",
+    "fr": "Enregistrer les preferences"
+  },
+  "Save configuration": {
+    "en": "Save configuration",
+    "fr": "Enregistrer la configuration"
+  },
+  "Load configuration": {
+    "en": "Load configuration",
+    "fr": "Charger la configuration"
+  },
+  "Licenses": {
+    "en": "Licenses",
+    "fr": "Licences"
+  },
+  "CyCode: license to be selected before publication. CyUI, Dear ImGui, TextEditor, CyToolsCore and nlohmann/json: MIT. SDL3: zlib.": {
+    "en": "CyCode: license to be selected before publication. CyUI, Dear ImGui, TextEditor, CyToolsCore and nlohmann/json: MIT. SDL3: zlib.",
+    "fr": "CyCode : licence a choisir avant publication. CyUI, Dear ImGui, TextEditor, CyToolsCore et nlohmann/json : MIT. SDL3 : zlib."
+  },
+  "Open third-party notices": {
+    "en": "Open third-party notices",
+    "fr": "Ouvrir les licences des dependances"
+  },
+  "Type a file name...": {
+    "en": "Type a file name...",
+    "fr": "Saisissez un nom de fichier..."
+  },
+  "Unsaved changes": {
+    "en": "Unsaved changes",
+    "fr": "Modifications non enregistrees"
+  },
+  "Save": {
+    "en": "Save",
+    "fr": "Enregistrer"
+  },
+  "Discard": {
+    "en": "Discard",
+    "fr": "Abandonner"
+  },
+  "Cancel": {
+    "en": "Cancel",
+    "fr": "Annuler"
+  },
+  "Close workspace?": {
+    "en": "Close workspace?",
+    "fr": "Fermer l'espace de travail ?"
+  },
+  "Some documents have unsaved changes.": {
+    "en": "Some documents have unsaved changes.",
+    "fr": "Certains documents ne sont pas enregistres."
+  },
+  "Save or close modified documents before switching workspace.": {
+    "en": "Save or close modified documents before switching workspace.",
+    "fr": "Enregistrez ou fermez les documents modifies avant de changer de projet."
+  },
+  "Wait for current tasks before switching workspace.": {
+    "en": "Wait for current tasks before switching workspace.",
+    "fr": "Attendez la fin des taches avant de changer de projet."
+  },
+  "Workspace opened: ": {
+    "en": "Workspace opened: ",
+    "fr": "Espace de travail ouvert : "
+  },
+  "A task is already running.": {
+    "en": "A task is already running.",
+    "fr": "Une tache est deja en cours."
+  },
+  "Saved": {
+    "en": "Saved",
+    "fr": "Enregistre"
+  },
+  "File list limited to 20,000 entries.": {
+    "en": "File list limited to 20,000 entries.",
+    "fr": "Liste limitee a 20 000 fichiers."
+  },
+  "Task failed. See output.": {
+    "en": "Task failed. See output.",
+    "fr": "Echec de la tache. Consultez la sortie."
+  },
+  "Task completed": {
+    "en": "Task completed",
+    "fr": "Tache terminee"
+  },
+  "Initialize Git repository": {
+    "en": "Initialize Git repository",
+    "fr": "Initialiser le depot Git"
+  },
+  "Changes": {
+    "en": "Changes",
+    "fr": "Modifications"
+  },
+  "Review": {
+    "en": "Review",
+    "fr": "Apercu"
+  },
+  "Branches": {
+    "en": "Branches",
+    "fr": "Branches"
+  },
+  "Remotes": {
+    "en": "Remotes",
+    "fr": "Depots distants"
+  },
+  "Stashes": {
+    "en": "Stashes",
+    "fr": "Stashes"
+  },
+  "Conflicts": {
+    "en": "Conflicts",
+    "fr": "Conflits"
+  },
+  "Commit changes": {
+    "en": "Commit changes",
+    "fr": "Creer un commit"
+  },
+  "Git branches": {
+    "en": "Git branches",
+    "fr": "Branches Git"
+  },
+  "Git history": {
+    "en": "Git history",
+    "fr": "Historique Git"
+  },
+  "Git remotes and sync": {
+    "en": "Git remotes and sync",
+    "fr": "Depots distants et synchronisation Git"
+  },
+  "Git stashes": {
+    "en": "Git stashes",
+    "fr": "Stashes Git"
+  },
+  "Git conflicts": {
+    "en": "Git conflicts",
+    "fr": "Conflits Git"
+  },
+  "Show file diff": {
+    "en": "Show file diff",
+    "fr": "Afficher les differences du fichier"
+  },
+  "Annotate file": {
+    "en": "Annotate file",
+    "fr": "Annoter le fichier"
+  },
+  "Resolve conflict": {
+    "en": "Resolve conflict",
+    "fr": "Resoudre le conflit"
+  },
+  "New branch name": {
+    "en": "New branch name",
+    "fr": "Nom de la nouvelle branche"
+  },
+  "Create branch": {
+    "en": "Create branch",
+    "fr": "Creer une branche"
+  },
+  "Start revision": {
+    "en": "Start revision",
+    "fr": "Revision de depart"
+  },
+  "Branch": {
+    "en": "Branch",
+    "fr": "Branche"
+  },
+  "Upstream": {
+    "en": "Upstream",
+    "fr": "Branche suivie"
+  },
+  "Track branch": {
+    "en": "Track branch",
+    "fr": "Suivre la branche"
+  },
+  "Switch branch": {
+    "en": "Switch branch",
+    "fr": "Changer de branche"
+  },
+  "Rename branch": {
+    "en": "Rename branch",
+    "fr": "Renommer la branche"
+  },
+  "Delete merged branch": {
+    "en": "Delete merged branch",
+    "fr": "Supprimer la branche fusionnee"
+  },
+  "Merge revision": {
+    "en": "Merge revision",
+    "fr": "Fusionner la revision"
+  },
+  "Switching and merging require saved buffers and a clean tracked working tree.": {
+    "en": "Switching and merging require saved buffers and a clean tracked working tree.",
+    "fr": "Enregistrez les documents et creez un commit ou un stash avant de changer ou de fusionner une branche."
+  },
+  "Commit": {
+    "en": "Commit",
+    "fr": "Commit"
+  },
+  "Author": {
+    "en": "Author",
+    "fr": "Auteur"
+  },
+  "Date": {
+    "en": "Date",
+    "fr": "Date"
+  },
+  "Message": {
+    "en": "Message",
+    "fr": "Message"
+  },
+  "Remote name": {
+    "en": "Remote name",
+    "fr": "Nom du depot distant"
+  },
+  "Remote URL": {
+    "en": "Remote URL",
+    "fr": "URL du depot distant"
+  },
+  "Add remote": {
+    "en": "Add remote",
+    "fr": "Ajouter le depot distant"
+  },
+  "Update remote URL": {
+    "en": "Update remote URL",
+    "fr": "Modifier l URL du depot distant"
+  },
+  "Remove remote": {
+    "en": "Remove remote",
+    "fr": "Retirer le depot distant"
+  },
+  "Set upstream on push": {
+    "en": "Set upstream on push",
+    "fr": "Definir la branche suivie au push"
+  },
+  "Fetch": {
+    "en": "Fetch",
+    "fr": "Recuperer"
+  },
+  "Pull fast-forward": {
+    "en": "Pull fast-forward",
+    "fr": "Mettre a jour sans fusion"
+  },
+  "Push": {
+    "en": "Push",
+    "fr": "Envoyer"
+  },
+  "Uses configured Git credentials and hooks. Pull refuses divergent branches.": {
+    "en": "Uses configured Git credentials and hooks. Pull refuses divergent branches.",
+    "fr": "Utilise les identifiants et hooks Git configures. La mise a jour refuse les branches divergentes."
+  },
+  "Stash message": {
+    "en": "Stash message",
+    "fr": "Message du stash"
+  },
+  "Include untracked": {
+    "en": "Include untracked",
+    "fr": "Inclure les fichiers non suivis"
+  },
+  "Save stash": {
+    "en": "Save stash",
+    "fr": "Creer un stash"
+  },
+  "Apply stash": {
+    "en": "Apply stash",
+    "fr": "Appliquer le stash"
+  },
+  "Pop stash": {
+    "en": "Pop stash",
+    "fr": "Appliquer et retirer le stash"
+  },
+  "Drop selected stash...": {
+    "en": "Drop selected stash...",
+    "fr": "Supprimer le stash selectionne..."
+  },
+  "Drop stash?": {
+    "en": "Drop stash?",
+    "fr": "Supprimer le stash ?"
+  },
+  "Drop stash": {
+    "en": "Drop stash",
+    "fr": "Supprimer le stash"
+  },
+  "Permanently remove this saved stash entry?": {
+    "en": "Permanently remove this saved stash entry?",
+    "fr": "Supprimer definitivement ce stash enregistre ?"
+  },
+  "Choose Resolve conflict from a conflicted file in Changes.": {
+    "en": "Choose Resolve conflict from a conflicted file in Changes.",
+    "fr": "Choisissez Resoudre le conflit sur un fichier en conflit dans Modifications."
+  },
+  "Refresh conflict": {
+    "en": "Refresh conflict",
+    "fr": "Actualiser le conflit"
+  },
+  "Use ours in editor": {
+    "en": "Use ours in editor",
+    "fr": "Utiliser notre version"
+  },
+  "Use theirs in editor": {
+    "en": "Use theirs in editor",
+    "fr": "Utiliser leur version"
+  },
+  "Save and mark resolved": {
+    "en": "Save and mark resolved",
+    "fr": "Enregistrer et marquer resolu"
+  },
+  "Edit the working file in its normal tab. These three source versions are read-only.": {
+    "en": "Edit the working file in its normal tab. These three source versions are read-only.",
+    "fr": "Modifiez le fichier dans son onglet habituel. Les trois versions ci-dessous sont en lecture seule."
+  },
+  "Base": {
+    "en": "Base",
+    "fr": "Base"
+  },
+  "Ours": {
+    "en": "Ours",
+    "fr": "Notre version"
+  },
+  "Theirs": {
+    "en": "Theirs",
+    "fr": "Leur version"
+  },
+  "libvterm and CodeLLDB: MIT. LLVM: Apache 2.0 with LLVM exceptions. Embedded Python: PSF.": {
+    "en": "libvterm and CodeLLDB: MIT. LLVM: Apache 2.0 with LLVM exceptions. Embedded Python: PSF.",
+    "fr": "libvterm et CodeLLDB : MIT. LLVM : Apache 2.0 avec exceptions LLVM. Python embarque : PSF."
+  },
+  "MSBuild": {
+    "en": "MSBuild",
+    "fr": "MSBuild"
+  },
+  "No MSBuild project": {
+    "en": "No MSBuild project",
+    "fr": "Aucun projet MSBuild"
+  },
+  "Open a .sln, .vcxproj or managed project.": {
+    "en": "Open a .sln, .vcxproj or managed project.",
+    "fr": "Ouvrez un .sln, .vcxproj ou projet .NET."
+  },
+  "MSBuild settings": {
+    "en": "MSBuild settings",
+    "fr": "Reglages MSBuild"
+  },
+  "This project uses MSBuild.": {
+    "en": "This project uses MSBuild.",
+    "fr": "Ce projet utilise MSBuild."
+  },
+  "Rebuild": {
+    "en": "Rebuild",
+    "fr": "Recompiler"
+  },
+  "Clean": {
+    "en": "Clean",
+    "fr": "Nettoyer"
+  },
+  "Restore packages": {
+    "en": "Restore packages",
+    "fr": "Restaurer les paquets"
+  },
+  "Solution / project": {
+    "en": "Solution / project",
+    "fr": "Solution / projet"
+  },
+  "Configuration / platform": {
+    "en": "Configuration / platform",
+    "fr": "Configuration / plateforme"
+  },
+  "Whole solution": {
+    "en": "Whole solution",
+    "fr": "Toute la solution"
+  },
+  "Build tool": {
+    "en": "Build tool",
+    "fr": "Outil de compilation"
+  },
+  "Packages": {
+    "en": "Packages",
+    "fr": "Paquets"
+  },
+  "Restore before build": {
+    "en": "Restore before build",
+    "fr": "Restaurer avant compilation"
+  },
+  "Evaluate project": {
+    "en": "Evaluate project",
+    "fr": "Evaluer le projet"
+  },
+  "Prepare code analysis": {
+    "en": "Prepare code analysis",
+    "fr": "Preparer l analyse du code"
+  },
+  "Mapped configuration": {
+    "en": "Mapped configuration",
+    "fr": "Configuration du projet"
+  },
+  "Included in solution build": {
+    "en": "Included in solution build",
+    "fr": "Inclus dans la compilation"
+  },
+  "Yes": {
+    "en": "Yes",
+    "fr": "Oui"
+  },
+  "No": {
+    "en": "No",
+    "fr": "Non"
+  },
+  "Use in debug profile": {
+    "en": "Use in debug profile",
+    "fr": "Utiliser pour le debogage"
+  },
+  "Rebuild MSBuild project": {
+    "en": "Rebuild MSBuild project",
+    "fr": "Recompiler le projet MSBuild"
+  },
+  "Clean MSBuild project": {
+    "en": "Clean MSBuild project",
+    "fr": "Nettoyer le projet MSBuild"
+  },
+  "Restore MSBuild packages": {
+    "en": "Restore MSBuild packages",
+    "fr": "Restaurer les paquets MSBuild"
+  },
+  "Evaluate MSBuild project": {
+    "en": "Evaluate MSBuild project",
+    "fr": "Evaluer le projet MSBuild"
+  },
+  "Prepare MSBuild code analysis": {
+    "en": "Prepare MSBuild code analysis",
+    "fr": "Preparer l analyse MSBuild"
+  },
+  "Evaluation loads project imports and rules. Code analysis uses evaluated C++ include paths, definitions and language modes.": {
+    "en": "Evaluation loads project imports and rules. Code analysis uses evaluated C++ include paths, definitions and language modes.",
+    "fr": "L evaluation charge les imports et regles du projet. L analyse utilise les includes, definitions et modes C++ evalues."
+  },
+  "Build diagnostics": {
+    "en": "Build diagnostics",
+    "fr": "Erreurs de compilation"
+  },
+  "Connected": {
+    "en": "Connected",
+    "fr": "Connecte"
+  },
+  "Starting...": {
+    "en": "Starting...",
+    "fr": "Demarrage..."
+  },
+  "Idle": {
+    "en": "Idle",
+    "fr": "En attente"
+  },
+  "Disabled": {
+    "en": "Disabled",
+    "fr": "Desactive"
+  },
+  "Diagnostics from C++ and C# language servers appear here.": {
+    "en": "Diagnostics from C++ and C# language servers appear here.",
+    "fr": "Les diagnostics des serveurs C++ et C# apparaissent ici."
+  },
+  "csharp-ls: MIT. Private .NET SDK: included Microsoft terms and component notices.": {
+    "en": "csharp-ls: MIT. Private .NET SDK: included Microsoft terms and component notices.",
+    "fr": "csharp-ls : MIT. SDK .NET prive : conditions Microsoft et notices des composants incluses."
+  },
+  "Workspace, live documents, C++/C#, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. MCP sessions use CyToolsCore jobs and permissions.": {
+    "en": "Workspace, live documents, C++/C#, search, Git, CMake/MSBuild/Unreal, terminal, debugger and plugins. MCP sessions use CyToolsCore jobs and permissions.",
+    "fr": "Espace de travail, documents, C++/C#, recherche, Git, CMake/MSBuild/Unreal, terminal, debogueur et extensions. Les sessions MCP utilisent les taches et permissions CyToolsCore."
+  },
+  "Debug engine": {
+    "en": "Debug engine",
+    "fr": "Moteur de debogage"
+  },
+  ".NET host": {
+    "en": ".NET host",
+    "fr": "Hote .NET"
+  },
+  "Managed debug output appears here. Run without debugging supports terminal input.": {
+    "en": "Managed debug output appears here. Run without debugging supports terminal input.",
+    "fr": "La sortie du debogage .NET est dans la console de debogage. Executer sans debogage permet la saisie dans le terminal."
+  }
+}

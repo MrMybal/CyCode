@@ -1,0 +1,1 @@
+{"id":"cycode.sample","name":"Text statistics","version":"0.1.0","abi":1,"library":"cycode_sample","description":"Reference native plugin: counts words, lines and UTF-8 bytes."}

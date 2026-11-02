@@ -1,0 +1,27 @@
+name: Native core
+on: [push, pull_request]
+jobs:
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install ripgrep on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ripgrep ninja-build
+      - name: Install ripgrep on macOS
+        if: runner.os == 'macOS'
+        run: brew install ripgrep ninja
+      - name: Install ripgrep on Windows
+        if: runner.os == 'Windows'
+        run: choco install ripgrep -y --no-progress
+      - run: python app/scripts/fetch_dependencies.py --core-only
+      - run: python app/scripts/build.py --core-only
+      # Full GUI/MCP jobs require the owner's not-yet-public CyUI and Core wheel.
+      # This workflow has not been run on GitHub during local development.

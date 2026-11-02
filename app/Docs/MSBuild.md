@@ -1,0 +1,74 @@
+# Visual Studio and MSBuild projects
+
+Open a .sln, .vcxproj, .csproj, .fsproj or .vbproj directly. Non-Unreal solutions use
+the native MSBuild service; Unreal continues to use UnrealBuildTool. A directory
+with CMakeLists.txt keeps its CMake workflow, while opening its generated .sln
+explicitly selects MSBuild. .slnx is not supported yet.
+
+The MSBuild panel selects the solution configuration/platform, whole solution or
+one local project, and Visual Studio MSBuild or dotnet msbuild. It exposes build,
+rebuild, clean, package restore, explicit project evaluation and C++ code analysis.
+The existing Build project shortcut routes to this adapter. Rider Ctrl+F9 and the
+Visual Studio/VS Code build bindings execute the selected solution profile.
+All operations use the same native service from the GUI, CLI and CyToolsCore MCP.
+GUI build/rebuild saves modified document buffers first using normal revision/disk
+guards, and refuses to compile when a buffer cannot be saved. Native/MCP builds use
+the disk project; clients explicitly save their document edits before building.
+
+Solution inspection parses ActiveCfg, Build.0 and Deploy.0, including nested folders,
+without loading MSBuild imports. Selecting a project builds its actual solution
+target, preserving MSBuild's dependency and configuration mapping behavior. Build
+uses the project target name without a :Build suffix; clean/rebuild use their named
+targets. Dotted project names use MSBuild's target-name escaping. Explicit package
+restore on a selected project uses its mapped configuration and project file.
+
+MSBuild/dotnet tools are discovered independently of the launching shell. C++ builds
+require Visual Studio MSBuild on Windows. The .NET SDK backend builds managed
+projects using installed SDKs and their normal package/import configuration. These
+are trusted-project operations: targets, imports, property functions, packages and
+build events can execute code and write outside the source root according to their
+own project rules. Inspection does not evaluate those imports. Evaluation is an
+explicit process.execute operation, including evaluation with no build targets.
+
+The last successful profile is saved atomically in .cycode/msbuild.json. Opening
+another explicit solution/project in the same directory preserves that entry's
+identity. Failed builds do not save a different selection. Artifact paths are read
+from actual evaluated TargetPath properties and can populate the native debugger
+profile for C++ executables. Managed compilation does not provide C# language
+services or a managed debugger.
+
+Prepare code analysis uses MSBuild 17.8+ structured property/item evaluation. For
+enabled local .vcxproj files it derives compile_commands.json from actual ClCompile
+items, include paths, preprocessor definitions, forced includes, language standard
+and compile-as mode. It skips ExcludedFromBuild items. Analysis is capped at eight
+projects, 20,000 translation units and 32 MiB per operation. Select a project to
+prepare a separate index. AdditionalOptions produce review warnings rather than
+being silently treated as complete compiler flags. Advanced PCH/modules/custom
+toolchain cases require further work. Generated headers must already exist; this
+evaluation step does not compile them.
+
+The shared clangd service reloads the prepared database. Cache inputs include the
+solution, local project files and existing local imports reported by MSBuildAllProjects;
+changed/deleted inputs invalidate cached artifacts/index metadata. New imports and
+SDK/tool updates may still require explicit preparation. Metadata and databases stay
+under .cycode/msbuild-cache rather than overwriting user compile_commands.json.
+
+MSVC/C# file diagnostics with source coordinates are parsed, deduplicated and shown
+in Problems, with navigation restricted to workspace files. Directory identity checks
+handle MSVC expanding Windows short temp paths. General MSBuild/global errors remain
+available in Build output. Each process has bounded output; builds have a 150-second
+deadline, evaluation 15 seconds per project. Immediate cancellation and streaming are
+still pending. Process results expose exitCode/timedOut/truncated; callers must inspect
+them, since a completed MCP job can contain compiler errors.
+
+The Windows native test creates a real two-project CMake-generated solution with a
+nested dotted project, builds/executes C++, exercises clean/rebuild and a changed
+Debug-to-Release mapping, prepares clangd navigation and checks actual compile errors.
+It also builds/executes an SDK C# fixture using installed .NET 8 packs and no NuGet
+network sources. A separate official MCP test verifies managed build/restore/evaluation
+and process permissions. Run app/scripts/verify_msbuild.py for the graphical workflow.
+Linux/macOS execution and F#/VB project builds remain unverified.
+
+Primary references: [MSBuild property/item evaluation](https://learn.microsoft.com/en-us/visualstudio/msbuild/evaluate-items-and-properties),
+[solution project targets](https://learn.microsoft.com/en-us/visualstudio/msbuild/how-to-build-specific-targets-in-solutions-by-using-msbuild-exe?view=visualstudio),
+[command-line reference](https://learn.microsoft.com/en-us/visualstudio/msbuild/msbuild-command-line-reference).
