@@ -73,6 +73,8 @@ std::string toolPath(const std::string &name) {
     if (name == "clangd") { candidates.push_back(programFiles / "LLVM/bin/clangd.exe"); candidates.push_back(programFiles / "Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/bin/clangd.exe"); }
     if (name == "lldb-dap") candidates.push_back(programFiles / "LLVM/bin/lldb-dap.exe");
     if (name == "dotnet") candidates.push_back(programFiles / "dotnet/dotnet.exe");
+    if(name=="cmake"||name=="ctest")for(const auto *edition:{"Community","Professional","Enterprise","BuildTools"})
+        candidates.push_back(programFiles/"Microsoft Visual Studio/2022"/edition/"Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin"/filename);
     if (name == "msbuild") {
         auto programFilesX86 = environment("ProgramFiles(x86)"); if (programFilesX86.empty()) programFilesX86 = "C:/Program Files (x86)";
         auto vswhere = programFilesX86 / "Microsoft Visual Studio/Installer/vswhere.exe";

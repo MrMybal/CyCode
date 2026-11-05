@@ -1,5 +1,6 @@
 #pragma once
 #include "cycode/Terminal.h"
+#include "cycode/TaskOutput.h"
 #include <functional>
 #include <mutex>
 namespace cycode {
@@ -11,6 +12,8 @@ class ProjectTasks {
     Json inspect(const Json &params=Json::object());
     Json execute(const std::string &method,const Json &params);
     Json cancel(const std::string &operationId="");
+    Json status() const;
+    Json output(const Json &parameters=Json::object()) const;
     static std::string detect(const std::filesystem::path &directory);
   private:
     Json profile(const Json &) const;
@@ -20,8 +23,10 @@ class ProjectTasks {
     std::filesystem::path root_,entry_;
     Resolver resolve_;
     Terminals &terminals_;
-    std::mutex operationMutex_,stateMutex_;
+    std::mutex operationMutex_;
+    mutable std::mutex stateMutex_;
     std::atomic<bool> cancellation_{false};
-    std::string runningId_;
+    std::string runningId_,runningMethod_,outputStream_;
+    TaskOutput output_;
 };
 }

@@ -1,0 +1,9 @@
+{
+  "id": "cycode.mercurial",
+  "name": "Mercurial revision control",
+  "version": "1.0.0",
+  "abi": 2,
+  "library": "cycode_mercurial",
+  "hostVersion": {"minimum": "0.2.0"},
+  "permissions": ["process.execute", "workspace.write", "vcs.write"]
+}

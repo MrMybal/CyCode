@@ -1,8 +1,12 @@
 #include "cycode/Engine.h"
+#include "cycode/Solution.h"
 #include <fstream>
 #include <iostream>
 using namespace cycode;
 namespace fs = std::filesystem;
+namespace cycode {void unrealAutomationContracts(const fs::path &);}
+namespace cycode {void unrealLaunchContracts(const fs::path &);}
+namespace cycode {void unrealArtifactContracts(const fs::path &);}
 static void check(bool ok, const char *message) {
     if (!ok)
         throw std::runtime_error(message);
@@ -21,12 +25,81 @@ template <class F> static void rejects(F fn) {
     }
     check(failed, "Expected rejection");
 }
+static void xmlSolutions(const fs::path &workspace) {
+    const auto file = workspace / "Modern.slnx";
+    const std::string xml = R"(<Solution Description="Native &amp; managed">
+      <Configurations><BuildType Name="Debug"/><BuildType Name="Release"/>
+        <Platform Name="Any CPU"/><Platform Name="x86"/>
+        <ProjectType Name="SpecialVC" Extension="specialproj" BasedOn="VC"><Build Solution="Release|*" Project="false"/></ProjectType>
+      </Configurations>
+      <Folder Name="/Games/Native/" Id="11111111-1111-1111-1111-111111111111">
+        <File Path="Source/main.cpp"/>
+        <Project Path="Game.vcxproj" DisplayName="Game &amp; tools" Id="22222222-2222-2222-2222-222222222222">
+          <BuildType Solution="Release|*" Project="Shipping"/>
+          <Platform Solution="*|x86" Project="ARM64"/>
+          <Build Solution="Release|*" Project="false"/><Deploy Solution="Debug|*"/>
+          <BuildDependency Project="Missing.csproj"/>
+        </Project>
+      </Folder>
+      <Project Path="Missing.csproj"/>
+      <Project Path="../outside.csproj"/>
+      <Project Path="Custom.specialproj"/>
+    </Solution>)";
+    write(file, "\xef\xbb\xbf" + xml);
+    Engine engine(file);
+    engine.configureLanguage("", false, false);
+    const auto model = engine.dispatch("workspace.describe").at("solution");
+    check(model.at("format") == "slnx" && model.at("projects").size() == 6,
+          "XML hierarchy and synthetic parents");
+    check(model.at("missingProjects") == 2 && model.at("externalProjects") == 1,
+          "XML reference classification");
+    check(model.at("configurations").size() == 4, "XML configuration cartesian product");
+    const auto &native = model.at("projects")[2];
+    check(native.at("name") == "Game & tools" &&
+              native.at("parent") == "{11111111-1111-1111-1111-111111111111}",
+          "XML entities and folder GUID");
+    check(native.at("configurations").at("Debug|Any CPU").at("platform") == "x64",
+          "Default native platform rule");
+    check(native.at("configurations").at("Release|x86").at("configuration") == "Shipping" &&
+              !native.at("configurations").at("Release|x86").at("build").get<bool>(),
+          "XML project configuration rules");
+    check(native.at("configurations").at("Debug|x86").at("platform") == "ARM64" &&
+              native.at("configurations").at("Debug|x86").at("deploy").get<bool>(),
+          "XML platform/deploy rules");
+    check(model.at("projects")[3].at("configurations").at("Debug|x86").at("platform") == "Any CPU",
+          "Default managed platform rule");
+    check(!model.at("projects")[5].at("configurations").at("Release|Any CPU").at("build").get<bool>(),
+          "Custom project-type inheritance");
+    const auto msbuild = engine.dispatch(
+        "msbuild.inspect", {{"configuration", "Release"}, {"platform", "x86"}, {"project", native.at("id")}});
+    check(msbuild.at("available").get<bool>() && msbuild.at("profile").at("entry") == "Modern.slnx",
+          "MSBuild accepts XML solution");
+    check(msbuild.at("projects")[2].at("activeConfiguration").at("configuration") == "Shipping",
+          "MSBuild XML mapped configuration");
+    auto verifyBad = [&](const std::string &value) {
+        write(workspace / "invalid.slnx", value);
+        rejects([&] { inspectSolution(workspace / "invalid.slnx"); });
+    };
+    verifyBad("<Solution><Project Path=\"Game.vcxproj\"/><Project Path=\"./Game.vcxproj\"/></Solution>");
+    verifyBad("<Solution><Folder Name=\"/../Bad/\"/></Solution>");
+    verifyBad("<!DOCTYPE Solution SYSTEM \"file:///outside\"><Solution/>");
+    verifyBad("<Solution/><Solution/>");
+    verifyBad("<Solution><Project Path=\"Game.vcxproj\"><Build Solution=\"Debug\"/></Project></Solution>");
+    verifyBad("<Solution><Configurations><ProjectType Name=\"A\" Extension=\"vcxproj\" "
+              "BasedOn=\"A\"/></Configurations><Project Path=\"Game.vcxproj\"/></Solution>");
+    write(workspace / "minimal.slnx", "<Solution><Project Path=\"Game.vcxproj\"/></Solution>");
+    check(inspectSolution(workspace / "minimal.slnx").at("configurations").size() == 2,
+          "XML default solution configurations");
+}
 int main() {
     auto root =
         fs::temp_directory_path() /
         ("cycode-solution-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(root);
     try {
+        unrealAutomationContracts(root);
+        unrealLaunchContracts(root);
+        unrealArtifactContracts(root);
         auto workspace = root / utf8Path("projet é");
         fs::create_directory(workspace);
         write(workspace / "Source/main.cpp", "int value = 3;\n");
@@ -67,6 +140,7 @@ EndGlobal
         rejects([&] { engine.dispatch("documents.read", {{"path", "../outside.csproj"}}); });
         check(!fs::exists(workspace / "Intermediate") && !fs::exists(workspace / ".cycode"),
               "Inspection must not generate project files");
+        xmlSolutions(workspace);
         write(workspace / "utf16.sln", "\xff\xfe");
         {
             std::ofstream out(workspace / "utf16.sln", std::ios::binary | std::ios::app);

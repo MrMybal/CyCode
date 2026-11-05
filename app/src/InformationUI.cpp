@@ -3,7 +3,7 @@
 #include <algorithm>
 namespace cycode {
 Json Application::informationParameters() const {
-    for (const auto &tab : tabs_) if (tab->path==active_ && LanguageService::supports(tab->path)) {
+    for (const auto &tab : tabs_) if (tab->path==active_ && engine_->supportsLanguage(tab->path)) {
         const auto cursor=tab->editor.GetMainCursorPosition();
         return {{"path",tab->path},{"expectedRevision",tab->revision},
             {"position",{{"line",cursor.line},{"character",LanguageClient::utf16Length(tab->editor.GetSectionText({cursor.line,0},cursor))}}}};
@@ -100,7 +100,7 @@ void Application::informationPanel() {
             ImGui::EndCombo();
         }
         const auto &signature=signatures[selected];
-        contents(Json::array({{{"kind","code"},{"language",languageBackend(active_)},{"text",signature.at("label")}}}));
+        contents(Json::array({{{"kind","code"},{"language",engine_->languageBackendFor(active_)},{"text",signature.at("label")}}}));
         const auto active=signature.value("activeParameter",-1);
         if (active>=0 && active<signature.at("parameters").size()) {
             const auto &parameter=signature.at("parameters")[active];

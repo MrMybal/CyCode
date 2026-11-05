@@ -1,8 +1,12 @@
 #include "cycode/Engine.h"
+#include "cycode/CMakePresets.h"
+#include "cycode/BuildLimits.h"
 #include <fstream>
 #include <iostream>
 using namespace cycode;
 namespace fs = std::filesystem;
+void buildOutputContracts();
+namespace cycode { void compilerLocationContracts(const std::filesystem::path &); }
 static void check(bool value, const std::string &message) {
     if (!value)
         throw std::runtime_error(message);
@@ -21,6 +25,132 @@ template <class F> static void rejects(F call, const std::string &message) {
     }
     check(rejected, message);
 }
+void presetActionContracts(const std::filesystem::path &);
+static void presetMetadata(const fs::path &parent) {
+    const auto root = parent / utf8Path("presets é");
+    write(root / "CMakeLists.txt", "cmake_minimum_required(VERSION 3.24)\nproject(Presets NONE)\n");
+    write(
+        root / "cmake/base.json",
+        R"({"version":6,"configurePresets":[{"name":"base","hidden":true,"generator":"Ninja","binaryDir":"${fileDir}/../out/${presetName}","cacheVariables":{"CMAKE_BUILD_TYPE":{"type":"STRING","value":"RelWithDebInfo"}},"environment":{"ROOT":"out","LEAF":"$env{ROOT}/nested"}}]})");
+    write(
+        root / "CMakePresets.json",
+        R"({"version":6,"include":["cmake/base.json"],"configurePresets":[{"name":"dev","inherits":"base"},{"name":"env","inherits":"base","binaryDir":"${sourceDir}/$env{LEAF}/${presetName}"},{"name":"unusable"}]})");
+    write(
+        root / "CMakeUserPresets.json",
+        R"({"version":6,"configurePresets":[{"name":"user","inherits":"dev","cacheVariables":{"CMAKE_BUILD_TYPE":"Release"}}],"buildPresets":[{"name":"build-user","configurePreset":"user","configuration":"Release","targets":["helper"]}]})");
+    Engine engine(root);
+    engine.configureLanguage("", false, false);
+    const auto catalogue = engine.dispatch("build.presets");
+    check(catalogue.at("error") == "" && catalogue.at("files").size() == 3,
+          "Preset files and implicit user include");
+    check(catalogue.at("configurePresets").size() == 4 && catalogue.at("buildPresets").size() == 1,
+          "Hidden presets excluded from catalogue");
+    const auto profile = engine.dispatch("build.inspect", {{"buildPreset", "build-user"}}).at("profile");
+    check(profile.at("configurePreset") == "user" && profile.at("configuration") == "Release" &&
+              profile.at("buildDirectory") == "out/user",
+          "Inherited preset paths and configuration");
+    const auto env = engine.dispatch("build.inspect", {{"configurePreset", "env"}}).at("profile");
+    check(env.at("buildDirectory") == "out/nested/env", "Recursive preset environment expansion");
+    rejects(
+        [&] {
+            engine.dispatch("build.inspect", {{"configurePreset", "dev"}, {"buildPreset", "build-user"}});
+        },
+        "Mismatched configure/build presets accepted");
+    rejects([&] { engine.dispatch("build.inspect", {{"configurePreset", "base"}}); },
+            "Hidden configure preset selected");
+    check(!fs::exists(root / "out") && !fs::exists(root / ".cycode"),
+          "Preset inspection executed or generated files");
+    CMakePresets snapshot(root, [&](const std::string &path) { return engine.resolve(path); });
+    snapshot.checkUnchanged();
+    write(root / "cmake/base.json", R"({"version":6,"configurePresets":[]})");
+    rejects([&] { snapshot.checkUnchanged(); }, "Changed preset snapshot accepted");
+    write(root / "CMakePresets.json", R"({"version":6,"include":["CMakePresets.json"]})");
+    check(engine.dispatch("build.presets").at("error") != "", "Include cycle silently accepted");
+    write(root / "CMakePresets.json",
+          R"({"version":6,"configurePresets":[{"name":"loop","inherits":"loop","binaryDir":"build"}]})");
+    rejects([&] { engine.dispatch("build.inspect", {{"configurePreset", "loop"}}); },
+            "Preset inheritance cycle accepted");
+    write(root / "CMakePresets.json",
+          R"({"version":6,"configurePresets":[{"name":"escape","binaryDir":"${sourceParentDir}/outside"}]})");
+    rejects([&] { engine.dispatch("build.inspect", {{"configurePreset", "escape"}}); },
+            "Preset binary directory escaped workspace");
+    write(
+        root / "CMakePresets.json",
+        R"({"version":6,"configurePresets":[{"name":"env-loop","binaryDir":"$env{A}","environment":{"A":"$env{B}","B":"$env{A}"}}]})");
+    rejects([&] { engine.dispatch("build.inspect", {{"configurePreset", "env-loop"}}); },
+            "Cyclic preset environment accepted");
+}
+static void cancellationOwnership() {
+    BuildOperations operations;
+    std::promise<void> entered, observed, release;
+    auto released = release.get_future().share();
+    auto enteredFuture = entered.get_future();
+    auto observedFuture = observed.get_future();
+    auto running = std::async(std::launch::async, [&] {
+        return operations.execute(
+            "build.run", {{"operationId", "first"}}, [&](const std::atomic<bool> *token) {
+                entered.set_value();
+                const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+                while (!token->load() && std::chrono::steady_clock::now() < deadline)
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                observed.set_value();
+                check(token->load(), "Cancellation did not reach the native work owner");
+                check(released.wait_for(std::chrono::seconds(10)) == std::future_status::ready,
+                      "Test release gate was not opened");
+                return Json{{"exitCode", 0}, {"output", ""}, {"timedOut", false}, {"truncated", false}};
+            });
+    });
+    struct Release {
+        BuildOperations &operations;
+        std::promise<void> &release;
+        ~Release() {
+            operations.cancel();
+            try {
+                release.set_value();
+            } catch (...) {
+            }
+        }
+    } cleanup{operations, release};
+    check(enteredFuture.wait_for(std::chrono::seconds(10)) == std::future_status::ready,
+          "Native owner did not start");
+    check(operations.status().at("running") && operations.status().at("operationId") == "first",
+          "Build status lost ownership");
+    check(!operations.cancel({{"operationId", "stale"}}).at("requested").get<bool>(),
+          "Stale cancellation stopped another build");
+    check(operations.cancel({{"operationId", "first"}}).at("requested"),
+          "Active build cancellation was refused");
+    check(observedFuture.wait_for(std::chrono::seconds(10)) == std::future_status::ready,
+          "Build did not observe cancellation");
+    check(operations.status().at("running") && operations.status().at("cancelling"),
+          "Cancellation released ownership before native work stopped");
+    rejects(
+        [&] {
+            operations.execute("msbuild.build", {{"operationId", "second"}},
+                               [](auto *) { return Json::object(); });
+        },
+        "A second build entered while cancelled work was still running");
+    release.set_value();
+    const auto cancelled = running.get();
+    check(cancelled.at("cancelled") && cancelled.at("exitCode") != 0, "Cancelled build reported success");
+    check(!operations.status().at("running").get<bool>(), "Completed work retained its reservation");
+    const auto next =
+        operations.execute("unreal.build", {{"operationId", "next"}}, [](const std::atomic<bool> *token) {
+            check(!token->load(), "Cancellation leaked into the next build");
+            return Json{{"exitCode", 0}};
+        });
+    check(next.at("exitCode") == 0 && !next.at("cancelled").get<bool>(), "Next native build could not run");
+    rejects(
+        [&] {
+            operations.execute("build.configure", {},
+                               [](auto *) -> Json { throw std::runtime_error("fixture failure"); });
+        },
+        "Native work exception was lost");
+    check(!operations.status().at("running").get<bool>(), "Failed native work retained its reservation");
+    std::atomic<bool> alreadyCancelled{true};
+    check(runProcess({"not-an-installed-executable"}, {}, std::chrono::seconds(1), 4096, &alreadyCancelled)
+              .cancelled,
+          "A pre-cancelled request tried to resolve/start a process");
+}
 int main() {
     const auto root =
         fs::temp_directory_path() /
@@ -37,6 +167,14 @@ int main() {
         }
     } cleanup{root};
     try {
+        cancellationOwnership();
+        buildOutputContracts();
+        compilerLocationContracts(root);
+        check(buildTimeout(Json::object()).count()==180 && buildTimeout(Json::object(),150).count()==150,"Default build deadlines");
+        check(buildTimeout({{"timeoutSeconds",3600}}).count()==3600,"Long build deadline rejected");
+        for(const auto &value:Json::array({0,-1,86401,1.5,true,"180"}))rejects([&]{buildTimeout({{"timeoutSeconds",value}});},"Invalid build deadline accepted");
+        presetMetadata(root);
+        presetActionContracts(root);
         write(root / "CMakeLists.txt", R"(cmake_minimum_required(VERSION 3.24)
 project(CyCodeBuildFixture LANGUAGES CXX)
 configure_file(config.hpp.in generated/config.hpp @ONLY)
@@ -84,6 +222,10 @@ target_link_libraries(demo PRIVATE helper)
         }
         auto configured = engine.dispatch("build.configure", {{"configuration", "Release"}});
         check(configured["exitCode"] == 0, "Configure: " + configured["output"].get<std::string>());
+        const auto streamed = engine.dispatch("build.output");
+        check(!streamed.at("running").get<bool>() && streamed.at("byteCount").get<uint64_t>() > 0 &&
+                  !streamed.at("output").get<std::string>().empty(),
+              "CMake execution did not publish its retained build output");
         const auto &project = configured["project"];
         bool haveDemo = false, haveHelper = false;
         for (const auto &target : project["targets"]) {

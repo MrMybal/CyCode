@@ -33,7 +33,7 @@ Json Engine::completionOperation(const std::string &method,const Json &params) {
     auto &initial=checked();const auto path=initial.path;
     if (method=="language.completionPrepare" && path.starts_with("sdk://")) throw std::runtime_error("SDK sources are read-only");
     bool resolved=initial.resolved.contains(index);
-    const auto statuses=language_.status();const auto backend=languageBackend(path);
+    const auto statuses=language_.status();const auto backend=language_.backend(path);
     const auto server=statuses.contains("servers") ? statuses.at("servers").at(backend) : statuses;
     const bool supported=server.value("methods",Json::object()).value("completionResolve",false);
     if (method=="language.completionResolve" && !supported) throw std::runtime_error("Language server does not support completionItem/resolve");

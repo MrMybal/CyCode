@@ -1,5 +1,7 @@
 #include "cycode/Application.h"
 #include "cycode/FileIcons.h"
+#include "cycode/DebugExecution.h"
+#include "cycode/StepInTargets.h"
 #include <algorithm>
 #include <cctype>
 #include <cyui/Core.h>
@@ -52,6 +54,16 @@ void Application::shortcuts() {
         return; // The focused PTY owns Ctrl+C, Ctrl+F, Tab and shell editing keys.
     }
     const bool editor = editorFocused_ && !input;
+    const bool resourcesWindow=window&&std::string(window->RootWindow->Name).ends_with("###resources");
+    const bool projectWindow=window&&std::string(window->RootWindow->Name).ends_with("###project");
+    if(resourcesWindow&&io.KeyCtrl&&!io.KeyShift&&!io.KeyAlt&&ImGui::IsKeyPressed(ImGuiKey_F,false)) {
+        if(resourceTrashView_)resourceTrashFilter_.focus();else resourceSearchFocus_=true;
+        return;
+    }
+    if((resourcesWindow||projectWindow)&&!input&&!io.KeyCtrl&&!io.KeyShift&&!io.KeyAlt) {
+        if(ImGui::IsKeyPressed(ImGuiKey_F2,false)){executeCommand("project.moveFile");return;}
+        if(ImGui::IsKeyPressed(ImGuiKey_Delete,false)){executeCommand("project.deleteFile");return;}
+    }
     const auto owner = ImHashStr("##cycode-command-routing");
     for (int i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_NamedKey_END; ++i) {
         auto key = static_cast<ImGuiKey>(i);
@@ -99,26 +111,53 @@ void Application::shortcuts() {
     }
 }
 bool Application::commandEnabled(const std::string &id) const {
+    if (id == "build.cancel") return engine_ &&
+        ((taskFuture_.valid() && BuildOperations::supports(taskMethod_)) || unrealAnalysisFuture_.valid() ||
+         engine_->dispatch("build.status").value("running", false));
+    if(id=="tests.discover")return !testsFuture_.valid()&&!taskFuture_.valid();
+    if(id=="tests.run")return !testsFuture_.valid()&&!taskFuture_.valid()&&testsCatalog_.contains("id")&&!testsSelection_.empty();
+    if(id=="tests.cancel")return testsFuture_.valid();
+    if(id=="file.newProject")return !templateFuture_.valid();
+    if(id=="file.saveAs") {
+        for (const auto &tab:tabs_) if(tab->path==active_) return !tab->readOnly&&!tab->image;
+        return false;
+    }
+    if(id=="project.moveFile"||id=="project.deleteFile")return !resourceFuture_.valid()&&!selectedResource_.empty();
+    if(id=="project.newFolder")return !resourceFuture_.valid();
+    if(id=="project.undoFile")return !resourceFuture_.valid()&&resourceLast_.value("state",std::string{})=="applied"&&!resourceLast_.contains("undone");
     if (id=="code.actions") {
         if (smoke_ || codeActionsFuture_.valid() || refactorFuture_.valid() || codeActionParameters().is_null()) return false;
-        const auto server=languageState_.value("servers",Json::object()).value(languageBackend(active_),Json::object());
+        const auto server=languageState_.value("servers",Json::object()).value(engine_->languageBackendFor(active_),Json::object());
         return !server.value("ready",false) || server.value("methods",Json::object()).value("codeActions",false);
     }
+    if(id=="app.checkUpdates")return !smoke_ && !testSession_ && !applicationUpdatePending() && updates::platform()!="unsupported";
     const auto command = findCommand(id);
-    if (!command) return false;
+    if (!command) return extensionCommandEnabled(id);
     if (command->context != CommandContext::global && active_.empty()) return false;
     for (const auto &tab : tabs_) if (tab->path==active_ && tab->image && command->context!=CommandContext::global &&
         id!="file.close" && id!="navigate.nextTab" && id!="navigate.previousTab" && id!="vcs.diff") return false;
-    const std::map<std::string,std::string> languageCommands={{"navigate.definition","definition"},{"navigate.references","references"},
-        {"code.documentation","hover"},{"code.parameters","signature"},
+    static const std::map<std::string,std::string> languageCommands={{"navigate.definition","definition"},{"navigate.references","references"},
+        {"navigate.declaration","declaration"},{"navigate.typeDefinition","typeDefinition"},{"navigate.implementation","implementation"},
+        {"navigate.callHierarchy","callHierarchy"},{"navigate.typeHierarchy","typeHierarchy"},
+        {"code.occurrences","documentHighlights"},{"code.documentation","hover"},{"code.parameters","signature"},
         {"navigate.members","documentSymbols"},{"refactor.rename","rename"},{"refactor.format","format"},{"refactor.formatSelection","rangeFormat"}};
     if (languageCommands.contains(id)) {
-        const auto server=languageState_.value("servers",Json::object()).value(languageBackend(active_),Json::object());
-        if (server.value("ready",false) && !server.value("methods",Json::object()).value(languageCommands.at(id),false)) return false;
+        const auto servers=languageState_.find("servers");
+        if (servers==languageState_.end()) return false;
+        const auto found=servers->find(engine_->languageBackendFor(active_));
+        if (found==servers->end()) return false;
+        const auto &server=*found;
+        const auto methods=server.find("methods");
+        if (server.value("ready",false) && (methods==server.end() || !methods->value(languageCommands.at(id),false))) return false;
         if (!server.value("enabled",false)) return false;
     }
-    if (id == "build.run" || id == "build.configure") return !taskFuture_.valid() && !unrealAnalysisFuture_.valid();
-    if (id=="code.documentation" || id=="code.parameters") return !smoke_ && LanguageService::supports(active_);
+    if (id == "build.run" || id == "build.configure") return !taskFuture_.valid() && !unrealAnalysisFuture_.valid() &&
+        !engine_->dispatch("build.status").value("running",false);
+    if (id=="code.occurrences") return !smoke_ && !occurrences_.future.valid() && !occurrenceParameters().is_null();
+    if (id=="code.clearOccurrences") return !occurrences_.wanted.empty();
+    if (id=="code.nextOccurrence" || id=="code.previousOccurrence" || id=="code.selectOccurrences")
+        return !occurrences_.future.valid() && occurrencesCurrent() && !occurrences_.report.at("occurrences").empty();
+    if (id=="code.documentation" || id=="code.parameters") return !smoke_ && engine_->supportsLanguage(active_);
     if (id == "project.cancel") return taskFuture_.valid() && taskMethod_.starts_with("project.");
     if (id == "project.test") return projectActive_ && projectState_.value("kind","")!="java" && !taskFuture_.valid();
     if (id == "project.install" || id == "project.script") return projectActive_ && projectState_.value("kind","")=="npm" && !taskFuture_.valid();
@@ -129,29 +168,59 @@ bool Application::commandEnabled(const std::string &id) const {
     if (id == "file.reopen") return !closedFiles_.empty();
     if (id.starts_with("vcs.") && id != "vcs.refresh") {
         if (vcsFuture_.valid() || taskFuture_.valid()) return false;
-        if ((id == "vcs.diff" || id == "vcs.blame") && (active_.starts_with("sdk://") || active_.starts_with("debug://"))) return false;
+        if ((id == "vcs.diff" || id == "vcs.blame") && (isUntitledDocument(active_) || active_.starts_with("sdk://") || active_.starts_with("debug://"))) return false;
         if (id == "vcs.diff" || id == "vcs.blame") return vcsSupports(id.substr(4));
         if (id != "vcs.changes" && provider_ != "git") return false;
     }
     if (id.starts_with("debug.") || id == "run.start") {
+        if (id == "debug.cancelReload") {
+            const auto reload = debugState_.value("javaReload",Json::object());
+            return !smoke_ && reload.value("status","") == "building" && !reload.value("cancelRequested",false);
+        }
         if (smoke_ || debugFuture_.valid() || pendingDebugBuild_) return false;
+        if (debugState_.value("pendingStop",false) && id != "debug.stop" && id != "debug.terminal") return false;
+        const auto runTo = debugState_.value("runToCursor",Json::object());
+        if (id == "debug.restoreRunToCursor") return debugState_.value("state","") == "stopped" && runTo.value("active",false) && runTo.value("restorePending",false) && runTo.value("stopConfirmed",false) && !runTo.value("replyPending",true);
+        if (runTo.value("active",false)) {
+            if (id == "debug.pause") return debugState_.value("state","") == "running" || !runTo.value("stopConfirmed",false);
+            if (id != "debug.stop" && id != "debug.terminal") return false;
+        }
+        if (id == "debug.runToCursor") {
+            if (runTo.value("replyPending",false) || debugState_.value("state","") != "stopped" || debugState_.value("threadId",0) <= 0) return false;
+            for (const auto &tab : tabs_) if (tab->path == active_) return !tab->image && !tab->readOnly && !tab->dirty && tab->diskConflict.empty() && tab->identity > 0 && tab->revision > 0 &&
+                !isUntitledDocument(active_) && !active_.starts_with("sdk://") && !active_.starts_with("debug://");
+            return false;
+        }
         if (projectActive_ && (id=="run.start" || id=="debug.start") && taskFuture_.valid()) return false;
         const auto phase = debugState_.value("state","idle");
-        if (projectActive_ && id=="debug.start" && phase!="stopped" && projectState_.value("kind","")!="cargo") return false;
-        if (id == "debug.start") return phase != "starting" && phase != "running";
+        if (projectActive_ && debugUnrealLaunch_.is_null() && id=="debug.start" && phase!="stopped" && projectState_.value("kind","")!="cargo" && debugAdapterId_=="builtin") return false;
+        if (id == "debug.start") {
+            if(phase!="stopped"&&debugAdapterId_!="builtin") {
+                const auto selected=std::find_if(debugAdapters_.begin(),debugAdapters_.end(),[&](const Json &entry){return entry.at("id")==debugAdapterId_;});
+                if(selected==debugAdapters_.end()||std::find(selected->at("requests").begin(),selected->at("requests").end(),"launch")==selected->at("requests").end())return false;
+            }
+            return phase != "starting" && phase != "running";
+        }
         if (id == "debug.stop") return phase == "stopped" || phase == "running" || phase == "starting";
         if (id == "debug.pause") return phase == "running";
+        if (id == "debug.hotReload") return (phase == "running" || phase == "stopped") && debugState_.value("runtime","") == "java" && !taskFuture_.valid();
         if (id == "debug.terminal") return !debugState_.value("terminalId","").empty();
-        if (id == "debug.next" || id == "debug.stepIn" || id == "debug.stepOut") return phase == "stopped";
-        if (id == "debug.breakpoint") { for (const auto &tab : tabs_) if (tab->path == active_) return !tab->readOnly; return false; }
+        if (id == "debug.next" || id == "debug.stepIn" || id == "debug.stepOut") return phase == "stopped" && debugState_.value("threadId",0) > 0;
+        if (id == "debug.stepBack" || id == "debug.reverseContinue") return phase == "stopped" && debugState_.value("threadId",0) > 0 && debugState_.value("capabilities",Json::object()).value("supportsStepBack",false);
+        if (id == "debug.restartFrame") return debugFrameRestartable(debugState_);
+        if (id == "debug.stepInTargets") return StepInTargets::available(debugState_);
+        if (id == "debug.gotoTargets") return DebugTargets::available(debugState_,DebugTargets::Kind::goTo);
+        if (id == "debug.breakpoint") { for (const auto &tab : tabs_) if (tab->path == active_) return !tab->readOnly && !isUntitledDocument(active_); return false; }
     }
     if (id == "refactor.undo") return !refactorFuture_.valid() && refactorPlan_.is_object() && refactorPlan_.value("state", "") == "applied";
     if (id == "refactor.apply") return !refactorFuture_.valid() && refactorPlan_.is_object() && refactorPlan_.value("state", "") == "preview" && !refactorPlan_.at("files").empty();
     if (id.starts_with("refactor.") || id == "navigate.members") {
-        if (smoke_ || !LanguageService::supports(active_) || refactorFuture_.valid()) return false;
+        if (smoke_ || !engine_->supportsLanguage(active_) || refactorFuture_.valid()) return false;
         for (const auto &tab : tabs_) if (tab->path == active_ && ((id.starts_with("refactor.") && tab->readOnly) || (id == "refactor.formatSelection" && !tab->editor.MainCursorHasSelection()))) return false;
     }
-    if (id == "navigate.definition" || id == "navigate.references") return LanguageService::supports(active_) && !navigationFuture_.valid();
+    if (id == "navigate.callHierarchy" || id == "navigate.typeHierarchy")
+        return !smoke_ && engine_->supportsLanguage(active_) && active_.find("://")==std::string::npos && !hierarchyFuture_.valid();
+    if (id == "navigate.definition" || id == "navigate.references" || id == "navigate.declaration" || id == "navigate.typeDefinition" || id == "navigate.implementation") return engine_->supportsLanguage(active_) && !navigationFuture_.valid();
     if (id == "edit.comment" || id == "edit.addComment" || id == "edit.removeComment") return !commentPrefix(active_).empty();
     for (const auto &tab : tabs_) if (tab->path == active_) {
         if (tab->readOnly && (id == "file.save" || (id.starts_with("edit.") && id != "edit.copy" && id != "edit.selectAll" && id != "edit.grow" && id != "edit.shrink" && id != "edit.nextOccurrence" && id != "edit.allOccurrences"))) return false;
@@ -189,23 +258,41 @@ void Application::executeCommand(const std::string &id) {
     std::shared_ptr<Tab> tab;
     for (const auto &item : tabs_) if (item->path == active_) tab = item;
     try {
-        if (id == "debug.start") { if (debugState_.value("state","") == "stopped") debugTask("debug.continue"); else startDebug(); }
+        if (executeExtensionCommand(id)) return;
+        if(id.starts_with("problem.")) {navigateProblem(id=="problem.previous"||id=="problem.previousInFile",id.ends_with("InFile"));return;}
+        if(id=="build.presetTest" || id=="build.presetPackage" || id=="build.presetWorkflow") {
+            presetKind_=id=="build.presetTest" ? 0 : id=="build.presetPackage" ? 1 : 2;
+            presetName_.clear();presetPlan_=nullptr;showPanel("CMake preset actions","cmakePresets");
+        }
+        else if (id == "debug.start") { if (debugState_.value("state","") == "stopped") debugTask("debug.continue"); else startDebug(); }
         else if (id == "debug.breakpoint") toggleBreakpoint(active_,tab->editor.GetMainCursorPosition().line+1);
         else if (id == "debug.terminal") { terminalId_ = debugState_.at("terminalId"); showPanel("Terminal","terminal"); focusTerminal_ = true; terminalScrollBottom_ = true; }
+        else if (id == "debug.hotReload") {
+            saveAll();
+            if (std::none_of(tabs_.begin(),tabs_.end(),[](const auto &tab){return tab->dirty;}))
+                debugTask(id,{{"sessionGeneration",debugState_.value("sessionGeneration",uint64_t(0))}});
+        }
+        else if (id == "debug.stepInTargets") requestStepInTargets();
+        else if (id == "debug.gotoTargets") requestGotoTargets(true);
+        else if (id == "debug.runToCursor") requestRunToCursor();
+        else if (id == "debug.restoreRunToCursor") debugTask(id,{{"sessionGeneration",debugState_.at("sessionGeneration")},{"stopGeneration",debugState_.at("stopGeneration")},{"expectedRevision",debugState_.at("runToCursor").at("revision")}});
         else if (id.starts_with("debug.")) debugTask(id);
-        else if (id == "run.start") { if (projectActive_) task("project.launch"); else debugTask("debug.run",debugParameters()); }
+        else if (id == "run.start") { if (projectActive_ && debugUnrealLaunch_.is_null()) task("project.launch"); else debugTask("debug.run",debugParameters()); }
         else if (id == "view.terminal") {
             if (terminalFocused_) { panels_["terminal"] = false; terminalFocused_ = false; focusTab_ = active_; }
             else { showPanel("Terminal", "terminal"); focusTerminal_ = true; if (engine_->terminals().list().at("sessions").empty()) newTerminal(); }
         }
         else if (id == "terminal.new") newTerminal();
         else if (id == "file.new") newFile_ = true;
+        else if (id == "file.newUntitled") newUntitled();
+        else if (id == "file.newProject") beginProjectTemplate();
         else if (id == "file.open") chooseSolution();
         else if (id == "file.openImage") chooseImage();
         else if (id == "file.folder") chooseFolder();
         else if (id == "file.window") newWindow(entry_);
         else if (id == "file.openWindow") chooseSolution(true);
         else if (id == "file.save") save(tab);
+        else if (id == "file.saveAs") beginSaveAs(tab);
         else if (id == "file.saveAll") saveAll();
         else if (id == "file.close") closeTab(active_);
         else if (id == "file.closeAll") closeAll_ = true;
@@ -223,6 +310,9 @@ void Application::executeCommand(const std::string &id) {
         else if (id == "refactor.apply") changeTask("changes.apply", {{"id", refactorPlan_.at("id")}});
         else if (id == "navigate.definition") navigate(false);
         else if (id == "navigate.references") navigate(true);
+        else if (id == "navigate.declaration" || id == "navigate.typeDefinition" || id == "navigate.implementation") requestNavigation("language."+id.substr(9));
+        else if (id == "navigate.callHierarchy" || id == "navigate.typeHierarchy") requestHierarchy(id=="navigate.callHierarchy" ? "call" : "type");
+        else if (id == "code.occurrences" || id == "code.nextOccurrence" || id == "code.previousOccurrence" || id == "code.selectOccurrences" || id == "code.clearOccurrences") occurrenceAction(id);
         else if (id == "code.documentation" || id == "code.parameters") requestInformation(id=="code.parameters");
         else if (id=="code.actions") requestCodeActions();
         else if (id == "navigate.back" || id == "navigate.forward") navigationHistory(id == "navigate.forward");
@@ -231,15 +321,23 @@ void Application::executeCommand(const std::string &id) {
             auto at = std::find(tabs_.begin(), tabs_.end(), tab) - tabs_.begin();
             auto next = (at + tabs_.size() + (id == "navigate.nextTab" ? 1 : -1)) % tabs_.size();
             open(tabs_[next]->path);
-        } else if (id == "build.run") task("build.run");
+        } else if(id=="tests.discover"){showPanel("Tests","tests");testTask("tests.discover",{{"buildDirectory",buildDirectory_},{"configuration",configuration_}});}
+        else if(id=="tests.run"){Json selected=Json::array();for(auto i:testsSelection_)selected.push_back(i);showPanel("Tests","tests");testTask("tests.run",{{"id",testsCatalog_.at("id")},{"tests",selected}});}
+        else if(id=="tests.cancel")engine_->dispatch("tests.cancel");
+        else if (id == "build.run") task("build.run");
         else if (id == "build.configure") task("build.configure");
+        else if (id == "build.cancel") cancelBuild();
         else if (id.starts_with("msbuild.")) { showPanel("MSBuild","msbuild"); task(id); }
         else if (id == "unreal.prepare") prepareUnreal();
         else if (id == "project.refresh") refreshFiles();
+        else if(id=="project.newFolder")beginResource("createDirectory",resourceFolder_=="."?"":resourceFolder_+"/");
+        else if(id=="project.moveFile")beginResource("move",selectedResource_,selectedResource_);
+        else if(id=="project.deleteFile")beginResource("delete",selectedResource_);
+        else if(id=="project.undoFile")resourceTask("resources.undo",{{"id",resourceLast_.at("id")}});
         else if (id == "project.cancel") engine_->dispatch("project.cancel");
         else if (id == "project.test" || id == "project.install" || id == "project.script") task(id);
         else if (id == "vcs.refresh") refreshGit();
-        else if (id == "vcs.diff" || id == "vcs.blame") { showPanel("Version control","vcs"); vcsTask(id,{{"path",active_}}); }
+        else if (id == "vcs.diff" || id == "vcs.blame" || id=="vcs.hunks") { showPanel("Version control","vcs"); vcsTask(id,{{"path",active_}}); }
         else if (id.starts_with("vcs.")) {
             showPanel("Version control","vcs");
             for (const auto &[command,section] : std::initializer_list<std::pair<const char *,const char *>>{{"changes","Changes"},{"branches","Branches"},{"history","History"},{"remotes","Remotes"},{"stashes","Stashes"},{"conflicts","Conflicts"}})
@@ -256,11 +354,14 @@ void Application::executeCommand(const std::string &id) {
             }
             refreshGit();
         }
+        else if (id == "app.checkUpdates") checkApplicationUpdates(true);
         else if (id == "view.reset") resetLayout_ = true;
+        else if (id == "view.recovery") { showPanel("Recovery", "recovery");recoveryTask("recovery.list"); }
         else if (id == "view.options" || id == "view.keymap") { options_ = true; focusKeymap_ = id == "view.keymap"; }
         else if (id.starts_with("view.") && findCommand(id)->context == CommandContext::global) {
             auto panel = id.substr(5); showPanel(findCommand(id)->title.c_str(), panel.c_str());
         } else if (tab) {
+            tab->pendingSession = nullptr;
             auto &e = tab->editor;
             const auto undo = e.GetUndoIndex();
             const auto pos = e.GetMainCursorPosition();
@@ -347,7 +448,7 @@ void Application::keymapOptions() {
         const char *names[] = {"Rider / ReSharper", "Visual Studio", "Visual Studio Code"};
         int selected = keymapProfile_ == "rider" ? 0 : keymapProfile_ == "visualstudio" ? 1 : 2;
         if (ImGui::Combo("##keymap", &selected, names, 3)) {
-            try { keymap_.load(profiles[selected], keymapOverrides_.value(profiles[selected], Json::object())); keymapProfile_ = profiles[selected]; keymapEditId_.clear(); }
+            try { applyKeymap(profiles[selected], keymapOverrides_.value(profiles[selected], Json::object())); keymapProfile_ = profiles[selected]; keymapEditId_.clear(); }
             catch (const std::exception &e) { error(e.what()); }
         }
         cyui::endProperties();
@@ -357,7 +458,7 @@ void Application::keymapOptions() {
     cyui::filterBox("##keymap-filter", shortcutsFilter_, {"Filter (Ctrl/Cmd+F)...", 0, false});
     if (ImGui::BeginTable("##commands", 3, ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable, ImVec2(0, cyui::dp(210)))) {
         ImGui::TableSetupColumn(tr("Command")); ImGui::TableSetupColumn(tr("Shortcut")); ImGui::TableSetupColumn(tr("Context")); ImGui::TableHeadersRow();
-        for (const auto &command : commands()) {
+        for (const auto &command : commandCatalogue()) {
             if (!shortcutsFilter_.matches(command.title, command.id + " " + keymap_.hint(command.id))) continue;
             ImGui::PushID(command.id.c_str()); ImGui::TableNextRow(); ImGui::TableNextColumn();
             if (ImGui::Selectable(tr(command.title.c_str()), command.id == keymapEditId_, ImGuiSelectableFlags_SpanAllColumns)) {
@@ -371,20 +472,21 @@ void Application::keymapOptions() {
         ImGui::EndTable();
     }
     if (!keymapEditId_.empty()) {
-        cyui::textDim("%s", tr(findCommand(keymapEditId_)->title.c_str()));
+        const auto catalogue=commandCatalogue();const auto selected=std::find_if(catalogue.begin(),catalogue.end(),[&](const auto &c) { return c.id==keymapEditId_; });
+        cyui::textDim("%s",selected==catalogue.end()?keymapEditId_.c_str():tr(selected->title.c_str()));
         ImGui::SetNextItemWidth(-1); ImGui::InputTextWithHint("##binding-edit", "Ctrl+K, Ctrl+C; Ctrl+Slash", &keymapEditText_);
         if (cyui::button(tr("Apply shortcut"))) {
             try {
                 Json bindings = Json::array(); std::istringstream input(keymapEditText_); std::string text;
                 while (std::getline(input, text, ';')) { auto start = text.find_first_not_of(" \t"); if (start != std::string::npos) bindings.push_back(text.substr(start, text.find_last_not_of(" \t") - start + 1)); }
                 auto overrides = keymapOverrides_.value(keymapProfile_, Json::object()); overrides[keymapEditId_] = bindings;
-                keymap_.load(keymapProfile_, overrides); keymapOverrides_[keymapProfile_] = overrides;
+                applyKeymap(keymapProfile_, overrides); keymapOverrides_[keymapProfile_] = overrides;
             } catch (const std::exception &e) { error(e.what()); }
         }
         ImGui::SameLine();
         if (cyui::button(tr("Reset command"))) {
             auto overrides = keymapOverrides_.value(keymapProfile_, Json::object()); overrides.erase(keymapEditId_);
-            try { keymap_.load(keymapProfile_, overrides); keymapOverrides_[keymapProfile_] = overrides; keymapEditId_.clear(); }
+            try { applyKeymap(keymapProfile_, overrides); keymapOverrides_[keymapProfile_] = overrides; keymapEditId_.clear(); }
             catch (const std::exception &e) { error(e.what()); }
         }
     }

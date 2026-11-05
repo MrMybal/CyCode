@@ -14,7 +14,7 @@ ROOT=Path(__file__).resolve().parents[2]
 def archive(item):
     cache=ROOT/'runtime/tools/downloads'
     cache.mkdir(parents=True,exist_ok=True)
-    path=cache/(item['sha256']+('.tar.xz' if item['url'].endswith('.xz') else '.tar.gz'))
+    path=cache/(item['sha256']+('.zip' if item['url'].endswith('.zip') else '.tar.xz' if item['url'].endswith('.xz') else '.tar.gz'))
     if not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest()!=item['sha256']:
         print('Downloading '+item['url'],flush=True)
         request=urllib.request.Request(item['url'],headers={'User-Agent':'CyCode-build/0.1'})
@@ -73,8 +73,12 @@ def ensure_languages(rust=True,java=True):
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--rust',action='store_true');parser.add_argument('--java',action='store_true');parser.add_argument('--web',action='store_true')
-    args=parser.parse_args();all_=not any((args.rust,args.java,args.web))
+    parser.add_argument('--python',action='store_true');parser.add_argument('--glsl',action='store_true')
+    args=parser.parse_args();all_=not any((args.rust,args.java,args.web,args.python,args.glsl))
     ensure_languages(rust=all_ or args.rust,java=all_ or args.java)
     if all_ or args.web:
         from setup_web import ensure_web
         ensure_web()
+    if all_ or args.python or args.glsl:
+        from setup_extra_languages import ensure_extra
+        ensure_extra(python=all_ or args.python,glsl=all_ or args.glsl)

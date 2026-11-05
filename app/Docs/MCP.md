@@ -1,5 +1,218 @@
 # Integrated MCP
 
+language_document_highlights / language.documentHighlights adds the shared
+permission-free in-document read (227 operations). Current document identity,
+revision and backend epoch are checked before and after the provider reply. Output
+contains actual Text/Read/Write kinds, sorted UTF-16 ranges, query position and
+invalid/truncated counts. Bounds are 4096 rows, 8192 records and 4 MiB. Disabled or
+unsupported providers are rejected; text-only highlights do not imply exhaustive
+semantic references. No cursor/source edits are exposed by this read. See
+[Document occurrences](Occurrences.md) for inputs, defaults and limits.
+
+language_declaration, language_type_definition and language_implementation join
+language_definition/references in the shared native location pipeline. All five
+accept optional expectedDocumentId/expectedEpoch and return source identity,
+backend/epoch, method/position, validated fullRange/optional originRange and
+invalid/outside/truncated counts. Schemas bind each operation's returned method.
+Source lifetime is precise; other-file targets remain index observations. The
+surface has 226 operations; the three additions are permission-free reads without
+execution/mutation groups. See [Source navigation](SourceNavigation.md).
+
+language_symbols preserves complete symbol rows and now returns issued session/
+resolveIndex references for scoped URI-only entries. language_symbol_resolve uses
+the original native server payload, two-minute/four-session bounded cache and
+workspace/lifecycle/monitor/epoch guards before and after resolving. Complete
+positions remain index observations. document_symbols retains precise document
+identity/range checks. language_status exposes symbolResolve capabilities.
+The added read operation has no permissions or mutation groups; 223 operations
+share the native owner and ABI2, with no independent Python model. See
+[Symbol navigation](SymbolNavigation.md).
+
+build_location resolves one supplied compiler display line to an existing
+workspace source file. It uses the shared native parser without execution,
+source-content reads, permissions or mutation groups. The bridge does not inject
+a build operation ID or cancellation target. language_status diagnosticRevisions
+now pairs required native id/revision with the publication URI; raw diagnostics
+remain advisory until consumers verify that pair. The current manifest has 222
+operations. See [Compiler locations](CompilerLocations.md) and
+[Diagnostics](DiagnosticNavigation.md).
+
+project_status/project_output read the existing project task owner without waiting
+for execution/plugin/document locks or saved buffers. Status is permission-free;
+output requires process.execute and has no mutation group. Context, conditional
+replacement snapshots and Cargo rendered-message byte accounting are explicit.
+Read-job cancellation never targets the compiler. The manifest has 222 operations;
+see [Project live output](ProjectTaskOutput.md).
+
+build_output reads the latest explicit CMake/MSBuild/Unreal live tail while a
+build owns the mutation group. It requires process.execute but is read-only and
+has no exclusive group. Conditional streamId/revision reads return replacement
+snapshots, never append-only chunks; byte counts and bounded display repair are
+explicit. The manifest has 222 operations. This uses normal SDK polling, not MCP
+push notifications; see [Live build output](LiveBuildOutput.md).
+
+unreal_artifacts / native unreal.artifacts add a read-only assessment of ordinary
+desktop Editor receipts, module IDs and recorded project binaries. The operation
+has no permissions/mutation group and uses a 64 MiB SDK memory reservation. The
+manifest now contains 222 operations. Native Unreal build results optionally add
+artifacts and inspectionError while retaining actual process outcome. Bound
+run/launch and desktop prebuild continuation require scoped ready outputs; profile
+configuration and SDK launch's explicit-build behavior remain unchanged. See
+[Unreal outputs](UnrealArtifacts.md) for bounds and incomplete/unsupported results.
+
+Prepared Unreal launch settings now include a required non-null unrealLaunch
+profile/request binding. Common debug profile/configure/run/launch schemas accept
+it, null detachment or absence for legacy profiles. The native owner revalidates
+bound program/cwd/argv/runtime before write or actual launch; native Unreal build
+requires saved/reconciled workspace buffers. The desktop prebuild uses the bound
+context and guarded captured parameters, independent of toolbar changes. SDK
+launch still does not compile automatically. The current manifest has 222 operations and
+permissions/ABI stay unchanged; see [Unreal launch](UnrealLaunch.md).
+
+unreal_launch_profile prepares typed UE4/UE5 editor/game/uncooked-server settings
+through the native Unreal inspector without compiling, saving or executing tools.
+It requires process.execute like debug_profile because expectedProfile can contain
+the saved environment. Send settings + expectedProfile to debug_configure for a
+guarded save, then use existing debug_run/debug_launch; SDK launch does not build
+automatically. The manifest now has 222 operations. See
+[Unreal launch profiles](UnrealLaunch.md) for flags, bounds and pending acceptance.
+
+unreal_automation_plan/run add reviewed UE5 cooking/packaging with explicit
+maps/container/deadline controls and issued input/tool/output guards. Run requires
+process.execute and workspace.write, uses the existing mutation group and actual
+build.status/cancel owner, and retains persistent workspace intent/logs/results.
+The bridge matches cancellation by operation ID and waits for the reviewed
+deadline plus postflight allowance. The manifest has 222 operations; Runtime/
+actual UE acceptance remains pending. See [Unreal automation](UnrealAutomation.md).
+
+vcs_replay_state/plan/apply add reviewed single-commit cherry-pick/revert, resolved
+continuation and quit tracking with retained work/index. Full source IDs and
+repository/state/plan guards exclude ranges, arbitrary options and external VCS
+providers. Apply persists an intent, retains actual process/inspection outcomes,
+requires VCS/workspace/process permissions and shares the existing mutation
+group. Native ownership is noncancellable; the bridge waits up to 1,200 seconds
+for repeated inspection/mutation/postflight. Actual Runtime acceptance remains
+pending. See [Git replay](GitReplay.md).
+
+vcs_merge_state/plan/commit/quit add actual merge blockers/staged review, guarded
+unsigned completion and quit tracking with retained working/index state. Typed
+requests bind repository/state/plan revisions and message/hooks policy; intent
+receipts are persistent workspace files. Actual process status and postflight
+inspectionError remain explicit. Mutations require VCS/workspace/process
+permissions, share the existing group and keep noncancellable native ownership.
+SDK Runtime acceptance remains pending.
+See [Merge workflow](GitMergeWorkflow.md).
+
+vcs_checkout_plan/apply/undo expose reviewed single-file synchronization after
+staging, with persistent original/displaced backups and separate guarded Undo.
+Paths are repository-relative; binary bytes remain native. Apply rechecks the
+issued plan and complete index; Undo protects newer file content. Both retain
+workspace/VCS/process permissions and report partial/inspection outcomes. All
+three use noncancellable native ownership.
+Actual SDK Runtime acceptance remains pending. See [Git working files](GitWorkingFiles.md).
+
+`vcs_conflict_list/inspect/plan/apply` add typed Git structural conflict services.
+The new paths are repository-relative; documentPath remains workspace-relative.
+Preview/apply require observed repository/catalogue guards, explicit per-path
+choices and an additional preview revision on apply. Nullable text never carries
+binary bytes. Apply changes the index only, requires VCS/workspace/process
+permissions and retains noncancellable native ownership. Actual exit status plus
+catalogue or catalogError remains explicit. Four typed conflict operations are included;
+SDK Runtime acceptance remains pending. See [Git conflicts](GitConflicts.md).
+
+`vcs_worktree_plan` previews `move` or `repair` with required observed repository/
+catalogue guards and path/destination. Apply through `vcs_worktree_move` or
+`vcs_worktree_repair` with the same inputs and issued expectedPlanRevision. Plans
+expose checked paths and explicit file/index/transport effects; apply returns real
+process status plus catalogue or an unconfirmed catalogError. Preview is read-only;
+apply requires VCS/workspace/process permissions. Both retain noncancellable native
+ownership and existing 600-second bridge waits. Repair audits the full linked set
+because Git can update other linking files. Session selection is desktop-owned;
+SDK callers continue to select repositories explicitly. Runtime acceptance remains
+pending; see [Git worktrees](GitWorktrees.md).
+
+`vcs_submodule_settings_plan` previews one URL/tracking-branch metadata edit,
+including previous value redaction, existing overrides, exact argv and effects.
+`vcs_submodule_settings` requires its preview revision plus the same observed
+repository/catalogue/input guards. Both share native handling of staged/unstaged
+metadata, document/directory guards and actual postflight/index/checkout checks.
+Preview is read-only; application requires VCS/workspace/process permissions.
+Neither requests transport/staging/checkout; URL sync follows Git config rules.
+Literal, empty remote-default and dot parent-name tracking branches are supported.
+Actual Runtime/Git/GUI acceptance remains pending; see [Git submodules](GitSubmodules.md).
+
+`vcs_submodule_deinit_plan` inspects a clean, absorbed, parent-owned module and
+returns removal/preservation effects plus a separate preview revision. The guarded
+`vcs_submodule_deinit` removes only that checkout/local registration, preserving the
+gitlink, .gitmodules and Git metadata. It refuses ignored/untracked files, hidden
+flags, nested gitlinks and open native documents. Read preview has no mutation
+permission; the action requires VCS/workspace/process permissions and retains
+noncancellable native ownership. Actual removal/retention is checked after Git,
+including partial outcomes with exit zero. Runtime acceptance remains pending.
+
+`vcs_submodule_add_plan` previews a new submodule locally. The separate
+`vcs_submodule_add` clones/stages only after the observed catalogue, repository
+and preview revisions match. Both share native guards/process ownership and
+typed actual/unknown metadata; read inspection has no mutation permission,
+while addition requires VCS/workspace/process permissions. See
+[Git submodules](GitSubmodules.md) for remaining runtime acceptance.
+
+`vcs_submodules` reads configured top-level modules for an explicit Git repository.
+The guarded `vcs_submodule_init/sync/update` operations share native process ownership,
+typed actual state and the desktop's reviewed actions. Mutations require VCS,
+workspace and process permissions; no SDK task artifact staging or independent
+Python Git model is involved. Real Git/Runtime acceptance remains pending; see
+[Git submodules](GitSubmodules.md).
+
+`debug_instruction_breakpoints` replaces the full session-only list with explicit
+session/stop/revision guards. Disabled entries remain local, enabled entries carry
+actual adapter verification, and ambiguous failures leave synchronization false.
+It requires process.execute and is noncancellable after submission, sharing the
+desktop/plugin DAP owner. No process addresses are persisted into launch.json.
+See [Instruction breakpoints](InstructionBreakpoints.md).
+
+`debug_step_back`, `debug_reverse_continue` and `debug_restart_frame` require
+explicit observed session/stop plus selected thread/frame references. Existing
+forward step/Continue operations retain optional queued context and gain typed,
+capability-gated granularity/singleThread options. All seven handlers are
+noncancellable after submission and expose actual lastExecution acknowledgement/
+uncertainty, rather than inventing a completed target step. They require only
+process.execute and share the native GUI/plugin owner. See
+[Execution controls](DebugExecution.md).
+
+`debug_set_variable`, `debug_set_expression` and `debug_write_memory` require
+process.execute and explicit observed session/stop generations. Expression edits
+also capture the selected frame; memory edits require expected bytes checked by a
+fresh read, with bounded explicit replacement bytes and subsequent read-back.
+The common native owner reports typed lastMutation outcomes, including partial or
+unconfirmed effects. These three handlers are noncancellable after submission and
+do not edit source or participate in document Undo. See
+[Value and memory editing](DebugValueEditing.md).
+
+`debug_data_breakpoint_info` inspects a paused target; `debug_data_breakpoints`
+replaces the entire session list. Both require process.execute and observed
+session/stop generations. Replacement also needs dataBreakpointRevision and
+current-pause issued handles, with explicit verification/uncertain state. Its
+noncancellable SDK handler retains the native mutation outcome. See
+[Data breakpoints](DataBreakpoints.md).
+
+`debug_hot_reload` uses the current `debug_status.sessionGeneration` and an optional
+unique operationId to build the imported JDT workspace and apply Java changes on
+the same native session. Both this operation and `debug_cancel_reload` require
+process.execute. Cancellation matches a pending call; the bridge retains the
+SDK reservation until its native result, and never rolls back an already sent
+redefine request. javaReload status reports actual returned class names, unchanged
+or failure. The cancellation operation has no workspace exclusive group so it can
+signal the running job. See [Java debugging](JavaDebugging.md) for requirements,
+VM limits and pending runtime acceptance.
+
+Prepared text edits expose passive annotations and issued per-plan confirmation
+IDs. Inspect their labels/descriptions/files, then pass required IDs through
+changes_apply.confirmedAnnotations. The native Engine rejects missing, duplicate,
+unknown or foreign-plan IDs before mutation. Plain-plan calls remain compatible;
+permissions, scheduling and operation IDs are unchanged. See
+[annotated changes](ChangeAnnotations.md).
+
 Visual Studio solution/project build, clean/rebuild/restore, artifact evaluation and
 C++ index preparation use the native msbuild_* operations. Inspecting configurations
 is read-only; evaluation and builds require process.execute. See [MSBuild](MSBuild.md).

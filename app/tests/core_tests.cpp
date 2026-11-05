@@ -21,6 +21,83 @@ static void write(const std::filesystem::path &path, const std::string &text) {
     std::ofstream out(path, std::ios::binary);
     out << text;
 }
+static void journalChecks(const std::filesystem::path &root) {
+    Events journal;
+    const auto epoch = journal.read(Json::object()).at("epoch");
+    for (int i = 0; i < 550; ++i)
+        journal.publish("document.changed", {{"path", "a.cpp"}, {"revision", i + 1}});
+    const auto first = journal.read({{"limit", 3}, {"types", {"document.*"}}});
+    check(first.at("gap").get<bool>() && first.at("events").size() == 3 && first.at("hasMore").get<bool>(),
+          "Journal overflow and bounded pages");
+    const auto skipped = journal.read({{"types", {"build.*"}}});
+    check(skipped.at("events").empty() && skipped.at("nextSequence") == 550,
+          "Filtered journal cursor did not advance");
+    rejects([&] { journal.read({{"afterSequence", 1}}); }, "Unscoped event resume accepted");
+    rejects([&] { journal.read({{"afterSequence", 551}, {"epoch", epoch}}); },
+            "Future event cursor accepted");
+    rejects([&] { journal.read({{"epoch", "different"}}); }, "Foreign event epoch accepted");
+    rejects([&] { journal.read({{"limit", 0}}); }, "Unbounded event limit accepted");
+    journal.publish("oversized", {{"value", std::string(70000, 'x')}});
+    const auto dropped = journal.read({{"epoch", epoch}, {"afterSequence", 550}});
+    check(dropped.at("gap").get<bool>() && dropped.at("events").empty() && dropped.at("nextSequence") == 551,
+          "Dropped event not signalled");
+    const auto tail = journal.read({{"tail", true}});
+    check(!tail.at("gap").get<bool>() && tail.at("events").empty() && tail.at("nextSequence") == 551,
+          "Journal tail subscription");
+    Events origins;
+    {
+        EventOrigin scope("sample.plugin");
+        origins.publish("sample", Json::object());
+    }
+    check(origins.read({{"excludeOrigin", "sample.plugin"}}).at("events").empty(),
+          "Origin filter returned own events");
+    Events concurrent;
+    std::vector<std::thread> writers;
+    for (int i = 0; i < 4; ++i)
+        writers.emplace_back([&] {
+            for (int j = 0; j < 100; ++j)
+                concurrent.publish("sample", Json::object());
+        });
+    for (auto &writer : writers)
+        writer.join();
+    check(concurrent.read({{"limit", 512}}).at("events").size() == 400,
+          "Concurrent event publication lost entries");
+    const auto workspace = root / "event-workspace";
+    std::filesystem::create_directory(workspace);
+    write(workspace / "a.cpp", "int value=1;\n");
+    Engine engine(workspace);
+    engine.configureLanguage("", false, false);
+    const auto start = engine.dispatch("events.read", {{"tail", true}});
+    auto doc = engine.dispatch("documents.read", {{"path", "a.cpp"}});
+    doc = engine.dispatch(
+        "documents.replace",
+        {{"path", "a.cpp"}, {"expectedRevision", doc.at("revision")}, {"text", "int value=2;\n"}});
+    engine.dispatch("documents.save", {{"path", "a.cpp"}, {"expectedRevision", doc.at("revision")}});
+    write(workspace / "a.cpp", "int value=3;\n");
+    doc = engine.dispatch("documents.reload", {{"path", "a.cpp"}, {"expectedRevision", doc.at("revision")}});
+    engine.dispatch("documents.close", {{"path", "a.cpp"}});
+    const auto events = engine
+                            .dispatch("events.read", {{"epoch", start.at("epoch")},
+                                                      {"afterSequence", start.at("nextSequence")},
+                                                      {"types", {"document.*"}}})
+                            .at("events");
+    check(events.size() == 5 && events[0].at("type") == "document.opened" &&
+              events[1].at("type") == "document.changed" && events[2].at("type") == "document.saved" &&
+              events[3].at("type") == "document.reloaded" && events[4].at("type") == "document.closed",
+          "Native document event order");
+    check(events[0].at("data").at("id") == events[3].at("data").at("id"),
+          "Reload published a transient document identity");
+    check(!events[2].at("data").at("dirty").get<bool>() && events[2].at("data").at("diskConflict") == "",
+          "Save event used uncommitted metadata");
+    for (const auto &event : events)
+        check(!event.at("data").contains("text"), "Document text leaked into event metadata");
+}
+void workspaceSessionContracts(const std::filesystem::path &);
+void draftDocumentContracts(const std::filesystem::path &);
+void hierarchyContracts();
+void semanticTokenContracts();
+void annotationContracts();
+void updateContracts(const std::filesystem::path &);
 int main(int argc, char **argv) {
     if (argc > 1 && std::string(argv[1]) == "--sleep-child") {
         std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -31,6 +108,13 @@ int main(int argc, char **argv) {
         ("cycode-test-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     try {
         std::filesystem::create_directories(root);
+        workspaceSessionContracts(root);
+        draftDocumentContracts(root);
+        hierarchyContracts();
+        semanticTokenContracts();
+        annotationContracts();
+        updateContracts(root);
+        journalChecks(root);
         write(root / "test.cpp", "\xef\xbb\xbfint main() { return 0; }\r\n");
         write(root / ".gitignore", "ignored.txt\n");
         write(root / "ignored.txt", "private_needle\n");
@@ -52,6 +136,8 @@ int main(int argc, char **argv) {
             check(edited["dirty"] == true, "Unsaved edit");
             auto search = engine.dispatch("search.text", {{"query", "42"}});
             check(search["matches"].size() == 1, "Search unsaved buffers");
+            const auto regex=engine.dispatch("search.text",{{"query","4[2]"},{"regex",true}});
+            check(regex.at("matches").size()==1&&regex.at("matches")[0].at("path")=="test.cpp"&&!regex.at("unsavedRegexExcluded").get<bool>(),"Regex must include unsaved buffers");
             check(engine.dispatch("search.text", {{"query", "return 0"}})["matches"].empty(),
                   "Dirty buffer must hide old disk hits");
             check(engine.dispatch("search.text", {{"query", "private_needle"}})["matches"].empty(),

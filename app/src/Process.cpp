@@ -2,8 +2,8 @@
 #include "cycode/Tools.h"
 #include <algorithm>
 #include <map>
-#include <thread>
 #include <sstream>
+#include <thread>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -15,6 +15,18 @@
 extern char **environ;
 #endif
 namespace cycode {
+namespace {
+thread_local ProcessOutputScope *outputScope = nullptr;
+}
+ProcessOutputScope::ProcessOutputScope(const std::atomic<bool> *owner, ProcessOutputObserver observer)
+    : owner_(owner), observer_(std::move(observer)), previous_(outputScope) {
+    outputScope = this;
+}
+ProcessOutputScope::~ProcessOutputScope() { outputScope = previous_; }
+ProcessOutputObserver processOutputObserver(const std::atomic<bool> *owner) {
+    return owner && outputScope && outputScope->owner_ == owner ? outputScope->observer_
+                                                               : ProcessOutputObserver{};
+}
 #ifdef _WIN32
 static std::wstring wide(const std::string &s) {
     int n =
@@ -46,24 +58,39 @@ static std::wstring quote(const std::string &s) {
 ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesystem::path &cwd,
                          std::chrono::milliseconds timeout, std::size_t maxOutput,
                          const std::atomic<bool> *cancellation,
-                         const std::map<std::string,std::string> &overrides) {
+                         const std::map<std::string, std::string> &overrides,
+                         const ProcessOutputObserver &observer) {
     ProcessResult result;
+    if (cancellation && cancellation->load()) {
+        result.cancelled = true;
+        return result;
+    }
     if (argv.empty()) {
         result.output = "Missing executable";
         return result;
     }
-    for (const auto &[name,value] : overrides) if (name.empty() || name.find('=')!=std::string::npos || name.find('\0')!=std::string::npos || value.find('\0')!=std::string::npos)
-        throw std::runtime_error("Invalid process environment override");
+    for (const auto &[name, value] : overrides)
+        if (name.empty() || name.find('=') != std::string::npos || name.find('\0') != std::string::npos ||
+            value.find('\0') != std::string::npos)
+            throw std::runtime_error("Invalid process environment override");
     auto commandArgs = argv;
     if (argv[0] == "rg" || argv[0] == "git") {
         auto resolved = toolPath(argv[0]);
-        if (resolved.empty()) { result.output = "Required tool is missing: " + argv[0] + ". Repair the CyCode runtime tools installation."; return result; }
+        if (resolved.empty()) {
+            result.output =
+                "Required tool is missing: " + argv[0] + ". Repair the CyCode runtime tools installation.";
+            return result;
+        }
         commandArgs[0] = resolved;
     }
     auto start = std::chrono::steady_clock::now();
     auto append = [&](const char *data, std::size_t n) {
         auto kept = std::min(n, maxOutput - result.output.size());
         result.output.append(data, kept);
+        if (kept && observer) {
+            // Observation must never interrupt draining, cancellation or child cleanup.
+            try { observer(std::string_view(data, kept)); } catch (...) {}
+        }
         if (kept < n)
             result.truncated = true;
     };
@@ -93,8 +120,16 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
     HANDLE job = CreateJobObjectW(nullptr, nullptr);
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
     limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-    if (job)
-        SetInformationJobObject(job, JobObjectExtendedLimitInformation, &limits, sizeof(limits));
+    if (!job || !SetInformationJobObject(job, JobObjectExtendedLimitInformation, &limits, sizeof(limits))) {
+        const auto error = GetLastError();
+        result.output = "Cannot create an owned process job (Windows error " + std::to_string(error) + ")";
+        CloseHandle(reader);
+        CloseHandle(writer);
+        CloseHandle(input);
+        if (job)
+            CloseHandle(job);
+        return result;
+    }
     // Some desktop hosts provide duplicate Path/PATH entries. .NET/MSBuild
     // rejects those even though the Windows environment lookup accepts them.
     auto insensitive = [](const std::wstring &a, const std::wstring &b) {
@@ -111,7 +146,8 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
         }
         FreeEnvironmentStringsW(inherited);
     }
-    for (const auto &[name,value] : overrides) variables[wide(name)]=wide(name+"="+value);
+    for (const auto &[name, value] : overrides)
+        variables[wide(name)] = wide(name + "=" + value);
     std::vector<wchar_t> environment;
     for (const auto &[key, value] : variables) {
         environment.insert(environment.end(), value.begin(), value.end());
@@ -121,17 +157,28 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
     BOOL created = CreateProcessW(nullptr, command.data(), nullptr, nullptr, TRUE,
                                   CREATE_NO_WINDOW | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT,
                                   environment.data(), cwd.empty() ? nullptr : cwd.c_str(), &si, &pi);
+    const auto creationError = created ? ERROR_SUCCESS : GetLastError();
     CloseHandle(writer);
     CloseHandle(input);
     if (!created) {
-        result.output = "Cannot start " + argv[0] + " (Windows error " + std::to_string(GetLastError()) + ")";
+        result.output = "Cannot start " + argv[0] + " (Windows error " + std::to_string(creationError) + ")";
         CloseHandle(reader);
         if (job)
             CloseHandle(job);
         return result;
     }
-    if (job)
-        AssignProcessToJobObject(job, pi.hProcess);
+    if (!AssignProcessToJobObject(job, pi.hProcess)) {
+        const auto error = GetLastError();
+        // The child is still suspended and has not run project/tool code.
+        TerminateProcess(pi.hProcess, 124);
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        CloseHandle(reader);
+        CloseHandle(job);
+        result.output = "Cannot own the process tree (Windows error " + std::to_string(error) + ")";
+        return result;
+    }
     ResumeThread(pi.hThread);
     CloseHandle(pi.hThread);
     for (;;) {
@@ -143,6 +190,8 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
                 !read)
                 break;
             append(buffer, read);
+            if (result.truncated || (cancellation && cancellation->load()))
+                break;
         }
         if (WaitForSingleObject(pi.hProcess, 10) == WAIT_OBJECT_0) {
             // A descendant may still own a writer: never wait for EOF here.
@@ -152,6 +201,8 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
                     !read)
                     break;
                 append(buffer, read);
+                if (result.truncated || (cancellation && cancellation->load()))
+                    break;
             }
             break;
         }
@@ -163,13 +214,29 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
                 TerminateJobObject(job, 124);
             else
                 TerminateProcess(pi.hProcess, 124);
-            WaitForSingleObject(pi.hProcess, 5000);
+            WaitForSingleObject(pi.hProcess, INFINITE);
             break;
         }
     }
     DWORD code = 0;
     GetExitCodeProcess(pi.hProcess, &code);
     result.exitCode = static_cast<int>(code);
+    // Kill remaining owned workers even when the parent exits normally, matching
+    // KILL_ON_JOB_CLOSE, and retain ownership until the job is actually empty.
+    TerminateJobObject(job, code);
+    JOBOBJECT_BASIC_ACCOUNTING_INFORMATION accounting{};
+    for (;;) {
+        if (!QueryInformationJobObject(job, JobObjectBasicAccountingInformation, &accounting,
+                                       sizeof(accounting), nullptr)) {
+            result.exitCode = -1;
+            const std::string error = "\nCannot verify termination of the owned process job.\n";
+            append(error.data(), error.size());
+            break;
+        }
+        if (!accounting.ActiveProcesses)
+            break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
     CloseHandle(pi.hProcess);
     CloseHandle(reader);
     if (job)
@@ -186,23 +253,38 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
     args.push_back(nullptr);
     std::vector<std::string> environmentValues;
     std::vector<char *> environmentPointers;
-    std::string executable=commandArgs.front();
+    std::string executable = commandArgs.front();
     if (!overrides.empty()) {
-        std::map<std::string,std::string> variables;
-        for (auto entry=environ;entry && *entry;++entry) { const std::string value(*entry);const auto at=value.find('=');if (at!=std::string::npos) variables[value.substr(0,at)]=value.substr(at+1); }
-        for (const auto &[name,value] : overrides) variables[name]=value;
-        for (const auto &[name,value] : variables) environmentValues.push_back(name+"="+value);
-        for (auto &value : environmentValues) environmentPointers.push_back(value.data());
+        std::map<std::string, std::string> variables;
+        for (auto entry = environ; entry && *entry; ++entry) {
+            const std::string value(*entry);
+            const auto at = value.find('=');
+            if (at != std::string::npos)
+                variables[value.substr(0, at)] = value.substr(at + 1);
+        }
+        for (const auto &[name, value] : overrides)
+            variables[name] = value;
+        for (const auto &[name, value] : variables)
+            environmentValues.push_back(name + "=" + value);
+        for (auto &value : environmentValues)
+            environmentPointers.push_back(value.data());
         environmentPointers.push_back(nullptr);
-        if (executable.find('/')==std::string::npos) {
-            std::istringstream paths(variables["PATH"]);std::string directory;
-            while (std::getline(paths,directory,':')) { const auto candidate=std::filesystem::path(directory)/executable;
-                if (access(candidate.c_str(),X_OK)==0) { executable=candidate.string();break; } }
+        if (executable.find('/') == std::string::npos) {
+            std::istringstream paths(variables["PATH"]);
+            std::string directory;
+            while (std::getline(paths, directory, ':')) {
+                const auto candidate = std::filesystem::path(directory) / executable;
+                if (access(candidate.c_str(), X_OK) == 0) {
+                    executable = candidate.string();
+                    break;
+                }
+            }
         }
     }
     pid_t pid = fork();
     if (pid == 0) {
-        setpgid(0, 0);
+        if (setpgid(0, 0) != 0)
+            _exit(126);
         close(pipes[0]);
         dup2(pipes[1], STDOUT_FILENO);
         dup2(pipes[1], STDERR_FILENO);
@@ -214,8 +296,10 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
         }
         if (!cwd.empty() && chdir(cwd.c_str()) != 0)
             _exit(126);
-        if (overrides.empty()) execvp(args[0], args.data());
-        else execve(executable.c_str(),args.data(),environmentPointers.data());
+        if (overrides.empty())
+            execvp(args[0], args.data());
+        else
+            execve(executable.c_str(), args.data(), environmentPointers.data());
         _exit(127);
     }
     close(pipes[1]);
@@ -230,11 +314,30 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
     for (;;) {
         char buffer[8192];
         ssize_t count;
-        while ((count = read(pipes[0], buffer, sizeof(buffer))) > 0)
+        while ((count = read(pipes[0], buffer, sizeof(buffer))) > 0) {
             append(buffer, static_cast<std::size_t>(count));
-        if (waitpid(pid, &status, WNOHANG) == pid) {
-            while ((count = read(pipes[0], buffer, sizeof(buffer))) > 0)
+            if (result.truncated || (cancellation && cancellation->load()))
+                break;
+        }
+        // Observe exit without reaping first: the child's PID/group ID stays
+        // reserved while we stop any remaining workers in its process group.
+        siginfo_t child{};
+        const auto observed = waitid(P_PID, static_cast<id_t>(pid), &child, WEXITED | WNOHANG | WNOWAIT);
+        if (observed < 0 && errno != EINTR) {
+            const std::string error = "\nCannot inspect owned child process status.\n";
+            append(error.data(), error.size());
+            close(pipes[0]);
+            return result;
+        }
+        if (observed == 0 && child.si_pid == pid) {
+            kill(-pid, SIGKILL);
+            while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
+            }
+            while ((count = read(pipes[0], buffer, sizeof(buffer))) > 0) {
                 append(buffer, static_cast<std::size_t>(count));
+                if (result.truncated || (cancellation && cancellation->load()))
+                    break;
+            }
             break;
         }
         if (std::chrono::steady_clock::now() - start > timeout || result.truncated ||

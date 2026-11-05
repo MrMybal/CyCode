@@ -13,11 +13,14 @@ static std::vector<std::string> fields(const std::string &text, char separator) 
     for (;;) { const auto end = text.find(separator,start); result.push_back(text.substr(start,end-start)); if (end == std::string::npos) break; start = end+1; }
     return result;
 }
-void Engine::refreshGitDocuments(Json &result) {
+void Engine::refreshGitDocuments(Json &result, const std::filesystem::path &scope) {
     const auto documents = dispatch("documents.list").at("documents");
     Json reloaded = Json::array(), retained = Json::array();
     for (const auto &doc : documents) {
         const auto path = doc.at("path").get<std::string>();
+        if(isUntitledDocument(path))continue;
+        try { if(!scope.empty()&&!containsPath(scope,resolve(path)))continue; }
+        catch(const std::exception &){retained.push_back(path);continue;}
         if (doc.at("dirty").get<bool>()) { retained.push_back(path); continue; }
         try {
             auto live = dispatch("documents.read",{{"path",path}}); std::ifstream input(resolve(path),std::ios::binary);
@@ -35,20 +38,28 @@ void Engine::refreshGitDocuments(Json &result) {
     if (!retained.empty()) result["output"] = result.value("output","")+"\nSome open buffers were retained because they changed or disappeared on disk.\n";
 }
 Json Engine::gitAdvanced(const std::string &method, const Json &params) {
+    const auto selected=gitSelection(params);
+    const auto &gitRoot=selected.directory;
     auto git = [&](std::vector<std::string> arguments, int seconds = 15) {
-        arguments.insert(arguments.begin(),{"git","--no-pager","-C",pathUtf8(root_),"-c","core.quotepath=false"});
-        return runProcess(arguments,root_,std::chrono::seconds(seconds),8*1024*1024);
+        arguments.insert(arguments.begin(),{"git","--no-pager","--literal-pathspecs","-C",pathUtf8(gitRoot),"-c","core.quotepath=false"});
+        return runProcess(arguments,gitRoot,std::chrono::seconds(seconds),8*1024*1024);
     };
     auto repository = git({"rev-parse","--show-toplevel"});
-    if (method == "vcs.init") return processJson(git({"init","--initial-branch=main"}));
+    if (method == "vcs.init") {
+        if(selected.marker)throw std::runtime_error("This directory already has a Git marker");
+        const auto bare = git({"rev-parse","--is-bare-repository"});
+        if(!bare.exitCode && trim(bare.output)=="true")
+            throw std::runtime_error("Cannot reinitialize a bare Git repository");
+        return processJson(git({"init","--initial-branch=main"}));
+    }
     if (repository.exitCode && method != "vcs.inspect") throw std::runtime_error("Open a Git repository first");
-    auto repositoryRoot = repository.exitCode ? root_ : std::filesystem::weakly_canonical(utf8Path(trim(repository.output)));
+    auto repositoryRoot = repository.exitCode ? gitRoot : std::filesystem::weakly_canonical(utf8Path(trim(repository.output)));
     auto rootOnly = [&] {
-        if (!containsPath(root_,repositoryRoot) || !containsPath(repositoryRoot,root_)) throw std::runtime_error("Open the repository root before changing repository-wide state");
+        if (!containsPath(gitRoot,repositoryRoot) || !containsPath(repositoryRoot,gitRoot)) throw std::runtime_error("Open the repository root before changing repository-wide state");
     };
     auto cleanBuffers = [&] {
         auto documents = dispatch("documents.list").at("documents");
-        for (const auto &doc : documents) if (doc.at("dirty").get<bool>()) throw std::runtime_error("Save modified buffers before changing Git working-tree state");
+        for (const auto &doc : documents) if (!isUntitledDocument(doc.at("path")) && containsPath(gitRoot,resolve(doc.at("path"))) && doc.at("dirty").get<bool>()) throw std::runtime_error("Save modified buffers before changing Git working-tree state");
     };
     auto cleanTree = [&] {
         cleanBuffers(); auto status = git({"status","--porcelain","--untracked-files=no"});
@@ -93,10 +104,10 @@ Json Engine::gitAdvanced(const std::string &method, const Json &params) {
         return {{"commits",commits},{"truncated",result.truncated},{"message",result.exitCode ? result.output : ""}};
     }
     if (method == "vcs.show") return processJson(git({"show","--no-ext-diff","--no-color",reference(params.at("revision")),"--","."}));
-    if (method == "vcs.blame") return processJson(git({"blame","--date=short","--",pathUtf8(resolve(params.at("path")).lexically_relative(root_))}));
+    if (method == "vcs.blame") return processJson(git({"blame","--date=short","--",gitFileArgument(root_,selected,resolve(params.at("path")))}));
     if (method == "vcs.conflicts") {
         rootOnly();
-        const auto path = pathUtf8(resolve(params.at("path")).lexically_relative(root_));
+        const auto path = gitFileArgument(root_,selected,resolve(params.at("path")));
         auto unresolved = git({"ls-files","-u","--",path}); if (unresolved.output.empty()) throw std::runtime_error("This file is not an unresolved merge conflict");
         Json versions = Json::object();
         for (const auto &[stage,name] : std::vector<std::pair<int,std::string>>{{1,"base"},{2,"ours"},{3,"theirs"}}) {
@@ -104,19 +115,19 @@ Json Engine::gitAdvanced(const std::string &method, const Json &params) {
             if (content.truncated || content.output.size() > 4*1024*1024 || content.output.find('\0') != std::string::npos) throw std::runtime_error("Conflict editor supports UTF-8 text up to 4 MiB per version");
             if (content.exitCode) versions[name] = nullptr; else { (void)Json(content.output).dump(); versions[name] = content.output; }
         }
-        auto doc = dispatch("documents.read",{{"path",path}});
-        return {{"path",path},{"revision",doc.at("revision")},{"working",doc.at("text")},{"versions",versions}};
+        auto doc = dispatch("documents.read",{{"path",params.at("path")}});
+        return {{"path",pathUtf8(resolve(params.at("path")).lexically_relative(root_))},{"revision",doc.at("revision")},{"working",doc.at("text")},{"versions",versions}};
     }
     if (method == "vcs.resolve") {
-        rootOnly(); const auto path = pathUtf8(resolve(params.at("path")).lexically_relative(root_));
+        rootOnly(); const auto path = gitFileArgument(root_,selected,resolve(params.at("path")));
         if (git({"ls-files","-u","--",path}).output.empty()) throw std::runtime_error("This file is not an unresolved merge conflict");
-        auto doc = dispatch("documents.read",{{"path",path}});
+        auto doc = dispatch("documents.read",{{"path",params.at("path")}});
         if (params.at("expectedRevision") != doc.at("revision")) throw std::runtime_error("RevisionConflict: conflict buffer changed");
         const auto text = params.value("text",doc.at("text").get<std::string>());
         std::istringstream lines(text); std::string line;
         while (std::getline(lines,line)) if (!params.value("allowMarkers",false) && (line.starts_with("<<<<<<< ") || line.starts_with("=======") || line.starts_with(">>>>>>> "))) throw std::runtime_error("Remove conflict markers before marking the file resolved");
-        if (params.contains("text")) doc = dispatch("documents.replace",{{"path",path},{"expectedRevision",doc.at("revision")},{"text",text}});
-        dispatch("documents.save",{{"path",path},{"expectedRevision",doc.at("revision")}});
+        if (params.contains("text")) doc = dispatch("documents.replace",{{"path",params.at("path")},{"expectedRevision",doc.at("revision")},{"text",text}});
+        dispatch("documents.save",{{"path",params.at("path")},{"expectedRevision",doc.at("revision")}});
         return processJson(git({"add","--",path}));
     }
     rootOnly();
@@ -150,7 +161,7 @@ Json Engine::gitAdvanced(const std::string &method, const Json &params) {
         args = {"stash",method.substr(10),"--","stash@{"+std::to_string(index)+"}"};
     } else throw std::runtime_error("Unsupported Git operation");
     auto result = processJson(git(args,method == "vcs.fetch" || method == "vcs.push" || method == "vcs.pull" ? 180 : 30));
-    if (changesFiles) refreshGitDocuments(result);
+    if (changesFiles) refreshGitDocuments(result,gitRoot);
     return result;
 }
 } // namespace cycode

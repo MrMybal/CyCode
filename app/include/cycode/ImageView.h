@@ -1,6 +1,7 @@
 #pragma once
 #include "cycode/ImageFile.h"
 #include <cyui/modules/Images.h>
+#include <nlohmann/json.hpp>
 
 namespace cycode {
 struct ImageTexture {
@@ -36,6 +37,8 @@ class ImageView {
     void update();
     void draw(const char *id, const std::function<void()> &reload);
     void zoom(double scale);
+    nlohmann::json sessionState() const;
+    void restoreSession(const nlohmann::json &);
     bool loading() const { return bool(request_); }
     const ImageTexture *texture() const { return texture_.get(); }
     const std::string &error() const { return error_; }
@@ -48,6 +51,8 @@ class ImageView {
     std::shared_ptr<ImageTexture> texture_;
     std::string error_;
     bool nearest_ = false, firstFrame_ = false, hdr_ = false;
+    bool fitMode_ = true;
+    nlohmann::json pendingSession_ = nullptr;
     std::uintmax_t fileBytes_ = 0;
 };
 } // namespace cycode

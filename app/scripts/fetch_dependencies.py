@@ -34,7 +34,7 @@ def main():
     lock = {**json.loads((editor/'dependencies.lock.json').read_text('utf-8')),
             **json.loads(lock_path.read_text('utf-8'))}
     for key, item in lock.items():
-        if options.core_only and key not in ('json', 'vterm'):
+        if options.core_only and key not in ('json', 'vterm', 'tinyxml2', 'monocypher'):
             continue
         target = DEPS / key
         if (target / '.cycode-dependency').exists():

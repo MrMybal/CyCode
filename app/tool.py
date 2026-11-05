@@ -11,7 +11,7 @@ import uuid
 from cytools_core import CyToolError, Runtime, load_manifest
 from cytools_core.transports.api import LocalClient
 from cytools_core.transports.cli import run_cli
-from contracts import METHODS
+from contracts import METHODS, GIT_METHODS, DEBUG_MUTATIONS, DEBUG_EXECUTIONS
 ROOT = Path(__file__).resolve().parents[1]
 
 class NativeClient:
@@ -20,8 +20,23 @@ class NativeClient:
 
     def call(self, method, parameters, cancellation=None):
         try:
-            project_operation=method.startswith('project.') and method not in ('project.inspect','project.cancel')
-            operation_id=uuid.uuid4().hex if project_operation else None
+            project_operation=method.startswith('project.') and method not in ('project.inspect','project.cancel','project.status','project.output')
+            test_operation=method in ('tests.discover','tests.run')
+            java_reload=method == 'debug.hotReload'
+            build_operation=method in ('build.configure','build.run','build.presetRun','msbuild.build','msbuild.rebuild',
+                'msbuild.clean','msbuild.restore','msbuild.evaluate','msbuild.prepare',
+                'unreal.generate','unreal.database','unreal.build','unreal.prepare','unreal.automationRun')
+            # Bundled VCS providers may validate identity/mapping, inspect local
+            # changes and then run a separate bounded network operation.
+            wait_seconds = 86460 if method.startswith('packages.') else 1200 if method.startswith('vcs.replay.') else 600 if method == 'vcs.providerAction' or method.startswith('vcs.merge.') or method.startswith('vcs.checkout.') or method.startswith('vcs.conflict.') or method.startswith('vcs.worktree.') or method.startswith('vcs.submodule') else 200
+            if build_operation or project_operation:
+                timeout = parameters.get('timeoutSeconds', 150 if method in ('msbuild.build','msbuild.rebuild','msbuild.clean','msbuild.restore') else 180)
+                if type(timeout) is not int or not 1 <= timeout <= 86400:
+                    raise ValueError('Invalid native build timeout')
+                # A saved project profile can own its deadline when no override
+                # is supplied; wait for that owner rather than releasing a live job.
+                wait_seconds = max(200, timeout + 60) if not project_operation or 'timeoutSeconds' in parameters else 86460
+            operation_id=(parameters.get('operationId') or uuid.uuid4().hex) if java_reload else uuid.uuid4().hex if project_operation or test_operation or build_operation else None
             if operation_id:
                 parameters={**parameters,'operationId':operation_id}
             def stop_if_cancelled():
@@ -32,7 +47,13 @@ class NativeClient:
                 except Exception:
                     # Match the executing call; a queued cancelled job must not
                     # stop a different actor's build in the shared native service.
-                    self.call('project.cancel',{'operationId':operation_id})
+                    try:
+                        self.call('debug.cancelReload' if java_reload else 'tests.cancel' if test_operation else 'build.cancel' if build_operation else 'project.cancel',{'operationId':operation_id})
+                    except Exception:
+                        # A failed cancellation notification must not release the
+                        # owning SDK reservation while its native call is alive.
+                        # Keep receiving, and retry at the next socket timeout.
+                        pass
             endpoint = json.loads(self.descriptor.read_text('utf-8'))
             if endpoint['protocol'] != 'cycode-native/1' or endpoint['host'] != '127.0.0.1':
                 raise ValueError('Unsupported native endpoint')
@@ -41,9 +62,10 @@ class NativeClient:
                 connection.settimeout(1)
                 connection.sendall((json.dumps(request, ensure_ascii=False) + '\n').encode('utf-8'))
                 data = bytearray()
-                deadline = time.monotonic() + 200
+                deadline = time.monotonic() + wait_seconds
                 # Keep the reservation until native work actually stops, even
-                # after cancellation. The native build deadline is 180 seconds.
+                # after cancellation. Custom build deadlines also extend this
+                # transport wait; the native owner still performs termination.
                 while b'\n' not in data:
                     try:
                         chunk = connection.recv(65536)
@@ -74,6 +96,17 @@ class NativeClient:
         except (OSError, ValueError, KeyError) as error:
             raise CyToolError('NativeUnavailable', str(error), recoverable=True) from error
 
+def native_parameters(method, parameters):
+    if method in GIT_METHODS:
+        if parameters.get('provider', 'git') != 'git':
+            raise CyToolError('UnsupportedProvider', 'Use vcs_provider_action for external providers.', recoverable=True)
+        # Typed Git schemas/permissions do not authorize arbitrary native DLL
+        # callbacks or their network processes. Keep the common Engine service,
+        # selecting its built-in provider and workspace repository explicitly.
+        return {**parameters, 'provider':'git', 'contextPath':parameters.get('repository','.')}
+    return parameters
+
+
 def create_runtime(data_dir, **options):
     runtime = Runtime(load_manifest(Path(__file__).with_name('CyTool.json')), data_dir, **options)
     runtime.configure_inputs(ROOT / 'data' / 'inputs', fields={})
@@ -81,7 +114,8 @@ def create_runtime(data_dir, **options):
     for operation_id, method in METHODS.items():
         def handler(context, parameters, native_method=method):
             context.cancellation.check()
-            return client.call(native_method, parameters, context.cancellation)
+            return client.call(native_method, native_parameters(native_method, parameters),
+                               None if native_method.startswith('packages.') or native_method.startswith('vcs.replay.') or native_method.startswith('vcs.merge.') or native_method.startswith('vcs.checkout.') or native_method.startswith('vcs.conflict.') or native_method.startswith('vcs.worktree.') or native_method.startswith('vcs.submodule') or native_method in DEBUG_MUTATIONS or native_method in DEBUG_EXECUTIONS or native_method in ('documents.createUntitled','documents.saveAs','documents.close','debug.dataBreakpoints','debug.runToCursor','debug.restoreRunToCursor','debug.instructionBreakpoints') else context.cancellation)
         runtime.register(operation_id, handler)
     return runtime
 

@@ -1,0 +1,55 @@
+# Workspace monitoring and path index
+
+The native Engine owns WorkspaceMonitor. Windows uses recursive
+ReadDirectoryChangesW, an overlapped worker, a 60 KiB notification buffer and
+100 ms stop checks. An overflow advances both counters and forces reconciliation.
+No path-event queue or callback can grow without a bound. Shutdown cancels the
+pending read and joins its owner before releasing the directory handle.
+
+The non-Windows implementation currently polls directory metadata once per second
+(up to 200,000 entries, 64 directory levels, no symlink traversal). Windows falls
+back to it if notifications cannot start or fail. Its backend/error is visible in
+workspace.poll. Only Windows native notifications have been executed locally;
+Linux/macOS polling is implemented but unverified. Polling a large tree has a cost;
+native Linux/macOS watchers remain planned.
+
+The desktop reconciles in a background future every 500 ms. A clean document whose
+disk bytes changed reloads through the same expectedRevision guard as an explicit
+reload. The editor receives the new revision, retains its cursor and records the
+replacement through its existing Undo path. Dirty documents retain their live text
+and saved baseline. Removed, unreadable, oversized or invalid UTF-8 files retain
+their last valid buffer too. A visible warning accompanies diskConflict metadata.
+Saving still rejects external changes. An explicit discard/reload is required to
+replace a dirty buffer; no automatic last-writer-wins save is added.
+
+Every two seconds a reconciliation also checks open documents, even if notifications
+were coalesced or the path is in an index-excluded directory. Directory notifications
+do not follow a symlink to grant new document access: Engine.resolve still checks
+canonical workspace containment before reading. Images and external read-only SDK
+sources retain their own reload lifecycle. Unsaved-buffer checkpoints are owned
+by a separate Engine worker; see [Recovery](Recovery.md). The watcher never treats
+checkpoint writes as project edits or automatically saves dirty buffers.
+
+workspace.files builds a sorted ripgrep path snapshot off the UI thread, respecting
+the existing ignore rules and excluding .git, runtime, data and .cycode. The cache
+holds up to 200,000 paths; ripgrep output is bounded to 32 MiB/30 seconds. Structural
+events and .gitignore/.ignore modifications invalidate it. Changes to global Git
+excludes or .git/info/exclude require an explicit refresh. The cache is in memory;
+there is no claim of a persistent path or symbol index.
+
+Clients request pages with offset (default 0), limit (1..20,000) and refresh
+(default false). Each response contains files, truncated, nextOffset, total and
+indexRevision. Continue at nextOffset until null; keep the same indexRevision or
+restart when the tree changes. Pages have an additional conservative 8 MiB JSON
+budget. truncated may mean another page exists or the overall snapshot exceeded
+its bounds. The desktop assembles pages asynchronously, retains a bounded tree and
+retries after a concurrent invalidation. Manual Refresh always rebuilds.
+
+workspace.poll / workspace_poll returns watcher counters, the extension-registry
+revision, reloaded paths, conflicts, checkpoint health and watcher status. It only reloads clean
+buffers; it does not save or discard dirty edits. These methods use the same native
+service from GUI, CLI and CyToolsCore/MCP.
+
+CTest workspace_monitor uses actual filesystem operations in an owned temporary
+workspace: clean edits, dirty conflicts, deletion/recreation, invalid content,
+Unicode paths, pagination and cache invalidation. It does not alter user projects.

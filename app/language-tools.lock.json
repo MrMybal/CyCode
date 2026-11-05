@@ -138,5 +138,40 @@
     "url": "https://download.eclipse.org/jdtls/milestones/1.50.0/jdt-language-server-1.50.0-202509041425.tar.gz",
     "sha256": "3292c5c33888f95ab0ff718e777ee94ff5496b8635a23a8844b876ee090ebdea",
     "javaMinimum": 21
+  },
+  "pyright": {
+    "version": "1.1.411",
+    "url": "https://registry.npmjs.org/pyright/-/pyright-1.1.411.tgz",
+    "sha256": "bd5c488fc20fa237a944279bf32cae2f986cf10d5d5d9e8705819859daeb2f4a",
+    "integrity": "sha512-03S/vmS5lF1S/tVbKc2WNXCMq8JWCwta/qIYjj1jvqbQhoy+N3NgBzHTSmUlbYD6DJwqQ5XHf108QujoqeURvw=="
+  },
+  "glsl_analyzer": {
+    "version": "1.7.1",
+    "platforms": {
+      "win32-x64": {
+        "url": "https://github.com/nolanderc/glsl_analyzer/releases/download/v1.7.1/x86_64-windows.zip",
+        "sha256": "117604ba20860abf0808fc5551a6e06d305066c1f4296d81a51f175a2cf2a38c"
+      },
+      "linux-arm64": {
+        "url": "https://github.com/nolanderc/glsl_analyzer/releases/download/v1.7.1/aarch64-linux-musl.zip",
+        "sha256": "dda05d727979c34333b86562bb706122ab95d17cd7298665e8afbaba79f76ea6"
+      },
+      "linux-x64": {
+        "url": "https://github.com/nolanderc/glsl_analyzer/releases/download/v1.7.1/x86_64-linux-musl.zip",
+        "sha256": "7c929b304e0d34abf4305d07895c409861f054613c3ae4070baa7ca15c916e7a"
+      },
+      "darwin-arm64": {
+        "url": "https://github.com/nolanderc/glsl_analyzer/releases/download/v1.7.1/aarch64-macos.zip",
+        "sha256": "7f78d98e762b241f7a39dde0fed81c9e4c58766cba5a8abcf20ce03790ee1678"
+      },
+      "darwin-x64": {
+        "url": "https://github.com/nolanderc/glsl_analyzer/releases/download/v1.7.1/x86_64-macos.zip",
+        "sha256": "8025e8c765b3bd6ab1e08bf7fd096437827397d618c43de2d4e377cc3b1f16fe"
+      },
+      "win32-arm64": {
+        "url": "https://github.com/nolanderc/glsl_analyzer/releases/download/v1.7.1/aarch64-windows.zip",
+        "sha256": "762c396b77f1756237587f64bf25ecefe4e1ad79145a9507a58db7e82a6395c7"
+      }
+    }
   }
 }

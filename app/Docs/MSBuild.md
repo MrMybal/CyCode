@@ -1,6 +1,10 @@
 # Visual Studio and MSBuild projects
 
-Open a .sln, .vcxproj, .csproj, .fsproj or .vbproj directly. Non-Unreal solutions use
+The native XML solution reader shares the existing model, build/evaluation/index
+services and guarded source access. See [Project formats](ProjectFormats.md) for
+configuration rules, tool prerequisites and pending execution validation.
+
+Open a .sln, .slnx, .vcxproj, .csproj, .fsproj or .vbproj directly. Non-Unreal solutions use
 the native MSBuild service; Unreal continues to use UnrealBuildTool. A directory
 with CMakeLists.txt keeps its CMake workflow, while opening its generated .sln
 explicitly selects MSBuild. .slnx is not supported yet.
@@ -56,9 +60,10 @@ under .cycode/msbuild-cache rather than overwriting user compile_commands.json.
 MSVC/C# file diagnostics with source coordinates are parsed, deduplicated and shown
 in Problems, with navigation restricted to workspace files. Directory identity checks
 handle MSVC expanding Windows short temp paths. General MSBuild/global errors remain
-available in Build output. Each process has bounded output; builds have a 150-second
-deadline, evaluation 15 seconds per project. Immediate cancellation and streaming are
-still pending. Process results expose exitCode/timedOut/truncated; callers must inspect
+available in Build output. Builds default to 150 seconds in the native API and accept
+timeoutSeconds overrides; the desktop remembers its own configurable build limit.
+Evaluation remains bounded to 15 seconds per project. Shared native cancellation
+is implemented; streaming remains pending. Process results expose exitCode/timedOut/truncated; callers must inspect
 them, since a completed MCP job can contain compiler errors.
 
 The Windows native test creates a real two-project CMake-generated solution with a

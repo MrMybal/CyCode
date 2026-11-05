@@ -6,12 +6,18 @@ using namespace cycode;
 namespace fs=std::filesystem;
 static void require(bool value,const std::string &message) { if (!value) throw std::runtime_error(message); }
 static void write(const fs::path &path,const std::string &value) { fs::create_directories(path.parent_path());std::ofstream out(path,std::ios::binary);out<<value; }
+void jvmBuildContracts(const std::filesystem::path &);
+void shaderBuildContracts(const std::filesystem::path &);
+void cargoBuildContracts(const std::filesystem::path &);
 static bool wait(const std::function<bool()> &check,int seconds=15) { const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(seconds);do { if (check()) return true;std::this_thread::sleep_for(std::chrono::milliseconds(30)); } while (std::chrono::steady_clock::now()<end);return false; }
 int main(int argc,char **argv) {
     const std::string kind=argc>1 ? argv[1] : "cargo";
     const auto root=fs::temp_directory_path()/utf8Path("cycode-task été # "+kind+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(root);
     try {
+        jvmBuildContracts(root);
+        shaderBuildContracts(root);
+        cargoBuildContracts(root);
         if (kind=="cargo") {
             write(root/"Cargo.toml","[package]\nname=\"workflow_test\"\nversion=\"0.1.0\"\nedition=\"2021\"\n");
             write(root/"src/main.rs","#[inline(never)]\nfn compute(value: i32) -> i32 { value + 1 }\nfn main() {\n let value = 41;\n let result = compute(value);\n println!(\"RESULT={} ARG={}\", result, std::env::args().nth(1).unwrap_or_default());\n}\n#[test] fn passes() { assert_eq!(compute(1), 2); }\n");
@@ -30,7 +36,20 @@ int main(int argc,char **argv) {
             if (tools.at(kind=="cargo" ? "cargo" : kind=="npm" ? "npm" : "javac")=="") { std::cout<<"Required optional tool is unavailable\n";fs::remove_all(root);return 77; }
             require(inspected.at("available").get<bool>(),"Project not detected");require(!fs::exists(root/"build-result"),"Inspection executed a script");
             const auto configured=engine.dispatch("project.configure",parameters);require(configured.at("exitCode")==0,configured.dump());
-            if (kind=="cargo") require(!configured.at("project").at("targets").empty(),"Actual Cargo metadata missing");
+            const auto taskOutput=engine.dispatch("project.output");
+            require(!engine.dispatch("project.status").at("running").get<bool>()&&
+                !taskOutput.at("running").get<bool>()&&taskOutput.at("context").at("system")==kind,
+                "Completed project task lost its output context or reservation");
+            if(kind=="cargo")require(taskOutput.at("byteCount")==0,"Cargo metadata leaked into live output");
+            if (kind=="cargo") {
+                require(!configured.at("project").at("targets").empty(),"Actual Cargo metadata missing");
+                require(configured.at("project").at("packages").size()==1,"Cargo workspace packages missing");
+                auto changed=parameters;changed["cargoFeatures"]={"changed"};
+                require(!engine.dispatch("project.inspect",changed).at("configured").get<bool>(),"Changed Cargo feature reused cached artifact metadata");
+                changed=parameters;changed["cargoToolchain"]="stable";
+                const auto selected=engine.dispatch("project.inspect",changed);
+                require(!selected.at("configured").get<bool>()&&selected.at("rustAnalysis").at("toolchain")=="stable","Cargo toolchain cache/analysis selection diverged");
+            }
             if (kind=="npm") require(inspected.at("scripts").size()==4,"npm scripts missing");
             const auto built=engine.dispatch("project.build",parameters);require(built.at("exitCode")==0,built.dump());
             if (kind!="npm") require(!built.at("project").at("artifacts").empty(),"Compiled executable artifact missing");
@@ -58,6 +77,8 @@ int main(int argc,char **argv) {
             if (kind=="npm") {
                 auto operation=std::async(std::launch::async,[&] { return engine.dispatch("project.script",{{"system","npm"},{"script","long"},{"operationId","test-long"}}); });
                 require(wait([&] { return fs::exists(root/"started"); }),"Long npm task did not start");
+                require(engine.dispatch("project.status").at("operationId")=="test-long"&&
+                    engine.dispatch("project.output").at("running"),"Live project task was hidden by execution locks");
                 require(!engine.dispatch("project.cancel",{{"operationId","wrong"}}).at("cancelled").get<bool>(),"Cancellation stopped a different request");
                 require(engine.dispatch("project.cancel",{{"operationId","test-long"}}).at("cancelled").get<bool>(),"Cancellation was not accepted");
                 require(operation.wait_for(std::chrono::seconds(5))==std::future_status::ready,"Cancelled project did not stop");
@@ -67,12 +88,15 @@ int main(int argc,char **argv) {
                 const auto source=kind=="cargo" ? "src/main.rs" : "src/demo/Main.java";
                 auto document=engine.dispatch("documents.read",{{"path",source}});
                 document=engine.dispatch("documents.replace",{{"path",source},{"expectedRevision",document.at("revision")},{"text","invalid source\n"}});
+                require(engine.dispatch("project.output").contains("streamId")&&
+                    !engine.dispatch("project.status").at("running").get<bool>(),"Dirty documents blocked read-only task controls");
                 bool dirty=false;try { engine.dispatch("project.build",parameters); } catch (const std::exception &e) { dirty=std::string(e.what()).starts_with("UnsavedDocuments"); }
                 require(dirty,"Build ignored unsaved live buffers");
                 engine.dispatch("documents.save",{{"path",source},{"expectedRevision",document.at("revision")}});
                 const auto failed=engine.dispatch("project.build",parameters);
                 require(failed.at("exitCode")!=0 && !failed.at("diagnostics").empty(),"Compiler errors are not available as diagnostics: "+failed.dump());
                 require(failed.at("project").at("artifacts").empty(),"Failed build retained runnable artifacts");
+                require(!failed.at("project").at("configured").get<bool>(),"Failed build retained a completed project cache");
             }
             bool escaped=false;try { engine.dispatch("project.inspect",{{"directory",".."},{"system",kind}}); } catch (...) { escaped=true; }
             require(escaped,"Project path escaped workspace");

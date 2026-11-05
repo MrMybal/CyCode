@@ -1,4 +1,14 @@
 {
+  "monocypher": {
+    "url": "https://monocypher.org/download/monocypher-4.0.3.tar.gz",
+    "revision": "4.0.3",
+    "sha256": "8cc9bc341a66249016db9bd70e9142d8d0aef9945973744b1ac05dbc55d8ee66"
+  },
+  "tinyxml2": {
+    "url": "https://codeload.github.com/leethomason/tinyxml2/tar.gz/9148bdf719e997d1f474be6bcc7943881046dba1",
+    "revision": "9148bdf719e997d1f474be6bcc7943881046dba1",
+    "sha256": "d0bcc7bf4e3e8ed7d83156e681ab9cb72bd636e5b2bb61d6f7199b32c007707f"
+  },
   "vterm": {
     "url": "https://www.leonerd.org.uk/code/libvterm/libvterm-0.3.3.tar.gz",
     "revision": "0.3.3",

@@ -40,6 +40,9 @@ static int fake() {
         if (!query.contains("id")) continue;
         if (method=="initialize") {
             require(params.at("capabilities").at("textDocument").at("codeAction").at("dataSupport")==true,"Missing code action capabilities");
+            require(params.at("capabilities").at("workspace").at("workspaceEdit").at("changeAnnotationSupport").at("groupsOnLabel")==false,"Missing annotation capability");
+            require(params.at("capabilities").at("textDocument").at("codeAction").at("honorsChangeAnnotations")==true &&
+                    params.at("capabilities").at("textDocument").at("rename").at("honorsChangeAnnotations")==true,"Annotations were not negotiated for actions/rename");
             result={{"capabilities",{{"codeActionProvider",{{"resolveProvider",true}}}}}};
         } else if (method=="workspace/executeCommand") { write("command-executed",""); }
         else if (method=="textDocument/codeAction") {
@@ -54,6 +57,13 @@ static int fake() {
                 {{"title","Outside edit"},{"kind","quickfix"},{"edit",{{"changes",{{LanguageClient::uri(fs::current_path().parent_path()/"outside.cpp"),Json::array()}}}}}},
                 {{"title","Overlapping edit"},{"kind","quickfix"},{"edit",{{"changes",{{main,Json::array({{{"range",range(4,8)},{"newText","one"}},{{"range",range(5,9)},{"newText","two"}}})}}}}}},
                 {{"title","Lazy target fix"},{"kind","quickfix"},{"data",{{"id",8}}}}});
+            Json annotated={{"changeAnnotations",{{"server-confirm",{{"label","Rename both files"},{"description","Explicit review"},{"needsConfirmation",true}}}}},
+                            {"documentChanges",Json::array()}};
+            for(const auto &[uri,entries]:edits.at("changes").items()) {
+                auto tagged=entries;for(auto &entry:tagged)entry["annotationId"]="server-confirm";
+                annotated["documentChanges"].push_back({{"textDocument",{{"uri",uri},{"version",versions.contains(uri)?Json(versions.at(uri)):Json()}}},{"edits",tagged}});
+            }
+            result.push_back({{"title","Annotated fix"},{"kind","quickfix"},{"edit",annotated}});
             if (fs::exists("many-actions")) for (int i=0;i<300;++i) result.push_back(result[0]);
         } else if (method=="codeAction/resolve") {
             result=params;require(!result.contains("cycodeLanguage"),"Internal language route leaked");
@@ -99,7 +109,9 @@ int main(int argc,char **argv) {
             const auto plan=engine.dispatch("language.codeActionPrepare",query);require(plan.at("editCount").get<int>()>0,"Empty fix plan: "+plan.dump());
             const auto preview=engine.dispatch("changes.preview",{{"id",plan.at("id")},{"path",path}});
             require(engine.dispatch("documents.read",{{"path",path}}).at("text")==source,"Prepare changed source");
-            engine.dispatch("changes.apply",{{"id",plan.at("id")}});require(engine.dispatch("documents.read",{{"path",path}}).at("text")==preview.at("after"),"Apply mismatch");
+            Json confirmations=Json::array();
+            for(const auto &annotation:plan.at("annotations"))if(annotation.at("needsConfirmation")==true)confirmations.push_back(annotation.at("id"));
+            engine.dispatch("changes.apply",{{"id",plan.at("id")},{"confirmedAnnotations",confirmations}});require(engine.dispatch("documents.read",{{"path",path}}).at("text")==preview.at("after"),"Apply mismatch");
             const auto after=preview.at("after").get<std::string>();
             require(mode=="typescript" ? after.find("import { greet }")!=std::string::npos : mode=="java" ? after.find("import java.util.ArrayList;")!=std::string::npos : mode=="rust" ? after.starts_with("pub(crate)") : after.find("vlaue")==std::string::npos,"Wrong actual correction: "+after);
             require(readTextFileBytes(root/path)==source,"Action saved disk source");
@@ -108,6 +120,18 @@ int main(int argc,char **argv) {
             if (!actual) {
                 require(plan.at("files").size()==2,"Multi-file plan missing");
                 auto fresh=[&](size_t item) { const auto response=list();return Json{{"sessionId",response.at("sessionId")},{"item",item},{"expectedRevision",doc.at("revision")}}; };
+                const auto annotatedPlan=engine.dispatch("language.codeActionPrepare",fresh(8));
+                const auto secondPlan=engine.dispatch("language.codeActionPrepare",fresh(8));
+                const auto annotationId=annotatedPlan.at("annotations")[0].at("id");
+                require(annotationId!=secondPlan.at("annotations")[0].at("id"),"Annotation IDs survived a new plan");
+                rejects([&]{engine.dispatch("changes.apply",{{"id",annotatedPlan.at("id")}});},"Required annotation was not confirmed");
+                rejects([&]{engine.dispatch("changes.apply",{{"id",secondPlan.at("id")},{"confirmedAnnotations",{annotationId}}});},"Another plan's acknowledgement was accepted");
+                require(engine.dispatch("documents.read",{{"path",path}}).at("text")==source,"Failed confirmation changed buffers");
+                const auto annotatedPreview=engine.dispatch("changes.preview",{{"id",annotatedPlan.at("id")},{"path",path}});
+                require(annotatedPreview.at("annotations")[0].at("files")==Json::array({path}),"Preview did not filter annotation files");
+                engine.dispatch("changes.apply",{{"id",annotatedPlan.at("id")},{"confirmedAnnotations",{annotationId}}});
+                engine.dispatch("changes.undo",{{"id",annotatedPlan.at("id")}});
+                doc=engine.dispatch("documents.read",{{"path",path}});
                 auto q=fresh(1);const auto lazy=engine.dispatch("language.codeActionPrepare",q);require(lazy.at("editCount")==1,"Versioned resolved edit missing");
                 const auto diagnosticsDeadline=std::chrono::steady_clock::now()+std::chrono::seconds(3);
                 while (Json::parse(readTextFileBytes(root/"request-context")).at("diagnostics").empty() && std::chrono::steady_clock::now()<diagnosticsDeadline) { std::this_thread::sleep_for(std::chrono::milliseconds(10));list(); }

@@ -10,9 +10,12 @@ class BuildSystem {
     using Json = nlohmann::json;
     using Resolver = std::function<std::filesystem::path(const std::string &)>;
     BuildSystem(std::filesystem::path root, Resolver resolve);
-    Json detect(bool refresh = false);
+    Json detect(bool refresh = false, const std::atomic<bool> *cancellation = nullptr);
     Json inspect(const Json &params = Json::object());
-    Json run(const std::string &method, const Json &params);
+    Json presets(const Json &params = Json::object());
+    Json presetPlan(const Json &);
+    Json runPreset(const Json &,const std::atomic<bool> *cancellation=nullptr);
+    Json run(const std::string &method, const Json &params, const std::atomic<bool> *cancellation = nullptr);
     std::filesystem::path activeDatabaseDirectory() const;
 
   private:

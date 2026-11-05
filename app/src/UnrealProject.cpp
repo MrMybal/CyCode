@@ -1,4 +1,7 @@
 #include "cycode/UnrealProject.h"
+#include "cycode/BuildLimits.h"
+#include "cycode/BuildOperations.h"
+#include "cycode/UnrealAutomation.h"
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -28,8 +31,10 @@ static fs::path analysisPath(const Json &profile) {
     const auto platform = profile.at("platform").get<std::string>();
     const auto configuration = profile.at("configuration").get<std::string>();
     for (const auto &value : {target, platform, configuration})
-        if (!std::regex_match(value, std::regex("[A-Za-z_][A-Za-z0-9_]*"))) throw std::runtime_error("Invalid Unreal analysis profile");
-    return fs::path(".cycode/unreal-analysis") / utf8Path(target) / utf8Path(platform) / utf8Path(configuration);
+        if (!std::regex_match(value, std::regex("[A-Za-z_][A-Za-z0-9_]*")))
+            throw std::runtime_error("Invalid Unreal analysis profile");
+    return fs::path(".cycode/unreal-analysis") / utf8Path(target) / utf8Path(platform) /
+           utf8Path(configuration);
 }
 static fs::path environment(const char *key) {
 #ifdef _WIN32
@@ -105,14 +110,14 @@ static fs::path findEngine(const std::string &association, const Json &solution)
         }
     return {};
 }
-static std::vector<std::string> ubt(const fs::path &engineRoot) {
+std::vector<std::string> unrealManagedTool(const fs::path &engineRoot, const std::string &tool) {
     if (engineRoot.empty())
         return {};
-    auto directory = engineRoot / "Engine/Binaries/DotNET/UnrealBuildTool";
-    auto dll = directory / "UnrealBuildTool.dll";
+    auto directory = engineRoot / "Engine/Binaries/DotNET" / tool;
+    auto dll = directory / (tool + ".dll");
     if (!file(dll)) {
 #ifdef _WIN32
-        auto exe = directory / "UnrealBuildTool.exe";
+        auto exe = directory / (tool + ".exe");
         if (file(exe))
             return {pathUtf8(exe)};
 #endif
@@ -120,36 +125,46 @@ static std::vector<std::string> ubt(const fs::path &engineRoot) {
     }
     auto bundled = engineRoot / "Engine/Binaries/ThirdParty/DotNet";
 #ifdef _WIN32
-    const auto platform = "windows";
+#ifdef _M_ARM64
+    const std::vector<std::string> platforms = {"win-arm64"};
+#else
+    const std::vector<std::string> platforms = {"windows", "win-x64"};
+#endif
     const auto name = "dotnet.exe";
 #elif defined(__APPLE__)
 #if defined(__aarch64__) || defined(__arm64__)
-    const auto platform = "mac-arm64";
+    const std::vector<std::string> platforms = {"mac-arm64", "osx-arm64"};
 #else
-    const auto platform = "mac-x64";
+    const std::vector<std::string> platforms = {"mac-x64", "osx-x64"};
 #endif
     const auto name = "dotnet";
 #else
-    const auto platform = "linux";
+#if defined(__aarch64__)
+    const std::vector<std::string> platforms = {"linux-arm64"};
+#else
+    const std::vector<std::string> platforms = {"linux", "linux-x64"};
+#endif
     const auto name = "dotnet";
 #endif
     // UE versions use both version/platform and platform/version layouts.
     std::error_code ec;
     if (fs::is_directory(bundled, ec)) {
         for (const auto &item : fs::directory_iterator(bundled)) {
-            for (const auto &candidate : {item.path() / platform / name, item.path() / name})
-                if (file(candidate) && pathUtf8(candidate).find(platform) != std::string::npos)
-                    return {pathUtf8(candidate), pathUtf8(dll)};
-            if (item.path().filename() == platform)
-                for (const auto &version : fs::directory_iterator(item.path())) {
-                    auto candidate = version.path() / name;
-                    if (file(candidate))
+            for (const auto &platform : platforms) {
+                for (const auto &candidate : {item.path() / platform / name, item.path() / name})
+                    if (file(candidate) && pathUtf8(candidate).find(platform) != std::string::npos)
                         return {pathUtf8(candidate), pathUtf8(dll)};
-                }
+                if (item.path().filename() == platform)
+                    for (const auto &version : fs::directory_iterator(item.path())) {
+                        auto candidate = version.path() / name;
+                        if (file(candidate))
+                            return {pathUtf8(candidate), pathUtf8(dll)};
+                    }
+            }
         }
     }
 #ifdef _WIN32
-    auto exe = directory / "UnrealBuildTool.exe";
+    auto exe = directory / (tool + ".exe");
     if (file(exe))
         return {pathUtf8(exe)};
 #endif
@@ -159,7 +174,9 @@ UnrealProject::UnrealProject(fs::path root, fs::path entry, Json solution, Build
     : root_(std::move(root)), entry_(std::move(entry)), solution_(std::move(solution)),
       resolve_(std::move(resolve)) {}
 Json UnrealProject::inspect(const Json &params) {
-    std::lock_guard lock(mutex_);
+    std::unique_lock lock(mutex_, std::try_to_lock);
+    if (!lock.owns_lock())
+        throw std::runtime_error("An Unreal operation is running; wait or cancel it before refreshing");
     return inspectLocked(params);
 }
 Json UnrealProject::inspectLocked(const Json &params) {
@@ -254,9 +271,13 @@ Json UnrealProject::inspectLocked(const Json &params) {
                {"platform", profile.value("platform", std::string(host))},
                {"configuration", profile.value("configuration", "Development")}};
     Json version = engineRoot.empty() ? Json::object() : readJson(engineRoot / "Engine/Build/Build.version");
-    auto command = ubt(engineRoot);
-    auto database = resolve_(pathUtf8((target.empty() ? fs::path(".cycode/unreal-analysis/unconfigured") : analysisPath(profile)) / "compile_commands.json"));
-    if (!file(database)) database = resolve_(pathUtf8(project.parent_path().lexically_relative(root_) / "compile_commands.json"));
+    auto command = unrealManagedTool(engineRoot, "UnrealBuildTool");
+    auto database = resolve_(
+        pathUtf8((target.empty() ? fs::path(".cycode/unreal-analysis/unconfigured") : analysisPath(profile)) /
+                 "compile_commands.json"));
+    if (!file(database))
+        database =
+            resolve_(pathUtf8(project.parent_path().lexically_relative(root_) / "compile_commands.json"));
     return {{"available", true},
             {"profile", profile},
             {"name", pathUtf8(project.stem())},
@@ -273,11 +294,15 @@ Json UnrealProject::inspectLocked(const Json &params) {
             {"compilationDatabase",
              {{"available", file(database)}, {"path", pathUtf8(database.lexically_relative(root_))}}}};
 }
-Json UnrealProject::run(const std::string &method, const Json &params) {
-    std::lock_guard lock(mutex_);
-    return runLocked(method, params, nullptr);
+Json UnrealProject::run(const std::string &method, const Json &params,
+                        const std::atomic<bool> *cancellation) {
+    checkBuildCancellation(cancellation);
+    auto lock = cancellableBuildLock(mutex_, cancellation);
+    return runLocked(method, params, cancellation);
 }
-Json UnrealProject::runLocked(const std::string &method, const Json &params, const std::atomic<bool> *cancellation) {
+Json UnrealProject::runLocked(const std::string &method, const Json &params,
+                              const std::atomic<bool> *cancellation) {
+    const auto timeout = buildTimeout(params);
     auto model = inspectLocked(params);
     if (!model.at("available").get<bool>())
         throw std::runtime_error("No Unreal .uproject in this workspace");
@@ -306,8 +331,10 @@ Json UnrealProject::runLocked(const std::string &method, const Json &params, con
     } else {
         if (method == "unreal.database") {
             command.push_back("-Mode=GenerateClangDatabase");
-            command.push_back("-ExecCodeGenActions"); // Run UHT/code generators without compiling the project.
-            command.push_back("-ForceHeaderGeneration"); // UBT timestamps alone miss individually deleted UHT outputs.
+            command.push_back(
+                "-ExecCodeGenActions"); // Run UHT/code generators without compiling the project.
+            command.push_back(
+                "-ForceHeaderGeneration"); // UBT timestamps alone miss individually deleted UHT outputs.
             auto directory = resolve_(pathUtf8(analysisPath(profile)));
             fs::create_directories(directory);
             command.push_back("-OutputDir=" + pathUtf8(directory));
@@ -321,46 +348,70 @@ Json UnrealProject::runLocked(const std::string &method, const Json &params, con
     auto cwd = utf8Path(profile.at("engineRoot")) / "Engine/Source";
     if (!fs::is_directory(cwd))
         throw std::runtime_error("Unreal engine Source directory is missing");
-    auto result = runProcess(command, cwd, std::chrono::minutes(3), 8 * 1024 * 1024, cancellation);
-    if (!result.exitCode) {
-        auto saved = resolve_(".cycode/unreal.json");
-        fs::create_directories(saved.parent_path());
-        std::ofstream out(saved);
-        out << profile.dump(2);
-        if (!out)
-            throw std::runtime_error("Cannot save Unreal profile");
+    checkBuildCancellation(cancellation);
+    auto result = runProcess(command, cwd, timeout, 8 * 1024 * 1024, cancellation,
+                             {}, processOutputObserver(cancellation));
+    Json response = {{"exitCode", result.exitCode},   {"output", result.output},
+                     {"timedOut", result.timedOut},   {"truncated", result.truncated},
+                     {"cancelled", result.cancelled}, {"project", {{"available", false}}}};
+    try {
+        if (!result.exitCode && !result.cancelled && !result.truncated &&
+            !(cancellation && cancellation->load())) {
+            auto saved = resolve_(".cycode/unreal.json");
+            fs::create_directories(saved.parent_path());
+            std::ofstream out(saved);
+            out << profile.dump(2);
+            if (!out)
+                throw std::runtime_error("Cannot save Unreal profile");
+        }
+        response["project"] = inspectLocked(profile);
+        if (method == "unreal.build")
+            response["artifacts"] = artifactsLocked(response.at("project"));
+    } catch (const std::exception &e) {
+        response["inspectionError"] = e.what();
     }
-    return {{"exitCode", result.exitCode},
-            {"output", result.output},
-            {"timedOut", result.timedOut},
-            {"truncated", result.truncated},
-            {"project", inspectLocked(profile)}};
+    return response;
 }
 Json UnrealProject::prepare(const Json &params, const std::atomic<bool> *cancellation) {
-    std::lock_guard lock(mutex_);
+    buildTimeout(params);
+    checkBuildCancellation(cancellation);
+    auto lock = cancellableBuildLock(mutex_, cancellation);
     auto model = inspectLocked(params);
-    if (!model.value("available", false)) throw std::runtime_error("No Unreal project to analyse");
+    if (!model.value("available", false))
+        throw std::runtime_error("No Unreal project to analyse");
     const auto profile = model.at("profile");
     auto directory = resolve_(pathUtf8(analysisPath(profile)));
     auto stamp = directory / "inputs.json";
     std::vector<std::string> inputs{profile.dump(), model.at("engineVersion").dump()};
     auto addRule = [&](const fs::path &path) {
-        if (file(path)) inputs.push_back(pathUtf8(path) + ':' + std::to_string(fs::last_write_time(path).time_since_epoch().count()));
+        if (file(path))
+            inputs.push_back(pathUtf8(path) + ':' +
+                             std::to_string(fs::last_write_time(path).time_since_epoch().count()));
     };
     addRule(resolve_(profile.at("project")));
     for (const auto *section : {"targets", "modules", "plugins"})
-        for (const auto &item : model.at(section)) addRule(resolve_(item.at("path")));
+        for (const auto &item : model.at(section))
+            addRule(resolve_(item.at("path")));
     for (const auto &folder : {root_ / "Source", root_ / "Plugins"}) {
-        std::error_code ec; if (!fs::is_directory(folder, ec)) continue;
+        std::error_code ec;
+        if (!fs::is_directory(folder, ec))
+            continue;
         size_t count = 0;
-        for (fs::recursive_directory_iterator it(folder, fs::directory_options::skip_permission_denied, ec), end; it != end && count++ < 50000; it.increment(ec)) {
-            if (cancellation && *cancellation) throw std::runtime_error("Unreal analysis cancelled");
+        for (fs::recursive_directory_iterator it(folder, fs::directory_options::skip_permission_denied, ec),
+             end;
+             it != end && count++ < 50000; it.increment(ec)) {
+            if (cancellation && *cancellation)
+                throw std::runtime_error("Unreal analysis cancelled");
             auto name = pathUtf8(it->path().filename());
-            if (it->is_directory(ec)) { if (name == "Binaries" || name == "Intermediate" || name == "Content" || name == ".git" || it.depth() >= 20) it.disable_recursion_pending(); }
-            else if (it->is_regular_file(ec)) {
+            if (it->is_directory(ec)) {
+                if (name == "Binaries" || name == "Intermediate" || name == "Content" || name == ".git" ||
+                    it.depth() >= 20)
+                    it.disable_recursion_pending();
+            } else if (it->is_regular_file(ec)) {
                 inputs.push_back(pathUtf8(it->path().lexically_relative(root_)));
                 auto ext = it->path().extension();
-                if (ext == ".h" || ext == ".hpp" || ext == ".hxx") addRule(it->path());
+                if (ext == ".h" || ext == ".hpp" || ext == ".hxx")
+                    addRule(it->path());
             }
         }
     }
@@ -370,37 +421,65 @@ Json UnrealProject::prepare(const Json &params, const std::atomic<bool> *cancell
     if (file(stamp)) {
         try {
             auto saved = readJson(stamp);
-            cached = saved.is_object() && saved.value("cacheVersion", 0) == 2 && saved.at("inputs") == signature;
-            if (cached) for (const auto &header : saved.at("generatedHeaders")) if (!file(resolve_(header))) cached = false;
+            cached =
+                saved.is_object() && saved.value("cacheVersion", 0) == 2 && saved.at("inputs") == signature;
+            if (cached)
+                for (const auto &header : saved.at("generatedHeaders"))
+                    if (!file(resolve_(header)))
+                        cached = false;
             auto dbPath = resolve_(model.at("compilationDatabase").at("path"));
             if (cached && file(dbPath) && fs::file_size(dbPath) < 64 * 1024 * 1024) {
-                std::ifstream in(dbPath); auto entries = Json::parse(in);
+                std::ifstream in(dbPath);
+                auto entries = Json::parse(in);
                 cached = entries.is_array() && !entries.empty();
                 const std::regex response(R"re(@"([^"]+)"|@([^\s]+))re");
                 for (const auto &entry : entries) {
                     const auto command = entry.value("command", "");
-                    for (std::sregex_iterator it(command.begin(), command.end(), response), end; it != end; ++it) {
+                    for (std::sregex_iterator it(command.begin(), command.end(), response), end; it != end;
+                         ++it) {
                         auto path = utf8Path((*it)[1].matched ? (*it)[1].str() : (*it)[2].str());
-                        if (path.is_relative()) path = utf8Path(entry.at("directory")) / path;
-                        if (!file(path)) cached = false;
+                        if (path.is_relative())
+                            path = utf8Path(entry.at("directory")) / path;
+                        if (!file(path))
+                            cached = false;
                     }
                 }
-            } else cached = false;
-        } catch (const std::exception &) { cached = false; }
+            } else
+                cached = false;
+        } catch (const std::exception &) {
+            cached = false;
+        }
     }
-    if (cached) return {{"exitCode", 0}, {"output", "Unreal analysis cache ready.\n"}, {"timedOut", false}, {"truncated", false}, {"project", model}, {"cached", true}};
-    auto result = runLocked("unreal.database", profile, cancellation);
-    if (result.at("exitCode") == 0) {
+    checkBuildCancellation(cancellation);
+    if (cached)
+        return {{"exitCode", 0},      {"output", "Unreal analysis cache ready.\n"},
+                {"timedOut", false},  {"truncated", false},
+                {"cancelled", false}, {"project", model},
+                {"cached", true}};
+    auto launch = profile;
+    if (params.contains("timeoutSeconds"))
+        launch["timeoutSeconds"] = params.at("timeoutSeconds");
+    auto result = runLocked("unreal.database", launch, cancellation);
+    if (result.at("project").value("available", false) && !result.contains("inspectionError") &&
+        result.at("exitCode") == 0 && !result.value("cancelled", false) &&
+        !result.value("truncated", false) && !(cancellation && cancellation->load())) {
         Json headers = Json::array();
         std::error_code ec;
         auto intermediate = root_ / "Intermediate";
         if (fs::is_directory(intermediate, ec)) {
             size_t count = 0;
-            for (fs::recursive_directory_iterator it(intermediate, fs::directory_options::skip_permission_denied, ec), end; it != end && count++ < 100000; it.increment(ec))
-                if (it->is_regular_file(ec) && pathUtf8(it->path().filename()).ends_with(".generated.h")) headers.push_back(pathUtf8(it->path().lexically_relative(root_)));
+            for (fs::recursive_directory_iterator
+                     it(intermediate, fs::directory_options::skip_permission_denied, ec),
+                 end;
+                 it != end && count++ < 100000; it.increment(ec))
+                if (it->is_regular_file(ec) && pathUtf8(it->path().filename()).ends_with(".generated.h"))
+                    headers.push_back(pathUtf8(it->path().lexically_relative(root_)));
         }
-        fs::create_directories(directory); std::ofstream out(stamp); out << Json({{"cacheVersion", 2}, {"inputs", signature}, {"generatedHeaders", headers}}).dump(2);
-        if (!out) throw std::runtime_error("Cannot save Unreal analysis cache");
+        fs::create_directories(directory);
+        std::ofstream out(stamp);
+        out << Json({{"cacheVersion", 2}, {"inputs", signature}, {"generatedHeaders", headers}}).dump(2);
+        if (!out)
+            throw std::runtime_error("Cannot save Unreal analysis cache");
     }
     result["cached"] = false;
     return result;

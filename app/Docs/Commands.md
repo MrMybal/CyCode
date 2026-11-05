@@ -1,6 +1,90 @@
 # Commands and keyboard profiles
 
+View > Application updates opens the installation update view; Check for updates
+is also available there and through Find Action, with no new default shortcut.
+Startup checking is configurable and enabled by default. A newer stable release
+gets an EN/FR proposal with Later and Skip this version. Download and Install
+update and restart are separate actions; the latter uses the existing document
+save/discard/cancel close flow. Native test/smoke sessions disable I/O and handoff.
+See [Application updates](Updates.md).
+
+Navigate / Find Action includes Highlight occurrences at caret (Rider
+Ctrl+Shift+F7), Next/Previous reported occurrence and Clear occurrence highlights.
+Edit includes Select reported occurrences; View > Occurrences opens its dockable
+inspector. Other profiles/actions have no new default binding. Existing F3 find
+and lexical occurrence selection are unchanged. All action availability is tied
+to the current native report/provider. Selection rejects incomplete, overlapping,
+empty or oversized reports before replacing cursors. See
+[Document occurrences](Occurrences.md) for source references and scope differences.
+
+Navigate adds Go to declaration, Go to type definition and Go to implementation,
+using the real backend capability. The Rider defaults add Ctrl+Shift+B for type
+and Ctrl+Alt+B for implementation; Ctrl+F9 remains build and the former extra
+Ctrl+Shift+B build alias is removed to avoid a conflict. VS/VS Code add Ctrl+F12
+for implementation. Declaration and other missing defaults remain assignable.
+The References dock adds shared filtering, cyclic keyboard/result selection,
+Enter/click activation, Copy locations and Refresh at caret; stale source/backend
+snapshots remain inspectable but do not navigate. See
+[Source navigation](SourceNavigation.md) for source references and limits.
+
+View > Structure opens a dockable persistent panel without a new default shortcut.
+Rider/Visual Studio/VS Code member/symbol bindings and @/# palette prefixes remain.
+Structure row clicks or focused-row Enter use existing source/history navigation;
+disclosure arrows keep tree behavior. The symbol/type/everywhere palette can
+select one available enabled server, including contributed IDs; document members
+always follow their own backend. Picker navigation does not activate a result. URI-only symbol rows display
+“Location on selection”; click/Enter waits in the palette for a current resolved
+position. Progress/errors remain visible. Refresh symbols creates a new request
+ticket even with unchanged text. Query/server/mode/selection changes or popup
+dismissal discard obsolete resolution replies; existing bindings remain.
+See [Symbol navigation](SymbolNavigation.md).
+
+Previous/Next diagnostic commands now navigate reported workspace or current-file
+locations with the Problems text/severity filters and wrap behavior.
+Unverified positions in open documents are retained for inspection/copy and
+excluded from navigation. The selected message has its own detail card. Rider uses F2/Shift+F2 in
+file and Alt+F2/Alt+Shift+F2 across reported locations; Visual Studio/VS Code use
+F8/Shift+F8 for the latter, keeping VS Code F2 for Rename. CyUI icon controls and
+guarded document opening share the same model. See
+[Diagnostic navigation](DiagnosticNavigation.md) for scope and pending acceptance.
+
 The command catalogue is shared by menus, keyboard dispatch and the action palette.
+Run > Run to cursor resumes once toward a verified destination in the active saved
+workspace document. It keeps existing breakpoints/exceptions and restores the
+original source list on the next actual stop. Rider uses Alt+F9 and Visual Studio
+Ctrl+F10; VS Code has no new default binding and custom bindings retain priority.
+Run > Restore source breakpoints is an explicit recovery action, available only
+with a confirmed pause and settled replies. See [Run to cursor](RunToCursor.md)
+for guards and pending real-adapter/GUI acceptance.
+
+Run > Step back / Continue backward / Restart selected frame are capability-gated
+commands with user-assignable shortcuts and no new default binding. Debugger >
+Execution controls sets the common stepping granularity and selected-thread mode;
+existing step shortcuts and Continue use those same native options/context guards.
+Frame restart is an explicit program action, separate from document Undo. See
+[Execution controls](DebugExecution.md) for capabilities and pending acceptance.
+
+Run > Choose step-in target opens the Debugger target list and reads actual
+adapter choices for the selected paused frame. Select a function explicitly,
+then use Step into selected target; ordinary Step into keeps its existing behavior.
+The new query command has no default binding and can receive a custom shortcut.
+See [Targeted step-in](StepInTargets.md) for captured context and pending acceptance.
+
+Run > Set next statement queries destinations in the selected frame source and
+opens the Next statement tab. Reading/selecting a destination does not move the
+instruction pointer; Set next statement here is a separate explicit action.
+It skips intervening code and does not run to the cursor. No default shortcut is
+added; see [Set next statement](GotoTargets.md) for pending adapter/GUI acceptance.
+
+Run > Apply Java code changes / Cancel Java reload use the same catalogue and
+native JDT/DAP service. They have no assigned shortcut by default; keyboard
+preferences can bind them. Application is manual and requires an active Java
+session with correctly imported JDT sources/output. See [Java debugging](JavaDebugging.md).
+Navigate > Call hierarchy / Type hierarchy and View > Hierarchy now use the same
+catalogue. Rider uses Ctrl+Alt+H / Ctrl+H, Visual Studio Ctrl+Alt+K for calls and
+VS Code Shift+Alt+H for calls; other bindings remain user-assignable. These inspect
+actual capability-gated LSP relationships with lazy navigation, not string
+references. See [Hierarchies](Hierarchies.md) for scope and pending runtime acceptance.
 Options > Keyboard shortcuts selects Rider / ReSharper (default), Visual Studio or
 Visual Studio Code. `--keymap rider|visualstudio|vscode` overrides the startup profile.
 These are Windows/Linux keyboard schemes. Dedicated macOS schemes remain pending.

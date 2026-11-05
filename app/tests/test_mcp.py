@@ -13,6 +13,149 @@ sys.path.insert(0, str(APP))
 from tool import NativeClient, create_runtime
 
 class NativeIntegration(unittest.TestCase):
+    def test_events_over_read_only_official_mcp(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        (self.workspace/'events.cpp').write_text('int value=0;\n','utf-8')
+        async def scenario():
+            parameters=StdioServerParameters(command=sys.executable,
+                args=[str(APP/'tool.py'),'--data-dir',str(self.directory/'events-mcp'),'mcp'],
+                env={**os.environ,'CYCODE_BRIDGE':str(self.descriptor),'CYCODE_PERMISSIONS':''})
+            async with stdio_client(parameters) as (read,write):
+                async with ClientSession(read,write) as session:
+                    await session.initialize()
+                    async def invoke(inputs, operation='events_read'):
+                        response=await session.call_tool('op_'+operation,{'parameters':inputs})
+                        self.assertFalse(response.isError,response)
+                        identifier=json.loads(response.content[0].text)['jobId']
+                        deadline=time.monotonic()+10
+                        while time.monotonic()<deadline:
+                            response=await session.call_tool('cy_get_job',{'jobId':identifier})
+                            job=json.loads(response.content[0].text)
+                            if job['state'] in ('Completed','Failed','Cancelled'):
+                                self.assertEqual(job['state'],'Completed',job)
+                                return job['outputs']
+                            await asyncio.sleep(.03)
+                        self.fail('Event metadata read did not complete')
+                    inventory=await invoke({},'plugins_list')
+                    self.assertIn('workspaceEvents',inventory['host']['features'])
+                    self.assertIn('eventSubscriptions',inventory)
+                    self.assertIn('debugAdapters',inventory['host']['features'])
+                    self.assertIn('debugAdapters',inventory)
+                    adapters=await invoke({},'debug_adapters')
+                    self.assertEqual(adapters['adapters'][0]['id'],'builtin')
+                    self.assertTrue(all('arguments' not in entry and 'environment' not in entry for entry in adapters['adapters']))
+                    for operation in ('debug_configure','debug_launch','debug_status'):
+                        denied=await session.call_tool('op_'+operation,{'parameters':{}})
+                        self.assertTrue(denied.isError,denied)
+                    start=await invoke({'tail':True})
+                    doc=self.client.call('documents.read',{'path':'events.cpp'})
+                    self.client.call('documents.replace',{'path':'events.cpp','expectedRevision':doc['revision'],'text':'int value=1;\n'})
+                    batch=await invoke({'epoch':start['epoch'],'afterSequence':start['nextSequence'],'types':['document.*']})
+                    self.assertFalse(batch['gap'],batch)
+                    self.assertEqual([event['type'] for event in batch['events']],['document.opened','document.changed'])
+                    self.assertTrue(all('text' not in event['data'] for event in batch['events']))
+                    empty=await invoke({'epoch':batch['epoch'],'afterSequence':batch['nextSequence']})
+                    self.assertEqual(empty['events'],[])
+        asyncio.run(scenario())
+
+    def test_build_cancellation_over_official_mcp(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        (self.workspace/'CMakeLists.txt').write_text(
+            'cmake_minimum_required(VERSION 3.24)\nproject(CancelBuild NONE)\n'
+            'if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/allow-fast")\n'
+            ' file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/entered-configure" "ready")\n'
+            ' execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep 30)\nendif()\n', 'utf-8')
+        runtime=create_runtime(self.directory/'build-cancel-permissions');runtime.start()
+        try:
+            reader=runtime.authenticate(runtime.create_client('reader')['token'])
+            session_id=runtime.create_session(reader,temporary=True)['sessionId']
+            with self.assertRaises(Exception):runtime.submit(reader,session_id,'build_cancel',{})
+            status=runtime.submit(reader,session_id,'build_status',{})
+            self.assertEqual(runtime.wait(reader,status['jobId'],timeout=10)['state'],'Completed')
+        finally:runtime.close()
+        async def scenario():
+            parameters=StdioServerParameters(command=sys.executable,args=[str(APP/'tool.py'),'--data-dir',str(self.directory/'build-cancel-mcp'),'mcp'],env={**os.environ,'CYCODE_BRIDGE':str(self.descriptor),'CYCODE_PERMISSIONS':'process.execute'})
+            async with stdio_client(parameters) as (read,write):
+                async with ClientSession(read,write) as session:
+                    await session.initialize()
+                    async def submit(name,inputs):
+                        response=await session.call_tool('op_'+name,{'parameters':inputs});self.assertFalse(response.isError,response)
+                        return json.loads(response.content[0].text)['jobId']
+                    async def done(identifier,expected='Completed'):
+                        deadline=time.monotonic()+25
+                        while time.monotonic()<deadline:
+                            response=await session.call_tool('cy_get_job',{'jobId':identifier});job=json.loads(response.content[0].text)
+                            if job['state'] in ('Completed','Failed','Cancelled'):
+                                self.assertEqual(job['state'],expected,job);return job.get('outputs',{})
+                            await asyncio.sleep(.04)
+                        self.fail('Native build MCP job did not stop')
+                    running=await submit('build_configure',{'buildDirectory':'build-cancel'})
+                    deadline=time.monotonic()+15
+                    while not (self.workspace/'entered-configure').exists() and time.monotonic()<deadline:
+                        await asyncio.sleep(.04)
+                    self.assertTrue((self.workspace/'entered-configure').exists(),'CMake did not enter its native execution phase')
+                    active=self.client.call('build.status',{});self.assertTrue(active['running'])
+                    stale=await done(await submit('build_cancel',{'operationId':'stale-operation'}));self.assertFalse(stale['requested'])
+                    self.assertTrue(self.client.call('build.status',{})['running'])
+                    response=await session.call_tool('cy_cancel_job',{'jobId':running});self.assertFalse(response.isError,response)
+                    await done(running,'Cancelled')
+                    self.assertFalse(self.client.call('build.status',{})['running'])
+                    (self.workspace/'allow-fast').write_text('ok','utf-8')
+                    result=await done(await submit('build_configure',{'buildDirectory':'build-next'}))
+                    self.assertEqual(result['exitCode'],0,result);self.assertFalse(result['cancelled'])
+        asyncio.run(scenario())
+
+    def test_ctest_and_hunks_over_official_mcp(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        cmake=self.client.call('toolchains.detect',{})['cmake']
+        self.assertTrue(cmake)
+        (self.workspace/'CMakeLists.txt').write_text('cmake_minimum_required(VERSION 3.24)\nproject(McpTests NONE)\nenable_testing()\nadd_test(NAME passing COMMAND "${CMAKE_COMMAND}" -E true)\nadd_test(NAME delayed COMMAND "${CMAKE_COMMAND}" -E sleep 10)\n','utf-8')
+        subprocess.run([cmake,'-S',str(self.workspace),'-B',str(self.workspace/'build')],check=True,capture_output=True)
+        def git(*args):
+            return subprocess.check_output(['git','-C',str(self.workspace),*args],stderr=subprocess.STDOUT)
+        git('init','--initial-branch=main');git('config','user.name','Fixture');git('config','user.email','fixture@example.invalid')
+        git('add','main.cpp');git('commit','-m','Initial')
+        (self.workspace/'main.cpp').write_text('int main() { return 42; }\n','utf-8')
+        runtime=create_runtime(self.directory/'workflow-permissions');runtime.start()
+        try:
+            reader=runtime.authenticate(runtime.create_client('reader')['token'])
+            session=runtime.create_session(reader,temporary=True)['sessionId']
+            for operation,parameters in [('tests_discover',{}),('tests_run',{'id':'none','tests':[0]}),('tests_cancel',{}),('vcs_apply_hunks',{'id':'none','hunks':[0]})]:
+                with self.assertRaises(Exception):runtime.submit(reader,session,operation,parameters)
+            job=runtime.submit(reader,session,'vcs_hunks',{'path':'main.cpp'})
+            self.assertEqual(runtime.wait(reader,job['jobId'],timeout=15)['state'],'Completed')
+        finally:runtime.close()
+        async def scenario():
+            parameters=StdioServerParameters(command=sys.executable,args=[str(APP/'tool.py'),'--data-dir',str(self.directory/'workflow-mcp'),'mcp'],env={**os.environ,'CYCODE_BRIDGE':str(self.descriptor),'CYCODE_PERMISSIONS':'process.execute,vcs.write'})
+            async with stdio_client(parameters) as (read,write):
+                async with ClientSession(read,write) as session:
+                    await session.initialize()
+                    async def submit(name,inputs):
+                        response=await session.call_tool('op_'+name,{'parameters':inputs});self.assertFalse(response.isError,response)
+                        return json.loads(response.content[0].text)['jobId']
+                    async def done(identifier,expected='Completed'):
+                        deadline=time.monotonic()+30
+                        while time.monotonic()<deadline:
+                            response=await session.call_tool('cy_get_job',{'jobId':identifier});job=json.loads(response.content[0].text)
+                            if job['state'] in ('Completed','Failed','Cancelled'):
+                                self.assertEqual(job['state'],expected,job);return job.get('outputs',{})
+                            await asyncio.sleep(.04)
+                        self.fail('Workflow MCP job did not stop')
+                    catalogue=await done(await submit('tests_discover',{}));self.assertEqual(len(catalogue['tests']),2)
+                    tested=await done(await submit('tests_run',{'id':catalogue['id'],'tests':[0]}));self.assertEqual(tested['results'][0]['status'],'passed')
+                    running=await submit('tests_run',{'id':catalogue['id'],'tests':[1]})
+                    await asyncio.sleep(.3)
+                    response=await session.call_tool('cy_cancel_job',{'jobId':running});self.assertFalse(response.isError,response)
+                    await done(running,'Cancelled')
+                    tested=await done(await submit('tests_run',{'id':catalogue['id'],'tests':[0]}));self.assertEqual(tested['exitCode'],0)
+                    hunks=await done(await submit('vcs_hunks',{'path':'main.cpp'}));self.assertEqual(len(hunks['hunks']),1)
+                    applied=await done(await submit('vcs_apply_hunks',{'id':hunks['id'],'hunks':[0]}));self.assertEqual(applied['exitCode'],0)
+                    self.assertIn(b'return 42',git('show',':main.cpp'))
+        asyncio.run(scenario())
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix='cycode-mcp-')
         self.directory = Path(self.temporary.name)
@@ -64,6 +207,247 @@ class NativeIntegration(unittest.TestCase):
         finally:
             runtime.close()
         self.assertTrue((self.workspace / 'main.cpp').exists())
+
+    def test_project_templates_and_permissions(self):
+        runtime = create_runtime(self.directory / 'template-jobs')
+        runtime.start()
+        try:
+            reader = runtime.authenticate(runtime.create_client('reader')['token'])
+            writer = runtime.authenticate(runtime.create_client('writer', ['workspace.write'])['token'])
+            sessions = {name: runtime.create_session(actor, temporary=True)['sessionId'] for name, actor in [('reader', reader), ('writer', writer)]}
+            def invoke(actor, name, operation, parameters, state='Completed'):
+                job = runtime.submit(actor, sessions[name], operation, parameters)
+                done = runtime.wait(actor, job['jobId'], timeout=10)
+                self.assertEqual(done['state'], state, done)
+                return done.get('outputs')
+            catalogue = invoke(reader, 'reader', 'templates_list', {})
+            self.assertTrue({'cpp.console','c.console','rust.console','csharp.console','java.console','web.javascript','cycode.unreal.cppGame'} <= {item['id'] for item in catalogue['templates']})
+            plan = invoke(reader, 'reader', 'templates_preview', {'template': 'csharp.console', 'name': 'HelloMcp'})
+            self.assertFalse((self.workspace / 'HelloMcp').exists())
+            with self.assertRaises(Exception):
+                runtime.submit(reader, sessions['reader'], 'templates_create', {'id': plan['id']})
+            result = invoke(writer, 'writer', 'templates_create', {'id': plan['id']})
+            self.assertEqual(result['state'], 'created')
+            self.assertEqual(result['entry'], 'HelloMcp/HelloMcp.sln')
+            for item in plan['files']:
+                self.assertEqual((self.workspace / 'HelloMcp' / item['path']).read_bytes(), item['text'].encode('utf-8'))
+            invoke(writer, 'writer', 'templates_create', {'id': plan['id']}, 'Failed')
+            invoke(reader, 'reader', 'templates_preview', {'template': 'cpp.console', 'name': 'Safe', 'destination': '../Outside'}, 'Failed')
+            collision = invoke(reader, 'reader', 'templates_preview', {'template': 'rust.console', 'name': 'Collision'})
+            (self.workspace / 'Collision').mkdir()
+            (self.workspace / 'Collision/keep').write_text('external', encoding='utf-8')
+            invoke(writer, 'writer', 'templates_create', {'id': collision['id']}, 'Failed')
+            self.assertEqual((self.workspace / 'Collision/keep').read_text('utf-8'), 'external')
+            unreal = invoke(reader, 'reader', 'templates_preview', {'template': 'cycode.unreal.cppGame', 'name': 'McpGame', 'options': {'engineAssociation': '5.3'}})
+            self.assertEqual(unreal['plugin'], 'cycode.unreal')
+            self.assertEqual(unreal['options']['engineAssociation'], '5.3')
+            with self.assertRaises(Exception):
+                runtime.submit(reader, sessions['reader'], 'templates_create', {'id': unreal['id']})
+            created = invoke(writer, 'writer', 'templates_create', {'id': unreal['id']})
+            self.assertEqual(created['entry'], 'McpGame/McpGame.uproject')
+            self.assertEqual(json.loads((self.workspace / 'McpGame/McpGame.uproject').read_text('utf-8'))['Modules'][0]['Name'], 'McpGame')
+            invoke(reader, 'reader', 'templates_preview', {'template': 'cycode.unreal.cppGame', 'name': 'Invalid', 'options': {'engineAssociation': '5.3"bad'}}, 'Failed')
+            stale = invoke(reader, 'reader', 'templates_preview', {'template': 'cycode.unreal.cppGame', 'name': 'StaleGame'})
+            admin = runtime.authenticate(runtime.create_client('admin', ['plugins.execute', 'workspace.write', 'process.execute'])['token'])
+            sessions['admin'] = runtime.create_session(admin, temporary=True)['sessionId']
+            inventory = invoke(reader, 'reader', 'plugins_list', {})
+            self.assertTrue(any(item['id'] == 'cycode.unreal.cppGame' for item in inventory['templates']))
+            disabled = invoke(admin, 'admin', 'plugins_configure', {'id': 'cycode.unreal', 'enabled': False, 'expectedRevision': inventory['revision']})
+            self.assertFalse(any(item['id'] == 'cycode.unreal.cppGame' for item in invoke(reader, 'reader', 'templates_list', {})['templates']))
+            invoke(writer, 'writer', 'templates_create', {'id': stale['id']}, 'Failed')
+            invoke(admin, 'admin', 'plugins_configure', {'id': 'cycode.unreal', 'enabled': True, 'expectedRevision': disabled['revision']})
+            invoke(writer, 'writer', 'templates_create', {'id': stale['id']}, 'Failed')
+            self.assertFalse((self.workspace / 'StaleGame').exists())
+        finally:
+            runtime.close()
+        self.assertTrue((self.workspace / 'HelloMcp/HelloMcp.sln').exists())
+        self.assertFalse((self.workspace / 'HelloMcp/LICENSE').exists())
+
+    def test_resource_transactions_and_permissions(self):
+        runtime = create_runtime(self.directory / 'resource-jobs')
+        runtime.start()
+        try:
+            reader = runtime.authenticate(runtime.create_client('reader')['token'])
+            writer = runtime.authenticate(runtime.create_client('writer', ['workspace.write'])['token'])
+            sessions = {name: runtime.create_session(actor, temporary=True)['sessionId'] for name, actor in [('reader', reader), ('writer', writer)]}
+            def invoke(actor, name, operation, parameters, state='Completed'):
+                job = runtime.submit(actor, sessions[name], operation, parameters)
+                done = runtime.wait(actor, job['jobId'], timeout=10)
+                self.assertEqual(done['state'], state, done)
+                return done.get('outputs')
+            doc = invoke(reader, 'reader', 'documents_read', {'path': 'main.cpp'})
+            plan = invoke(reader, 'reader', 'resources_preview', {'operation': 'move', 'path': 'main.cpp', 'destination': 'renommé.cpp'})
+            self.assertTrue((self.workspace / 'main.cpp').exists())
+            with self.assertRaises(Exception):
+                runtime.submit(reader, sessions['reader'], 'resources_apply', {'id': plan['id']})
+            edited = invoke(writer, 'writer', 'documents_replace', {'path': 'main.cpp', 'text': '// modified\n', 'expectedRevision': doc['revision']})
+            invoke(writer, 'writer', 'resources_apply', {'id': plan['id']}, 'Failed')
+            invoke(writer, 'writer', 'documents_save', {'path': 'main.cpp', 'expectedRevision': edited['revision']})
+            plan = invoke(reader, 'reader', 'resources_preview', {'operation': 'move', 'path': 'main.cpp', 'destination': 'renommé.cpp'})
+            moved = invoke(writer, 'writer', 'resources_apply', {'id': plan['id']})
+            renamed = invoke(reader, 'reader', 'documents_read', {'path': 'renommé.cpp'})
+            self.assertEqual(renamed['id'], doc['id'])
+            self.assertFalse((self.workspace / 'main.cpp').exists())
+            children = invoke(reader, 'reader', 'resources_children', {'path': '.'})
+            self.assertEqual([item['path'] for item in children['items']], ['renommé.cpp'])
+            events = invoke(reader, 'reader', 'resources_events', {})
+            self.assertEqual(events['events'][-1]['to'], 'renommé.cpp')
+            deletion = invoke(reader, 'reader', 'resources_preview', {'operation': 'delete', 'path': 'renommé.cpp'})
+            removed = invoke(writer, 'writer', 'resources_apply', {'id': deletion['id']})
+            trash = invoke(reader, 'reader', 'resources_trash', {})
+            self.assertEqual(trash['items'][0]['id'], removed['trash'])
+            restore = invoke(reader, 'reader', 'resources_preview', {'operation': 'restore', 'trash': removed['trash']})
+            self.assertFalse(restore['blocked'])
+            invoke(writer, 'writer', 'resources_apply', {'id': restore['id']})
+            with self.assertRaises(Exception):
+                runtime.submit(reader, sessions['reader'], 'resources_undo', {'id': moved['id']})
+            invoke(writer, 'writer', 'resources_undo', {'id': moved['id']})
+            self.assertEqual((self.workspace / 'main.cpp').read_text('utf-8'), '// modified\n')
+            invoke(reader, 'reader', 'resources_preview', {'operation': 'delete', 'path': '../outside'}, 'Failed')
+            self.assertTrue((self.workspace / 'main.cpp').exists())
+        finally:
+            runtime.close()
+
+    def test_recovery_native_runtime_permissions_and_restart(self):
+        runtime = create_runtime(self.directory / 'recovery-jobs')
+        runtime.start()
+        try:
+            reader = runtime.authenticate(runtime.create_client('reader')['token'])
+            writer = runtime.authenticate(runtime.create_client('writer', ['workspace.write'])['token'])
+            sessions = {name: runtime.create_session(actor, temporary=True)['sessionId'] for name, actor in [('reader', reader), ('writer', writer)]}
+            def invoke(actor, name, operation, parameters, state='Completed'):
+                job = runtime.submit(actor, sessions[name], operation, parameters)
+                done = runtime.wait(actor, job['jobId'], timeout=10)
+                self.assertEqual(done['state'], state, done)
+                return done.get('outputs')
+            before = (self.workspace / 'main.cpp').read_bytes()
+            doc = self.client.call('documents.read', {'path': 'main.cpp'})
+            edited = '// récupéré 🛠\nint main() { return 73; }\n'
+            invoke(writer, 'writer', 'documents_replace', {'path': 'main.cpp', 'text': edited, 'expectedRevision': doc['revision']})
+            status = invoke(writer, 'writer', 'recovery_flush', {})
+            self.assertEqual(status['documents'], 1)
+            self.assertFalse(status['errors'])
+            inventory = invoke(reader, 'reader', 'recovery_list', {})
+            entry = inventory['items'][0]
+            self.assertTrue(entry['active'])
+            ref = {key: entry[key] for key in ('session', 'id', 'checkpoint')}
+            invoke(reader, 'reader', 'recovery_preview', ref, 'Failed')
+            for operation, parameters in [('recovery_flush', {}), ('recovery_discard', ref), ('recovery_restore', {**ref, 'expectedRevision': 0, 'expectedDiskState': 'missing'})]:
+                with self.assertRaises(Exception):
+                    runtime.submit(reader, sessions['reader'], operation, parameters)
+            # Terminate the native process, bypassing its destructor and leaving the real checkpoint.
+            self.process.kill()
+            self.process.communicate(timeout=10)
+            self.descriptor.unlink(missing_ok=True)
+            executable = Path(os.environ['CYCODE_TEST_CLI']).resolve()
+            self.process = subprocess.Popen([str(executable), str(self.workspace), '--serve', str(self.descriptor)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            deadline = time.monotonic() + 10
+            while not self.descriptor.exists():
+                if self.process.poll() is not None or time.monotonic() > deadline:
+                    raise RuntimeError('Native bridge did not restart')
+                time.sleep(.02)
+            preview = invoke(reader, 'reader', 'recovery_preview', ref)
+            self.assertEqual(preview['text'], edited)
+            self.assertEqual(preview['targetRevision'], 0)
+            parameters = {**ref, 'expectedRevision': preview['targetRevision'], 'expectedDiskState': preview['diskState']}
+            invoke(writer, 'writer', 'recovery_restore', {**parameters, 'expectedRevision': 999}, 'Failed')
+            recovered = invoke(writer, 'writer', 'recovery_restore', parameters)
+            self.assertTrue(recovered['checkpointProtected'])
+            self.assertFalse(recovered['sourceRetained'])
+            self.assertEqual(recovered['document']['text'], edited)
+            self.assertEqual((self.workspace / 'main.cpp').read_bytes(), before)
+            invoke(writer, 'writer', 'documents_save', {'path': 'main.cpp', 'expectedRevision': recovered['document']['revision']})
+            self.assertEqual(invoke(reader, 'reader', 'recovery_list', {})['items'], [])
+        finally:
+            runtime.close()
+
+    def test_extensions_provider_contracts_and_permissions(self):
+        runtime = create_runtime(self.directory / 'extension-jobs')
+        runtime.start()
+        try:
+            reader = runtime.authenticate(runtime.create_client('reader')['token'])
+            partial = runtime.authenticate(runtime.create_client('plugin-only', ['plugins.execute'])['token'])
+            editor = runtime.authenticate(runtime.create_client('editor', ['plugins.execute', 'workspace.write', 'process.execute', 'vcs.write'])['token'])
+            sessions = {name: runtime.create_session(actor, temporary=True)['sessionId'] for name, actor in [('reader', reader), ('partial', partial), ('editor', editor)]}
+            def invoke(actor, name, operation, parameters, state='Completed'):
+                job = runtime.submit(actor, sessions[name], operation, parameters)
+                done = runtime.wait(actor, job['jobId'], timeout=10)
+                self.assertEqual(done['state'], state, done)
+                return done.get('outputs')
+            inventory = invoke(reader, 'reader', 'plugins_list', {})
+            self.assertEqual(inventory['supportedAbis'], [1, 2])
+            self.assertTrue(any(p['id'] == 'cycode.unreal' for p in inventory['plugins']))
+            for actor, name in [(reader, 'reader'), (partial, 'partial')]:
+                with self.assertRaises(Exception):
+                    runtime.submit(actor, sessions[name], 'plugins_invoke', {'command': 'sample.text_statistics', 'input': {'text': 'hello'}})
+            sample_id = 'cycode.sample'
+            disabled = invoke(editor, 'editor', 'plugins_configure', {'id': sample_id, 'enabled': False, 'expectedRevision': inventory['revision']})
+            invoke(editor, 'editor', 'plugins_invoke', {'command': 'sample.text_statistics', 'input': {'text': 'hello'}}, 'Failed')
+            enabled = invoke(editor, 'editor', 'plugins_configure', {'id': sample_id, 'enabled': True, 'expectedRevision': disabled['revision']})
+            self.assertGreater(enabled['revision'], disabled['revision'])
+            self.assertEqual(invoke(editor, 'editor', 'plugins_invoke', {'command': 'sample.text_statistics', 'input': {'text': 'hello world'}})['words'], 2)
+            providers = invoke(reader, 'reader', 'vcs_providers', {})
+            self.assertEqual(providers['providers'][0]['id'], 'git')
+            self.assertTrue(any(p['id']=='cycode.perforce.provider' for p in providers['providers']))
+            self.assertTrue(any(p['id']=='cycode.svn.provider' for p in providers['providers']))
+            self.assertTrue(any(p['id']=='cycode.mercurial.provider' for p in providers['providers']))
+            self.assertTrue(any(p['id']=='cycode.diversion.provider' for p in providers['providers']))
+            context = invoke(reader, 'reader', 'vcs_context', {'contextPath': 'main.cpp'})
+            mapped = invoke(editor, 'editor', 'vcs_configure', {'root':'.','provider':'cycode.perforce.provider','expectedRevision':context['revision']})
+            self.assertEqual(invoke(reader, 'reader', 'vcs_context', {})['provider'], 'cycode.perforce.provider')
+            self.assertEqual(invoke(reader, 'reader', 'vcs_status', {})['provider'], 'git')
+            for provider in ('cycode.perforce.provider','cycode.svn.provider','cycode.mercurial.provider','cycode.diversion.provider'):
+                with self.assertRaises(Exception):
+                    runtime.submit(reader, sessions['reader'], 'vcs_status', {'provider':provider})
+                with self.assertRaises(Exception):
+                    runtime.submit(reader, sessions['reader'], 'vcs_provider_action', {'provider':provider,'action':'status'})
+            context = invoke(reader, 'reader', 'vcs_context', {})
+            with self.assertRaises(Exception):
+                runtime.submit(reader, sessions['reader'], 'vcs_configure', {'root': '.', 'provider': 'git', 'expectedRevision': context['revision']})
+            invoke(editor, 'editor', 'vcs_configure', {'root': '.', 'provider': 'git', 'expectedRevision': context['revision']})
+            for filename in ['a.txt', 'b.txt']:
+                (self.workspace / filename).write_text(filename, encoding='utf-8')
+            page = invoke(reader, 'reader', 'workspace_files', {'limit': 1, 'refresh': True})
+            paths = page['files'][:]
+            while page['nextOffset'] is not None:
+                page = invoke(reader, 'reader', 'workspace_files', {'limit': 1, 'offset': page['nextOffset']})
+                paths += page['files']
+            self.assertEqual(set(paths), {'a.txt', 'b.txt', 'main.cpp'})
+            self.assertEqual(page['total'], 3)
+            poll = invoke(reader, 'reader', 'workspace_poll', {})
+            self.assertIn(poll['watcher']['backend'], ['ReadDirectoryChangesW', 'polling'])
+        finally:
+            runtime.close()
+
+    def test_extension_registry_over_official_mcp(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        async def scenario():
+            parameters = StdioServerParameters(command=sys.executable, args=[str(APP / 'tool.py'), '--data-dir', str(self.directory / 'extensions-mcp'), 'mcp'], env={**os.environ, 'CYCODE_BRIDGE': str(self.descriptor), 'CYCODE_PERMISSIONS': ''})
+            async with stdio_client(parameters) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    tools = await session.list_tools()
+                    names = {tool.name for tool in tools.tools}
+                    self.assertTrue({'op_resources_preview', 'op_resources_apply', 'op_resources_undo', 'op_resources_children', 'op_resources_trash', 'op_resources_events'} <= names)
+                    self.assertTrue({'op_templates_list', 'op_templates_preview', 'op_templates_create'} <= names)
+                    self.assertTrue({'op_plugins_configure', 'op_plugins_project', 'op_vcs_context', 'op_vcs_providers', 'op_workspace_poll', 'op_recovery_list', 'op_recovery_preview', 'op_recovery_restore', 'op_recovery_discard', 'op_recovery_flush', 'op_recovery_status'} <= names)
+                    response = await session.call_tool('op_plugins_list', {'parameters': {}})
+                    self.assertFalse(response.isError, response)
+                    identifier = json.loads(response.content[0].text)['jobId']
+                    deadline = time.monotonic() + 10
+                    while True:
+                        result = await session.call_tool('cy_get_job', {'jobId': identifier})
+                        job = json.loads(result.content[0].text)
+                        if job['state'] in ('Completed', 'Failed', 'Cancelled'):
+                            self.assertEqual(job['state'], 'Completed', job)
+                            self.assertEqual(job['outputs']['abi'], 2)
+                            break
+                        self.assertLess(time.monotonic(), deadline)
+                        await asyncio.sleep(.03)
+                    denied = await session.call_tool('op_plugins_invoke', {'parameters': {'command': 'sample.text_statistics', 'input': {'text': 'hello'}}})
+                    self.assertTrue(denied.isError)
+        asyncio.run(scenario())
 
     def test_official_mcp_roundtrip(self):
         from mcp import ClientSession, StdioServerParameters
@@ -324,10 +708,13 @@ class NativeIntegration(unittest.TestCase):
                 async with ClientSession(ar,aw) as reader,ClientSession(br,bw) as writer:
                     await reader.initialize(); await writer.initialize()
                     tools={tool.name for tool in (await writer.list_tools()).tools}
-                    for operation in ('debug_profile','debug_configure','debug_status','debug_breakpoints','debug_launch','debug_attach','debug_run','debug_continue','debug_pause','debug_next','debug_step_in','debug_step_out','debug_stop','debug_evaluate','debug_variables','debug_source'):
+                    for operation in ('debug_profile','debug_configure','debug_status','debug_breakpoints','debug_launch','debug_attach','debug_run','debug_continue','debug_pause','debug_next','debug_step_in','debug_step_out','debug_stop','debug_evaluate','debug_variables','debug_source','debug_memory','debug_disassemble','debug_exception_info','debug_function_breakpoints','debug_exception_breakpoints'):
                         self.assertIn('op_'+operation,tools)
                     denied=await reader.call_tool('op_debug_status',{'parameters':{}})
                     self.assertTrue(denied.isError,denied)
+                    for name,inputs in (('debug_memory',{'memoryReference':'x'}),('debug_disassemble',{'memoryReference':'x'}),('debug_exception_info',{}),('debug_function_breakpoints',{'breakpoints':[]}),('debug_exception_breakpoints',{'filters':None})):
+                        refused=await reader.call_tool('op_'+name,{'parameters':inputs})
+                        self.assertTrue(refused.isError,refused)
                     profile=await job(writer,'debug_configure',{'program':str(program),'terminal':'integrated','watches':['local + 1']})
                     self.assertEqual(profile['program'],str(program))
                     await job(writer,'debug_breakpoints',{'path':'main.cpp','breakpoints':[{'line':3}]})
@@ -667,6 +1054,10 @@ class NativeIntegration(unittest.TestCase):
             session=runtime.create_session(reader,temporary=True)['sessionId']
             with self.assertRaises(Exception):
                 runtime.submit(reader,session,'language_configure',{'language':'typescript'})
+            with self.assertRaises(Exception):
+                runtime.submit(reader,session,'language_preferences_forget',{'language':'typescript','expectedPreferencesRevision':0})
+            preferences=runtime.submit(reader,session,'language_preferences',{})
+            self.assertEqual(runtime.wait(reader,preferences['jobId'],timeout=10)['state'],'Completed')
         finally:
             runtime.close()
         self.assertFalse(self.client.call('language.status',{})['servers']['typescript']['enabled'])
@@ -691,6 +1082,15 @@ class NativeIntegration(unittest.TestCase):
                             await asyncio.sleep(.06)
                         self.fail('Web MCP job did not complete')
                     doc=await invoke('documents_read',{'path':'main.ts'})
+                    preferences=await invoke('language_preferences',{})
+                    self.assertTrue(preferences['available'],preferences)
+                    saved=await invoke('language_configure',{'language':'typescript','enabled':False,
+                        'arguments':[],'settings':{},'save':True,'expectedPreferencesRevision':preferences['revision']})
+                    self.assertFalse(saved['servers']['typescript']['enabled'])
+                    preferences=await invoke('language_preferences',{})
+                    self.assertEqual(preferences['profiles']['typescript']['arguments'],[])
+                    forgotten=await invoke('language_preferences_forget',{'language':'typescript','expectedPreferencesRevision':preferences['revision']})
+                    self.assertNotIn('typescript',forgotten['profiles'])
                     await invoke('language_configure',{'language':'typescript'})
                     completion=await invoke('language_complete',{'path':'main.ts','expectedRevision':doc['revision'],
                         'position':{'line':1,'character':11}})
@@ -703,7 +1103,7 @@ class NativeIntegration(unittest.TestCase):
                     status=await invoke('language_status',{})
                     self.assertTrue(status['servers']['typescript']['ready'])
                     self.assertTrue(status['servers']['typescript']['methods']['completion'])
-                    self.assertEqual(set(status['servers']),{'cpp','csharp','rust','java','typescript','html','css'})
+                    self.assertTrue({'cpp','csharp','rust','java','typescript','html','css','python','hlsl','glsl'} <= set(status['servers']))
                     await invoke('language_configure',{'language':'typescript','enabled':False})
         asyncio.run(scenario())
         self.assertEqual((self.workspace/'main.ts').read_text('utf-8'),text)

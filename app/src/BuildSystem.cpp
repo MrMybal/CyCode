@@ -1,7 +1,12 @@
 #include "cycode/BuildSystem.h"
+#include "cycode/BuildLimits.h"
+#include "cycode/BuildOperations.h"
+#include "cycode/CMakePresets.h"
+#include "cycode/Tools.h"
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <tuple>
@@ -181,8 +186,8 @@ static std::string argument(const std::string &value) {
 }
 BuildSystem::BuildSystem(fs::path root, Resolver resolve)
     : root_(std::move(root)), resolve_(std::move(resolve)) {}
-Json BuildSystem::detect(bool refresh) {
-    std::lock_guard lock(discoveryMutex_);
+Json BuildSystem::detect(bool refresh, const std::atomic<bool> *cancellation) {
+    auto lock = cancellableBuildLock(discoveryMutex_, cancellation);
     if (!refresh && detected_.is_object())
         return detected_;
     Json compilers = Json::array(), generators = Json::array(), warnings = Json::array();
@@ -200,7 +205,7 @@ Json BuildSystem::detect(bool refresh) {
         auto result =
             runProcess({pathUtf8(vswhere), "-products", "*", "-requires",
                         "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-format", "json", "-utf8"},
-                       root_, std::chrono::seconds(5), 1024 * 1024);
+                       root_, std::chrono::seconds(5), 1024 * 1024, cancellation);
         if (!result.exitCode) {
             auto parsed = Json::parse(result.output, nullptr, false);
             if (parsed.is_array())
@@ -245,7 +250,8 @@ Json BuildSystem::detect(bool refresh) {
         auto c = executable(cName, cHints), cxx = executable(cxxName, cxxHints);
         if (c.empty() || cxx.empty())
             continue;
-        auto result = runProcess({pathUtf8(cxx), "--version"}, root_, std::chrono::seconds(3), 4096);
+        auto result =
+            runProcess({pathUtf8(cxx), "--version"}, root_, std::chrono::seconds(3), 4096, cancellation);
         if (result.exitCode)
             continue;
         auto version = result.output.substr(0, result.output.find_first_of("\r\n"));
@@ -260,8 +266,8 @@ Json BuildSystem::detect(bool refresh) {
     }
     std::string cmakeVersion;
     if (!cmake.empty()) {
-        auto result =
-            runProcess({pathUtf8(cmake), "-E", "capabilities"}, root_, std::chrono::seconds(5), 1024 * 1024);
+        auto result = runProcess({pathUtf8(cmake), "-E", "capabilities"}, root_, std::chrono::seconds(5),
+                                 1024 * 1024, cancellation);
         auto data = Json::parse(result.output, nullptr, false);
         if (!result.exitCode && data.is_object()) {
             for (const auto &entry : data.value("generators", Json::array())) {
@@ -280,6 +286,7 @@ Json BuildSystem::detect(bool refresh) {
             warnings.push_back("CMake capabilities could not be read");
     } else
         warnings.push_back("CMake was not found");
+    checkBuildCancellation(cancellation);
     detected_ = {{"cmake", pathUtf8(cmake)}, {"cmakeVersion", cmakeVersion}, {"ninja", pathUtf8(ninja)},
                  {"make", pathUtf8(make)},   {"toolchains", compilers},      {"generators", generators},
                  {"warnings", warnings}};
@@ -293,7 +300,9 @@ Json BuildSystem::profile(const Json &params) const {
                   {"configuration", "Debug"},
                   {"toolchain", "automatic"},
                   {"generator", "automatic"},
-                  {"target", ""}};
+                  {"target", ""},
+                  {"configurePreset", ""},
+                  {"buildPreset", ""}};
     auto file = resolve_(".cycode/build.json");
     if (fs::exists(file)) {
         auto saved = Json::parse(read(file, 65536));
@@ -308,16 +317,39 @@ Json BuildSystem::profile(const Json &params) const {
             value[key] = setting;
         }
     }
+    const auto oldConfigurePreset = value.at("configurePreset"), oldBuildPreset = value.at("buildPreset");
     for (auto &[key, setting] : value.items())
         if (params.contains(key))
             setting = params.at(key);
+    if (!params.contains("target") &&
+        (value.at("configurePreset") != oldConfigurePreset || value.at("buildPreset") != oldBuildPreset))
+        value["target"] = "";
     for (const auto &[key, setting] : value.items())
         if (!setting.is_string())
             throw std::runtime_error("Build profile values must be strings");
     const std::string config = value.at("configuration");
-    if (config != "Debug" && config != "Release" && config != "RelWithDebInfo" && config != "MinSizeRel")
+    const bool presetMode = value.at("configurePreset") != "" || value.at("buildPreset") != "";
+    if (!presetMode && config != "Debug" && config != "Release" && config != "RelWithDebInfo" &&
+        config != "MinSizeRel")
         throw std::runtime_error("Unsupported build configuration");
     value["source"] = pathUtf8(resolve_(value.at("source")).lexically_relative(root_));
+    if (presetMode) {
+        CMakePresets presets(resolve_(value.at("source")), resolve_);
+        const auto selected = presets.selection(value.at("configurePreset"), value.at("buildPreset"));
+        value["configurePreset"] = selected.at("configurePreset");
+        value["buildDirectory"] = selected.at("buildDirectory");
+        if (selected.at("configuration") != "")
+            value["configuration"] = selected.at("configuration");
+        value["toolchain"] = "automatic";
+        value["generator"] = "automatic";
+    }
+    if (value.at("configuration") == "." || value.at("configuration") == ".." ||
+        value.at("configuration").get_ref<const std::string &>().empty() ||
+        value.at("configuration").get_ref<const std::string &>().size() > 128 ||
+        value.at("configuration").get_ref<const std::string &>().find_first_of("/\\\r\n") !=
+            std::string::npos ||
+        value.at("configuration").get_ref<const std::string &>().find('\0') != std::string::npos)
+        throw std::runtime_error("Invalid build configuration name");
     value["buildDirectory"] = pathUtf8(resolve_(value.at("buildDirectory")).lexically_relative(root_));
     return value;
 }
@@ -337,6 +369,23 @@ Json BuildSystem::readReply(const fs::path &directory, const std::string &name) 
 Json BuildSystem::inspect(const Json &params) {
     std::lock_guard lock(operationMutex_);
     return inspectLocked(profile(params));
+}
+Json BuildSystem::presets(const Json &params) {
+    std::lock_guard lock(operationMutex_);
+    const auto source =
+        resolve_(params.value("source", std::filesystem::exists(root_ / "CMakeLists.txt")       ? "."
+                                        : std::filesystem::exists(root_ / "app/CMakeLists.txt") ? "app"
+                                                                                                : "."));
+    try {
+        return CMakePresets(source, resolve_).catalogue();
+    } catch (const std::exception &e) {
+        return {{"configurePresets", Json::array()},
+                {"buildPresets", Json::array()},
+                {"testPresets",Json::array()},{"packagePresets",Json::array()},{"workflowPresets",Json::array()},
+                {"revision",""},
+                {"files", Json::array()},
+                {"error", e.what()}};
+    }
 }
 std::filesystem::path BuildSystem::activeDatabaseDirectory() const {
     auto value = profile(Json::object());
@@ -362,6 +411,14 @@ Json BuildSystem::inspectLocked(const Json &value, bool generateDatabase) {
                    {"toolchains", Json::array()},
                    {"compilationDatabase", database},
                    {"message", ""}};
+    try {
+        result["presets"] = CMakePresets(source, resolve_).catalogue();
+    } catch (const std::exception &e) {
+        result["presets"] = {{"configurePresets", Json::array()},
+                             {"buildPresets", Json::array()},
+                             {"files", Json::array()},
+                             {"error", e.what()}};
+    }
     auto reply = resolve_(pathUtf8(build / ".cmake/api/v1/reply"));
     std::string indexName;
     if (fs::is_directory(reply))
@@ -491,8 +548,95 @@ Json BuildSystem::inspectLocked(const Json &value, bool generateDatabase) {
             "No usable compilation database. Configure with CyCode to request CMake File API metadata.";
     return result;
 }
-Json BuildSystem::run(const std::string &method, const Json &params) {
-    std::lock_guard lock(operationMutex_);
+static Json presetActionPlan(const fs::path &root,const fs::path &source,CMakePresets &presets,const Json &params) {
+    const auto kind=params.at("kind").get<std::string>();
+    if(kind!="test" && kind!="package" && kind!="workflow")
+        throw std::runtime_error("Choose a CMake test, package or workflow preset");
+    auto plan=presets.action(kind,params.at("preset"));
+    const auto binary=utf8Path(plan.at("buildDirectory"));
+    if(within(binary,source))throw std::runtime_error("Choose a preset binary directory separate from the source tree");
+    plan["source"]=pathUtf8(source.lexically_relative(root));
+    plan["buildDirectory"]=pathUtf8(binary.lexically_relative(root));
+    auto relative=[&](Json &paths) {
+        for(auto &path:paths)path=pathUtf8(utf8Path(path).lexically_relative(root));
+    };
+    relative(plan.at("outputs"));
+    for(auto &step:plan.at("steps")) {
+        step["buildDirectory"]=pathUtf8(utf8Path(step.at("buildDirectory")).lexically_relative(root));
+        relative(step.at("outputs"));
+    }
+    if(plan.dump().size()>2*1024*1024)throw std::runtime_error("CMake preset plan exceeds 2 MiB");
+    plan["revision"]=presets.revision(plan);
+    presets.checkUnchanged();
+    return plan;
+}
+Json BuildSystem::presetPlan(const Json &params) {
+    const auto source=resolve_(params.value("source",std::string(".")));
+    if(!fs::is_regular_file(source/"CMakeLists.txt"))throw std::runtime_error("No CMakeLists.txt in source directory");
+    CMakePresets presets(source,resolve_);
+    return presetActionPlan(root_,source,presets,params);
+}
+Json BuildSystem::runPreset(const Json &params,const std::atomic<bool> *cancellation) {
+    const auto timeout=buildTimeout(params);
+    checkBuildCancellation(cancellation);
+    auto lock=cancellableBuildLock(operationMutex_,cancellation);
+    const auto source=resolve_(params.value("source",std::string(".")));
+    if(!fs::is_regular_file(source/"CMakeLists.txt"))throw std::runtime_error("No CMakeLists.txt in source directory");
+    CMakePresets presets(source,resolve_);
+    const auto plan=presetActionPlan(root_,source,presets,params);
+    if(params.at("expectedRevision")!=plan.at("revision"))
+        throw std::runtime_error("CMake preset plan changed; preview it again");
+    const auto build=resolve_(plan.at("buildDirectory"));
+    const auto stored=cache(build,resolve_);
+    if(stored.contains("CMAKE_HOME_DIRECTORY") && !samePath(utf8Path(stored.at("CMAKE_HOME_DIRECTORY")),source))
+        throw std::runtime_error("Preset binary directory belongs to another source tree");
+    const auto kind=params.at("kind").get<std::string>();
+    if(kind!="workflow" && stored.empty())throw std::runtime_error("Configure the preset binary tree before testing or packaging");
+    const auto tools=detect(false,cancellation);
+    const auto cmake=tools.at("cmake").get<std::string>();
+    if(cmake.empty())throw std::runtime_error("CMake was not found");
+    int major=0,minor=0;char dot=0;
+    std::istringstream version(tools.value("cmakeVersion",std::string{}));
+    if(!(version>>major>>dot>>minor) || dot!='.' || major<3 ||
+       (major==3 && minor<(kind=="test" ? 20 : 25)))
+        throw std::runtime_error("This preset command requires CMake "+plan.at("minimumCMake").get<std::string>()+" or later");
+    auto program=cmake;
+    if(kind!="workflow") {
+#ifdef _WIN32
+        const auto sibling=utf8Path(cmake).parent_path()/(plan.at("program").get<std::string>()+".exe");
+#else
+        const auto sibling=utf8Path(cmake).parent_path()/plan.at("program").get<std::string>();
+#endif
+        program=fs::is_regular_file(sibling) ? pathUtf8(sibling) : toolPath(plan.at("program"));
+        if(program.empty())throw std::runtime_error("CMake companion tool was not found: "+plan.at("program").get<std::string>());
+    }
+    std::vector<std::string> args{program};
+    for(const auto &argument:plan.at("arguments"))args.push_back(argument.get<std::string>());
+    checkBuildCancellation(cancellation);
+    presets.checkUnchanged();
+    if(kind=="workflow") {
+        const auto query=resolve_(pathUtf8(build/".cmake/api/v1/query/client-cycode"));
+        for(const auto *entry:{"codemodel-v2","toolchains-v1"})writeAtomic(resolve_(pathUtf8(query/entry)),"");
+    }
+    auto process=runProcess(args,source,timeout,8*1024*1024,cancellation,{},processOutputObserver(cancellation));
+    Json result={{"exitCode",process.exitCode},{"output",process.output},{"timedOut",process.timedOut},
+                 {"truncated",process.truncated},{"cancelled",process.cancelled},{"plan",plan},{"project",nullptr}};
+    // A completed external action cannot be rolled back by a later inspection failure.
+    try {
+        presets.checkUnchanged();
+        if(kind=="workflow" && !process.exitCode && !process.cancelled && !process.timedOut && !process.truncated &&
+           !(cancellation && cancellation->load())) {
+            const auto value=profile({{"source",plan.at("source")},{"configurePreset",plan.at("configurePreset")},
+                {"buildPreset",""},{"target",""},{"configuration",plan.at("configuration")=="" ? Json("Debug") : plan.at("configuration")}});
+            result["project"]=inspectLocked(value,true);
+        }
+    } catch(const std::exception &e) {result["inspectionError"]=e.what();}
+    return result;
+}
+Json BuildSystem::run(const std::string &method, const Json &params, const std::atomic<bool> *cancellation) {
+    const auto timeout = buildTimeout(params);
+    checkBuildCancellation(cancellation);
+    auto lock = cancellableBuildLock(operationMutex_, cancellation);
     auto value = profile(params);
     auto source = resolve_(value.at("source")), build = resolve_(value.at("buildDirectory"));
     if (!fs::exists(source / "CMakeLists.txt"))
@@ -503,11 +647,33 @@ Json BuildSystem::run(const std::string &method, const Json &params) {
     if (stored.contains("CMAKE_HOME_DIRECTORY") &&
         !samePath(utf8Path(stored.at("CMAKE_HOME_DIRECTORY")), source))
         throw std::runtime_error("Build directory belongs to another source tree; choose a new directory");
-    auto tools = detect();
+    auto tools = detect(false, cancellation);
     if (tools.at("cmake") == "")
         throw std::runtime_error("CMake was not found");
     std::vector<std::string> args{tools.at("cmake")};
-    if (method == "build.configure") {
+    const bool presetMode = value.at("configurePreset") != "";
+    std::unique_ptr<CMakePresets> selectedPresets;
+    if (presetMode) {
+        selectedPresets = std::make_unique<CMakePresets>(source, resolve_);
+        const auto selected =
+            selectedPresets->selection(value.at("configurePreset"), value.at("buildPreset"));
+        if (resolve_(selected.at("buildDirectory")) != build)
+            throw std::runtime_error("Preset build directory changed; refresh before building");
+        if (selected.at("configuration") != "" && selected.at("configuration") != value.at("configuration"))
+            throw std::runtime_error("Preset configuration changed; refresh before building");
+    }
+    auto queryFiles = [&] {
+        auto query = resolve_(pathUtf8(build / ".cmake/api/v1/query/client-cycode"));
+        for (const auto *kind : {"codemodel-v2", "toolchains-v1"})
+            writeAtomic(resolve_(pathUtf8(query / kind)), "");
+        ignoreGeneratedTree(resolve_(pathUtf8(build / ".gitignore")));
+    };
+    if (method == "build.configure" && presetMode) {
+        args.insert(args.end(),
+                    {"--preset=" + value.at("configurePreset").get<std::string>(), "-S", pathUtf8(source),
+                     "-B", pathUtf8(build), "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"});
+        queryFiles();
+    } else if (method == "build.configure") {
         Json compiler;
         auto selected = value.at("toolchain").get<std::string>();
         for (const auto &entry : tools.at("toolchains"))
@@ -584,11 +750,7 @@ Json BuildSystem::run(const std::string &method, const Json &params) {
                 throw std::runtime_error("Ninja was not found");
             args.push_back("-DCMAKE_MAKE_PROGRAM=" + tools.at("ninja").get<std::string>());
         }
-        auto query = resolve_(pathUtf8(build / ".cmake/api/v1/query/client-cycode"));
-        for (const auto *kind : {"codemodel-v2", "toolchains-v1"})
-            writeAtomic(resolve_(pathUtf8(query / kind)), "");
-        auto ignore = resolve_(pathUtf8(build / ".gitignore"));
-        ignoreGeneratedTree(ignore);
+        queryFiles();
     } else {
         if (stored.empty())
             throw std::runtime_error("Configure the project before building");
@@ -597,8 +759,12 @@ Json BuildSystem::run(const std::string &method, const Json &params) {
             stored.at("CMAKE_BUILD_TYPE") != "" && stored.at("CMAKE_BUILD_TYPE") != value.at("configuration"))
             throw std::runtime_error(
                 "Configuration changed; reconfigure this single-configuration build first");
-        args.insert(args.end(),
-                    {"--build", pathUtf8(build), "--config", value.at("configuration"), "--parallel", "4"});
+        if (presetMode && value.at("buildPreset") != "")
+            args.insert(args.end(), {"--build", "--preset=" + value.at("buildPreset").get<std::string>(),
+                                     "--config", value.at("configuration")});
+        else
+            args.insert(args.end(), {"--build", pathUtf8(build), "--config", value.at("configuration"),
+                                     "--parallel", "4"});
         const std::string target = value.at("target");
         if (!target.empty()) {
             bool found = false;
@@ -610,13 +776,22 @@ Json BuildSystem::run(const std::string &method, const Json &params) {
             args.insert(args.end(), {"--target", target});
         }
     }
-    auto process = runProcess(args, root_, std::chrono::minutes(3), 8 * 1024 * 1024);
+    checkBuildCancellation(cancellation);
+    if (selectedPresets)
+        selectedPresets->checkUnchanged();
+    auto process = runProcess(args, presetMode ? source : root_, timeout, 8 * 1024 * 1024, cancellation,
+                              {}, processOutputObserver(cancellation));
     Json result = {{"exitCode", process.exitCode},
                    {"output", process.output},
                    {"timedOut", process.timedOut},
-                   {"truncated", process.truncated}};
-    if (!process.exitCode) {
+                   {"truncated", process.truncated},
+                   {"cancelled", process.cancelled}};
+    if (!process.exitCode && !process.cancelled && !process.truncated &&
+        !(cancellation && cancellation->load())) {
+        if (selectedPresets)
+            selectedPresets->checkUnchanged();
         auto project = inspectLocked(value, true);
+        checkBuildCancellation(cancellation);
         saveProfile(value);
         result["project"] = std::move(project);
     } else

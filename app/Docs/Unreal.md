@@ -1,5 +1,10 @@
 # Solutions and Unreal Engine
 
+The reviewed cook/package workflow now has typed maps/container controls,
+per-attempt staging/archive/logs and shared cancellable native/UI/SDK/ABI2
+execution. Actual Unreal acceptance remains pending during the Kaspersky
+suspension; see [Unreal automation](UnrealAutomation.md).
+
 Use File > Open solution (Ctrl+O) to select a .sln or .uproject. A path can also
 be passed as the first argument, with --workspace, or dropped onto the application.
 File > New window launches an independent process; Open solution in
@@ -12,7 +17,8 @@ sources. Solution inspection does not evaluate MSBuild. For an Unreal project,
 normal desktop opening prepares its code analysis automatically as described below.
 External references have a context menu to open a separate instance; they do
 not widen the current workspace's document/MCP permissions. General Visual Studio
-solutions can be inspected and edited; a general MSBuild adapter remains pending.
+solutions can be inspected, edited and built through the shared
+[MSBuild adapter](MSBuild.md).
 
 An Unreal .uproject opens directly, including when no .sln exists. A matching
 .uproject beside a selected .sln is detected. A directory containing one Unreal
@@ -37,6 +43,8 @@ All operations share native services between the UI, CLI and CyToolsCore/MCP:
 | unreal.database / unreal_database | Run UBT -Mode=GenerateClangDatabase -ExecCodeGenActions into a managed analysis directory |
 | unreal.prepare / unreal_prepare | Prepare UHT/analysis automatically, or reuse a matching validated cache |
 | unreal.build / unreal_build | Build the selected target/platform/configuration with UBT |
+| unreal.automationPlan / unreal_automation_plan | Preview one typed UE5 cook/package action and managed output context |
+| unreal.automationRun / unreal_automation_run | Execute its issued preview once through the shared cancellable build owner |
 
 Native names use dots; MCP names are prefixed with op_ and use underscore IDs.
 Inputs are project, engineRoot, target, platform and configuration. Inspect needs
@@ -48,8 +56,10 @@ runtime is preferred. No shell command is assembled from project names. A discov
 Editor target and host platform are selected by default. Configurations are Debug,
 DebugGame, Development, Shipping and Test; platform choices require the corresponding
 Unreal SDK. Output is bounded to 8 MiB and operations currently have a 180-second
-deadline. The process tree is stopped at that limit. Immediate cancellation,
-streaming and longer user-configurable deadlines remain future work.
+default deadline. The native build service supports explicit cancellation and
+1..86400-second deadlines; see [Build cancellation](BuildCancellation.md).
+Automation has a separately reviewed 3600-second default. Streaming remains
+future work.
 
 Successful operations persist .cycode/unreal.json. Project generation writes the
 usual Unreal Intermediate/solution files. Analysis preparation runs UHT/code generators
@@ -67,7 +77,7 @@ headers. Preparation supplies these automatically; failures are reported in Buil
 with a retry in the Unreal panel. Unreal macros/types also have a small local completion
 catalogue while analysis is starting. Engine members and project symbols come from clangd.
 Assets are listed but are not text editors. Blueprint analysis, Unreal Editor
-automation, Live Coding, cooking/packaging, Unreal debugging and asset-aware
+automation, Live Coding, richer cooking/packaging, Unreal debugging and asset-aware
 refactoring are pending. C++ definition/reference navigation can open registered
 Engine/Source and Engine/Plugins sources in read-only tabs. Semantic C++ rename
 previews references across project files; it does not update serialized Unreal names

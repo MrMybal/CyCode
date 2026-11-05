@@ -4,6 +4,7 @@
 #include "cycode/TextFile.h"
 #include <imgui_internal.h>
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <thread>
@@ -88,6 +89,22 @@ struct ApplicationImageTests {
         io.AddMousePosEvent(center.x+40,center.y+20);frame(draw);io.AddMouseButtonEvent(2,false);frame(draw);
         require(view.state.canvas.view.origin.x!=origin.x || view.state.canvas.view.origin.y!=origin.y,"Middle mouse did not pan the image");
         view.zoom(1);frame(draw);require(view.state.canvas.view.zoom==1,"Actual-pixel zoom failed");
+        view.zoom(2);frame(draw);view.state.canvas.view.origin={10,20};frame(draw);
+        auto savedView=view.sessionState();savedView["pixelated"]=true;
+        const auto display=io.DisplaySize;
+        view.zoom(.5);frame(draw);view.restoreSession(savedView);
+        require(view.sessionState()==savedView,"Pending async/hidden image view was lost");
+        io.DisplaySize={1000,700};frame(draw);
+        const auto restoredView=view.sessionState();
+        require(restoredView.at("zoom")==2. && restoredView.at("pixelated")==true &&
+                !restoredView.at("fit").get<bool>() &&
+                std::abs(restoredView.at("centerX").get<double>()-savedView.at("centerX").get<double>())<.01 &&
+                std::abs(restoredView.at("centerY").get<double>()-savedView.at("centerY").get<double>())<.01,
+                "Image center/zoom/filter did not restore in a resized viewport");
+        auto resizedSource=savedView;resizedSource["width"]=savedView.at("width").get<int>()+1;
+        view.restoreSession(resizedSource);frame(draw);
+        require(view.sessionState().at("fit").get<bool>(),"Changed image dimensions reused an obsolete camera");
+        io.DisplaySize=display;frame(draw);
         write(workspace/"alpha.png","broken");app.reloadImage(image);
         wait([&] { app.updateImages();return !view.loading(); });
         require(!view.error().empty() && view.texture()->data.texture==texture,"Failed reload discarded a valid image");

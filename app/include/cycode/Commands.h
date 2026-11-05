@@ -18,6 +18,7 @@ class Keymap {
   public:
     struct Result { std::string command; bool consumed = false; };
     void load(const std::string &profile, const Json &overrides = Json::object());
+    void extensions(std::vector<Command> commands, Json defaults = Json::object());
     Result press(const std::string &stroke, double time, bool editor, bool document);
     void cancel();
     std::string pending(double time) const;
@@ -26,6 +27,8 @@ class Keymap {
     static std::vector<std::string> parse(const std::string &shortcut);
   private:
     std::vector<KeyBinding> bindings_;
+    std::vector<Command> extensionCommands_;
+    Json extensionDefaults_ = Json::object();
     std::vector<size_t> candidates_;
     size_t step_ = 0;
     double until_ = 0;

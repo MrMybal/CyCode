@@ -36,8 +36,14 @@ int main(int argc, char **argv) {
     SDL_Window *window = nullptr;
     SDL_GLContext glContext = nullptr;
     bool automated = false;
+    std::unique_ptr<cycode::NativeFileLease> installationLease;
     std::filesystem::path installation;
     try {
+#ifdef _WIN32
+        // SDL's class icons also apply to independently detached platform windows.
+        SDL_SetHint(SDL_HINT_WINDOWS_INTRESOURCE_ICON, "1");
+        SDL_SetHint(SDL_HINT_WINDOWS_INTRESOURCE_ICON_SMALL, "1");
+#endif
         if (!SDL_Init(SDL_INIT_VIDEO))
             throw std::runtime_error(SDL_GetError());
         cycode::LaunchOptions options;
@@ -52,6 +58,7 @@ int main(int argc, char **argv) {
         if (options.installation.empty())
             throw std::runtime_error("Cannot locate app/CyTool.json beside the CyCode installation");
         installation = options.installation;
+        installationLease=cycode::updates::installationUse(installation);
         std::string capture, testReport, capturePanel;
         cycode::Json testKeys = cycode::Json::array();
         std::string testProject;
@@ -78,6 +85,7 @@ int main(int argc, char **argv) {
                 options.language = next();
             else if (args[i] == "--keymap")
                 options.keymap = next();
+            else if (args[i] == "--disable-plugins") options.disablePlugins = true;
             else if (args[i] == "--terminal-profile") options.terminalProfile = next();
             else if (args[i] == "--show-options")
                 options.showOptions = true;
@@ -163,7 +171,7 @@ int main(int argc, char **argv) {
         {
             cycode::Application app(options, window);
             bool exit = false;
-            int frames = 0;
+            int frames = 0, idleFrames = 0;
             Uint64 gateStarted = 0;
             const auto started = SDL_GetTicks();
             SDL_Event queued{};
@@ -176,6 +184,8 @@ int main(int argc, char **argv) {
                     if (!testKeys.empty() && (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP ||
                         e.type == SDL_EVENT_TEXT_INPUT || e.type == SDL_EVENT_TEXT_EDITING)) return;
                     ImGui_ImplSDL3_ProcessEvent(&e);
+                    if(e.type==SDL_EVENT_WINDOW_SHOWN)
+                        app.applyWindowIcon(SDL_GetWindowFromID(e.window.windowID));
                     if (e.type == SDL_EVENT_QUIT || (e.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
                                                      e.window.windowID == SDL_GetWindowID(window)))
                         app.requestQuit();
@@ -241,9 +251,12 @@ int main(int argc, char **argv) {
                 ImGui::RenderPlatformWindowsDefault();
                 SDL_GL_MakeCurrent(window, glContext);
                 if (advanceTestFrame) ++frames;
+                // Async data can finish during this frame while ImGui queues
+                // tab selection/font updates for the next one. Capture settled UI.
+                idleFrames=app.busy()?0:std::min(idleFrames+1,4);
                 if (frameLimit && frames >= frameLimit &&
                     (!options.smoke || app.readyToCapture() || SDL_GetTicks() - started > 15000) &&
-                    (!testWaitIdle || !app.busy() || SDL_GetTicks() - started > 180000) &&
+                    (!testWaitIdle || idleFrames>=4 || SDL_GetTicks() - started > 180000) &&
                     (app.readyToFinishTests() || (!app.busy() && SDL_GetTicks() - started > 30000) || SDL_GetTicks() - started > 180000)) {
                     if (!testReport.empty()) {
                         auto path = cycode::utf8Path(testReport);
@@ -287,7 +300,7 @@ int main(int argc, char **argv) {
                 SDL_GL_SwapWindow(window);
                 if (options.smoke && frames >= frameLimit)
                     SDL_Delay(5);
-                exit |= app.shouldQuit();
+                exit |= app.shouldQuit() && app.finishQuit();
                 // Sleep on the OS event queue at rest instead of repainting at
                 // monitor refresh rate. Caret animation still receives 30 Hz.
                 if (!options.smoke && !app.busy() && !ImGui::IsAnyItemActive())

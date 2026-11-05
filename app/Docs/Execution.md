@@ -1,5 +1,36 @@
 # Run, terminal and debugging
 
+Bound Unreal run/launch now checks ordinary Editor output receipts, module
+BuildIds and recorded project files before dispatching a terminal or DAP launch.
+Configure still works before compiling. Desktop build-before-debug also requires
+a matching ready artifact assessment; actual process success and output readiness
+are distinct. Existing attach and unbound manual profiles are unchanged. This
+does not validate every dependency, source freshness or binary ABI; see
+[Unreal output inspection](UnrealArtifacts.md) and its pending actual acceptance.
+
+Bound Unreal profiles now retain their project/engine/target/platform/configuration
+and normalized launch options. Desktop compilation before debugging uses that
+context, then checks the captured profile/draft/build ID, matching successful
+result and open document identities/revisions before launching captured parameters.
+Cancellation, uncertainty or concurrent changes stop automatic launch. The native
+owner revalidates bound program/cwd/argv/runtime for configure and actual launch.
+Null detachment preserves manual profiles; SDK launch still does not compile.
+See [Unreal launch](UnrealLaunch.md) for scope and pending actual acceptance.
+
+The Unreal Engine panel now prepares UE4/UE5 editor, standalone game and uncooked
+server launch settings with map/listen/port/resolution/log options. Applying saves
+the common run/debug profile with an observed-profile conflict guard; no process
+starts until existing Run/Debug is used. Other saved environment/watch settings
+remain. SDK preparation/configuration share that owner and do not compile; actual
+Unreal execution remains unverified. See [Unreal launch](UnrealLaunch.md).
+
+ABI2 plugins can contribute stdio-DAP adapters to the same native debugger,
+selected explicitly in Launch configuration or through `debug_adapters` and
+`adapterId`/`adapterOptions`. Disable/change revokes their owned session. See
+[Plugin debuggers](PluginDebuggers.md) for manifests, payloads, process ownership
+and current runtime/adapter limits. The bundled Unreal extension supplies a
+CodeLLDB entry; this does not establish UnrealEditor debugging acceptance.
+
 The desktop and MCP use the same native Terminals and Debugger services. Windows
 x64 has been exercised with actual PowerShell/cmd, a C++ PDB executable, CodeLLDB,
 and a .NET 8 console assembly with portable PDBs through NetCoreDbg,
@@ -73,9 +104,12 @@ process ID; stopping that session detaches and leaves the existing process runni
 Native acceptance verifies this distinction. Process ownership is tied to native
 shutdown/workspace changes. Always use matching symbols and sufficiently unoptimized
 code. MSVC incremental-link thunks can produce disassembly-only stops; the source-level
-fixture disables incremental linking. Remote/core-dump workflows, data/function/exception
-breakpoint UIs, memory/register/disassembly tooling, reverse debugging, and full Unreal
-visualizers/Live Coding integration remain pending or unverified.
+fixture disables incremental linking. Capability-gated function/exception breakpoint
+controls, paged scopes/variables, register scopes, read-only memory and disassembly
+now use the same stopped-session guards. See [Advanced debugging](AdvancedDebugging.md)
+for contracts and currently unexecuted runtime acceptance. Data breakpoints,
+memory writes, remote/core-dump workflows, reverse debugging and full Unreal
+visualizers/Live Coding integration remain pending.
 
 ## C#/.NET runtime
 

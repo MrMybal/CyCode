@@ -1,4 +1,5 @@
 #include "cycode/LanguageClient.h"
+#include "cycode/LoopbackStream.h"
 #include "cycode/Tools.h"
 #include <array>
 #include <algorithm>
@@ -95,9 +96,8 @@ std::string LanguageClient::uriKey(const std::string &uri) {
     return key;
 }
 bool LanguageClient::start(const std::filesystem::path &root, const std::string &executable,
-                           const std::filesystem::path &compilationDatabase) {
+                           const std::filesystem::path &compilationDatabase, Json settings) {
     waitForWorkspace_ = false;
-    Json settings = Json::object();
     if (!compilationDatabase.empty()) settings["compilationDatabasePath"] = pathUtf8(compilationDatabase);
     return startImpl(root, {executable, "--background-index", "--log=error", "--header-insertion=never", "--completion-style=detailed"}, settings, false);
 }
@@ -109,6 +109,26 @@ bool LanguageClient::startRaw(const std::filesystem::path &root, const std::stri
 bool LanguageClient::startRaw(const std::filesystem::path &root, const std::vector<std::string> &argv, Json environment) { waitForWorkspace_ = false; return startImpl(root,argv,Json::object(),true,environment); }
 std::deque<Json> LanguageClient::receiveRaw() {
     std::lock_guard lock(mutex_); std::deque<Json> result; result.swap(incoming_); incomingBytes_ = 0; return result;
+}
+bool LanguageClient::connectRaw(std::uint16_t port) {
+    stop();
+    raw_ = true; waitForWorkspace_ = false; workspaceReady_ = false;
+    {
+        std::lock_guard lock(mutex_);
+        error_.clear(); logs_.clear(); incoming_.clear(); outgoing_.clear();
+        incomingBytes_ = 0; outgoingBytes_ = 0;
+    }
+    socket_ = std::make_unique<LoopbackStream>();
+    if (!socket_->connect(port)) {
+        socket_.reset();
+        std::lock_guard lock(mutex_);
+        error_ = "Cannot connect to the local Java debug adapter";
+        return false;
+    }
+    running_ = true;
+    reader_ = std::thread([this] { readLoop(); });
+    writer_ = std::thread([this] { writeLoop(); });
+    return true;
 }
 bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vector<std::string> &argv,
                               Json configuration, bool raw,const Json &overrides) {
@@ -130,6 +150,7 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     {
         std::lock_guard lock(mutex_);
         error_.clear();
+        logs_.clear();
         incoming_.clear();
         outgoing_.clear();
         outgoingBytes_ = 0;
@@ -270,8 +291,19 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
          {{"general", {{"positionEncodings", Json::array({"utf-16"})}}},
           {"experimental",{{"serverStatusNotification",true}}},
           {"window",{{"workDoneProgress",true}}},
-          {"workspace",{{"configuration",true},{"workspaceFolders",true},{"semanticTokens",{{"refreshSupport",true}}}}},
-          {"textDocument", {{"completion", {{"dynamicRegistration",false},{"insertTextMode",1},{"completionItem", {{"snippetSupport", true},{"insertReplaceSupport",true},{"insertTextModeSupport",{{"valueSet",Json::array({1,2})}}},{"resolveSupport",{{"properties",Json::array({"documentation","detail","additionalTextEdits","insertTextMode"})}}}}},{"completionList",{{"itemDefaults",Json::array({"commitCharacters","editRange","insertTextFormat","insertTextMode","data"})}}}}},
+          {"workspace",{{"configuration",true},{"workspaceFolders",true},
+              {"workspaceEdit",{{"documentChanges",true},{"failureHandling","textOnlyTransactional"},
+                  {"normalizesLineEndings",true},{"changeAnnotationSupport",{{"groupsOnLabel",false}}}}},
+              {"symbol",{{"dynamicRegistration",false},{"tagSupport",{{"valueSet",Json::array({1})}}},
+                  {"symbolKind",{{"valueSet",Json::array({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26})}}},
+                  {"resolveSupport",{{"properties",Json::array({"location.range"})}}}}},
+              {"semanticTokens",{{"refreshSupport",true}}}}},
+          {"textDocument", {{"documentHighlight",{{"dynamicRegistration",false}}},
+                             {"definition",{{"dynamicRegistration",false},{"linkSupport",true}}},
+                             {"declaration",{{"dynamicRegistration",false},{"linkSupport",true}}},
+                             {"typeDefinition",{{"dynamicRegistration",false},{"linkSupport",true}}},
+                             {"implementation",{{"dynamicRegistration",false},{"linkSupport",true}}},
+                             {"completion", {{"dynamicRegistration",false},{"insertTextMode",1},{"completionItem", {{"snippetSupport", true},{"insertReplaceSupport",true},{"insertTextModeSupport",{{"valueSet",Json::array({1,2})}}},{"resolveSupport",{{"properties",Json::array({"documentation","detail","additionalTextEdits","insertTextMode"})}}}}},{"completionList",{{"itemDefaults",Json::array({"commitCharacters","editRange","insertTextFormat","insertTextMode","data"})}}}}},
                              {"hover",{{"dynamicRegistration",false},{"contentFormat",Json::array({"plaintext"})}}},
                              {"signatureHelp",{{"dynamicRegistration",false},{"contextSupport",true},
                                  {"signatureInformation",{{"documentationFormat",Json::array({"plaintext"})},
@@ -279,9 +311,11 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
                              {"publishDiagnostics",{{"relatedInformation",false},{"versionSupport",true}}},
                              {"codeAction",{{"dynamicRegistration",false},{"isPreferredSupport",true},{"disabledSupport",true},{"dataSupport",true},
                                  {"codeActionLiteralSupport",{{"codeActionKind",{{"valueSet",Json::array({"","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports","source.fixAll"})}}}}},
-                                 {"resolveSupport",{{"properties",Json::array({"edit"})}}},{"honorsChangeAnnotations",false}}},
-                             {"rename",{{"prepareSupport",true},{"dynamicRegistration",false}}},
-                             {"semanticTokens",{{"dynamicRegistration",false},{"requests",{{"full",true}}},
+                                 {"resolveSupport",{{"properties",Json::array({"edit"})}}},{"honorsChangeAnnotations",true}}},
+                             {"rename",{{"prepareSupport",true},{"dynamicRegistration",false},{"honorsChangeAnnotations",true}}},
+                             {"callHierarchy",{{"dynamicRegistration",false}}},
+                             {"typeHierarchy",{{"dynamicRegistration",false}}},
+                             {"semanticTokens",{{"dynamicRegistration",false},{"requests",{{"full",{{"delta",true}}}}},
                                  {"tokenTypes",Json::array({"namespace","type","class","enum","interface","struct","typeParameter","parameter","variable","property","enumMember","event","function","method","macro","keyword","modifier","comment","string","number","regexp","operator","decorator","bracket","label","unknown","concept"})},
                                  {"tokenModifiers",Json::array({"declaration","definition","readonly","static","deprecated","abstract","async","modification","documentation","defaultLibrary","deduced","virtual","dependentName","usedAsMutableReference","usedAsMutablePointer","constructorOrDestructor","userDefined","functionScope","classScope","fileScope","globalScope"})},
                                  {"formats",Json::array({"relative"})},{"overlappingTokenSupport",false},{"multilineTokenSupport",false},{"augmentsSyntaxTokens",true}}},
@@ -305,9 +339,10 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     return true;
 }
 void LanguageClient::stop() {
-    capabilities_ = Json::object(); ++semanticGeneration_;
+    capabilities_ = Json::object(); ++semanticGeneration_; ++semanticRefreshGeneration_;
     running_ = false;
     outgoingReady_.notify_all();
+    if (socket_) socket_->shutdown();
     if (child_) {
 #ifdef _WIN32
         if (child_->process) {
@@ -341,6 +376,7 @@ void LanguageClient::stop() {
 #endif
     }
     child_.reset();
+    socket_.reset();
     callbacks_.clear();
     initialized_ = false;
     diagnostics_ = Json::object();diagnosticVersions_=Json::object();
@@ -348,8 +384,10 @@ void LanguageClient::stop() {
 }
 std::string LanguageClient::error() const {
     std::lock_guard lock(mutex_);
-    return error_;
+    const auto &text=error_.empty()&&!running_?logs_:error_;
+    return Json::parse(Json(text).dump(-1,' ',false,Json::error_handler_t::replace)).get<std::string>();
 }
+std::string LanguageClient::logs() const {std::lock_guard lock(mutex_);return Json::parse(Json(logs_).dump(-1,' ',false,Json::error_handler_t::replace)).get<std::string>();}
 bool LanguageClient::enqueue(Json message) {
     auto body = message.dump();
     std::lock_guard lock(mutex_);
@@ -449,7 +487,7 @@ void LanguageClient::poll() {
                 reply["result"] = values;
             } else if (method == "workspace/workspaceFolders") reply["result"] = workspaceFolders_;
             else if (method == "window/workDoneProgress/create") reply["result"] = nullptr;
-            else if (method == "workspace/semanticTokens/refresh") { ++semanticGeneration_; reply["result"] = nullptr; }
+            else if (method == "workspace/semanticTokens/refresh") { ++semanticGeneration_; ++semanticRefreshGeneration_; reply["result"] = nullptr; }
             else if (method == "workspace/applyEdit") reply["result"] = {{"applied",false},{"failureReason","Use the revision-checked change preview API"}};
             else if (method == "client/registerCapability" || method == "client/unregisterCapability")
                 reply["error"] = {{"code",-32601},{"message","Dynamic capability registration is not supported"}};
@@ -478,7 +516,18 @@ void LanguageClient::writeLoop() {
             outgoingBytes_ -= message.size() - message.find("\r\n\r\n") - 4;
         }
         size_t offset = 0;
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
         while (running_ && offset < message.size()) {
+            if (socket_) {
+                const auto sent = socket_->write(message.data() + offset, message.size() - offset);
+                if (sent < 0 || std::chrono::steady_clock::now() >= deadline) {
+                    { std::lock_guard lock(mutex_); error_ = "Java debug adapter write failed or timed out"; }
+                    running_ = false; outgoingReady_.notify_all(); break;
+                }
+                if (!sent) std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                else offset += static_cast<size_t>(sent);
+                continue;
+            }
 #ifdef _WIN32
             DWORD sent = 0;
             if (!WriteFile(child_->input, message.data() + offset,
@@ -506,6 +555,11 @@ void LanguageClient::readLoop() {
     while (running_) {
         char bytes[8192];
         std::string stderrText;
+        if (socket_) {
+            const auto count = socket_->read(bytes, sizeof(bytes));
+            if (count > 0) buffer.append(bytes, static_cast<size_t>(count));
+            else if (count < 0) running_ = false;
+        } else {
 #ifdef _WIN32
         DWORD available = 0, count = 0;
         if (PeekNamedPipe(child_->output, nullptr, 0, nullptr, &available, nullptr) && available) {
@@ -528,11 +582,12 @@ void LanguageClient::readLoop() {
         if (count > 0)
             stderrText.assign(bytes, static_cast<size_t>(count));
 #endif
+        }
         if (!stderrText.empty()) {
             std::lock_guard lock(mutex_);
-            error_ += stderrText;
-            if (error_.size() > 65536)
-                error_.erase(0, error_.size() - 65536);
+            logs_ += stderrText;
+            if (logs_.size() > 65536)
+                logs_.erase(0, logs_.size() - 65536);
         }
         if (buffer.size() > 16 * 1024 * 1024) {
             std::lock_guard lock(mutex_);

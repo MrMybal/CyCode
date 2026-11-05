@@ -17,6 +17,10 @@ static std::string trim(std::string text) {
     const auto first = text.find_first_not_of(" \t\r\n");
     return first == std::string::npos ? "" : text.substr(first, text.find_last_not_of(" \t\r\n") - first + 1);
 }
+bool isSolutionPath(const std::filesystem::path &path) {
+    const auto extension = lower(pathUtf8(path.extension()));
+    return extension == ".sln" || extension == ".slnx";
+}
 static std::filesystem::path solutionFile(const std::filesystem::path &entry) {
     if (!std::filesystem::is_directory(entry)) {
         const auto extension = lower(pathUtf8(entry.extension()));
@@ -24,16 +28,17 @@ static std::filesystem::path solutionFile(const std::filesystem::path &entry) {
         if (std::filesystem::is_regular_file(entry) && lower(pathUtf8(entry.extension())) == ".uproject") {
             auto solution = entry;
             solution.replace_extension(".sln");
+            if (!std::filesystem::is_regular_file(solution)) solution.replace_extension(".slnx");
             return std::filesystem::is_regular_file(solution) ? std::filesystem::canonical(solution)
                                                               : std::filesystem::path{};
         }
-        if (!std::filesystem::is_regular_file(entry) || lower(pathUtf8(entry.extension())) != ".sln")
-            throw std::runtime_error("Open a workspace directory, .sln solution or Unreal .uproject");
+        if (!std::filesystem::is_regular_file(entry) || !isSolutionPath(entry))
+            throw std::runtime_error("Open a workspace directory, .sln/.slnx solution or Unreal .uproject");
         return std::filesystem::canonical(entry);
     }
     std::filesystem::path found;
     for (const auto &item : std::filesystem::directory_iterator(entry))
-        if (item.is_regular_file() && lower(pathUtf8(item.path().extension())) == ".sln") {
+        if (item.is_regular_file() && isSolutionPath(item.path())) {
             if (!found.empty())
                 return {}; // Several solutions: let the user select one explicitly.
             found = item.path();
@@ -101,7 +106,7 @@ static std::string readText(const std::filesystem::path &path) {
     (void)Json(text).dump(); // Validate UTF-8 before it reaches the GUI or MCP.
     return text;
 }
-static Json reference(const std::filesystem::path &root, std::string value) {
+Json solutionReference(const std::filesystem::path &root, std::string value) {
     std::replace(value.begin(), value.end(), '\\', '/');
     auto path = utf8Path(value);
     // Keep Windows absolute references external when inspecting the same solution on Unix.
@@ -119,6 +124,8 @@ Json inspectSolution(const std::filesystem::path &entry) {
     const auto file = solutionFile(entry);
     if (file.empty())
         return nullptr;
+    if (lower(pathUtf8(file.extension())) == ".slnx")
+        return inspectXmlSolution(file, readText(file));
     std::istringstream input(readText(file));
     std::string line, section;
     bool header = false;
@@ -143,7 +150,7 @@ Json inspectSolution(const std::filesystem::path &entry) {
             bool folder = lower(match[1]) == "{2150e333-8fdc-42a3-9474-1a3956d46de8}";
             auto item = folder
                             ? Json{{"path", ""}, {"relativePath", ""}, {"exists", true}, {"external", false}}
-                            : reference(file.parent_path(), match[3]);
+                            : solutionReference(file.parent_path(), match[3]);
             item.update({{"id", id},
                          {"name", match[2].str()},
                          {"type", match[1].str()},
@@ -182,7 +189,7 @@ Json inspectSolution(const std::filesystem::path &entry) {
         }
         else if (section == "items" && current >= 0 && line.find('=') != std::string::npos)
             projects[size_t(current)]["items"].push_back(
-                reference(file.parent_path(), trim(line.substr(0, line.find('=')))));
+                solutionReference(file.parent_path(), trim(line.substr(0, line.find('=')))));
     }
     if (!header)
         throw std::runtime_error("Invalid Visual Studio solution header");

@@ -1,5 +1,13 @@
 # Language support
 
+Java launch/attach debugging now uses JDT LS with the separately installed Microsoft
+java-debug bundle and shared DAP services. Project tasks provides explicit actual
+main/runtime-classpath launch profiles, while JDWP attach uses independent saved
+host/port/timeout fields and detaches existing JVMs. Manual Hot Code Replace builds
+the imported JDT model then requests redefineClasses with guarded session/documents
+and matched cancellation. JVM support and matching source/output mappings are
+required; runtime/network/GUI acceptance remains pending. See [Java debugging](JavaDebugging.md).
+
 CyCode and CyCodeReader share a native, incremental Tree-sitter syntax layer for
 Rust, Java, JavaScript/JSX, TypeScript/TSX, HTML and CSS. HTML script/style blocks
 use the JavaScript/CSS parsers. Strings, nested Rust comments, raw strings and
@@ -11,6 +19,23 @@ take precedence over syntax while protecting strings/comments.
 
 Language services belong to CyCode's native core; Reader hosts the shared syntax
 layer, not project analysis or language servers.
+
+Semantic coloring now negotiates full/delta transport for any connected server
+advertising it, with bounded per-worker bases and a full-request fallback.
+Existing Unicode/revision and display guards remain. Backend/GUI acceptance is
+pending; see [semantic token updates](SemanticTokenUpdates.md).
+
+Versioned diagnostics now feed CodeEditor squiggles and message tooltips with
+native revision/UTF-16 guards and theme roles. Unversioned advisory reports remain
+in Problems. See [Editor diagnostics](EditorDiagnostics.md) for provider limits,
+display budgets and unexecuted runtime acceptance.
+
+Python/Pyright and GLSL Analyzer now use the same native service router, and ABI2
+plugins can add file selectors/LSP backends without a process-global registry.
+Problems includes editable per-project argv/settings, session-only opt-out and
+separate server logs. See [language preferences](LanguagePreferences.md).
+See [Development workflows](DevelopmentWorkflows.md) for the installer, exact pins,
+supported methods and the configurable but unverified HLSL backend.
 
 | Files | Native language server | Connected operations |
 |---|---|---|
@@ -24,7 +49,7 @@ layer, not project analysis or language servers.
 
 The Problems panel shows the availability, state and enable/restart/disable
 controls for each server. The IDE starts installed additional servers when their
-files are first opened. The core/CLI/MCP starts those backends only after an
+files are first opened, preserving saved disables. The core/CLI/MCP starts those backends only after an
 explicit `language_configure` operation authorized with `process.execute`.
 Inspection and read-only queries never enable them. Servers are independent child
 processes with bounded queues/output and owned process-tree lifetimes. Rust and
@@ -188,7 +213,17 @@ Installed programs can also be selected with `CYCODE_NODE`, `CYCODE_JAVA`,
 `CYCODE_RUST_ANALYZER`, `CYCODE_CLANGD` and the existing C# overrides.
 Cargo, npm and standalone Java build/run tasks now share the native project service
 and the existing shortcuts; Cargo targets also feed the native debugger. See
-[Project tasks](ProjectTasks.md). Java/web debug adapters, Maven/Gradle integration,
+[Project tasks](ProjectTasks.md) and [Cargo workspaces](CargoBuilds.md) for the
+workspace/features/profile/target additions and pending expanded acceptance.
+The explicit Cargo-to-Rust analysis action copies supported manifest/feature/
+resolution options to initialization and server configuration, with optional
+local preference persistence. It does not adopt later task edits automatically
+or reproduce custom compilation profiles; see [Rust analysis](RustAnalysis.md).
+An installed named Rustup toolchain can now be selected for Cargo and explicitly
+copied into the analysis snapshot. It uses the existing native process owners
+without requesting installation; see [Rust toolchains](RustToolchains.md) for
+analyzer component/custom argv behavior and pending runtime acceptance.
+Java/web debug adapters, broader Maven/Gradle integration,
 framework previews, remaining server-specific code actions, advanced refactoring and external
 standard-library source navigation remain separate work. Linux/macOS builds and
 runtime behavior remain unverified.

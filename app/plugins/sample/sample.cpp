@@ -3,7 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 static const char *stats(const char *input) {
-    static std::string result;
+    static thread_local std::string result;
     try {
         auto text = nlohmann::json::parse(input).value("text", std::string{});
         size_t words = 0, lines = text.empty() ? 0 : 1;

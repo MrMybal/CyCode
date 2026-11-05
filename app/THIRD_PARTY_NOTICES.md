@@ -7,6 +7,8 @@ corresponding runtime package, as detailed below.
 
 | Component | License | Source |
 |---|---|---|
+| Monocypher 4.0.3 | BSD-2-Clause or CC0-1.0, [local notice](licenses/Monocypher.txt) | https://monocypher.org ; release archive and SHA-256 pinned in app/dependencies.lock.json; Ed25519 and SHA-512 for plugin packages |
+| TinyXML2 | zlib, [local notice](licenses/TinyXML2.txt) | https://github.com/leethomason/tinyxml2, commit 9148bdf719e997d1f474be6bcc7943881046dba1; app/dependencies.lock.json |
 | CyUI | [MIT license](https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE) ([local copy](licenses/CyUI.txt)) | [Official repository](https://github.com/MrMybal/CyUI), pinned by app/cyui-source.lock.json |
 | Dear ImGui | MIT | https://github.com/ocornut/imgui |
 | TextEditor | MIT | CyUI snapshot of https://github.com/goossens/ImGuiColorTextEdit |
@@ -94,3 +96,12 @@ Image previews include the pinned stb_image decoder (MIT or Unlicense, notice
 in licenses/stb.txt) and the decoder-only libwebp target (notices in
 licenses/libwebp-COPYING.txt, libwebp-PATENTS.txt and libwebp-AUTHORS.txt).
 The source archives remain under runtime/deps; they are not copied into app.
+
+Optional Python analysis uses Microsoft Pyright 1.1.411 (MIT), pinned in
+language-tools.lock.json. Its notice and typeshed fallback notice are retained in
+licenses/Pyright.txt and licenses/Typeshed.txt; the complete upstream notices/stub
+metadata remain in the private package. Node.js is an installed prerequisite.
+Optional GLSL analysis uses nolanderc/glsl_analyzer 1.7.1 under GNU GPL v3, with
+the original text in licenses/GLSL-Analyzer.txt and corresponding source at
+https://github.com/nolanderc/glsl_analyzer/tree/v1.7.1. Language-server archives are
+development/runtime prerequisites and are not added to the application ZIP.

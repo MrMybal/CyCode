@@ -1,5 +1,7 @@
 #include "cycode/Engine.h"
+#include "cycode/SymbolCatalogue.h"
 #include "cycode/TextEdits.h"
+#include "cycode/ChangeAnnotations.h"
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
@@ -67,7 +69,7 @@ Json Engine::sourceLocationLocked(const std::string &uri, const Json &range, boo
     if (!includeExternal) return nullptr;
     auto extension = pathUtf8(path.extension());
     std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    if (!LanguageService::supports(pathUtf8(path)) && extension != ".inc" && extension != ".tpp") return nullptr;
+    if (!language_.accepts(pathUtf8(path)) && extension != ".inc" && extension != ".tpp") return nullptr;
     if (std::none_of(sdkRoots_.begin(), sdkRoots_.end(), [&](const auto &root) { return containsPath(root, path); })) return nullptr;
     std::string handle;
     for (const auto &[key, source] : externalSources_) if (source.path == path) { handle = key; break; }
@@ -97,8 +99,8 @@ Json Engine::sourceOperation(const std::string &method, const Json &params) {
         if (doc.bom) raw.erase(0, 3);
         doc.crlf = raw.find("\r\n") != std::string::npos;
         doc.crOnly = raw.find('\r') != std::string::npos && raw.find('\n') == std::string::npos;
-        doc.text = normalized(raw); doc.saved = doc.text; doc.revision = nextRevision_++;
-        source.loaded = true; language_.sync(pathUtf8(source.path), doc.text, doc.revision);
+        doc.text = normalized(raw); doc.saved = doc.text; doc.revision = nextRevision_++; doc.identity = nextDocumentIdentity_++;
+        source.loaded = true; language_.sync(pathUtf8(source.path), doc.text, doc.revision, doc.identity);
     }
     auto result = documentJson(handle, source.document);
     result["readOnly"] = true; result["displayPath"] = pathUtf8(source.path);
@@ -114,67 +116,154 @@ std::pair<Engine::Document *, fs::path> Engine::semanticDocumentLocked(const std
 }
 Json Engine::symbolQuery(const std::string &method, const Json &params) {
     std::future<Json> future;
-    std::uint64_t revision = 0, generation;
+    uint64_t revision = 0, identity = 0, generation = 0, context = 0, diskGeneration = 0, epoch = 0;
     const bool document = method == "language.documentSymbols";
-    const auto key = document ? params.at("path").get<std::string>() : "";
+    std::string key = document ? params.at("path").get<std::string>() : "", backend, uri;
     fs::path source;
     {
         std::lock_guard lock(mutex_);
         Json request;
         if (document) {
             auto [doc, full] = semanticDocumentLocked(key);
-            revision = doc->revision; source = full;
-            if (revision != params.at("expectedRevision")) throw std::runtime_error("RevisionConflict: document changed; read it again");
-            request = {{"textDocument", {{"uri", LanguageClient::uri(full)}}}};
+            revision = doc->revision; identity = doc->identity; source = full;
+            if (revision != params.at("expectedRevision") || (params.contains("expectedDocumentId") && params.at("expectedDocumentId") != identity))
+                throw std::runtime_error("RevisionConflict: document changed; read it again");
+            if (!externalSources_.contains(key)) key = pathUtf8(full.lexically_relative(root_));
+            uri = LanguageClient::uri(full);
+            backend = language_.backend(pathUtf8(full));
+            request = {{"textDocument", {{"uri", uri}}}};
         } else {
-            auto query = params.value("query", "");
-            if (query.size() > 256) throw std::runtime_error("Symbol query exceeds 256 bytes");
-            const auto backend = params.value("language","cpp");
-            const auto &backends=languageBackends();
-            if (std::find(backends.begin(),backends.end(),backend)==backends.end()) throw std::runtime_error("Unknown symbol search language");
-            request = {{"query", query}, {"cycodeLanguage",backend}};
+            const auto query = params.value("query", "");
+            if (query.size() > 256 || query.find('\0') != query.npos) throw std::runtime_error("Invalid symbol query (maximum 256 UTF-8 bytes)");
+            backend = params.value("language", "cpp");
+            if (!language_.hasBackend(backend)) throw std::runtime_error("Unknown symbol search language");
+            request = {{"query", query}, {"cycodeLanguage", backend}};
         }
-        generation = nextRevision_;
+        epoch = language_.backendEpoch(backend);
+        if (params.contains("expectedEpoch") && params.at("expectedEpoch") != epoch)
+            throw std::runtime_error("RevisionConflict: language configuration changed");
+        generation = nextRevision_; context=hierarchyGeneration_; diskGeneration=monitor_.snapshot().revision;
         future = language_.request(document ? "textDocument/documentSymbol" : "workspace/symbol", request);
     }
-    auto response = future.get();
+    const auto response = future.get();
     std::lock_guard lock(mutex_);
-    if (generation != nextRevision_) throw std::runtime_error("RevisionConflict: workspace changed during symbol query");
-    Json symbols = Json::array(); std::set<std::string> unique;
-    size_t outside = 0; bool truncated = false;
+    if (epoch != language_.backendEpoch(backend)) throw std::runtime_error("RevisionConflict: language configuration changed during symbol query");
+    const Document *current = nullptr;
+    if (document) {
+        if (const auto found = externalSources_.find(key); found != externalSources_.end()) {
+            if (found->second.loaded) current = &found->second.document;
+        } else if (const auto found = documents_.find(key); found != documents_.end()) current = &found->second;
+        if (!current || current->identity != identity || current->revision != revision)
+            throw std::runtime_error("RevisionConflict: symbol document was edited, closed or replaced");
+    } else if (generation != nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision) throw std::runtime_error("RevisionConflict: workspace changed during symbol query");
+    std::optional<SymbolTextBounds> bounds;
+    if (document) bounds.emplace(current->text);
     const auto limit = static_cast<size_t>(std::clamp(params.value("limit", 200), 1, 1000));
-    const bool types = params.value("typesOnly", false), external = params.value("includeExternal", false);
-    std::function<void(const Json &, const std::string &, size_t)> collect = [&](const Json &list, const std::string &container, size_t depth) {
-        if (!list.is_array() || depth > 64) return;
-        for (const auto &item : list) {
-            if (!item.is_object()) continue;
-            const auto name = item.value("name", ""), parent = item.value("containerName", container);
-            const int kind = item.value("kind", 0);
-            auto location = item.value("location", Json::object());
-            auto range = item.value("selectionRange", location.value("range", item.value("range", Json())));
-            const auto uri = location.value("uri", document ? LanguageClient::uri(source) : "");
-            if (!name.empty() && range.is_object() && (!types || kind == 5 || kind == 10 || kind == 11 || kind == 23 || kind == 26)) {
-                Json target;
-                try { target = sourceLocationLocked(uri, range, external); } catch (const std::exception &) { target = nullptr; }
-                if (target.is_null()) ++outside;
-                else {
-                    target.update({{"name", name}, {"kind", kind}, {"container", parent}, {"detail", item.value("detail", "")}});
-                    if (unique.insert(target.dump()).second) {
-                        if (symbols.size() < limit) symbols.push_back(std::move(target)); else truncated = true;
-                    }
-                }
+    pruneSymbolSessionsLocked();
+    SymbolSession session;
+    session.backend=backend; session.epoch=epoch; session.generation=generation; session.context=context; session.diskGeneration=diskGeneration;
+    session.includeExternal=params.value("includeExternal", false);
+    auto result = collectSymbols(response, uri, limit, params.value("typesOnly", false),
+        [&](const std::string &targetUri, const Json &selection, const Json &extent) -> Json {
+            if (document) {
+                if (LanguageClient::uriKey(targetUri) != LanguageClient::uriKey(uri))
+                    throw std::runtime_error("Document symbol belongs to another source");
+                if (!bounds->accepts(selection) || !bounds->accepts(extent))
+                    throw std::runtime_error("Symbol range is outside the live UTF-16 buffer");
             }
-            if (item.contains("children")) collect(item.at("children"), parent.empty() ? name : parent + "::" + name, depth+1);
-        }
-    };
-    collect(response, "", 0);
-    Json result = {{"symbols", symbols}, {"outsideWorkspace", outside}, {"truncated", truncated}, {"positionEncoding", "utf-16"}};
-    if (document) { result["path"] = key; result["revision"] = revision; }
+            return sourceLocationLocked(targetUri, selection, params.value("includeExternal", false));
+        }, document ? PendingSymbolResolver{} : PendingSymbolResolver{[&](const std::string &targetUri, const Json &item) -> Json {
+            auto target=sourceLocationLocked(targetUri, Json(), session.includeExternal);
+            if (target.is_null()) return nullptr;
+            const auto bytes=item.dump().size();
+            if (bytes>64*1024 || session.items.size()>=1000 || bytes>1024*1024-session.bytes)
+                throw std::runtime_error("Workspace symbol resolve data exceeds the session budget");
+            target.erase("range"); target["unresolved"]=true; target["resolveIndex"]=session.items.size();
+            session.items.push_back(item); session.bytes+=bytes;
+            return target;
+        }});
+    for (const auto &row:result.at("symbols")) if (row.value("unresolved", false))
+        session.descriptions[std::to_string(row.at("resolveIndex").get<size_t>())]=row.at("node");
+    if (!session.descriptions.empty()) {
+        const auto id="ws-symbol-"+std::to_string(nextSymbolSession_++);
+        symbolSessions_.emplace(id,std::move(session));
+        pruneSymbolSessionsLocked(); result["session"]=id;
+    }
+    result["backend"] = backend; result["epoch"] = epoch;
+    if (document) { result["path"] = key; result["revision"] = revision; result["documentId"] = identity; }
+    return result;
+}
+void Engine::pruneSymbolSessionsLocked() {
+    const auto now=std::chrono::steady_clock::now();
+    std::erase_if(symbolSessions_,[&](const auto &entry) {
+        return now-entry.second.created>std::chrono::minutes(2);
+    });
+    while (symbolSessions_.size()>4) {
+        const auto oldest=std::min_element(symbolSessions_.begin(),symbolSessions_.end(),[](const auto &a,const auto &b) {
+            return a.second.created<b.second.created;
+        });
+        symbolSessions_.erase(oldest);
+    }
+}
+Json Engine::resolveSymbol(const Json &params) {
+    const auto id=params.at("session").get<std::string>();
+    if (id.empty() || id.size()>40 || (!params.at("index").is_number_unsigned() && !params.at("index").is_number_integer()))
+        throw std::runtime_error("Invalid workspace symbol reference");
+    const auto index=params.at("index").get<int64_t>();
+    if (index<0 || index>=1000) throw std::runtime_error("Invalid workspace symbol index");
+    const auto slot=std::to_string(index);
+    std::future<Json> future;
+    Json original;
+    std::string backend;
+    uint64_t epoch=0,generation=0,context=0,diskGeneration=0;
+    bool includeExternal=false;
+    {
+        std::lock_guard lock(mutex_);
+        pruneSymbolSessionsLocked();
+        const auto found=symbolSessions_.find(id);
+        if (found==symbolSessions_.end() || !found->second.descriptions.contains(slot))
+            throw std::runtime_error("Unknown or expired workspace symbol; search again");
+        auto &session=found->second;
+        backend=session.backend; epoch=session.epoch; generation=session.generation; context=session.context; diskGeneration=session.diskGeneration; includeExternal=session.includeExternal;
+        if (generation!=nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision || epoch!=language_.backendEpoch(backend) ||
+            (params.contains("expectedEpoch") && params.at("expectedEpoch")!=epoch))
+            throw std::runtime_error("RevisionConflict: workspace or language configuration changed; search again");
+        if (session.resolved.contains(slot)) return session.resolved.at(slot);
+        original=session.items.at(static_cast<size_t>(index));
+        auto request=original; request["cycodeLanguage"]=backend;
+        future=language_.request("workspaceSymbol/resolve",request);
+    }
+    const auto response=future.get();
+    std::lock_guard lock(mutex_);
+    pruneSymbolSessionsLocked();
+    const auto found=symbolSessions_.find(id);
+    if (found==symbolSessions_.end() || generation!=nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision || epoch!=language_.backendEpoch(backend))
+        throw std::runtime_error("RevisionConflict: symbol session expired or workspace/language changed during resolution");
+    if (!response.is_object() || response.value("name",Json())!=original.at("name") ||
+        response.value("kind",Json())!=original.at("kind") || !response.contains("location") ||
+        response.at("location").value("uri",Json())!=original.at("location").at("uri"))
+        throw std::runtime_error("Language server resolved a different workspace symbol");
+    // Only the advertised lazy property is trusted. Retain the issued metadata/data.
+    auto resolved=original;
+    resolved["location"]["range"]=response.at("location").at("range");
+    auto report=collectSymbols(Json::array({resolved}),"",1,false,
+        [&](const std::string &uri,const Json &range,const Json &) {
+            return sourceLocationLocked(uri,range,includeExternal);
+        });
+    if (report.at("symbols").size()!=1)
+        throw std::runtime_error("Resolved workspace symbol has an invalid or unavailable source location");
+    auto row=std::move(report.at("symbols").at(0));
+    row["node"]=found->second.descriptions.at(slot);
+    Json result={{"symbol",std::move(row)},{"backend",backend},{"epoch",epoch},{"positionEncoding","utf-16"}};
+    const auto bytes=result.dump().size();
+    if (bytes<=1024*1024-found->second.bytes && !found->second.resolved.contains(slot)) {
+        found->second.bytes+=bytes; found->second.resolved[slot]=result;
+    }
     return result;
 }
 Json Engine::prepareChange(const std::string &method, const Json &params) {
     const auto key = pathUtf8(resolve(params.at("path").get<std::string>()).lexically_relative(root_));
-    if (!LanguageService::supports(key)) throw std::runtime_error("No language backend for this file type");
+    if (!language_.accepts(key)) throw std::runtime_error("No language backend for this file type");
     std::string before, oldName; std::uint64_t revision, generation;
     Json request;
     const bool rename = method == "language.rename";
@@ -219,7 +308,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
         // CSS supports rename without prepareRename. Its symbol range is the
         // current selector identifier; the server still computes every edit.
         Json prepared;
-        if (languageBackend(key)=="css") {
+        if (language_.backend(key)=="css") {
             const auto offset=utf16Offset(before,request.at("position"));size_t a=offset,b=offset;
             auto identifier=[](unsigned char c) { return c>=128 || std::isalnum(c) || c=='_' || c=='-'; };
             while (a && identifier(before[a-1])) --a;
@@ -235,7 +324,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
         if (b <= a) throw std::runtime_error("The selected symbol has no renameable range");
         oldName = before.substr(a, b-a);
         request["newName"] = params.at("newName");
-        if (languageBackend(key)=="css" && (oldName.starts_with('.') || oldName.starts_with('#'))) {
+        if (language_.backend(key)=="css" && (oldName.starts_with('.') || oldName.starts_with('#'))) {
             auto name=request.at("newName").get<std::string>();
             if (!name.starts_with('.') && !name.starts_with('#')) request["newName"]=oldName.substr(0,1)+name;
         }
@@ -304,7 +393,8 @@ Json Engine::workspaceEditFilesLocked(const Json &supplied) {
 }
 
 Json Engine::workspaceChangeLocked(const std::string &title,const Json &edits,const std::string &oldName,bool onlyOpened) {
-    const auto files=workspaceEditFilesLocked(edits);
+    const auto annotated=normalizeChangeAnnotations(workspaceEditFilesLocked(edits),edits.is_null()?Json::object():edits.value("changeAnnotations",Json::object()));
+    const auto &files=annotated.files;
     ChangePlan plan; plan.title = title; size_t total = 0; std::set<std::string> paths;
     for (auto i = files.begin(); i != files.end(); ++i) {
         const auto path = i.key();
@@ -322,6 +412,9 @@ Json Engine::workspaceChangeLocked(const std::string &title,const Json &edits,co
         if (total > 16 * 1024 * 1024) throw std::runtime_error("Refactoring preview exceeds 16 MiB");
         plan.files.push_back({path, doc.text, std::move(edited.text), doc.disk, std::move(edited.edits), doc.revision});
     }
+    Json effective=Json::object();
+    for(const auto &file:plan.files)effective[file.path]=file.edits;
+    plan.annotations=usedChangeAnnotations(annotated.annotations,effective);
     return storeChange(std::move(plan));
 }
 Json Engine::storeChange(ChangePlan plan) {
@@ -333,6 +426,14 @@ Json Engine::storeChange(ChangePlan plan) {
         changes_.erase(oldest);
     }
     const auto id = "change-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-" + std::to_string(nextChange_++);
+    std::map<std::string,std::string> annotationIds;
+    for(auto &annotation:plan.annotations) {
+        const auto previous=annotation.at("id").get<std::string>();
+        annotationIds[previous]=id+":"+previous;annotation["id"]=annotationIds.at(previous);
+    }
+    for(auto &file:plan.files)for(auto &edit:file.edits)if(edit.contains("annotationId"))
+        edit["annotationId"]=annotationIds.at(edit.at("annotationId").get<std::string>());
+    if(plan.annotations.dump().size()>512*1024)throw std::runtime_error("Issued change annotations exceed 512 KiB");
     changes_.emplace(id, std::move(plan));
     return changeDescription(id);
 }
@@ -340,7 +441,7 @@ Json Engine::changeDescription(const std::string &id) const {
     const auto &plan = changes_.at(id);
     Json files = Json::array(); size_t edits = 0;
     for (const auto &file : plan.files) { edits += file.edits.size(); files.push_back({{"path", file.path}, {"expectedRevision", file.revision}, {"editCount", file.edits.size()}}); }
-    return {{"id", id}, {"title", plan.title}, {"state", plan.state}, {"files", files}, {"editCount", edits}};
+    return {{"id", id}, {"title", plan.title}, {"state", plan.state}, {"files", files}, {"editCount", edits}, {"annotations",plan.annotations}};
 }
 Json Engine::changeOperation(const std::string &method, const Json &params) {
     std::lock_guard lock(mutex_);
@@ -350,11 +451,15 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
     auto &plan = found->second;
     if (method == "changes.preview") {
         const auto path = params.at("path").get<std::string>();
-        for (const auto &file : plan.files) if (file.path == path) return {{"id", id}, {"path", path}, {"before", file.before}, {"after", file.after}, {"edits", file.edits}};
+        for (const auto &file : plan.files) if (file.path == path) {
+            const auto annotations=usedChangeAnnotations(plan.annotations,Json{{path,file.edits}});
+            return {{"id", id}, {"path", path}, {"before", file.before}, {"after", file.after}, {"edits", file.edits}, {"annotations",annotations}};
+        }
         throw std::runtime_error("Document is not part of this refactoring");
     }
     const bool undo = method == "changes.undo";
     if (plan.state != (undo ? "applied" : "preview")) throw std::runtime_error("Refactoring is not in the expected state");
+    if (!undo) confirmChangeAnnotations(plan.annotations,params.value("confirmedAnnotations",Json::array()));
     // Validate EVERY affected buffer and disk baseline before mutating ANY buffer.
     for (const auto &file : plan.files) {
         auto doc = documents_.find(file.path);
@@ -365,9 +470,11 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
         auto &doc = documents_.at(file.path);
         doc.text = undo ? file.before : file.after; doc.revision = nextRevision_++; doc.dirty = doc.text != doc.saved;
         if (!undo) file.appliedRevision = doc.revision;
-        language_.sync(file.path, doc.text, doc.revision);
+        language_.sync(file.path, doc.text, doc.revision, doc.identity);
     }
     plan.state = undo ? "undone" : "applied";
+    for(const auto &file:plan.files)documentEvent("document.changed",file.path,documents_.at(file.path),id);
+    events_.publish("transaction.committed",{{"id",id},{"action",undo?"undo":"apply"},{"documents",plan.files.size()}});
     return changeDescription(id);
 }
 } // namespace cycode

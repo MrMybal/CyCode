@@ -3,6 +3,7 @@
 #include "cycode/TextEdits.h"
 #include <fstream>
 #include <iostream>
+#include <thread>
 using namespace cycode;
 namespace fs=std::filesystem;
 static void require(bool condition,const std::string &message) { if (!condition) throw std::runtime_error(message); }
@@ -43,6 +44,20 @@ int main(int argc,char **argv) {
             auto types=engine.dispatch("documents.read",{{"path","types.hpp"}});
             auto query=[&](const std::string &path,const Json &doc) { return engine.dispatch("language.highlight",{{"path",path},{"expectedRevision",doc.at("revision")}}); };
             const auto result=query("main.cpp",main), declarations=query("types.hpp",types);
+            auto publishedRevision=[&](const Json &document) {
+                const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(10);
+                while(std::chrono::steady_clock::now()<deadline) {
+                    const auto status=engine.languageStatus().at("servers").at("cpp");
+                    const auto revisions=status.at("diagnosticRevisions");
+                    if(revisions.contains("main.cpp")&&revisions.at("main.cpp").at("revision")==document.at("revision")) {
+                        require(status.at("diagnostics").contains(revisions.at("main.cpp").at("uri").get<std::string>()),"Eligible diagnostic publication has no source data");
+                        return;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                }
+                throw std::runtime_error("clangd did not publish diagnostics for the current native revision");
+            };
+            publishedRevision(main);
             require(result.at("supported") && !result.at("truncated"),"clangd full-token capability");
             require(typeToken(token(result,source,"WidgetAlias")),"Actual alias classification");
             require(token(result,source,"Compute").at("type")=="method","Actual method classification");
@@ -56,6 +71,7 @@ int main(int argc,char **argv) {
             const auto originalRevision=main.at("revision");
             const auto live=source+"using LocalAlias = Widget;\n";
             main=engine.dispatch("documents.replace",{{"path","main.cpp"},{"expectedRevision",originalRevision},{"text",live}});
+            (void)query("main.cpp",main);publishedRevision(main);
             require(typeToken(token(query("main.cpp",main),live,"LocalAlias")),"Unsaved aliases use live document");
             bool stale=false;
             try { engine.dispatch("language.highlight",{{"path","main.cpp"},{"expectedRevision",originalRevision}}); } catch (const std::exception &e) { stale=std::string(e.what()).starts_with("RevisionConflict"); }

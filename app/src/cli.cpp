@@ -1,4 +1,6 @@
 #include "cycode/Bridge.h"
+#include "cycode/Tools.h"
+#include "cycode/Updates.h"
 #include <iostream>
 #ifdef _WIN32
 // clang-format off
@@ -25,17 +27,22 @@ int main(int argc, char **argv) {
         for (int i = 0; i < argc; ++i)
             arguments.emplace_back(argv[i]);
 #endif
+        bool disablePlugins=false;
+        if(arguments.size()>1&&arguments[1]=="--disable-plugins") { disablePlugins=true;arguments.erase(arguments.begin()+1); }
         argc = static_cast<int>(arguments.size());
         if (argc == 2 && arguments[1] == "--version") {
             std::cout << "CyCode " << CYCODE_VERSION << '\n';
             return 0;
         }
         if (argc < 3) {
-            std::cerr << "Usage: cycode_cli WORKSPACE METHOD [PARAMETERS_JSON]\n       cycode_cli WORKSPACE "
+            std::cerr << "Usage: cycode_cli [--disable-plugins] WORKSPACE METHOD [PARAMETERS_JSON]\n       cycode_cli WORKSPACE "
                          "--serve DESCRIPTOR\n";
             return 2;
         }
-        cycode::Engine engine(cycode::utf8Path(arguments[1]));
+        const auto installation=cycode::installationRoot();
+        const auto installationLease=installation.empty() ? nullptr : cycode::updates::installationUse(installation);
+        cycode::Engine engine(cycode::utf8Path(arguments[1]), installation.empty() ? std::filesystem::path{} : installation / "data/settings/language-servers");
+        if(!disablePlugins&&!installation.empty())engine.plugins().loadInstalled(installation);
         if (arguments[2] == "--serve") {
             if (argc < 4)
                 return 2;

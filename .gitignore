@@ -1,7 +1,10 @@
 /runtime/
+/output/
 /data/
 /.cycode/
 /CyCode.exe
+/CyCodeUpdater.exe
+/cycode_cli.exe
 /CyCodeReader.exe
 /CyCode
 /CyCodeReader
@@ -26,3 +29,4 @@ __pycache__/
 /.idea/
 /gitleaks-report.*
 *.cycode-save-*
+/extensions-managed/

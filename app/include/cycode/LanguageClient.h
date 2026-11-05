@@ -2,6 +2,7 @@
 #include "cycode/Process.h"
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
 #include <deque>
 #include <functional>
 #include <map>
@@ -9,6 +10,7 @@
 #include <nlohmann/json.hpp>
 #include <thread>
 namespace cycode {
+class LoopbackStream;
 using Json = nlohmann::json;
 // Single-owner LSP transport. Callbacks run on the thread calling poll().
 class LanguageClient {
@@ -16,7 +18,7 @@ class LanguageClient {
     LanguageClient();
     ~LanguageClient();
     bool start(const std::filesystem::path &root, const std::string &executable,
-               const std::filesystem::path &compilationDatabase = {});
+               const std::filesystem::path &compilationDatabase = {}, Json configuration = Json::object());
     bool startServer(const std::filesystem::path &root, const std::vector<std::string> &argv,
                      Json configuration = Json::object(), bool waitForWorkspace = false,
                      Json environment = Json::object());
@@ -24,6 +26,8 @@ class LanguageClient {
     bool startRaw(const std::filesystem::path &root, const std::string &executable);
     bool startRaw(const std::filesystem::path &root, const std::vector<std::string> &argv,
                   Json environment = Json::object());
+    // Only a validated port returned by the local JDT LS debug-session command.
+    bool connectRaw(std::uint16_t port);
     bool sendRaw(Json message) { return running_ && enqueue(std::move(message)); }
     std::deque<Json> receiveRaw();
     void stop();
@@ -39,6 +43,7 @@ class LanguageClient {
         return running_;
     }
     std::string error() const;
+    std::string logs() const;
     const Json &diagnostics() const {
         return diagnostics_;
     }
@@ -48,6 +53,7 @@ class LanguageClient {
     }
     const Json &capabilities() const { return capabilities_; }
     size_t semanticGeneration() const { return semanticGeneration_; }
+    size_t semanticRefreshGeneration() const { return semanticRefreshGeneration_; }
     void invalidateSemantic() { ++semanticGeneration_; }
     static std::string uri(const std::filesystem::path &);
     static std::filesystem::path fromUri(const std::string &);
@@ -60,10 +66,12 @@ class LanguageClient {
                    const Json &environment = Json::object());
     Json configuration_, initializationOptions_, workspaceFolders_, capabilities_ = Json::object();
     size_t semanticGeneration_ = 0;
+    size_t semanticRefreshGeneration_ = 0;
     bool waitForWorkspace_ = false, workspaceReady_ = false;
     std::string workspaceReadyNotification_;
     Json workspaceLoadToken_;
     std::unique_ptr<Child> child_;
+    std::unique_ptr<LoopbackStream> socket_;
     bool enqueue(Json);
     void readLoop();
     void writeLoop();
@@ -82,6 +90,6 @@ class LanguageClient {
     Json diagnostics_ = Json::object();
     Json diagnosticVersions_=Json::object();
     size_t diagnosticGeneration_ = 0;
-    std::string error_;
+    std::string error_,logs_;
 };
 } // namespace cycode

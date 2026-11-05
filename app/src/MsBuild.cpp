@@ -1,4 +1,6 @@
 #include "cycode/MsBuild.h"
+#include "cycode/BuildOperations.h"
+#include "cycode/BuildLimits.h"
 #include "cycode/Solution.h"
 #include "cycode/Tools.h"
 #include <algorithm>
@@ -60,7 +62,7 @@ static bool fresh(const Json &data,const fs::path &root,const BuildSystem::Resol
     if (!data.contains("inputs") || !data.at("inputs").is_array() || data.at("inputs").size() > 1024) return false;
     try { for (const auto &stamp : data.at("inputs")) if (inputStamp(resolve(stamp.at("path")),root) != stamp) return false; } catch (...) { return false; } return true;
 }
-static Json process(const ProcessResult &value) { return {{"exitCode",value.exitCode},{"output",value.output},{"timedOut",value.timedOut},{"truncated",value.truncated}}; }
+static Json process(const ProcessResult &value) { return {{"exitCode",value.exitCode},{"output",value.output},{"timedOut",value.timedOut},{"truncated",value.truncated},{"cancelled",value.cancelled}}; }
 static Json diagnostics(const std::string &output,const fs::path &root,const BuildSystem::Resolver &resolve) {
     static const std::regex diagnostic(R"re(^(?:[0-9]+>)?(.*)\(([0-9]+)(?:,([0-9]+))?(?:,[0-9]+,[0-9]+)?\)\s*:\s*(?:fatal )?(error|warning)\s+([A-Za-z]+[0-9]+)\s*:\s*(.*)$)re");
     Json result = Json::array(); std::set<std::string> seen; std::istringstream lines(output); std::string line;
@@ -82,19 +84,19 @@ static Json diagnostics(const std::string &output,const fs::path &root,const Bui
     return result;
 }
 MsBuild::MsBuild(fs::path root,fs::path entry,BuildSystem::Resolver resolve) : root_(std::move(root)),entry_(std::move(entry)),resolve_(std::move(resolve)) {}
-Json MsBuild::tools(bool refresh) {
-    std::lock_guard lock(mutex_); if (!refresh && tools_.is_object()) return tools_;
+Json MsBuild::tools(bool refresh, const std::atomic<bool> *cancellation) {
+    auto lock = cancellableBuildLock(mutex_, cancellation); if (!refresh && tools_.is_object()) return tools_;
     Json items = Json::array();
-    if (auto exe = toolPath("msbuild"); !exe.empty()) { auto version = runProcess({exe,"-nologo","-version"},root_,std::chrono::seconds(5),4096);
+    if (auto exe = toolPath("msbuild"); !exe.empty()) { auto version = runProcess({exe,"-nologo","-version"},root_,std::chrono::seconds(5),4096,cancellation);
         if (!version.exitCode) items.push_back({{"id","msbuild"},{"name","Visual Studio MSBuild"},{"executable",exe},{"version",trim(version.output)},{"nativeCpp",true}}); }
-    if (auto exe = toolPath("dotnet"); !exe.empty()) { auto sdks = runProcess({exe,"--list-sdks"},root_,std::chrono::seconds(5),65536);
+    if (auto exe = toolPath("dotnet"); !exe.empty()) { auto sdks = runProcess({exe,"--list-sdks"},root_,std::chrono::seconds(5),65536,cancellation);
         if (!sdks.exitCode && !trim(sdks.output).empty()) items.push_back({{"id","dotnet"},{"name",".NET SDK / MSBuild"},{"executable",exe},{"version",trim(sdks.output)},{"nativeCpp",false}}); }
-    tools_ = {{"tools",items}}; return tools_;
+    checkBuildCancellation(cancellation); tools_ = {{"tools",items}}; return tools_;
 }
 Json MsBuild::inspect(const Json &params) { std::lock_guard lock(mutex_); return inspectLocked(params); }
 Json MsBuild::inspectLocked(const Json &params) {
     fs::path entry;
-    if (fs::is_regular_file(entry_) && (projectFile(entry_) || lower(pathUtf8(entry_.extension())) == ".sln")) entry = entry_;
+    if (fs::is_regular_file(entry_) && (projectFile(entry_) || isSolutionPath(entry_))) entry = entry_;
     else if (auto solution = inspectSolution(root_); solution.is_object()) entry = utf8Path(solution.at("path"));
     else { for (const auto &item : fs::directory_iterator(root_)) if (item.is_regular_file() && projectFile(item.path())) { if (!entry.empty()) { entry.clear(); break; } entry = item.path(); } }
     Json profile = {{"entry",entry.empty() ? "" : pathUtf8(entry.lexically_relative(root_))},{"configuration",""},{"platform",""},{"project",""},{"tool","automatic"}};
@@ -110,7 +112,7 @@ Json MsBuild::inspectLocked(const Json &params) {
     Json model = {{"available",false},{"profile",profile},{"configurations",Json::array()},{"projects",Json::array()},{"artifacts",Json::array()},{"tools",Json::array()},
                   {"compilationDatabase",{{"available",false},{"path",""},{"entries",0}}},{"analysisWarnings",Json::array()},{"message","Open a .sln, .vcxproj or managed project."}};
     if (profile.at("entry") == "") return model;
-    entry = resolve_(profile.at("entry")); if (!fs::is_regular_file(entry) || (!projectFile(entry) && lower(pathUtf8(entry.extension())) != ".sln")) throw std::runtime_error("Select a workspace .sln or MSBuild project");
+    entry = resolve_(profile.at("entry")); if (!fs::is_regular_file(entry) || (!projectFile(entry) && !isSolutionPath(entry))) throw std::runtime_error("Select a workspace .sln/.slnx or MSBuild project");
     profile["entry"] = pathUtf8(entry.lexically_relative(root_));
     const auto solution = inspectSolution(entry);
     if (solution.is_object()) { model["projects"] = solution.at("projects"); model["configurations"] = solution.at("configurations"); }
@@ -139,9 +141,9 @@ Json MsBuild::inspectLocked(const Json &params) {
     } }
     return model;
 }
-std::vector<std::string> MsBuild::command(const Json &model) {
+std::vector<std::string> MsBuild::command(const Json &model, const std::atomic<bool> *cancellation) {
     const auto tool = model.at("profile").at("tool").get<std::string>();
-    const auto discovered = tools();
+    const auto discovered = tools(false,cancellation);
     for (const auto &item : discovered.at("tools")) if (tool == "automatic" || item.at("id") == tool) {
         if (item.at("id") == "dotnet") for (const auto &project : model.at("projects")) if (!project.at("folder").get<bool>() && lower(pathUtf8(utf8Path(project.at("path")).extension())) == ".vcxproj") throw std::runtime_error("C++ projects require Visual Studio MSBuild on Windows");
         std::vector<std::string> result{item.at("executable")}; if (item.at("id") == "dotnet") result.push_back("msbuild");
@@ -149,15 +151,16 @@ std::vector<std::string> MsBuild::command(const Json &model) {
     }
     throw std::runtime_error("The selected MSBuild tool is unavailable");
 }
-Json MsBuild::evaluate(const Json &model,const Json &item) {
+Json MsBuild::evaluate(const Json &model,const Json &item,const std::atomic<bool> *cancellation) {
+    checkBuildCancellation(cancellation);
     if (!item.at("exists").get<bool>() || item.at("external").get<bool>() || item.at("folder").get<bool>()) throw std::runtime_error("Select an existing workspace project to evaluate");
-    const auto file = resolve_(item.at("relativePath")); auto args = command(model);
+    const auto file = resolve_(item.at("relativePath")); auto args = command(model,cancellation);
     const auto &config = item.at("activeConfiguration"); property(config.at("configuration")); property(config.at("platform"));
     args.insert(args.end(),{pathUtf8(file),"-p:Configuration="+config.at("configuration").get<std::string>(),"-p:Platform="+config.at("platform").get<std::string>(),
         "-getProperty:TargetPath,TargetFramework,TargetFrameworks,Configuration,Platform,ConfigurationType,VCToolsInstallDir,IncludePath,MSBuildProjectDirectory,AssemblyName,MSBuildAllProjects",
         "-getItem:ClCompile,ClInclude,ProjectReference"});
-    auto value = runProcess(args,root_,std::chrono::seconds(15),8*1024*1024); auto result = process(value); result["project"] = item;
-    if (!value.exitCode && !value.truncated) { const auto start = value.output.find('{'), end = value.output.rfind('}');
+    auto value = runProcess(args,root_,std::chrono::seconds(15),8*1024*1024,cancellation); auto result = process(value); result["project"] = item;
+    if (!value.exitCode && !value.truncated && !value.cancelled) { const auto start = value.output.find('{'), end = value.output.rfind('}');
         auto metadata = start == std::string::npos ? Json() : Json::parse(value.output.substr(start,end-start+1),nullptr,false);
         if (!metadata.is_object() || !metadata.contains("Properties") || !metadata.contains("Items")) throw std::runtime_error("MSBuild 17.8+ is required for structured project evaluation"); result["evaluation"] = metadata;
     } else result["evaluation"] = nullptr;
@@ -170,26 +173,30 @@ static std::string targetName(const Json &model,const Json &item) {
     return result;
 }
 static std::vector<std::string> list(const std::string &text) { std::vector<std::string> result; std::istringstream in(text); std::string part; while (std::getline(in,part,';')) { part = trim(part); if (!part.empty() && part.find("%(") == std::string::npos && part.find("$(") == std::string::npos) result.push_back(part); } return result; }
-Json MsBuild::run(const std::string &method,const Json &params) {
-    std::lock_guard lock(mutex_); auto model = inspectLocked(params); if (!model.at("available").get<bool>()) throw std::runtime_error("Open a solution or MSBuild project first");
+Json MsBuild::run(const std::string &method,const Json &params,const std::atomic<bool> *cancellation) {
+    buildTimeout(params,150);
+    checkBuildCancellation(cancellation);
+    auto lock = cancellableBuildLock(mutex_,cancellation);
+    auto model = inspectLocked(params); if (!model.at("available").get<bool>()) throw std::runtime_error("Open a solution or MSBuild project first");
     const auto profile = model.at("profile"); const auto entry = resolve_(profile.at("entry"));
     Json chosen;
     for (const auto &item : model.at("projects")) if (!item.at("folder").get<bool>() && (profile.at("project") == item.at("id") || (profile.at("project") == "" && !chosen.is_object() && item.at("exists").get<bool>() && !item.at("external").get<bool>() && item.at("activeConfiguration").value("build",false)))) chosen = item;
     auto save = [&] { atomic(resolve_(".cycode/msbuild.json"),Json{{"schemaVersion",1},{"profile",profile}}.dump(2)); };
     if (method == "msbuild.build" || method == "msbuild.rebuild" || method == "msbuild.clean" || method == "msbuild.restore") {
-        auto args = command(model); std::string target = method.substr(8); target[0] = char(std::toupper(static_cast<unsigned char>(target[0])));
+        auto args = command(model,cancellation); std::string target = method.substr(8); target[0] = char(std::toupper(static_cast<unsigned char>(target[0])));
         auto buildEntry = entry; auto configuration = profile.at("configuration").get<std::string>(), platform = profile.at("platform").get<std::string>();
-        if (profile.at("project") != "" && lower(pathUtf8(entry.extension())) == ".sln") {
+        if (profile.at("project") != "" && isSolutionPath(entry)) {
             if (method == "msbuild.restore") { buildEntry = resolve_(chosen.at("relativePath")); configuration = chosen.at("activeConfiguration").at("configuration"); platform = chosen.at("activeConfiguration").at("platform"); }
             else target = targetName(model,chosen)+(method == "msbuild.build" ? "" : ":"+target);
         }
         args.insert(args.end(),{pathUtf8(buildEntry),"-maxCpuCount:4","-p:Configuration="+configuration,"-p:Platform="+platform,"-target:"+target});
         if (params.value("restore",false) && method != "msbuild.restore") args.push_back("-restore");
-        auto result = process(runProcess(args,root_,std::chrono::seconds(150),8*1024*1024)); if (result.at("exitCode") == 0) save(); result["project"] = inspectLocked(profile); result["diagnostics"] = diagnostics(result.at("output"),root_,resolve_); return result;
+        checkBuildCancellation(cancellation);
+        auto result = process(runProcess(args,root_,buildTimeout(params,150),8*1024*1024,cancellation,{},processOutputObserver(cancellation))); if (result.at("exitCode") == 0 && !result.value("cancelled",false) && !result.value("truncated",false) && !(cancellation&&cancellation->load())) save(); result["project"] = inspectLocked(profile); result["diagnostics"] = diagnostics(result.at("output"),root_,resolve_); return result;
     }
     if (method == "msbuild.evaluate") {
-        if (!chosen.is_object()) throw std::runtime_error("Select a workspace project to evaluate"); auto result = evaluate(model,chosen);
-        if (result.at("exitCode") == 0 && !result.at("evaluation").is_null()) {
+        if (!chosen.is_object()) throw std::runtime_error("Select a workspace project to evaluate"); auto result = evaluate(model,chosen,cancellation);
+        if (result.at("exitCode") == 0 && !result.at("evaluation").is_null() && !(cancellation&&cancellation->load())) {
             const auto &props = result.at("evaluation").at("Properties"); Json artifact = {{"project",chosen.at("id")},{"name",chosen.at("name")},{"path",props.value("TargetPath","")},{"framework",props.value("TargetFramework","")},{"type",props.value("ConfigurationType","")}};
             auto sources = list(props.value("MSBuildAllProjects","")); const auto cached = resolve_(cachePath(profile)+"/model.json");
             if (fs::is_regular_file(cached)) { const auto previous = Json::parse(read(cached)); if (fresh(previous,root_,resolve_)) for (const auto &stamp : previous.at("inputs")) sources.push_back(stamp.at("path")); }
@@ -202,18 +209,20 @@ Json MsBuild::run(const std::string &method,const Json &params) {
     auto warning = [&](const std::string &text) { if (warnings.size() < 128) warnings.push_back(text); };
     std::vector<std::string> configurationInputs;
     for (const auto &item : model.at("projects")) {
+        checkBuildCancellation(cancellation);
         if (item.at("folder").get<bool>() || item.at("external").get<bool>() || !item.at("exists").get<bool>() || lower(pathUtf8(utf8Path(item.at("path")).extension())) != ".vcxproj") continue;
         if (profile.at("project") != "" && profile.at("project") != item.at("id")) continue;
         if (profile.at("project") == "" && !item.at("activeConfiguration").value("build",false)) continue;
         if (++evaluated > 8) { warning("Analysis is limited to eight C++ projects per operation. Select another project to prepare its own index."); break; }
-        auto value = evaluate(model,item); combined.output += value.at("output").get<std::string>().substr(0,8192);
-        if (value.at("exitCode") != 0 || value.at("evaluation").is_null()) { combined.exitCode = value.at("exitCode") == 0 ? 1 : value.at("exitCode").get<int>(); combined.truncated = value.at("truncated"); combined.timedOut = value.at("timedOut"); break; }
+        auto value = evaluate(model,item,cancellation); combined.output += value.at("output").get<std::string>().substr(0,8192);
+        if (value.at("exitCode") != 0 || value.at("evaluation").is_null() || value.value("cancelled",false)) { combined.exitCode = value.at("exitCode") == 0 ? 1 : value.at("exitCode").get<int>(); combined.truncated = value.at("truncated"); combined.timedOut = value.at("timedOut"); combined.cancelled=value.value("cancelled",false); break; }
         const auto &evaluation = value.at("evaluation"), &props = evaluation.at("Properties"); const auto directory = utf8Path(props.at("MSBuildProjectDirectory"));
         for (const auto &path : list(props.value("MSBuildAllProjects",""))) configurationInputs.push_back(path);
         artifacts.push_back({{"project",item.at("id")},{"name",item.at("name")},{"path",props.value("TargetPath","")},{"framework",props.value("TargetFramework","")},{"type",props.value("ConfigurationType","")}});
         auto tools = utf8Path(props.value("VCToolsInstallDir","")); const auto platform = lower(props.at("Platform"));
         auto compiler = tools/"bin/Hostx64"/(platform == "win32" ? "x86" : platform == "arm64" ? "arm64" : "x64")/"cl.exe";
         for (const auto &file : evaluation.at("Items").value("ClCompile",Json::array())) {
+            checkBuildCancellation(cancellation);
             if (lower(file.value("ExcludedFromBuild","false")) == "true") continue;
             if (database.size() >= 20000) throw std::runtime_error("MSBuild analysis exceeds 20,000 translation units");
             fs::path source; try { source = resolve_(pathUtf8(directory/utf8Path(file.at("Identity")))); } catch (...) { warning("Skipped a source outside the workspace: "+file.at("Identity").get<std::string>()); continue; }
@@ -228,6 +237,7 @@ Json MsBuild::run(const std::string &method,const Json &params) {
             databaseBytes += unit.dump(2).size()+16; if (databaseBytes > 32*1024*1024) throw std::runtime_error("MSBuild analysis exceeds 32 MiB; select a smaller project"); database.push_back(std::move(unit));
         }
     }
+    checkBuildCancellation(cancellation);
     if (!evaluated) throw std::runtime_error("No enabled local C++ project to index");
     if (!combined.exitCode && database.empty()) { combined.exitCode = 1; combined.output += "\nNo supported C++ translation units were evaluated.\n"; }
     if (!combined.exitCode) { const auto text = database.dump(2); if (text.size() > 32*1024*1024) throw std::runtime_error("MSBuild analysis exceeds 32 MiB; select a smaller project"); atomic(resolve_(cachePath(profile)+"/compile_commands.json"),text); atomic(resolve_(cachePath(profile)+"/model.json"),Json{{"profile",profile},{"artifacts",artifacts},{"entries",database.size()},{"analysisWarnings",warnings},{"inputs",inputs(model,root_,resolve_,configurationInputs)}}.dump(2)); save(); }

@@ -62,6 +62,11 @@ under `app/licenses`. No additional decoder DLL or Python package is needed at r
 
 ## Validation
 
+Workspace sessions now retain Fit mode or manual zoom/image-space center plus
+pixelated filtering. Settings wait for decoding/viewport availability, and changed
+image dimensions fall back to Fit. External grants do not restore. New native/
+graphical acceptance is pending; see [Workspace sessions](WorkspaceSessions.md).
+
 The `images` CTest uses real PNG/JPEG/WebP/GIF/BMP/TGA/PSD/HDR/PGM/PPM fixtures,
 Unicode paths, malformed/oversized inputs, cancellation and actual app views with
 headless ImGui frames. Its injected renderer verifies RGBA handoff, draw-list

@@ -8,10 +8,13 @@ namespace cycode {
 const std::vector<Command> &commands() {
     static const std::vector<Command> value = {
         {"file.new", "New file...", "File"}, {"file.open", "Open solution...", "File"},
+        {"file.newProject", "New project...", "File"},
+        {"file.newUntitled", "New text document", "File"},
         {"file.openImage", "Open image...", "File"},
         {"file.folder", "Open workspace...", "File"}, {"file.window", "New window", "File"},
         {"file.openWindow", "Open solution in new window...", "File"},
         {"file.save", "Save", "File", CommandContext::document}, {"file.saveAll", "Save all", "File"},
+        {"file.saveAs", "Save as...", "File", CommandContext::document},
         {"file.close", "Close file", "File", CommandContext::document}, {"file.closeAll", "Close all files", "File"},
         {"file.reopen", "Reopen closed file", "File"}, {"file.exit", "Exit", "File"},
         {"edit.undo", "Undo", "Edit", CommandContext::editor}, {"edit.redo", "Redo", "Edit", CommandContext::editor},
@@ -35,42 +38,82 @@ const std::vector<Command> &commands() {
         {"search.everywhere", "Search Everywhere", "Search"}, {"search.actions", "Find action...", "Search"},
         {"search.types", "Go to type...", "Search"}, {"search.symbols", "Go to symbol...", "Search"},
         {"navigate.members", "File structure", "Navigate", CommandContext::document},
+        {"code.occurrences", "Highlight occurrences at caret", "Navigate", CommandContext::document},
+        {"code.nextOccurrence", "Next reported occurrence", "Navigate", CommandContext::document},
+        {"code.previousOccurrence", "Previous reported occurrence", "Navigate", CommandContext::document},
+        {"code.selectOccurrences", "Select reported occurrences", "Edit", CommandContext::document},
+        {"code.clearOccurrences", "Clear occurrence highlights", "Navigate", CommandContext::document},
+        {"view.updates", "Application updates", "View"},
+        {"app.checkUpdates", "Check for updates", "View"},
+        {"view.occurrences", "Occurrences", "View"},
         {"code.documentation", "Quick documentation", "Navigate", CommandContext::document},
         {"code.parameters", "Parameter information", "Navigate", CommandContext::document},
         {"code.actions", "Quick fixes and context actions", "Refactor", CommandContext::editor},
         {"view.codeActions", "Code actions", "View"},
         {"view.information", "Code information", "View"},
+        {"view.hierarchy", "Hierarchy", "View"}, {"view.structure", "Structure", "View"},
         {"refactor.rename", "Rename symbol", "Refactor", CommandContext::editor},
         {"refactor.format", "Format document", "Refactor", CommandContext::editor},
         {"refactor.formatSelection", "Format selection", "Refactor", CommandContext::editor},
         {"refactor.undo", "Undo refactoring", "Refactor"},
         {"refactor.apply", "Apply refactoring", "Refactor"},
         {"navigate.definition", "Go to definition", "Navigate", CommandContext::editor},
+        {"navigate.declaration", "Go to declaration", "Navigate", CommandContext::editor},
+        {"navigate.typeDefinition", "Go to type definition", "Navigate", CommandContext::editor},
+        {"navigate.implementation", "Go to implementation", "Navigate", CommandContext::editor},
         {"navigate.references", "Find references", "Navigate", CommandContext::editor},
+        {"navigate.callHierarchy", "Call hierarchy", "Navigate", CommandContext::document},
+        {"navigate.typeHierarchy", "Type hierarchy", "Navigate", CommandContext::document},
         {"navigate.line", "Go to line...", "Navigate", CommandContext::document},
         {"navigate.back", "Navigate back", "Navigate"}, {"navigate.forward", "Navigate forward", "Navigate"},
         {"navigate.recent", "Recent files", "Navigate"},
         {"navigate.nextTab", "Next document", "Navigate", CommandContext::document},
         {"navigate.previousTab", "Previous document", "Navigate", CommandContext::document},
         {"build.run", "Build project", "Build"}, {"build.configure", "Configure", "Build"},
+        {"build.cancel", "Cancel build", "Build"},
+        {"build.presetTest","CMake test presets","Build"},
+        {"build.presetPackage","CMake package presets","Build"},
+        {"build.presetWorkflow","CMake workflow presets","Build"},
+        {"view.cmakePresets","CMake preset actions","View"},
         {"project.test", "Run project tests", "Build"}, {"project.install", "Install npm dependencies", "Build"},
         {"project.script", "Run npm script", "Build"}, {"project.cancel", "Cancel task", "Build"},
         {"view.projectTasks", "Project tasks", "View"},
+        {"view.tests", "Tests", "View"},
+        {"tests.discover","Discover CTest tests","Build"},
+        {"tests.run","Run selected tests","Build"},
+        {"tests.cancel","Cancel tests","Build"},
+        {"vcs.hunks","Review hunks","Version control",CommandContext::document},
         {"msbuild.rebuild", "Rebuild MSBuild project", "Build"}, {"msbuild.clean", "Clean MSBuild project", "Build"},
         {"msbuild.restore", "Restore MSBuild packages", "Build"}, {"msbuild.evaluate", "Evaluate MSBuild project", "Build"},
         {"msbuild.prepare", "Prepare MSBuild code analysis", "Build"}, {"view.msbuild", "MSBuild", "View"},
         {"debug.start", "Debug / Continue", "Run"}, {"run.start", "Run without debugging", "Run"},
         {"debug.pause", "Pause program", "Run"}, {"debug.stop", "Stop debugging", "Run"},
+        {"debug.hotReload", "Apply Java code changes", "Run"}, {"debug.cancelReload", "Cancel Java reload", "Run"},
         {"debug.next", "Step over", "Run"}, {"debug.stepIn", "Step into", "Run"}, {"debug.stepOut", "Step out", "Run"},
+        {"debug.stepBack", "Step back", "Run"}, {"debug.reverseContinue", "Continue backward", "Run"},
+        {"debug.restartFrame", "Restart selected frame", "Run"},
+        {"debug.stepInTargets", "Choose step-in target", "Run"},
+        {"debug.gotoTargets", "Set next statement", "Run"},
+        {"debug.runToCursor", "Run to cursor", "Run", CommandContext::document},
+        {"debug.restoreRunToCursor", "Restore source breakpoints", "Run"},
         {"debug.breakpoint", "Toggle breakpoint", "Run", CommandContext::document}, {"view.debugger", "Debugger", "View"},
         {"debug.terminal", "Program terminal", "Run"},
         {"unreal.prepare", "Prepare Unreal code analysis", "Build"},
         {"view.project", "Project", "View"}, {"view.search", "Search", "View"}, {"view.build", "Build", "View"},
         {"view.unreal", "Unreal Engine", "View"}, {"view.cmake", "CMake", "View"}, {"view.vcs", "Version control", "View"},
         {"view.problems", "Problems", "View"}, {"view.references", "References", "View"},
+        {"problem.next","Next diagnostic","Navigate"},{"problem.previous","Previous diagnostic","Navigate"},
+        {"problem.nextInFile","Next diagnostic in current file","Navigate",CommandContext::editor},
+        {"problem.previousInFile","Previous diagnostic in current file","Navigate",CommandContext::editor},
         {"view.refactoring", "Refactoring", "View"},
         {"view.terminal", "Terminal", "View"}, {"terminal.new", "New terminal", "View"},
         {"view.extensions", "Extensions", "View"}, {"view.mcp", "MCP", "View"},
+        {"view.recovery", "Recovery", "View"},
+        {"view.resources","Files","View"},
+        {"project.newFolder","New folder...","Project"},
+        {"project.moveFile","Rename or move...","Project"},
+        {"project.deleteFile","Move to project trash...","Project"},
+        {"project.undoFile","Undo file operation","Project"},
         {"view.options", "Options", "View"}, {"view.keymap", "Keyboard shortcuts", "View"}, {"view.reset", "Reset layout", "View"},
         {"view.wrap", "Toggle word wrap", "View", CommandContext::editor},
         {"view.lineNumbers", "Toggle line numbers", "View", CommandContext::editor},
@@ -127,6 +170,10 @@ std::vector<std::string> Keymap::parse(const std::string &shortcut) {
     if (strokes.empty() || strokes.size() > 3 || shortcut.back() == ',') throw std::runtime_error("Invalid shortcut: " + shortcut);
     return strokes;
 }
+void Keymap::extensions(std::vector<Command> commands,Json defaults) {
+    for(const auto &command:commands) if(findCommand(command.id)) throw std::runtime_error("Extension conflicts with built-in command");
+    extensionCommands_=std::move(commands);extensionDefaults_=std::move(defaults);cancel();
+}
 void Keymap::load(const std::string &profile, const Json &overrides) {
     if (profile != "rider" && profile != "visualstudio" && profile != "vscode") throw std::runtime_error("Unknown keymap: " + profile);
     std::vector<KeyBinding> next;
@@ -141,8 +188,13 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
     add("view.terminal", {"Alt+F12"});
     add("navigate.nextTab", {"Ctrl+Tab"}); add("navigate.previousTab", {"Ctrl+Shift+Tab"});
     add("edit.indent", {"Ctrl+RightBracket"}); add("edit.unindent", {"Ctrl+LeftBracket"});
+    if(profile!="rider") {add("problem.next",{"F8"});add("problem.previous",{"Shift+F8"});}
     if (profile == "rider") {
+        add("problem.nextInFile",{"F2"});add("problem.previousInFile",{"Shift+F2"});
+        add("problem.next",{"Alt+F2"});add("problem.previous",{"Alt+Shift+F2"});
+        add("debug.runToCursor", {"Alt+F9"});
         add("code.actions", {"Alt+Enter"});
+        add("code.occurrences", {"Ctrl+Shift+F7"});
         add("code.documentation", {"Ctrl+Q"}); add("code.parameters", {"Ctrl+P", "Ctrl+Shift+Space"});
         add("vcs.changes", {"Ctrl+K"}); add("vcs.remotes", {"Ctrl+Shift+K"});
         add("debug.start", {"Shift+F9", "F5", "F9"}); add("run.start", {"Shift+F10"});
@@ -158,12 +210,15 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
         add("edit.moveUp", {"Ctrl+Shift+Up"}); add("edit.moveDown", {"Ctrl+Shift+Down"});
         add("edit.comment", {"Ctrl+Slash"}); add("edit.grow", {"Ctrl+W"}); add("edit.shrink", {"Ctrl+Shift+W"});
         add("edit.nextOccurrence", {"Alt+J"}); add("edit.allOccurrences", {"Ctrl+Alt+Shift+J"});
+        add("navigate.implementation", {"Ctrl+Alt+B"}); add("navigate.typeDefinition", {"Ctrl+Shift+B"});
         add("navigate.definition", {"Ctrl+B", "F12"}); add("navigate.references", {"Alt+F7", "Shift+F12"});
+        add("navigate.callHierarchy", {"Ctrl+Alt+H"}); add("navigate.typeHierarchy", {"Ctrl+H"});
         add("navigate.line", {"Ctrl+G"}); add("navigate.recent", {"Ctrl+E"});
         add("navigate.back", {"Ctrl+Alt+Left"}); add("navigate.forward", {"Ctrl+Alt+Right"});
-        add("build.run", {"Ctrl+F9", "Ctrl+Shift+B"}); add("view.project", {"Alt+1"}); add("view.build", {"Alt+0"});
+        add("build.run", {"Ctrl+F9"}); add("view.project", {"Alt+1"}); add("view.build", {"Alt+0"});
         add("view.vcs", {"Alt+9"}); add("view.fold", {"Ctrl+Minus"}); add("view.unfold", {"Ctrl+Equal"});
     } else if (profile == "visualstudio") {
+        add("debug.runToCursor", {"Ctrl+F10"});
         add("code.actions", {"Ctrl+Period", "Alt+Enter"});
         add("code.documentation", {"Ctrl+K, Ctrl+I"}); add("code.parameters", {"Ctrl+Shift+Space"});
         add("debug.start", {"F5"}); add("run.start", {"Ctrl+F5"}); add("debug.stop", {"Shift+F5"});
@@ -177,7 +232,9 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
         add("edit.moveUp", {"Alt+Up"}); add("edit.moveDown", {"Alt+Down"});
         add("edit.addComment", {"Ctrl+K, Ctrl+C"}); add("edit.removeComment", {"Ctrl+K, Ctrl+U"});
         add("edit.grow", {"Shift+Alt+Equal"}); add("edit.shrink", {"Shift+Alt+Minus"});
+        add("navigate.implementation", {"Ctrl+F12"});
         add("navigate.definition", {"F12"}); add("navigate.references", {"Shift+F12"}); add("navigate.line", {"Ctrl+G"});
+        add("navigate.callHierarchy", {"Ctrl+Alt+K"});
         add("navigate.back", {"Ctrl+Minus"}); add("navigate.forward", {"Ctrl+Shift+Minus"});
         add("build.run", {"Ctrl+Shift+B"}); add("view.project", {"Ctrl+Alt+L"}); add("view.build", {"Ctrl+Alt+O"});
         std::erase_if(next, [](const auto &b) { return b.command == "file.folder"; });
@@ -190,7 +247,9 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
         add("debug.next", {"F10"}); add("debug.stepIn", {"F11"}); add("debug.stepOut", {"Shift+F11"}); add("debug.breakpoint", {"F9"});
         add("search.symbols", {"Ctrl+T"}); add("navigate.members", {"Ctrl+Shift+O"});
         add("refactor.rename", {"F2"}); add("refactor.format", {"Shift+Alt+F"}); add("refactor.formatSelection", {"Ctrl+K, Ctrl+F"});
-        add("file.new", {"Ctrl+N"}); add("file.close", {"Ctrl+W"}); add("file.closeAll", {"Ctrl+K, Ctrl+W"});
+        add("file.newUntitled", {"Ctrl+N"}); add("file.close", {"Ctrl+W"}); add("file.closeAll", {"Ctrl+K, Ctrl+W"});
+        std::erase_if(next, [](const auto &b) { return b.command == "file.saveAll"; });
+        add("file.saveAs", {"Ctrl+Shift+S"}); add("file.saveAll", {"Ctrl+K, S"});
         add("file.reopen", {"Ctrl+Shift+T"}); add("search.files", {"Ctrl+P"}); add("search.actions", {"Ctrl+Shift+P", "F1"});
         add("search.replace", {"Ctrl+H"}); add("edit.redo", {"Ctrl+Y", "Ctrl+Shift+Z"});
         add("edit.duplicate", {"Shift+Alt+Down"}); add("edit.deleteLine", {"Ctrl+Shift+K"});
@@ -198,7 +257,9 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
         add("edit.addComment", {"Ctrl+K, Ctrl+C"}); add("edit.removeComment", {"Ctrl+K, Ctrl+U"});
         add("edit.grow", {"Shift+Alt+Right"}); add("edit.shrink", {"Shift+Alt+Left"});
         add("edit.nextOccurrence", {"Ctrl+D"}); add("edit.allOccurrences", {"Ctrl+Shift+L"});
+        add("navigate.implementation", {"Ctrl+F12"});
         add("navigate.definition", {"F12"}); add("navigate.references", {"Shift+F12"}); add("navigate.line", {"Ctrl+G"});
+        add("navigate.callHierarchy", {"Shift+Alt+H"});
         add("navigate.back", {"Alt+Left"}); add("navigate.forward", {"Alt+Right"});
         add("build.run", {"Ctrl+Shift+B"}); add("view.project", {"Ctrl+Shift+E"}); add("view.search", {"Ctrl+Shift+F"});
         std::erase_if(next, [](const auto &b) { return b.command == "view.search"; });
@@ -206,9 +267,17 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
         add("view.keymap", {"Ctrl+K, Ctrl+S"}); add("view.wrap", {"Alt+Z"});
         add("view.fold", {"Ctrl+Shift+LeftBracket"}); add("view.unfold", {"Ctrl+Shift+RightBracket"}); add("view.unfoldAll", {"Ctrl+K, Ctrl+J"});
     }
+    for(const auto &command:extensionCommands_) for(const auto &shortcut:extensionDefaults_.value(command.id,Json::array())) {
+        const auto text=shortcut.get<std::string>();const auto strokes=parse(text);
+        const bool conflict=std::any_of(next.begin(),next.end(),[&](const auto &b) {
+            const auto count=std::min(strokes.size(),b.strokes.size());return std::equal(strokes.begin(),strokes.begin()+count,b.strokes.begin());
+        });
+        if(!conflict)next.push_back({command.id,text,strokes});
+    }
     if (!overrides.is_object()) throw std::runtime_error("Shortcut overrides must be an object");
     for (auto it = overrides.begin(); it != overrides.end(); ++it) {
-        if (!findCommand(it.key()) || !it.value().is_array()) throw std::runtime_error("Invalid command override: " + it.key());
+        const bool extension=std::any_of(extensionCommands_.begin(),extensionCommands_.end(),[&](const auto &c) { return c.id==it.key(); });
+        if ((!findCommand(it.key())&&!extension) || !it.value().is_array()) throw std::runtime_error("Invalid command override: " + it.key());
         std::erase_if(next, [&](const auto &b) { return b.command == it.key(); });
         for (const auto &shortcut : it.value()) {
             auto text = shortcut.get<std::string>(); next.push_back({it.key(), text, parse(text)});
@@ -233,7 +302,10 @@ Keymap::Result Keymap::press(const std::string &stroke, double time, bool editor
     if (time > until_) cancel();
     if (stroke == "escape" && !candidates_.empty()) { cancel(); return {{}, true}; }
     auto allowed = [&](const KeyBinding &b) {
-        const auto &command = *findCommand(b.command);
+        const auto builtIn=findCommand(b.command);
+        const auto extension=std::find_if(extensionCommands_.begin(),extensionCommands_.end(),[&](const auto &c) { return c.id==b.command; });
+        if(!builtIn&&extension==extensionCommands_.end())return false;
+        const auto &command = builtIn ? *builtIn : *extension;
         if (command.context == CommandContext::global) return true;
         if (!document) return false;
         return command.context != CommandContext::editor || editor;

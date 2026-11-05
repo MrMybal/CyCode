@@ -24,7 +24,7 @@ size_t utf16Offset(const std::string &text, const Json &position) {
 }
 EditedText applyTextEdits(const std::string &text, const Json &edits, const std::string &expectedOldName) {
     if (!edits.is_array() || edits.size() > 50000) throw std::runtime_error("Invalid or excessive text edits");
-    struct Edit { size_t start, end; std::string text; Json range; };
+    struct Edit { size_t start, end; std::string text; Json range, annotation; };
     std::vector<Edit> sorted;
     for (const auto &edit : edits) {
         const auto &range = edit.at("range");
@@ -33,13 +33,20 @@ EditedText applyTextEdits(const std::string &text, const Json &edits, const std:
         const auto replacement = edit.at("newText").get<std::string>();
         if (replacement.find('\0') != std::string::npos) throw std::runtime_error("Binary replacement text");
         if (!expectedOldName.empty() && text.substr(a, b-a) != expectedOldName) throw std::runtime_error("RevisionConflict: rename range no longer names the expected symbol");
-        if (text.substr(a, b-a) != replacement) sorted.push_back({a, b, replacement, range});
+        auto annotation=edit.value("annotationId",Json());
+        if (edit.contains("annotationId") && (!annotation.is_string() || annotation.get_ref<const std::string &>().size()>512))
+            throw std::runtime_error("Invalid text edit annotation ID");
+        if (text.substr(a, b-a) != replacement) sorted.push_back({a, b, replacement, range, std::move(annotation)});
     }
     std::sort(sorted.begin(), sorted.end(), [](const auto &a, const auto &b) { return a.start == b.start ? a.end < b.end : a.start < b.start; });
     for (size_t i = 1; i < sorted.size(); ++i)
         if (sorted[i].start < sorted[i-1].end || sorted[i].start == sorted[i-1].start) throw std::runtime_error("Overlapping or ambiguous text edits");
     EditedText result{text, Json::array()};
-    for (const auto &edit : sorted) result.edits.push_back({{"range", edit.range}, {"oldText", text.substr(edit.start, edit.end-edit.start)}, {"newText", edit.text}});
+    for (const auto &edit : sorted) {
+        Json value={{"range", edit.range}, {"oldText", text.substr(edit.start, edit.end-edit.start)}, {"newText", edit.text}};
+        if (!edit.annotation.is_null()) value["annotationId"]=edit.annotation;
+        result.edits.push_back(std::move(value));
+    }
     for (auto i = sorted.rbegin(); i != sorted.rend(); ++i) {
         result.text.replace(i->start, i->end-i->start, i->text);
         if (result.text.size() > 4 * 1024 * 1024) throw std::runtime_error("Edited document exceeds 4 MiB");

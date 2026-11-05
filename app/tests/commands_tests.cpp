@@ -7,6 +7,14 @@ int main() {
         Keymap map;
         for (const auto &profile : {"rider", "visualstudio", "vscode"}) {
             map.load(profile);
+            const bool rider=std::string(profile)=="rider";
+            require(map.press(rider ? "ctrl+alt+b" : "ctrl+f12",.01,true,true).command=="navigate.implementation","Implementation binding missing");
+            if (rider) {
+                require(map.press("ctrl+shift+f7",.005,true,true).command=="code.occurrences","Rider occurrence shortcut missing");
+                require(map.press("ctrl+shift+b",.02,true,true).command=="navigate.typeDefinition","Type navigation collided with build");
+                require(map.press("ctrl+f9",.03,true,true).command=="build.run","Rider build binding lost");
+            }
+            require(findCommand("navigate.declaration") && findCommand("navigate.typeDefinition"),"Navigation command catalogue incomplete");
             require(map.press("ctrl+shift+f", 1, false, false).command == "search.workspace", "Global project search");
             require(map.press("ctrl+alt+f", 2, false, false).command == "search.files", "Explicit file search");
             require(map.press("ctrl+f", 3, false, true).command == "search.document", "Find from a tool window");
@@ -21,6 +29,13 @@ int main() {
                 require(map.press("ctrl+i",7.2,true,true).command=="code.documentation","VS/VS Code quick information chord");
             }
         }
+        map.load("rider");
+        require(map.press("alt+f9",.001,true,true).command == "debug.runToCursor","Rider run to cursor binding");
+        require(map.press("alt+f9",.002,false,false).command.empty(),"Run to cursor requires a document");
+        map.load("visualstudio");
+        require(map.press("ctrl+f10",.003,true,true).command == "debug.runToCursor","Visual Studio run to cursor binding");
+        map.load("rider",{{"debug.runToCursor",Json::array({"Ctrl+Alt+F10"})}});
+        require(map.press("ctrl+alt+f10",.004,true,true).command == "debug.runToCursor","Custom run-to-cursor binding was overwritten");
         map.load("rider");
         require(map.press("ctrl+q",.01,true,true).command=="code.documentation","Rider quick documentation");
         require(map.press("ctrl+p",.02,true,true).command=="code.parameters","Rider parameter information");
@@ -54,6 +69,7 @@ int main() {
             try { Keymap::parse(text); } catch (...) { rejected = true; }
             require(rejected, "Malformed shortcut accepted");
         }
+        for (const auto *id:{"view.occurrences","code.selectOccurrences","code.clearOccurrences","code.nextOccurrence","code.previousOccurrence"}) require(findCommand(id),"Occurrence catalogue incomplete");
         require(fuzzyScore("Actor", "Source/Actor.h") > fuzzyScore("Actor", "Source/AbstractController.cpp"), "Filename ranking");
         require(fuzzyScore("zz", "Actor.h") < 0, "Nonmatching file");
         std::cout << "Command profiles, contexts, chords, timeout, overrides, conflicts and ranking passed\n";

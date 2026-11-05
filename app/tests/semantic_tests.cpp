@@ -7,6 +7,9 @@
 #include <windows.h>
 #endif
 using namespace cycode;
+void symbolCatalogueContracts();
+void navigationLocationContracts();
+void occurrenceContracts();
 static void require(bool value, const std::string &message) { if (!value) throw std::runtime_error(message); }
 template<class F> static void rejects(F fn, const std::string &message) {
     bool rejected = false; try { fn(); } catch (const std::exception &) { rejected = true; }
@@ -34,6 +37,9 @@ int main(int argc, char **argv) {
 #endif
     int code = 0;
     try {
+        symbolCatalogueContracts();
+        navigationLocationContracts();
+        occurrenceContracts();
         const auto range = [](int a, int b) { return Json{{"start", {{"line", 0}, {"character", a}}}, {"end", {{"line", 0}, {"character", b}}}}; };
         require(utf16Offset("é🛠x", {{"line",0},{"character",3}}) == 6, "UTF-16 to UTF-8 byte offset");
         rejects([&] { utf16Offset("é🛠x", {{"line",0},{"character",2}}); }, "Surrogate split accepted");

@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import subprocess
 import time
-import zipfile
+from release_package import payload, write_archive, executable_version, version_tuple
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -28,10 +28,12 @@ def main():
         raise SystemExit('Invalid release version')
     build = args.build.resolve() / args.configuration
     cli = build / 'cycode_cli.exe'
-    actual = subprocess.check_output([str(cli), '--version'], text=True).strip()
-    if actual != 'CyCode ' + version:
-        raise SystemExit('Rebuild first: CLI version differs from app/CyTool.json')
+    for binary in (cli, build / 'CyCode.exe', build / 'CyCodeUpdater.exe'):
+        if executable_version(binary) != version_tuple(version):
+            raise SystemExit('Rebuild first: executable resources differ from app/CyTool.json')
     git = ['git', '-c', f'safe.directory={ROOT.as_posix()}', '-C', str(ROOT)]
+    if subprocess.check_output([*git, 'status', '--porcelain', '--untracked-files=normal'], text=True).strip():
+        raise SystemExit('Release packaging requires a clean source checkout; local changes are preserved')
     revision = subprocess.check_output([*git, 'rev-parse', 'HEAD'], text=True).strip()
     epoch = int(os.environ.get('SOURCE_DATE_EPOCH') or
                 subprocess.check_output([*git, 'show', '-s', '--format=%ct', 'HEAD'], text=True).strip())
@@ -50,6 +52,13 @@ def main():
 
     include(build / 'CyCode.exe', 'CyCode.exe')
     include(cli, 'cycode_cli.exe')
+    include(build / 'CyCodeUpdater.exe', 'CyCodeUpdater.exe')
+    for name in ['CyCode.png', 'CyCode.ico', 'CyCode-document.png', 'CyCode-document.ico']:
+        include(ROOT / 'icons' / name)
+    for plugin in ['sample', 'unreal', 'svn', 'perforce', 'mercurial', 'diversion']:
+        library = 'cycode_' + plugin
+        include(ROOT / 'runtime/plugins' / (library + '.dll'), 'extensions/' + library + '.dll')
+        include(ROOT / 'app/plugins' / plugin / 'plugin.json', 'extensions/' + plugin + '.json')
     for name in ['LICENSE', 'COPYRIGHT', 'README.md', 'LISEZ-MOI.md', 'CHANGELOG.md', 'app/CyTool.json',
                  'app/README.md', 'app/THIRD_PARTY_NOTICES.md', 'app/tool.py', 'app/contracts.py',
                  'app/locales/ui.json', 'app/include/cycode/PluginAPI.h']:
@@ -71,11 +80,11 @@ def main():
         include(tools / 'licenses/ripgrep' / name, 'tools/licenses/ripgrep/' + name)
     entries['PACKAGE.md'] = f'''# CyCode {version} — Windows x64
 
-Extract the complete archive to a writable folder and run CyCode.exe. Keep app/
-and tools/ beside the executable. Visual C++ 2022 x64 runtime and an OpenGL 3.3
+Extract the complete archive to a writable folder and run CyCode.exe. Keep app/,
+icons/ and tools/ beside the executable. Visual C++ 2022 x64 runtime and an OpenGL 3.3
 driver are required. cycode_cli.exe --version reports the bundled version.
 
-IDE, text/image editing, project search and native services are included. Git,
+IDE, text/image editing, project search and native services are included. Git, SVN, Perforce, Mercurial, Diversion,
 compilers/build tools and language servers/debug adapters are external tools.
 This development package does not include a private Python/SDK environment.
 Optional MCP setup: python app/scripts/setup_runtime.py --core-wheel PATH_TO_WHEEL.
@@ -84,6 +93,12 @@ The scripts and notices describe local installation of additional toolchains.
 No settings, credentials, SDK wheels, downloaded dependency source trees or
 development runtime directories are included. data/ and runtime/ are created
 locally when needed. This is unsigned and has not been tested on a clean machine.
+Automatic updates use stable GitHub Releases and the matching -update.zip asset.
+The application checks at startup and asks before download or installation.
+Close every instance of this installation before replacement. data/ and unknown
+files are preserved. Local changes to package-owned files block replacement.
+Private repositories require CYCODE_UPDATE_TOKEN (or GH_TOKEN/GITHUB_TOKEN) in
+the environment; credentials are never stored in preferences.
 Linux/macOS binaries are not provided by this release.
 
 Source commit: {revision}
@@ -94,23 +109,22 @@ Corresponding source: https://github.com/MrMybal/CyCode/tree/{revision}
 Pinned dependency sources are identified in manifest.json and the app/*source.lock.json
 files. Binary recipients must also have access to those sources and build scripts.
 '''.encode('utf-8')
-    manifest = {'version': version, 'license': 'GPL-3.0-only', 'platform': 'windows-x64', 'sourceCommit': revision,
-                'cyui': json.loads((ROOT / 'app/cyui-source.lock.json').read_text(encoding='utf-8')),
-                'sharedEditor': json.loads((ROOT / 'app/editor-source.lock.json').read_text(encoding='utf-8')),
-                'files': [{'path': name, 'sha256': sha256(data)} for name, data in sorted(entries.items())]}
-    entries['manifest.json'] = (json.dumps(manifest, indent=2) + '\n').encode('utf-8')
+    entries = payload(entries, version, {
+        'license': 'GPL-3.0-only', 'sourceCommit': revision,
+        'cyui': json.loads((ROOT / 'app/cyui-source.lock.json').read_text(encoding='utf-8')),
+        'sharedEditor': json.loads((ROOT / 'app/editor-source.lock.json').read_text(encoding='utf-8'))})
     args.output.mkdir(parents=True, exist_ok=True)
     archive = args.output / f'CyCode-{version}-windows-x64.zip'
-    with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as package:
-        for name, data in sorted(entries.items()):
-            info = zipfile.ZipInfo(f'CyCode-{version}/' + name, timestamp)
-            info.compress_type = zipfile.ZIP_DEFLATED
-            info.external_attr = 0o644 << 16
-            package.writestr(info, data, compresslevel=9)
-    checksum = sha256(archive.read_bytes())
-    (args.output / 'SHA256SUMS.txt').write_text(f'{checksum}  {archive.name}\n', encoding='utf-8')
-    print(json.dumps({'archive': str(archive), 'sha256': checksum,
+    update = args.output / f'CyCode-{version}-windows-x64-update.zip'
+    write_archive(archive, entries, version, timestamp, update=False)
+    write_archive(update, entries, version, timestamp, update=True)
+    if update.stat().st_size > 256 * 1024 * 1024:
+        raise RuntimeError('Update archive exceeds native download limit')
+    checksums = {file.name: sha256(file.read_bytes()) for file in (archive, update)}
+    (args.output / 'SHA256SUMS.txt').write_text(''.join(f'{digest}  {name}\n' for name,digest in checksums.items()), encoding='utf-8')
+    print(json.dumps({'archive': str(archive), 'update': str(update), 'sha256': checksums,
                       'files': len(entries), 'commit': revision}, indent=2))
+
 
 
 if __name__ == '__main__':

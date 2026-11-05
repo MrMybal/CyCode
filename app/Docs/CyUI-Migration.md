@@ -10,13 +10,14 @@ Neither developer checkout is modified by configuration or compilation.
 | Module | CyCode use |
 | --- | --- |
 | Core | Existing themes, fonts, icons, docking, notifications; shared locale catalogues and filters for menus, project files, diagnostics and settings |
-| Code / CodeEditor | Editable documents, read-only SDK/debugger sources, Git source versions and wrapped refactoring previews; common 101-mode syntax catalogue including HLSL, GLSL and logs |
+| Code / CodeEditor | Editable documents, read-only SDK/debugger sources, Git source versions, project-template source previews and wrapped refactoring previews; common 101-mode syntax catalogue including HLSL, GLSL and logs; version-checked diagnostic squiggles through the existing native annotation hook |
 | Diff | Unified/split Git review and refactoring comparisons, synchronized scrolling, inline differences and hunk navigation |
 | Commands | Action palette with stable command IDs and keyboard navigation; common ranking plus the IDE's abbreviation matching inside Search Everywhere |
 | Diagnostics | Bounded build output with shared log severity classification, filtering and follow; build/LSP problem list and source navigation |
 | DocumentViews | Native Markdown documentation from language servers; literal code sections use Code and plain text remains literal |
 | Inspector | General settings with stable property IDs, validation, drafts and commit/cancel phases |
 | Images / Canvas | Read-only image tabs with transparency, fit/zoom/pan and reload; the application owns decoding and GPU resources |
+| Assets | Lazy physical file/folder browser, common selection/filter/grid/list/navigation and action requests; native Engine owns preview/apply/undo and persistent project trash |
 
 The IDE retains its project/symbol search tabs, asynchronous symbol requests,
 keymaps, document permissions/revisions, multi-file refactoring transactions,

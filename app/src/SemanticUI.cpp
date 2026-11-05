@@ -57,12 +57,27 @@ void Application::selectChangeFile(const std::string &path) {
     refactorFile_ = path; changeTask("changes.preview", {{"id", refactorPlan_.at("id")}, {"path", path}});
 }
 void Application::updateSemantic() {
+    if (completed(symbolResolveFuture_)) {
+        try {
+            auto reply=symbolResolveFuture_.get();
+            if (reply.at("key")==symbolWantedKey_ && reply.at("selection")==symbolResolveKey_) {
+                if (reply.contains("error")) { symbolError_=reply.at("error"); symbolResolveKey_.clear(); }
+                else symbolResolved_=std::move(reply);
+            }
+        } catch (const std::exception &e) {
+            if (!symbolResolveKey_.empty()) { symbolError_=e.what(); symbolResolveKey_.clear(); }
+        }
+    }
     if (completed(symbolFuture_)) {
         try {
             auto result = symbolFuture_.get();
-            if (symbolSentKey_ == symbolWantedKey_) {
-                symbolResults_ = std::move(result); symbolError_.clear();
+            if (result.at("key") == symbolWantedKey_) {
+                symbolSentKey_ = symbolWantedKey_;
+                if (result.contains("error")) { symbolError_ = result.at("error"); }
+                else {
+                symbolResults_ = std::move(result.at("result")); symbolError_.clear();
                 if (symbolResults_.at("symbols").empty() && symbolAttempts_ < 6) { symbolSentKey_.clear(); symbolChanged_ = ImGui::GetTime()+.7; }
+                }
             }
         } catch (const std::exception &e) {
             if (symbolSentKey_ == symbolWantedKey_) symbolError_ = e.what();
@@ -80,10 +95,10 @@ void Application::updateSemantic() {
             refactorDiffState_ = {};
             for (auto *view : {&beforePreviewCode_, &afterPreviewCode_}) {
                 configureCodeEditor(*view); view->setLanguageForPath(refactorFile_);
-                view->setSyntaxEnabled(!LanguageService::supports(refactorFile_)); view->setReadOnly(true);
+                view->setSyntaxEnabled(!languageUsesLegacyLexer(refactorFile_)); view->setReadOnly(true);
             }
             for (auto editor : {&beforePreview_, &afterPreview_}) {
-                if (LanguageService::supports(refactorFile_)) editor->SetLanguage(editorLanguage(refactorFile_,unreal_.value("available",false))); editor->SetReadOnlyEnabled(true);
+                if (languageUsesLegacyLexer(refactorFile_)) editor->SetLanguage(editorLanguage(refactorFile_,unreal_.value("available",false))); editor->SetReadOnlyEnabled(true);
                 Syntax syntax; syntax.update(*editor,refactorFile_,editor->GetText());
                 editor->SetShowMiniMapEnabled(false); editor->SetWordWrapEnabled(true);
                 editor->SetShowWhitespacesEnabled(false); editor->SetShowCurrentLineHighlightEnabled(false);
@@ -93,7 +108,8 @@ void Application::updateSemantic() {
         } else if (method == "language.format" || method == "language.rename" || method=="language.codeActionPrepare") {
             refactorPlan_ = result; refactorPreview_ = nullptr;
             if (result.at("files").empty()) { cyui::notify(tr("No changes required"), cyui::Tone::neutral); return; }
-            if (method == "language.format" || (method=="language.codeActionPrepare" && codeActionApply_)) changeTask("changes.apply", {{"id", result.at("id")}});
+            if ((method == "language.format" || (method=="language.codeActionPrepare" && codeActionApply_)) &&
+                result.value("annotations",Json::array()).empty()) changeTask("changes.apply", {{"id", result.at("id")}});
             else { showPanel("Refactoring", "refactoring"); selectChangeFile(result.at("files")[0].at("path")); }
         } else if (method == "changes.apply" || method == "changes.undo") {
             refactorPlan_ = result;
@@ -114,8 +130,42 @@ void Application::refactorPanel() {
     }
     cyui::textDim("%s", refactorPlan_.value("title", "").c_str());
     const auto state = refactorPlan_.value("state", "preview");
-    ImGui::BeginDisabled(refactorFuture_.valid() || state != "preview" || refactorPlan_.at("files").empty());
-    if (cyui::primaryButton(tr("Apply changes"))) changeTask("changes.apply", {{"id", refactorPlan_.at("id")}});
+    const auto planId=refactorPlan_.at("id").get<std::string>();
+    if(refactorAnnotationPlan_!=planId) {refactorAnnotationPlan_=planId;refactorConfirmed_.clear();}
+    const auto annotations=refactorPlan_.value("annotations",Json::array());
+    bool confirmed=true;
+    if(!annotations.empty()) {
+        const bool expanded=cyui::beginSection(tr("Change annotations"));
+        for(const auto &annotation:annotations) {
+            const auto id=annotation.at("id").get<std::string>();
+            const bool required=annotation.at("needsConfirmation").get<bool>();
+            if(expanded) {
+                cyui::ScopedID annotationId(id.c_str());
+                if(required) {
+                    bool checked=refactorConfirmed_.contains(id);
+                    {cyui::ScopedDisabled disabled(refactorFuture_.valid() || state!="preview");
+                     if(ImGui::Checkbox("##confirm",&checked)) {
+                         if(checked)refactorConfirmed_.insert(id);else refactorConfirmed_.erase(id);
+                     }}
+                    cyui::tooltip(tr("Confirm this annotated change"));ImGui::SameLine();
+                }
+                const auto &label=annotation.at("label").get_ref<const std::string &>();
+                const bool details=ImGui::TreeNodeEx("##details",ImGuiTreeNodeFlags_SpanAvailWidth,"%s",label.c_str());
+                if(ImGui::IsItemHovered())cyui::tooltip(label.c_str());
+                if(details) {
+                    const auto description=annotation.at("description").get<std::string>();
+                    if(!description.empty())ImGui::TextWrapped("%s",description.c_str());
+                    for(const auto &path:annotation.at("files"))cyui::textDim("%s",path.get_ref<const std::string &>().c_str());
+                    ImGui::TreePop();
+                }
+            }
+            if(required && !refactorConfirmed_.contains(id))confirmed=false;
+        }
+        if(expanded)cyui::endSection();
+        if(!confirmed && state=="preview")cyui::textDim("%s",tr("Confirm the required annotations before applying."));
+    }
+    ImGui::BeginDisabled(refactorFuture_.valid() || state != "preview" || refactorPlan_.at("files").empty() || !confirmed);
+    if (cyui::primaryButton(tr("Apply changes"))) changeTask("changes.apply", {{"id", refactorPlan_.at("id")},{"confirmedAnnotations",refactorConfirmed_}});
     ImGui::EndDisabled(); ImGui::SameLine();
     ImGui::BeginDisabled(refactorFuture_.valid() || state != "applied");
     if (cyui::button(tr("Undo refactoring"))) changeTask("changes.undo", {{"id", refactorPlan_.at("id")}});

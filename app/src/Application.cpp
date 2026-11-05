@@ -1,10 +1,15 @@
 #include "cycode/Application.h"
+#include "cycode/SymbolCatalogue.h"
+#include "cycode/DiagnosticAnnotations.h"
+#include "cycode/Solution.h"
+#include "cycode/BuildLimits.h"
 #include "cycode/Completion.h"
 #include "cycode/EditorCompletion.h"
 #include "cycode/EditorTheme.h"
 #include "cycode/EditorLanguage.h"
 #include "cycode/FileIcons.h"
 #include "cycode/ImageView.h"
+#include "cycode/WorkspaceSession.h"
 #include <algorithm>
 #include <cyui/Core.h>
 #include <fstream>
@@ -21,6 +26,11 @@ static std::string lower(std::string value) {
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return value;
 }
+static int desktopBuildTimeout(const Json &settings) {
+    try {return int(buildTimeout(Json{{"timeoutSeconds",settings.value("buildTimeoutSeconds",Json(1800))}}).count());}
+    catch(const std::exception &) {return 1800;}
+}
+int Application::configuredBuildTimeout() const {return desktopBuildTimeout(settings_);}
 static const TextEditor::Language *languageFor(const std::string &path) {
     return editorLanguage(path);
 }
@@ -29,6 +39,7 @@ static bool cppFile(const std::string &path) {
 }
 Application::Application(LaunchOptions options, SDL_Window *window)
     : root_(options.installation), window_(window), smoke_(options.smoke) {
+    disablePlugins_=options.disablePlugins;
     testHighlights_=options.testHighlights;
     try {
         std::ifstream in(root_ / "app/locales/ui.json");
@@ -43,7 +54,7 @@ Application::Application(LaunchOptions options, SDL_Window *window)
         cyui::registerTranslations(locale, catalog);
     }
     loadSettings();
-    if (!options.keymap.empty()) { keymap_.load(options.keymap, keymapOverrides_.value(options.keymap, Json::object())); keymapProfile_ = options.keymap; }
+    if (!options.keymap.empty()) { applyKeymap(options.keymap, keymapOverrides_.value(options.keymap, Json::object())); keymapProfile_ = options.keymap; }
     options_ = options.showOptions;
     focusCmake_ = options.showCmake;
     focusProjectTasks_ = options.showProjectTasks;
@@ -78,12 +89,38 @@ Application::Application(LaunchOptions options, SDL_Window *window)
     if (options.workspace.empty() && !std::filesystem::exists(workspace))
         workspace = root_;
     setWorkspace(workspace);
+    loadBranding();
+    updateStartupTime_=ImGui::GetTime();
     if (!options.openFile.empty())
         open(options.openFile, options.openLine, options.openColumn, true);
-    else if (std::filesystem::exists(workspace / "app/examples/hello/main.cpp"))
+    else if (sessionRestoreQueue_.empty() && std::filesystem::exists(workspace / "app/examples/hello/main.cpp"))
         open("app/examples/hello/main.cpp");
 }
 Application::~Application() {
+    if(updateCancellation_) *updateCancellation_=true;
+    if(updateCheckFuture_.valid())updateCheckFuture_.wait();
+    if(updateDownloadFuture_.valid())updateDownloadFuture_.wait();
+    if(updateInspectFuture_.valid())updateInspectFuture_.wait();
+    if(updateHistoryFuture_.valid())updateHistoryFuture_.wait();
+    if(updateStorageFuture_.valid())updateStorageFuture_.wait();
+    if(updateStorageActionFuture_.valid())updateStorageActionFuture_.wait();
+    if (unrealAnalysisCancellation_) *unrealAnalysisCancellation_ = true;
+    auto waitWithBuildStop = [&](std::future<Json> &future) {
+        while (future.valid() && future.wait_for(std::chrono::milliseconds(20)) != std::future_status::ready) {
+            engine_->dispatch("build.cancel");
+            engine_->dispatch("project.cancel");
+        }
+    };
+    engine_->dispatch("build.cancel");
+    engine_->dispatch("project.cancel");
+    waitWithBuildStop(taskFuture_);
+    if(testsFuture_.valid()){engine_->dispatch("tests.cancel");testsFuture_.wait();}
+    if(templateFuture_.valid())templateFuture_.wait();
+    if(resourceFuture_.valid())resourceFuture_.wait();
+    if(recoveryFuture_.valid())recoveryFuture_.wait();
+    if(workspacePollFuture_.valid())workspacePollFuture_.wait();
+    if(extensionsRefreshFuture_.valid())extensionsRefreshFuture_.wait();
+    for(auto &[id,view]:extensionViews_)waitWithBuildStop(view.pending);
     if (unrealAnalysisCancellation_) *unrealAnalysisCancellation_ = true;
     if (unrealAnalysisFuture_.valid()) unrealAnalysisFuture_.wait();
     if (searchCancellation_)
@@ -92,20 +129,24 @@ Application::~Application() {
     for (const auto &tab : tabs_) for (auto *future : {&tab->completion,&tab->completionAccept,&tab->highlighting}) if (future->valid()) future->wait();
     for (auto &future : retiredCompletions_) if (future.valid()) future.wait();
     for (auto *future : {&filesFuture_, &searchFuture_, &gitFuture_, &taskFuture_, &navigationFuture_,
-                         &buildFuture_, &detectionFuture_, &symbolFuture_, &informationFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
+                         &buildFuture_, &presetFuture_, &detectionFuture_, &structure_.future, &occurrences_.future, &symbolFuture_, &symbolResolveFuture_, &informationFuture_, &hierarchyFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
         if (future->valid())
             future->wait();
     bridge_.reset();
     if (coreService_.valid())
         coreService_.wait();
     if (!smoke_ && !testSession_) {
-        ImGui::SaveIniSettingsToDisk(layoutIni_.c_str());
+        try { saveWorkspaceSession(true); } catch(const std::exception &) { /* Session metadata must not prevent preferences or exit. */ }
         try {
+            if(!layoutIni_.empty())ImGui::SaveIniSettingsToDisk(layoutIni_.c_str());
             saveSettings();
         } catch (const std::exception &) { /* A read-only settings directory must not prevent exit. */
         }
     }
     tabs_.clear();
+    brandingLogo_.reset();
+    brandingIcon_.reset();
+    synchronizeSyntax(Json::array());
     if (imageTextures_) imageTextures_->collect();
     imageLoader_.reset();
     ImGui::GetIO().IniFilename = nullptr;
@@ -126,14 +167,19 @@ void Application::loadSettings() {
     } catch (...) {
         settings_ = Json::object();
     }
+    checkUpdatesAtStartup_=!settings_.contains("checkUpdatesAtStartup") || !settings_.at("checkUpdatesAtStartup").is_boolean() || settings_.at("checkUpdatesAtStartup").get<bool>();
+    if(settings_.contains("skippedUpdate") && settings_.at("skippedUpdate").is_string())skippedUpdate_=settings_.at("skippedUpdate").get<std::string>();
+    try {if(!skippedUpdate_.empty())(void)updates::version(skippedUpdate_);}catch(...){skippedUpdate_.clear();}
+    restoreWorkspaceSession_=settings_.value("restoreWorkspaceSession",true);
     theme_ = settings_.value("theme", theme_);
     if (settings_.value("schemaVersion", 1) < 2 && theme_ == "navy")
         theme_ = "graphite";
     locale_ = settings_.value("language", locale_);
     keymapProfile_ = settings_.value("keymap", keymapProfile_);
     keymapOverrides_ = settings_.value("keymapOverrides", Json::object());
-    try { keymap_.load(keymapProfile_, keymapOverrides_.value(keymapProfile_, Json::object())); }
-    catch (const std::exception &e) { lastError_ = e.what(); keymapProfile_ = "rider"; keymapOverrides_ = Json::object(); keymap_.load(keymapProfile_); }
+    if(!keymapOverrides_.is_object())keymapOverrides_=Json::object();
+    try { applyKeymap(keymapProfile_, keymapOverrides_.value(keymapProfile_, Json::object())); }
+    catch (const std::exception &e) { lastError_ = e.what(); keymapProfile_ = "rider"; keymap_.load(keymapProfile_); }
     textScale_ = settings_.value("textScale", 1.15f);
     if (settings_.value("schemaVersion", 1) < 3 && settings_.contains("textScale")) textScale_ *= 1.15f;
     textScale_ = std::clamp(textScale_, 0.8f, 2.0f);
@@ -144,10 +190,11 @@ void Application::loadSettings() {
 #endif
 }
 void Application::saveSettings() {
+    const auto buildLimit=desktopBuildTimeout(settings_);
     std::filesystem::create_directories(root_ / "data/settings");
-    settings_ = {{"schemaVersion", 3},      {"theme", theme_},   {"language", locale_},
+    settings_ = {{"schemaVersion", 3}, {"checkUpdatesAtStartup",checkUpdatesAtStartup_}, {"skippedUpdate",skippedUpdate_},      {"theme", theme_},   {"language", locale_},
                  {"textScale", textScale_}, {"clangd", clangd_}, {"workspace", pathUtf8(entry_)},
-                 {"keymap", keymapProfile_}, {"keymapOverrides", keymapOverrides_}};
+                 {"keymap", keymapProfile_}, {"keymapOverrides", keymapOverrides_}, {"buildTimeoutSeconds",buildLimit},{"restoreWorkspaceSession",restoreWorkspaceSession_}};
     auto destination = root_ / "data/settings/ui-preferences.json";
     auto temporary = destination;
     temporary += "." + instance_ + ".tmp";
@@ -163,9 +210,15 @@ void Application::saveSettings() {
     }
 }
 bool Application::busy() const {
+    if (engine_ && engine_->dispatch("build.status").value("running", false)) return true;
+    if (engine_ && engine_->dispatch("project.status").value("running", false)) return true;
+    if(testsFuture_.valid())return true;
+    if(templateFuture_.valid())return true;
+    if(resourceFuture_.valid())return true;
+    if(recoveryFuture_.valid())return true;
     for (const auto &tab : tabs_) if ((tab->image && tab->image->loading()) || tab->highlighting.valid() || tab->completionAccept.valid()) return true;
     return filesFuture_.valid() || searchFuture_.valid() || gitFuture_.valid() || taskFuture_.valid() ||
-           navigationFuture_.valid() || buildFuture_.valid() || detectionFuture_.valid() || unrealAnalysisFuture_.valid() || symbolFuture_.valid() || informationFuture_.valid() || codeActionsFuture_.valid() || refactorFuture_.valid() || terminalFuture_.valid() || debugFuture_.valid() || vcsFuture_.valid();
+           navigationFuture_.valid() || buildFuture_.valid() || detectionFuture_.valid() || unrealAnalysisFuture_.valid() || structure_.future.valid() || occurrences_.future.valid() || symbolFuture_.valid() || symbolResolveFuture_.valid() || informationFuture_.valid() || codeActionsFuture_.valid() || refactorFuture_.valid() || terminalFuture_.valid() || debugFuture_.valid() || vcsFuture_.valid();
 }
 Json Application::testState() const {
     Json result = {{"active", active_},
@@ -175,6 +228,8 @@ Json Application::testState() const {
     result["build"] = buildState_;
     result["msbuild"] = msbuildState_; result["msbuildActive"] = msbuildActive_;
     result["projectTasks"] = projectState_; result["projectActive"] = projectActive_;
+    result["tests"]={{"catalogue",testsCatalog_},{"results",testsResults_},{"error",testsError_}};
+    result["vcsHunks"]=vcsHunks_;
     result["buildDiagnostics"] = buildDiagnostics_;
     result["toolchains"] = toolchains_;
     result["solution"] = solution_;
@@ -186,6 +241,7 @@ Json Application::testState() const {
     result["textScale"] = textScale_;
     result["fileCount"] = files_.size();
     result["ui"] = {{"quickOpen", quickOpenVisible_}, {"lastShortcut", lastShortcut_}};
+    result["ui"]["branding"]={{"logo",bool(brandingLogo_)},{"windowIcon",brandingWindowIcon_},{"error",brandingError_}};
     result["ui"]["paletteMode"] = paletteMode_;
     result["ui"]["keymap"] = keymapProfile_;
     result["ui"]["options"] = options_;
@@ -202,6 +258,12 @@ Json Application::testState() const {
     result["terminals"] = engine_->terminals().list();
     result["debug"] = engine_->debugger().status();
     result["vcs"] = {{"status",git_},{"details",vcsInfo_},{"history",vcsHistory_},{"conflict",vcsConflict_},{"section",vcsSection_},{"preview",vcsPreviewTitle_}};
+    result["vcs"]["tabs"]=Json::array();
+    if(auto *window=ImGui::FindWindowByName(label("Version control","vcs").c_str()))if(auto *bar=ImGui::GetCurrentContext()->TabBars.GetByKey(window->GetID("##vcs-sections"))) {
+        result["vcs"]["tabRect"]={bar->BarRect.Min.x,bar->BarRect.Min.y,bar->BarRect.Max.x,bar->BarRect.Max.y};
+        result["vcs"]["visibleTab"]=bar->VisibleTabContentsId;
+        for(auto &tab:bar->Tabs)result["vcs"]["tabs"].push_back({{"id",tab.ID},{"name",ImGui::TabBarGetTabName(bar,&tab)},{"selected",tab.ID==bar->SelectedTabId},{"visible",tab.ContentsIsVisible},{"width",tab.Width},{"offset",tab.Offset}});
+    }
     if (!terminalId_.empty()) {
         try { result["terminal"] = engine_->dispatch("terminal.read", {{"id", terminalId_}, {"limit", 2000}}); } catch (const std::exception &) {}
     }
@@ -234,18 +296,26 @@ Json Application::testState() const {
 }
 void Application::setWorkspace(const std::filesystem::path &path) {
     // Validate the requested solution before tearing down the current session.
-    auto nextEngine = std::make_shared<Engine>(path);
+    auto nextEngine = std::make_shared<Engine>(path, smoke_ || testSession_ ? std::filesystem::path{} : std::filesystem::absolute(root_ / "data/settings/language-servers"));
     auto nextSolution = nextEngine->dispatch("workspace.describe").at("solution");
     auto nextUnreal = nextEngine->dispatch("unreal.inspect");
     const bool inspectMsbuild = !nextUnreal.value("available",false) && (!std::filesystem::is_directory(path) || (!std::filesystem::exists(nextEngine->workspace()/"CMakeLists.txt") && !std::filesystem::exists(nextEngine->workspace()/"app/CMakeLists.txt")));
     const auto nextMsbuild = inspectMsbuild ? nextEngine->dispatch("msbuild.inspect") : Json::object();
     if (engine_) {
+        if(engine_->dispatch("build.status").value("running",false))throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
+        if(engine_->dispatch("project.status").value("running",false))throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
+        if(templateFuture_.valid())throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
+        if(resourceFuture_.valid())throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
+        if(recoveryFuture_.valid()) { recoveryFuture_.wait();recoveryFuture_={}; }
+        if(workspacePollFuture_.valid()) { workspacePollFuture_.wait();workspacePollFuture_={}; }
+        if(extensionsRefreshFuture_.valid()) { extensionsRefreshFuture_.wait();extensionsRefreshFuture_={}; }
+        for(const auto &[id,view]:extensionViews_)if(view.pending.valid())throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
         for (const auto &tab : tabs_)
             if (tab->dirty)
                 throw std::runtime_error(tr("Save or close modified documents before switching workspace."));
         for (const auto &tab : tabs_) if (tab->completionAccept.valid()) throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
-        for (auto *future : {&filesFuture_, &searchFuture_, &gitFuture_, &taskFuture_, &navigationFuture_,
-                             &buildFuture_, &detectionFuture_, &symbolFuture_, &informationFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
+        for (auto *future : {&testsFuture_,&filesFuture_, &searchFuture_, &gitFuture_, &taskFuture_, &navigationFuture_,
+                             &buildFuture_, &presetFuture_, &detectionFuture_, &structure_.future, &occurrences_.future, &symbolFuture_, &symbolResolveFuture_, &informationFuture_, &hierarchyFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
             if (future->valid())
                 throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
         engine_->configureLanguage(clangd_, false, false);
@@ -257,23 +327,53 @@ void Application::setWorkspace(const std::filesystem::path &path) {
         if (tab->highlighting.valid()) retiredCompletions_.push_back(std::move(tab->highlighting));
         if (tab->completion.valid()) retiredCompletions_.push_back(std::move(tab->completion));
     }
+    if(workspaceSession_) {
+        try{saveWorkspaceSession(true);}catch(const std::exception &e){cyui::notify(e.what(),cyui::Tone::warning);}
+        workspaceSession_.reset();
+    }
+    if(vcsRepositoriesFuture_.valid())try{vcsRepositoriesFuture_.get();}catch(...){}
+    vcsRepository_.clear();vcsRepositoryIdentity_.clear();vcsWorktreeReview_=Json::object();vcsRepositories_=nullptr;vcsWorktrees_=Json::object();vcsWorktreesRequested_=false;vcsWorktreeRemoveOpen_=false;vcsWorktreeRemoval_=Json::object();
+    vcsSubmodules_=Json::object();vcsSubmoduleReview_=Json::object();vcsSubmodulesRequested_=false;
+    vcsSubmoduleAddPlan_=Json::object();vcsSubmoduleAddOpen_=false;vcsSubmoduleAddUrl_.clear();vcsSubmoduleAddPath_.clear();vcsSubmoduleAddName_.clear();vcsSubmoduleAddBranch_.clear();
+    sessionRestoreQueue_.clear();
+    liveBuildState_=Json::object();liveBuildText_.clear();liveBuildError_.clear();lastLiveBuildPoll_=-1;
     tabs_.clear();
+    saveAsQueue_.clear();saveAsDocument_=0;saveAsOpen_=false;saveAsError_.clear();
     languageDecisions_.clear();
+    languageSettingsBackend_.clear();languageSettingsError_.clear();
+    extensionViews_.clear();
     historyBack_.clear(); historyForward_.clear(); recentFiles_.clear(); closedFiles_.clear(); keymap_.cancel(); closeAll_ = false;
-    symbolResults_ = Json::object(); symbolWantedKey_.clear(); symbolSentKey_.clear(); refactorPlan_ = nullptr; refactorPreview_ = nullptr;
+    clearOccurrences();
+    occurrences_ = OccurrenceView{};
+    structure_ = StructureView{};
+    ++navigationTicket_; navigation_=Json::object(); navigationModel_.set(Json::array());
+    navigationError_.clear(); navigationPath_.clear(); navigationSelected_=-1; navigationFilter_.query.clear();
+    symbolBackend_.clear();
+    symbolResults_ = Json::object(); symbolWantedKey_.clear(); symbolSentKey_.clear(); symbolResolveKey_.clear(); symbolResolved_=Json::object(); refactorPlan_ = nullptr; refactorPreview_ = nullptr;
+    refactorAnnotationPlan_.clear();refactorConfirmed_.clear();
     panels_.try_emplace("refactoring", false);
     panels_.try_emplace("information", false);
+    panels_.try_emplace("cmakePresets",false);presetInitialized_=false;presetCatalogue_=nullptr;presetPlan_=nullptr;presetName_.clear();presetError_.clear();
+    panels_.try_emplace("hierarchy",false);hierarchyState_=Json::object();hierarchySelected_=Json::object();hierarchyBranches_.clear();hierarchyBranchErrors_.clear();hierarchyError_.clear();hierarchyValid_=false;hierarchyBytes_=0;
     panels_.try_emplace("codeActions",false);codeActionsState_=Json::object();codeActionsKey_.clear();codeActionsError_.clear();codeActionSelected_=-1;
     informationMethod_.clear(); informationWanted_.clear(); informationSent_.clear(); informationError_.clear();
     informationState_ = Json::object(); informationQuery_ = nullptr;
     panels_.try_emplace("terminal", false);
     terminalId_.clear(); terminalFocused_ = false; focusTerminal_ = false;
     debugProfileLoaded_ = false; debugState_ = Json::object(); debugChildren_ = Json::object(); debugJumpKey_.clear(); debugCurrentPath_.clear(); pendingDebugBuild_ = false;
+    debugUnrealLaunch_ = nullptr; pendingUnrealDebug_ = Json::object();
+    debugVariablePages_=debugScopePage_=debugMemory_=debugAssembly_=debugException_=Json::object();debugScopeReference_=debugScopeStart_=0;debugEvaluationMemory_.clear();
     debugBreakpointDrafts_ = Json::object(); debugCurrentLine_ = 0;
     vcsInfo_ = vcsHistory_ = vcsConflict_ = Json::object(); vcsSection_ = "Changes"; vcsPreviewTitle_.clear();
+    clearGitConflicts();
+    clearGitCheckout();
+    clearUnrealAutomation();clearUnrealLaunch();unrealArtifacts_=Json::object();unrealArtifactsBound_=true;clearGitReplay();clearGitMerge();
+    vcsHunks_=Json::object();vcsHunkSelection_.clear();vcsHunkDiff_={};vcsHunkDiffState_={};
+    testsCatalog_=testsResults_=Json::object();testsSelection_.clear();testsError_.clear();panels_.try_emplace("tests",false);
     terminalSelectionStart_ = terminalSelectionEnd_ = {-1, 0};
     active_.clear();
     files_.clear();
+    workspaceIndexRevision_=0;lastWorkspaceCheck_=-10;
     tree_ = {};
     lastError_.clear();
     search_ = Json::object();
@@ -287,6 +387,15 @@ void Application::setWorkspace(const std::filesystem::path &path) {
     buildGenerator_ = "automatic";
     buildTarget_.clear();
     engine_ = std::move(nextEngine);
+    projectTemplates_.reset();templateModal_=false;templatePlan_=Json::object();
+    resourcePlan_=resourceLast_=resourceItems_=resourceTrash_=Json::object();resourceFolder_=".";selectedResource_.clear();
+    resourceError_.clear();lastResourceRevision_=0;resourceModal_=false;resourceAssets_={};resourceAssets_.grid=false;
+    resourceAssetPaths_.clear();resourceFavorites_.clear();lastResourceRefresh_=-10;panels_.try_emplace("resources",false);
+    recoveryInfo_=recoveryPreview_=Json::object();recoveryDiscard_=nullptr;
+    recoveryError_.clear();recoveryHealthError_.clear();recoveryInitialCheck_=true;recoveryConfirm_=false;
+    recoveryCode_={};recoveryCodeState_={};lastRecoveryRefresh_=-10;
+    panels_.try_emplace("recovery",false);
+    recoveryTask("recovery.list");
     solution_ = std::move(nextSolution);
     solutionConfiguration_ = solution_.is_object() && !solution_.at("configurations").empty()
                                  ? solution_.at("configurations")[0].get<std::string>()
@@ -295,6 +404,8 @@ void Application::setWorkspace(const std::filesystem::path &path) {
     msbuildState_ = Json::object(); msbuildActive_ = false;
     msbuildActive_ = nextMsbuild.value("available",false); if (msbuildActive_) applyBuild(nextMsbuild);
     projectActive_ = !unreal_.value("available",false) && !msbuildActive_ && !ProjectTasks::detect(engine_->workspace()).empty();
+    liveBuildSource_=projectActive_?1:0;projectCancellationId_.clear();selectedProblem_=0;
+    problems_={};problemBuild_=nullptr;problemLanguage_=nullptr;
     projectState_ = Json::object(); projectProfile_ = Json::object();
     unrealLanguage_ = *editorLanguage("source.cpp",true);
     entry_ = !std::filesystem::is_directory(path)
@@ -315,17 +426,15 @@ void Application::setWorkspace(const std::filesystem::path &path) {
         }
         auto directory = root_ / "data/settings/workspaces";
         std::filesystem::create_directories(directory);
-        layoutIni_ = pathUtf8(directory / (std::to_string(hash) + ".ini"));
-        ImGui::GetIO().IniFilename = layoutIni_.c_str();
         ImGui::ClearIniSettings();
-        if (std::filesystem::exists(utf8Path(layoutIni_)))
-            ImGui::LoadIniSettingsFromDisk(layoutIni_.c_str());
+        beginWorkspaceSession(directory/(std::to_string(hash)+".ini"),key);
         layoutReady_ = false;
     }
     unrealAnalysisState_.clear();
     engine_->configureLanguage(clangd_, !smoke_ && !unreal_.value("available", false), true);
-    engine_->plugins().load(root_ / "runtime/plugins");
+    if(!disablePlugins_)engine_->plugins().loadInstalled(root_);
     pluginInfo_ = engine_->dispatch("plugins.list");
+    synchronizeExtensions();
     auto instance =
         instance_ + '-' + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
     bridge_ = std::make_unique<Bridge>(*engine_, root_ / ("data/bridge/native-" + instance + ".json"));
@@ -371,15 +480,26 @@ void Application::prepareUnreal() {
     if (unrealAnalysisFuture_.valid() || !unreal_.value("available", false)) return;
     unrealAnalysisState_ = "preparing";
     auto engine = engine_; auto params = buildParameters();
+    params["timeoutSeconds"]=desktopBuildTimeout(settings_);
     unrealAnalysisCancellation_ = std::make_shared<std::atomic<bool>>(false);
     auto cancellation = unrealAnalysisCancellation_;
     unrealAnalysisFuture_ = std::async(std::launch::async, [engine, params, cancellation] { return engine->prepareUnrealAnalysis(params, cancellation.get()); });
 }
-void Application::refreshFiles() {
+void Application::refreshFiles(bool force) {
     if (filesFuture_.valid())
         return;
     auto engine = engine_;
-    filesFuture_ = std::async(std::launch::async, [engine] { return engine->dispatch("workspace.files"); });
+    filesFuture_ = std::async(std::launch::async, [engine,force] {
+        auto result=engine->dispatch("workspace.files",{{"refresh",force}});
+        const auto generation=result.at("indexRevision");size_t attempts=0;
+        while(!result.at("nextOffset").is_null()&&++attempts<32) {
+            const auto page=engine->dispatch("workspace.files",{{"offset",result.at("nextOffset")}});
+            if(page.at("indexRevision")!=generation) { result["indexRevision"]=0;result["truncated"]=true;result["nextOffset"]=nullptr;break; }
+            for(const auto &file:page.at("files"))result["files"].push_back(file);
+            result["nextOffset"]=page.at("nextOffset");result["truncated"]=page.at("truncated");
+        }
+        return result;
+    });
 }
 Json Application::buildParameters() const {
     if (projectActive_) return projectProfile_;
@@ -392,7 +512,8 @@ Json Application::buildParameters() const {
     if (msbuildActive_) return {{"entry",msbuildState_.at("profile").at("entry")},{"configuration",msbuildConfiguration_},{"platform",msbuildPlatform_},{"project",msbuildProject_},{"tool",msbuildTool_}};
     return {{"source", buildSource_},          {"buildDirectory", buildDirectory_},
             {"configuration", configuration_}, {"toolchain", buildToolchain_},
-            {"generator", buildGenerator_},    {"target", buildTarget_}};
+            {"generator", buildGenerator_},    {"target", buildTarget_},
+            {"configurePreset",buildConfigurePreset_},{"buildPreset",buildBuildPreset_}};
 }
 void Application::applyBuild(const Json &project) {
     if (project.contains("kind")) {
@@ -407,6 +528,12 @@ void Application::applyBuild(const Json &project) {
         return;
     }
     buildState_ = project;
+    if(buildEdited_ && project.contains("profile")) {
+        const auto &profile=project.at("profile");
+        if((!buildConfigurePreset_.empty() || !buildBuildPreset_.empty()) && profile.value("configurePreset","")==buildConfigurePreset_ && profile.value("buildPreset","")==buildBuildPreset_) {
+            buildDirectory_=profile.at("buildDirectory");configuration_=profile.at("configuration");
+        }
+    }
     if (buildEdited_ || !project.contains("profile"))
         return;
     const auto &profile = project.at("profile");
@@ -416,6 +543,7 @@ void Application::applyBuild(const Json &project) {
     buildToolchain_ = profile.at("toolchain");
     buildGenerator_ = profile.at("generator");
     buildTarget_ = profile.at("target");
+    buildConfigurePreset_=profile.value("configurePreset","");buildBuildPreset_=profile.value("buildPreset","");
 }
 void Application::refreshBuild(bool detectTools, bool initial) {
     if (unreal_.value("available", false))
@@ -440,10 +568,21 @@ void Application::refreshGit() {
     if (gitFuture_.valid())
         return;
     auto engine = engine_;
-    auto provider = provider_;
-    gitFuture_ = std::async(std::launch::async, [engine, provider] {
-        Json result = {{"status",engine->dispatch("vcs.status", {{"provider", provider}})}};
-        if (provider == "git") { result["details"] = engine->dispatch("vcs.inspect"); if (result.at("details").value("repository",false)) result["history"] = engine->dispatch("vcs.history"); }
+    const auto explicitRepository=vcsRepository_;
+    const auto path=vcsRequestPath();
+    gitFuture_ = std::async(std::launch::async, [engine, path,explicitRepository] {
+        Json query={{"contextPath",path}};
+        if(!explicitRepository.empty()){query["provider"]="git";query["repository"]=explicitRepository;}
+        const auto context=engine->dispatch("vcs.context",query);
+        Json result = {{"context",context},{"contextPath",path}};
+        Json request={{"provider",context.at("provider")},{"contextPath",path}};
+        if(context.at("provider")=="git"){request["repository"]=context.at("gitRepository");request["expectedRepository"]=context.at("gitIdentity");}
+        const std::string provider=context.at("provider");
+        const auto caps=context.at("capabilities");
+        if(!context.at("available").get<bool>())result["status"]={{"repository",false},{"files",Json::array()},{"message","Configured provider is unavailable"}};
+        else if(std::find(caps.begin(),caps.end(),"status")!=caps.end())result["status"]=engine->dispatch("vcs.status",request);
+        else result["status"]={{"repository",false},{"files",Json::array()},{"message","Provider does not advertise status"}};
+        if (provider == "git") { result["details"] = engine->dispatch("vcs.inspect",request); if (result.at("details").value("repository",false)) result["history"] = engine->dispatch("vcs.history",request); }
         return result;
     });
     lastGitRefresh_ = ImGui::GetTime();
@@ -474,13 +613,14 @@ void Application::task(const std::string &method, Json params) {
     }
     if (msbuildActive_) { if (method == "build.configure") actualMethod = "msbuild.restore"; if (method == "build.run") actualMethod = "msbuild.build"; }
     if (projectActive_) { if (method == "build.configure") actualMethod = "project.configure"; if (method == "build.run") actualMethod = "project.build"; }
-    if (actualMethod.starts_with("unreal."))
+    if (actualMethod.starts_with("unreal.") && actualMethod!="unreal.automationPlan" && actualMethod!="unreal.automationRun" && actualMethod!="unreal.launchProfile" && actualMethod!="unreal.artifacts" && !((actualMethod=="unreal.build"||actualMethod=="unreal.inspect")&&!params.empty()))
         params = buildParameters();
     if (method == "build.configure" || method == "build.run")
         params = buildParameters();
     if (actualMethod.starts_with("msbuild.")) { params = buildParameters(); if (msbuildRestore_ && (actualMethod == "msbuild.build" || actualMethod == "msbuild.rebuild")) params["restore"] = true; }
     if (actualMethod.starts_with("project.")) params = projectProfile_;
-    if (actualMethod == "msbuild.build" || actualMethod == "msbuild.rebuild" || actualMethod.starts_with("project.")) {
+    if(supportsBuildTimeout(actualMethod)&&actualMethod!="unreal.automationRun")params["timeoutSeconds"]=desktopBuildTimeout(settings_);
+    if (actualMethod == "msbuild.build" || actualMethod == "msbuild.rebuild" || actualMethod == "build.presetRun" || actualMethod.starts_with("project.")) {
         saveAll();
         if (std::any_of(tabs_.begin(),tabs_.end(),[](const auto &tab) { return tab->dirty; })) return;
     }
@@ -492,7 +632,16 @@ void Application::task(const std::string &method, Json params) {
     }
     auto engine = engine_;
     taskMethod_ = actualMethod;
-    showPanel("Build","build");
+    taskOperationId_.clear();
+    buildCancellationId_.clear();
+    projectCancellationId_.clear();
+    if (BuildOperations::supports(actualMethod) || actualMethod.starts_with("project.")) {
+        static std::atomic<uint64_t> sequence{0};
+        taskOperationId_ = "gui-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) +
+                           "-" + std::to_string(++sequence);
+        params["operationId"] = taskOperationId_;
+    }
+    if (actualMethod != "unreal.launchProfile" && actualMethod != "unreal.artifacts") showPanel("Build","build");
     output_ += "\n> " + actualMethod + "\n";
     taskFuture_ = std::async(std::launch::async, [engine, actualMethod, params] {
         return engine->dispatch(actualMethod, params);
@@ -502,9 +651,9 @@ void Application::configureEditor(const std::shared_ptr<Tab> &tab) {
     configureCodeEditor(tab->codeEditor);
     tab->codeEditor.setLanguageForPath(tab->displayPath);
     // Rich project-aware lexical/semantic overlays keep their existing native hook.
-    tab->codeEditor.setSyntaxEnabled(!LanguageService::supports(tab->displayPath));
+    tab->codeEditor.setSyntaxEnabled(!cyui::codeLanguageInfo(tab->codeEditor.language()).builtin||!languageUsesLegacyLexer(tab->displayPath));
     tab->snippet.attach(tab->editor);
-    if (LanguageService::supports(tab->displayPath)) tab->editor.SetLanguage(unreal_.value("available", false) && cppFile(tab->path) ? &unrealLanguage_ : languageFor(tab->displayPath));
+    if (languageUsesLegacyLexer(tab->displayPath)) tab->editor.SetLanguage(unreal_.value("available", false) && cppFile(tab->path) ? &unrealLanguage_ : languageFor(tab->displayPath));
     tab->syntax.update(tab->editor,tab->path,tab->editor.GetText());
     tab->editor.SetTabSize(4);
     tab->editor.SetInsertSpacesOnTabs(true);
@@ -528,7 +677,7 @@ void Application::configureEditor(const std::shared_ptr<Tab> &tab) {
         }
         if (debugState_.value("state","") == "stopped" && debugCurrentPath_ == tab->path && debugCurrentLine_ == line.line+1)
             draw->AddTriangleFilled({at.x+line.width*.6f,at.y+cyui::dp(2)},{at.x+line.width,at.y+line.height*.5f},{at.x+line.width*.6f,at.y+line.height-cyui::dp(2)},cyui::palette().warning);
-        ImGui::BeginDisabled(tab->readOnly || debugFuture_.valid());
+        ImGui::BeginDisabled(tab->readOnly || isUntitledDocument(tab->path) || debugFuture_.valid());
         if (ImGui::InvisibleButton("##breakpoint",{line.width,line.height})) toggleBreakpoint(tab->path,line.line+1);
         if (ImGui::IsItemHovered()) cyui::tooltip((std::string(tr("Toggle breakpoint"))+" ("+keymap_.hint("debug.breakpoint")+")").c_str());
         ImGui::EndDisabled();
@@ -540,7 +689,7 @@ void Application::configureEditor(const std::shared_ptr<Tab> &tab) {
     completion.callback = [this, weak](TextEditor::AutoCompleteState &state) {
         auto tab = weak.lock();
         state.suggestions.clear(); state.suggestionsPromise = false;
-        if (!tab || tab->readOnly || tab->snippet.active() || !LanguageService::supports(tab->path))
+        if (!tab || tab->readOnly || tab->snippet.active() || !engine_->supportsLanguage(tab->path))
             return;
         tab->completionSession.clear();tab->completionItems.clear();
         if (cppFile(tab->path) && unreal_.value("available", false) && state.searchTerm.size() >= 2) {
@@ -577,7 +726,7 @@ void Application::configureEditor(const std::shared_ptr<Tab> &tab) {
     tab->editor.SetAutoCompleteConfig(&completion);
 }
 void Application::open(const std::string &path, size_t line, size_t column, bool utf16, bool activate) {
-    if (openImage(path,activate)) return;
+    if (!isUntitledDocument(path) && openImage(path,activate)) return;
     if (path.starts_with("debug://")) { openDebugSource(path,line,column); return; }
     try {
         auto doc = path.starts_with("sdk://") ? engine_->dispatch("sources.read", {{"source", path}})
@@ -597,13 +746,6 @@ void Application::open(const std::string &path, size_t line, size_t column, bool
             tab->dirty = doc["dirty"];
             configureEditor(tab);
             tabs_.push_back(tab);
-            const auto backend=languageBackend(tab->path);
-            if (!smoke_ && !backend.empty() && backend!="cpp" && backend!="csharp" && !languageDecisions_.contains(backend)) {
-                languageDecisions_.insert(backend);
-                const auto server=engine_->languageStatus().value("servers",Json::object()).value(backend,Json::object());
-                if (server.value("available",false) && !server.value("enabled",false))
-                    engine_->dispatch("language.configure",{{"language",backend}});
-            }
         } else if (tab->revision != doc["revision"].get<std::uint64_t>()) {
             tab->snippet.cancel();
             const auto cursor = tab->editor.GetMainCursorPosition();
@@ -616,11 +758,26 @@ void Application::open(const std::string &path, size_t line, size_t column, bool
             tab->queuedCompletion = nullptr;
             ++tab->completionGeneration;
             tab->editor.SetAutoCompleteSuggestions({});
-            navigation_ = Json::object();
         }
+        // Recovery may seed a tab before open() mirrors its revision. Apply the
+        // same language-server activation policy to both paths.
+        const auto backend=engine_->languageBackendFor(tab->path);
+        if (!smoke_ && !backend.empty() && backend!="cpp" && backend!="csharp" && !languageDecisions_.contains(backend)) {
+            languageDecisions_.insert(backend);
+            const auto languageStatus=engine_->languageStatus();
+            const auto server=languageStatus.value("servers",Json::object()).value(backend,Json::object());
+            const auto saved=languageStatus.value("preferences",Json::object()).value("backends",Json::object());
+            if (server.value("available",false) && !server.value("enabled",false) && saved.value(backend,true))
+                engine_->dispatch("language.configure",{{"language",backend}});
+        }
+        tab->displayPath=doc.value("displayPath",canonical);
+        tab->identity=doc.value("id",uint64_t(0));
+        tab->synchronizedText=doc.at("text").get<std::string>();
+        tab->synchronizedRevision=tab->revision;
         if (activate) {
+            tab->pendingSession = nullptr;
             if (!historyMoving_ && (active_ != canonical || line)) rememberNavigation();
-            std::erase(recentFiles_, canonical); recentFiles_.insert(recentFiles_.begin(), canonical);
+            if (!isUntitledDocument(canonical)) { std::erase(recentFiles_, canonical); recentFiles_.insert(recentFiles_.begin(), canonical); }
             if (recentFiles_.size() > 100) recentFiles_.resize(100);
             active_ = canonical;
             focusTab_ = canonical;
@@ -648,6 +805,7 @@ void Application::open(const std::string &path, size_t line, size_t column, bool
 }
 void Application::changed(const std::shared_ptr<Tab> &tab) {
     if (tab->readOnly) return;
+    clearDiagnosticAnnotations(tab->editor);tab->diagnosticKey.clear();tab->diagnosticCount=0;tab->diagnosticTruncated=false;
     tab->editor.ClearSemanticTokens(); tab->highlightRevision=0; tab->highlightCount=0; tab->highlightRetryAt=ImGui::GetTime()+.3;
     try {
         auto result = engine_->dispatch(
@@ -655,15 +813,31 @@ void Application::changed(const std::shared_ptr<Tab> &tab) {
             {{"path", tab->path}, {"text", tab->editor.GetText()}, {"expectedRevision", tab->revision}});
         tab->revision = result["revision"];
         tab->dirty = result["dirty"];
+        tab->synchronizedText=result.at("text").get<std::string>();
+        tab->synchronizedRevision=tab->revision;
         tab->syntax.update(tab->editor,tab->path,result["text"].get_ref<const std::string &>());
         ++tab->completionGeneration;
-        navigation_ = Json::object();
     } catch (const std::exception &e) {
+        // A filesystem move/delete can complete between the UI's metadata poll
+        // and this keystroke. Retry only when identity and text prove continuity.
+        if(tab->identity)try {
+            const auto documents=engine_->dispatch("documents.list").at("documents");
+            for(const auto &info:documents)if(info.value("id",uint64_t(0))==tab->identity&&info.at("revision").get<uint64_t>()!=tab->revision) {
+                const auto current=engine_->dispatch("documents.read",{{"path",info.at("path")}});
+                if(current.at("text").get_ref<const std::string &>()!=tab->synchronizedText)break;
+                resourceTabPath(tab,current.at("path"));tab->revision=current.at("revision");
+                const auto result=engine_->dispatch("documents.replace",{{"path",tab->path},{"text",tab->editor.GetText()},{"expectedRevision",tab->revision}});
+                tab->revision=result.at("revision");tab->dirty=result.at("dirty");tab->synchronizedText=result.at("text").get<std::string>();tab->synchronizedRevision=tab->revision;
+                tab->syntax.update(tab->editor,tab->path,tab->synchronizedText);return;
+            }
+        } catch(const std::exception &) {}
+        tab->dirty = true; // Preserve uncommitted editor text through a concurrent native close/conflict.
         error(e.what());
     }
 }
 void Application::save(const std::shared_ptr<Tab> &tab) {
     if (tab->readOnly) return;
+    if (isUntitledDocument(tab->path)) { beginSaveAs(tab); return; }
     try {
         auto result =
             engine_->dispatch("documents.save", {{"path", tab->path}, {"expectedRevision", tab->revision}});
@@ -687,23 +861,48 @@ void Application::closeTab(const std::string &path, bool discard) {
         pendingClose_ = path;
         return;
     }
-    if ((*found)->image) { }
-    else if ((*found)->readOnly && path.starts_with("sdk://")) engine_->dispatch("sources.close", {{"source", path}});
-    else if (path.starts_with("debug://")) { }
-    else engine_->dispatch("documents.close", {{"path", path}, {"discard", discard}});
-    navigation_ = Json::object();
+    try {
+        if ((*found)->image) { }
+        else if ((*found)->readOnly && path.starts_with("sdk://")) engine_->dispatch("sources.close", {{"source", path}});
+        else if (path.starts_with("debug://")) { }
+        else engine_->dispatch("documents.close", {{"path", path}, {"discard", discard},{"expectedRevision",(*found)->revision}});
+    } catch (const std::exception &e) {
+        closeAll_ = false;
+        if (pendingClose_ == path) pendingClose_.clear();
+        error(e.what());
+        return; // A concurrent edit must leave this tab and its editor Undo alive.
+    }
+    retireTabView(path);
+}
+void Application::retireTabView(const std::string &path) {
+    auto found = std::find_if(tabs_.begin(),tabs_.end(),[&](const auto &tab){return tab->path==path;});
+    if (found == tabs_.end()) return;
+    std::erase(saveAsQueue_,(*found)->identity);
+    if (pendingClose_ == path) {
+        if (auto *popup = ImGui::FindWindowByName(tr("Unsaved changes"))) {
+            auto &stack = ImGui::GetCurrentContext()->OpenPopupStack;
+            for (int i=0;i<stack.Size;++i) if (stack[i].Window==popup) { ImGui::ClosePopupToLevel(i,true); break; }
+        }
+        pendingClose_.clear();
+    }
     if ((*found)->completion.valid())
         retiredCompletions_.push_back(std::move((*found)->completion));
     if ((*found)->completionAccept.valid()) retiredCompletions_.push_back(std::move((*found)->completionAccept));
     if ((*found)->highlighting.valid()) retiredCompletions_.push_back(std::move((*found)->highlighting));
     tabs_.erase(found);
-    closedFiles_.push_back(path);
+    sessionDraftTabs_.erase(path);
+    if (!isUntitledDocument(path)) closedFiles_.push_back(path);
     if (closedFiles_.size() > 100) closedFiles_.erase(closedFiles_.begin());
     if (active_ == path)
         active_ = tabs_.empty() ? "" : tabs_.front()->path;
 }
 void Application::update() {
+    updateBuildCancellation();
+    updateProjectCancellation();
+    updateProjectTemplates();
     updateImages();
+    updateResources();
+    updateRecovery();
     if (ready(unrealAnalysisFuture_)) {
         try {
             auto result = unrealAnalysisFuture_.get();
@@ -743,34 +942,71 @@ void Application::update() {
         }
     }
     // Synchronize external edits before consuming any asynchronous language result.
+    updateWorkspace();
     auto documents = engine_->dispatch("documents.list")["documents"];
+    std::set<uint64_t> liveDocumentIds;
+    for (const auto &info : documents) liveDocumentIds.insert(info.value("id",uint64_t(0)));
+    const auto views = tabs_;
+    for (const auto &tab : views) if (!tab->readOnly && !tab->image && tab->identity && !liveDocumentIds.contains(tab->identity)) {
+        const auto text = tab->editor.GetText();
+        if (text != tab->synchronizedText) {
+            try {
+                auto name = pathUtf8(utf8Path(tab->displayPath).filename());
+                try { validateUntitledName(name); } catch (const std::exception &) { name="Recovered.txt"; }
+                const auto rescued=engine_->dispatch("documents.createUntitled",{{"name",name},{"text",text}});
+                resourceTabPath(tab,rescued.at("path"));
+                tab->identity=rescued.at("id");tab->revision=rescued.at("revision");tab->dirty=true;tab->diskConflict.clear();
+                tab->synchronizedText=rescued.at("text").get<std::string>();tab->synchronizedRevision=tab->revision;
+                cyui::notify(tr("The document was closed externally. Local edits were kept in a new draft."),cyui::Tone::warning);
+            } catch (const std::exception &e) {
+                if (tab->diskConflict!="closed") error(e.what());
+                tab->diskConflict="closed";tab->dirty=true;
+            }
+        } else retireTabView(tab->path);
+    }
     for (const auto &info : documents) {
         auto found = std::find_if(tabs_.begin(), tabs_.end(), [&](const auto &tab) {
-            return tab->path == info["path"].get<std::string>();
+            return tab->identity?tab->identity==info.value("id",uint64_t(0)):tab->path == info["path"].get<std::string>();
         });
-        if (found == tabs_.end())
+        if (found == tabs_.end()) {
+            if (info.value("untitled",false)) open(info.at("path"),0,0,false,false);
             continue;
+        }
         auto &tab = *found;
+        if(info.at("revision").get<uint64_t>()==tab->revision&&tab->synchronizedRevision!=tab->revision) {
+            tab->synchronizedText=tab->editor.GetText();tab->synchronizedRevision=tab->revision;
+        }
+        if(tab->path!=info.at("path").get<std::string>())resourceTabPath(tab,info.at("path"));
+        tab->diskConflict=info.value("diskConflict",std::string{});
         if (info["revision"] != tab->revision) {
             auto doc = engine_->dispatch("documents.read", {{"path", tab->path}});
             tab->snippet.cancel();
             auto cursor = tab->editor.GetMainCursorPosition();
-            tab->editor.SelectAll();
-            tab->editor.ReplaceTextPreservingTabs(doc["text"].get<std::string>());
+            if(tab->editor.GetText()!=doc.at("text").get_ref<const std::string &>()) {
+                tab->editor.SelectAll();
+                tab->editor.ReplaceTextPreservingTabs(doc["text"].get<std::string>());
+            }
             tab->syntax.update(tab->editor,tab->path,doc["text"].get_ref<const std::string &>());
             tab->editor.SetCursor(cursor);
             tab->revision = doc["revision"];
             tab->dirty = doc["dirty"];
+            tab->synchronizedText=doc.at("text").get<std::string>();
+            tab->synchronizedRevision=tab->revision;
             tab->queuedCompletion = nullptr;
             ++tab->completionGeneration;
             tab->editor.SetAutoCompleteSuggestions({});
-            navigation_ = Json::object();
         }
     }
+    updateApplicationUpdates();
     updateSemantic();
+    updateStructure();
+    updateOccurrences();
     updateInformation();
+    updatePresetActions();
+    updateHierarchy();
     updateCodeActions();
     updateHighlights();
+    updateDiagnostics();
     updateTerminal();
     updateDebug();
     updateVcs();
@@ -792,7 +1028,7 @@ void Application::update() {
                     tab->revision=doc.at("revision");tab->dirty=doc.at("dirty");
                     tab->syntax.update(tab->editor,tab->path,doc.at("text"));
                     tab->editor.ClearSemanticTokens();tab->highlightRevision=0;tab->highlightRetryAt=ImGui::GetTime()+.3;
-                    ++tab->completionGeneration;navigation_=Json::object();
+                    ++tab->completionGeneration;
                 }
                 tab->snippet.begin(prepared.at("snippet"));
             } catch (const std::exception &e) { error(e.what()); }
@@ -823,7 +1059,7 @@ void Application::update() {
                     std::vector<std::string> suggestions;
                     std::vector<size_t> indices;std::set<std::string> unique;
                     for (const auto &item : items) {
-                        if (!item.is_object() || !completionCommandAllowed(item,languageBackend(tab->path)))
+                        if (!item.is_object() || !completionCommandAllowed(item,engine_->languageBackendFor(tab->path)))
                             continue;
                         // Selection/ranking and editor-only hints do not alter
                         // the complete text edit. No completion command is run.
@@ -866,7 +1102,7 @@ void Application::update() {
             // isIncomplete=false). Keep the widget's promise until the document's
             // first diagnostics publication, including an empty diagnostics list.
             const auto uri = LanguageClient::uri(engine_->workspace() / utf8Path(tab->path));
-            const auto backend=languageBackend(tab->path);
+            const auto backend=engine_->languageBackendFor(tab->path);
             const auto server = languageState_.value("servers",Json::object()).value(backend,Json::object());
             if (!server.value("ready", false) || (backend=="cpp" && (unrealAnalysisState_ == "preparing" || !server.value("diagnostics", Json::object()).contains(uri)))) continue;
             auto parameters = std::move(tab->queuedCompletion);
@@ -883,35 +1119,11 @@ void Application::update() {
             });
         }
     }
-    if (ready(navigationFuture_)) {
-        try {
-            auto result = navigationFuture_.get();
-            const auto source = std::find_if(tabs_.begin(), tabs_.end(),
-                                             [&](const auto &tab) { return tab->path == navigationPath_; });
-            if (source == tabs_.end() || (*source)->revision != result["revision"].get<std::uint64_t>())
-                throw std::runtime_error("RevisionConflict: navigation result is obsolete");
-            navigation_ = std::move(result);
-            const auto &locations = navigation_["locations"];
-            bool cursorUnchanged = false;
-            for (const auto &tab : tabs_)
-                if (tab->path == navigationPath_ && active_ == navigationPath_)
-                    cursorUnchanged = tab->editor.GetMainCursorPosition() == navigationPosition_;
-            if (!navigationReferences_ && locations.size() == 1 && cursorUnchanged) {
-                const auto &location = locations.front();
-                const auto &start = location["range"]["start"];
-                open(location["path"], start["line"].get<size_t>() + 1, start["character"].get<size_t>() + 1,
-                     true);
-            } else
-                showPanel("References", "references");
-            if (locations.empty())
-                cyui::notify(tr("No locations found"), cyui::Tone::neutral);
-        } catch (const std::exception &e) {
-            error(e.what());
-        }
-    }
+    updateNavigation();
     if (ready(filesFuture_)) {
         try {
             auto result = filesFuture_.get();
+            workspaceIndexRevision_=result.value("indexRevision",uint64_t(0));
             files_ = result["files"].get<std::vector<std::string>>();
             tree_ = {};
             for (const auto &path : files_) {
@@ -922,15 +1134,26 @@ void Application::update() {
                 node->files.push_back(path);
             }
             if (result.value("truncated", false))
-                output_ += std::string(tr("File list limited to 20,000 entries.")) + "\n";
+                output_ += std::string(tr("File index is incomplete; refine the project scope or refresh.")) + "\n";
         } catch (const std::exception &e) {
             error(e.what());
         }
     }
     if (ready(gitFuture_)) {
         try {
-            auto result = gitFuture_.get(); git_ = result.at("status");
+            auto result = gitFuture_.get();
+            const auto path=vcsRequestPath();
+            if(result.value("contextPath",path)!=path) { lastGitRefresh_=-10;refreshGit(); }
+            else {
+            git_ = result.at("status");
+            const auto oldGitRoot=vcsContext_.value("gitRepository",std::string{});const auto oldGitIdentity=vcsContext_.value("gitIdentity",std::string{});
+            const auto oldProvider=provider_;const auto oldActions=vcsContext_.value("actions",Json::array());vcsContext_=result.value("context",Json::object());
+            provider_=vcsContext_.value("provider",std::string("git"));vcsContextPath_=path;
+            if(oldProvider!=provider_||oldGitRoot!=vcsContext_.value("gitRepository",std::string{})||oldGitIdentity!=vcsContext_.value("gitIdentity",std::string{})) { clearGitReplay();clearGitMerge();clearGitCheckout();clearGitConflicts();vcsWorktreeReview_=Json::object();vcsWorktrees_=Json::object();vcsWorktreesRequested_=false;vcsHunks_=Json::object();vcsHunkSelection_.clear();vcsConflict_=Json::object();vcsPreviewTitle_.clear();vcsSection_="Changes"; }
+            if(oldProvider!=provider_||oldGitRoot!=vcsContext_.value("gitRepository",std::string{})||oldGitIdentity!=vcsContext_.value("gitIdentity",std::string{})) { vcsSubmodules_=Json::object();vcsSubmoduleReview_=Json::object();vcsSubmodulesRequested_=false; vcsSubmoduleAddPlan_=Json::object();vcsSubmoduleAddOpen_=false; }
             vcsInfo_ = result.value("details",Json::object()); vcsHistory_ = result.value("history",Json::object());
+            if(oldProvider!=provider_||oldActions!=vcsContext_.value("actions",Json::array()))synchronizeExtensions();
+            }
         } catch (const std::exception &e) {
             error(e.what());
         }
@@ -938,11 +1161,16 @@ void Application::update() {
     if (ready(taskFuture_)) {
         try {
             auto result = taskFuture_.get();
+            if(taskMethod_=="unreal.automationPlan"||taskMethod_=="unreal.automationRun")unrealAutomationResult(result);
+            if(taskMethod_=="unreal.launchProfile")unrealLaunchResult(result);
+            if(taskMethod_=="unreal.artifacts")unrealArtifacts_=result;
+            if(taskMethod_=="unreal.build"&&result.contains("artifacts"))unrealArtifacts_=result.at("artifacts");
             if (taskMethod_.starts_with("msbuild.") || taskMethod_.starts_with("project.")) buildDiagnostics_ = result.value("diagnostics",Json::array());
             if (taskMethod_ == "unreal.generate" && result.value("exitCode", -1) == 0) {
                 solution_ = engine_->dispatch("workspace.describe").at("solution");
                 refreshFiles();
             }
+            if(taskMethod_=="plugins.configure"||taskMethod_=="plugins.list") { pluginInfo_=result;synchronizeExtensions();refreshGit(); }
             if (taskMethod_ == "unreal.inspect")
                 applyUnreal(result);
             else if (taskMethod_.starts_with("unreal.") && result.contains("project"))
@@ -951,26 +1179,52 @@ void Application::update() {
                 buildEdited_ = false;
                 applyBuild(result["project"]);
             }
-            output_ += result.contains("output") ? result["output"].get<std::string>() : result.dump(2);
+            if(result.contains("inspectionError")) {
+                output_+="\n"+result.at("inspectionError").get<std::string>()+"\n";
+                error(result.at("inspectionError"));
+            }
+            // The launch preview carries a private saved environment for compare-and-swap.
+            if (taskMethod_ == "unreal.launchProfile") output_ += tr("Unreal launch profile prepared.");
+            else if (taskMethod_ == "unreal.artifacts") output_ += tr("Unreal output inspection finished.");
+            else output_ += result.contains("output") ? result["output"].get<std::string>() : result.dump(2);
             output_ += "\n";
             if (result.contains("terminal")) {
                 terminalId_ = result.at("terminal").at("id"); showPanel("Terminal","terminal"); focusTerminal_ = true; terminalScrollBottom_ = true;
             }
             if (taskMethod_=="project.debug" && result.contains("program")) {
+                debugUnrealLaunch_ = nullptr;
                 debugProgram_ = result.at("program"); debugRuntime_ = "native"; debugCwd_ = projectProfile_.value("directory",".");
+                debugAdapterId_ = "builtin"; debugAdapterOptions_ = "{}";
                 debugArgs_.clear(); for (const auto &arg : projectProfile_.value("args",Json::array())) debugArgs_ += arg.get<std::string>()+"\n";
             }
-            if (pendingDebugBuild_) { pendingDebugBuild_ = false; if (result.value("exitCode",-1) == 0 && !result.value("cancelled",false)) startDebug(false); }
+            if (taskMethod_ == "project.debug" && result.contains("debugProfile")) {
+                debugUnrealLaunch_ = nullptr;
+                const auto &profile = result.at("debugProfile");
+                // Retain user VM/source options, replace the actual built main/runtime classpath.
+                auto options = debugAdapterId_ == "builtin.java" ? Json::parse(debugAdapterOptions_) : Json::object();
+                options.update(profile.at("adapterOptions"));
+                debugAdapterId_ = profile.at("adapterId"); debugAdapterOptions_ = options.dump(2);
+                debugProgram_.clear(); debugRuntime_ = "automatic"; debugCwd_ = profile.at("cwd");
+                debugArgs_.clear(); for (const auto &arg : profile.at("args")) debugArgs_ += arg.get<std::string>()+"\n";
+            }
+            if (!continueUnrealDebug(result) && pendingDebugBuild_) { pendingDebugBuild_ = false; if (result.value("exitCode",-1) == 0 && !result.value("cancelled",false)) startDebug(false); }
             if (result.value("cancelled",false)) cyui::notify(tr("Task cancelled"),cyui::Tone::warning);
             else if (result.value("exitCode", 0) != 0)
                 { error(tr("Task failed. See output.")); if (!buildDiagnostics_.empty()) showPanel("Problems","problems"); }
+            else if (result.contains("inspectionError") || result.contains("receiptError"))
+                cyui::notify(tr("Task finished with unconfirmed results."),cyui::Tone::warning);
             else
                 cyui::notify(tr("Task completed"), cyui::Tone::success);
             refreshGit();
         } catch (const std::exception &e) {
             pendingDebugBuild_ = false;
-            error(e.what());
+            pendingUnrealDebug_ = Json::object();
+            if (std::string(e.what()).starts_with("BuildCancelled:"))
+                cyui::notify(tr("Task cancelled"), cyui::Tone::warning);
+            else error(e.what());
         }
+        taskOperationId_.clear();
+        buildCancellationId_.clear();
     }
     if (ready(searchFuture_)) {
         try {
@@ -1013,7 +1267,10 @@ void Application::update() {
     }
     if (!pendingWorkspace_.empty() && !busy()) {
         auto path = std::move(pendingWorkspace_); pendingWorkspace_.clear();
-        try { setWorkspace(utf8Path(path)); } catch (const std::exception &e) { error(e.what()); }
+        const bool generated=path==templateOpenEntry_;
+        try { setWorkspace(utf8Path(path));if(generated&&!templateOpenFile_.empty())open(templateOpenFile_); }
+        catch (const std::exception &e) { error(e.what());if(generated){templateError_=e.what();templateModal_=true;} }
+        if(generated){templateOpenEntry_.clear();templateOpenFile_.clear();}
     }
     if (pendingWorkspace_.empty() && ImGui::GetTime() - lastGitRefresh_ > 5 && !smoke_)
         refreshGit();
@@ -1070,9 +1327,9 @@ void Application::chooseSolution(bool separate) {
         dialog_->newWindow = separate;
         dialog_->image = false;
     }
-    static const SDL_DialogFileFilter filters[] = {{"Solutions / Unreal / Cargo / npm / Java", "sln;uproject;vcxproj;csproj;fsproj;vbproj;toml;json;java"},
+    static const SDL_DialogFileFilter filters[] = {{"Solutions / Unreal / Cargo / npm / JVM", "sln;slnx;uproject;vcxproj;csproj;fsproj;vbproj;toml;json;java;xml;gradle;kts"},
                                                    {"Unreal project (.uproject)", "uproject"},
-                                                   {"Visual Studio solution (.sln)", "sln"}};
+                                                   {"Visual Studio solution (.sln / .slnx)", "sln;slnx"}};
     auto *state = new std::shared_ptr<Dialog>(dialog_);
     SDL_ShowOpenFileDialog(
         [](void *user, const char *const *paths, int) {
@@ -1095,7 +1352,8 @@ void Application::newWindow(const std::filesystem::path &entry) {
 #endif
     std::vector<std::string> command{pathUtf8(executable), "--workspace", pathUtf8(entry), "--theme", theme_,
                                      "--language",         locale_, "--keymap", keymapProfile_};
-    if (std::filesystem::is_regular_file(entry) && lower(pathUtf8(entry.extension())) != ".sln" &&
+    if(disablePlugins_)command.push_back("--disable-plugins");
+    if (std::filesystem::is_regular_file(entry) && !isSolutionPath(entry) &&
         lower(pathUtf8(entry.extension())) != ".uproject") {
         const auto ext = lower(pathUtf8(entry.extension()));
         if (ext != ".vcxproj" && ext != ".csproj" && ext != ".fsproj" && ext != ".vbproj") {
@@ -1139,20 +1397,33 @@ void Application::showPanel(const char *text, const char *id) {
 }
 void Application::menu() {
     if (!ImGui::BeginMainMenuBar()) return;
-    for (const auto *category : {"File", "Edit", "Search", "Navigate", "Refactor", "Build", "Run", "View", "Project", "Version control"}) {
+    for (const auto *category : {"File", "Edit", "Search", "Navigate", "Refactor", "Build", "Run", "View", "Project", "Version control", "Extensions"}) {
         if (!ImGui::BeginMenu(tr(category))) continue;
         std::vector<cyui::FilterMenuItem> items;
-        for (const auto &command : commands()) if (command.category == category)
+        const auto catalogue=commandCatalogue();
+        for (const auto &command : commandCatalogue()) if (command.category == category &&
+            !(std::string(category)=="Version control"&&provider_!="git"&&command.id.starts_with("vcs.")&&command.id!="vcs.changes"&&command.id!="vcs.refresh"&&command.id!="vcs.diff"&&command.id!="vcs.blame"))
             items.push_back({uiId("command/" + command.id), command.title, keymap_.hint(command.id), command.id,
                              commandEnabled(command.id), false, {}});
+        const std::map<std::string,std::string> locations={{"File","file"},{"Edit","edit"},{"View","view"},{"Navigate","navigate"},{"Build","build"},{"Run","run"},{"Project","project"},{"Version control","vcs"},{"Extensions","extensions"}};
+        if(locations.contains(category))for(const auto &entry:pluginInfo_.value("menus",Json::array()))if(entry.at("location")==locations.at(category)&&extensionVisible(entry)) {
+            const std::string id=entry.at("command");const auto itemId=uiId("command/"+id);
+            std::erase_if(items,[&](const auto &item) { return item.id==itemId; });
+            items.push_back({itemId,entry.value("title",id),keymap_.hint(id),id,commandEnabled(id),false,{}});
+        }
         const auto request = cyui::filterMenu(category, menuFilters_[category], items);
-        if (request) for (const auto &command : commands()) if (uiId("command/" + command.id) == request) { executeCommand(command.id); break; }
+        if (request) for (const auto &command : catalogue) if (uiId("command/" + command.id) == request) { executeCommand(command.id); break; }
         ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
 }
 void Application::topBar() {
     cyui::beginTopBar("##top", 44);
+    if(brandingLogo_) {
+        const float size=cyui::dp(26);
+        ImGui::Image(brandingLogo_->data.texture,{size*brandingLogo_->data.width/brandingLogo_->data.height,size});
+        ImGui::SameLine();
+    }
     {
         cyui::ScopedFont bold(cyui::boldFont(), 1.1f);
         cyui::textColoured(cyui::palette().accent, "CYCODE");
@@ -1226,7 +1497,7 @@ void Application::rail() {
 }
 void Application::layout(ImGuiID dock) {
     for (auto &[id, visible] : panels_)
-        visible = id != "refactoring" && id != "terminal" && id != "debugger" && id != "codeActions";
+        visible = id != "refactoring" && id != "terminal" && id != "debugger" && id != "codeActions" && id != "hierarchy" && id != "cmakePresets";
     ImGui::DockBuilderRemoveNode(dock);
     ImGui::DockBuilderAddNode(dock, ImGuiDockNodeFlags_DockSpace);
     ImGui::DockBuilderSetNodeSize(dock, ImGui::GetMainViewport()->WorkSize);
@@ -1235,22 +1506,28 @@ void Application::layout(ImGuiID dock) {
     auto bottom = ImGui::DockBuilderSplitNode(center, ImGuiDir_Down, .29f, nullptr, &center);
     ImGui::DockBuilderDockWindow(label("Project", "project").c_str(), left);
     ImGui::DockBuilderDockWindow(label("Search", "search").c_str(), left);
+    ImGui::DockBuilderDockWindow(label("Files", "resources").c_str(), left);
+    ImGui::DockBuilderDockWindow(label("Structure", "structure").c_str(), left);
     ImGui::DockBuilderDockWindow("##editors", center);
     for (const auto &[text, id] :
          std::vector<std::pair<const char *, const char *>>{{"Build", "build"},
                                                             {"Unreal Engine", "unreal"},
                                                             {"CMake", "cmake"},
+                                                            {"CMake preset actions", "cmakePresets"},
                                                             {"MSBuild", "msbuild"},
                                                             {"Project tasks", "projectTasks"},
+                                                            {"Tests", "tests"},
                                                             {"Version control", "vcs"},
                                                             {"Problems", "problems"},
                                                             {"References", "references"},
                                                             {"Code information", "information"},
+                                                            {"Hierarchy", "hierarchy"},
                                                             {"Code actions", "codeActions"},
                                                             {"Refactoring", "refactoring"},
                                                             {"Terminal", "terminal"},
                                                             {"Debugger", "debugger"},
                                                             {"Extensions", "extensions"},
+                                                            {"Recovery", "recovery"},
                                                             {"MCP", "mcp"}})
         ImGui::DockBuilderDockWindow(label(text, id).c_str(), bottom);
     ImGui::DockBuilderFinish(dock);
@@ -1269,6 +1546,8 @@ void Application::tree(Tree &node, const std::string &prefix) {
                                           ? ImGuiTreeNodeFlags_DefaultOpen
                                           : 0),
                                  theme_, true);
+        if(ImGui::IsItemClicked())selectedResource_=key;
+        if(ImGui::BeginPopupContextItem()) { resourceMenu(key,true);ImGui::EndPopup(); }
         if (open) {
             tree(child, key + "/");
             ImGui::TreePop();
@@ -1283,8 +1562,11 @@ void Application::tree(Tree &node, const std::string &prefix) {
             bool selected = active_ == path;
             auto name = pathUtf8(utf8Path(path).filename());
             ImGui::PushID(path.c_str());
-            if (fileSelectable(name, path, selected, theme_))
+            if (fileSelectable(name, path, selected, theme_)) {
+                selectedResource_=path;
                 open(path);
+            }
+            if(ImGui::BeginPopupContextItem()) { resourceMenu(path,false);ImGui::EndPopup(); }
             cyui::tooltip(path.c_str());
             ImGui::PopID();
         }
@@ -1318,6 +1600,7 @@ void Application::solutionTree(const std::string &parent, int depth) {
             exists && !external)
             open(project.at("relativePath"));
         if (ImGui::BeginPopupContextItem()) {
+            extensionMenu("project");
             if (ImGui::MenuItem(tr("Open project file"), nullptr, false, exists && !folder && !external))
                 open(project.at("relativePath"));
             if (ImGui::MenuItem(tr("Open in new window"), nullptr, false, exists && !folder))
@@ -1340,6 +1623,7 @@ void Application::solutionTree(const std::string &parent, int depth) {
 void Application::projectPanel() {
     if (!beginPanel("Project", "project"))
         return;
+    resourceFocused_=ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
     cyui::overline(pathUtf8(engine_->workspace().filename()).c_str());
     ImGui::SameLine();
     cyui::alignRight(cyui::dp(24));
@@ -1349,7 +1633,7 @@ void Application::projectPanel() {
     viewFilter("##filter", filesFilter_);
     cyui::divider();
     if (solution_.is_object()) {
-        cyui::textDim("%s", (solution_.at("name").get<std::string>() + ".sln").c_str());
+        cyui::textDim("%s", pathUtf8(utf8Path(solution_.at("path")).filename()).c_str());
         ImGui::SetNextItemWidth(-1);
         if (ImGui::BeginCombo("##solution-config", solutionConfiguration_.c_str())) {
             for (const auto &config : solution_.at("configurations")) {
@@ -1400,8 +1684,15 @@ void Application::projectPanel() {
     } else {
         for (const auto &path : files_)
             if (filesFilter_.matches(path, path))
-                if (fileSelectable(path, path, active_ == path, theme_))
+            {
+                ImGui::PushID(path.c_str());
+                if (fileSelectable(path, path, active_ == path, theme_)) {
+                    selectedResource_=path;
                     open(path);
+                }
+                if(ImGui::BeginPopupContextItem()) { resourceMenu(path,false);ImGui::EndPopup(); }
+                ImGui::PopID();
+            }
     }
     ImGui::EndChild();
     ImGui::End();
@@ -1435,7 +1726,7 @@ void Application::editorPanel() {
     std::string close;
     for (auto &tab : tabs_) {
         bool opened = true;
-        auto title = documentTitle(tab->path);
+        auto title = tabTitle(tab);
         ImGui::SetNextWindowDockID(editorDock_, ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(cyui::dp(850, 650), ImGuiCond_FirstUseEver);
         if (focusTab_ == tab->path) {
@@ -1468,18 +1759,26 @@ void Application::editorPanel() {
                 }
             }
             if (tab->readOnly) { ImGui::SameLine(); cyui::badge(tr(tab->path.starts_with("debug://") ? "Read-only debugger source" : "Read-only SDK source"), cyui::Tone::neutral); }
+            if(!tab->diskConflict.empty())cyui::callout(cyui::Tone::warning,tr(tab->diskConflict=="missing"?"File disappeared from disk; the open buffer is preserved.":"File changed on disk. Reload it or save a copy."));
+            if(tab->diagnosticTruncated)cyui::textDim("%s",tr("Additional diagnostics are available in Problems."));
             cyui::divider(4);
             const auto undoBefore = tab->editor.GetUndoIndex();
+            const auto occurrenceChild = ImGui::GetID(("##text" + tab->path).c_str());
             const bool renderedChange = tab->codeEditor.draw(("##text" + tab->path).c_str());
+            if (!renderedChange && tab->editor.GetUndoIndex() == undoBefore && tab->path == active_ && occurrencesCurrent())
+                drawOccurrenceAnnotations(tab->editor,occurrences_.annotations,occurrenceChild);
+
             // Popup edits occur after the widget's Render change flag is computed.
             // Include their transactions so completion/replace reaches Engine now.
             if (renderedChange || tab->editor.GetUndoIndex() != undoBefore)
                 changed(tab);
+            applySessionEditor(tab,tab->editor.GetUndoIndex() != undoBefore);
             if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !(ImGui::GetActiveID() && ImGui::GetCurrentContext()->InputTextState.ID == ImGui::GetActiveID())) editorFocused_ = true;
             }
         }
         if (ImGui::BeginPopupContextWindow("##document-actions", ImGuiPopupFlags_MouseButtonRight |
                                                                      ImGuiPopupFlags_NoOpenOverItems)) {
+            extensionMenu("editor");
             if (ImGui::MenuItem(tr("Move to new window"))) {
                 ImGui::SetWindowDock(ImGui::FindWindowByName(title.c_str()), 0, ImGuiCond_Always);
             }
@@ -1516,7 +1815,7 @@ void Application::searchPanel() {
     cyui::divider();
     if (!search_.contains("matches"))
         cyui::emptyState(tr("Search your project"),
-                         tr("Results include unsaved documents for literal searches."), cyui::icon::search);
+                         tr("Results include unsaved documents."), cyui::icon::search);
     else {
         cyui::textDim("%zu %s", search_["matches"].size(), tr("matches"));
         if (search_.value("truncated", false))
@@ -1540,20 +1839,25 @@ void Application::searchPanel() {
 void Application::outputPanel() {
     if (!beginPanel("Build", "build"))
         return;
+    liveBuildOutput();
+    if (commandEnabled("build.cancel")) {
+        if (cyui::button(tr("Cancel build"))) executeCommand("build.cancel");
+        if (!buildCancellationId_.empty()) { ImGui::SameLine(); cyui::textDim("%s", tr("Cancelling build...")); }
+    }
     if (projectActive_) {
         cyui::textDim("%s",projectState_.value("name",projectState_.value("kind","")).c_str()); ImGui::SameLine();
         { cyui::ScopedDisabled disabled(taskFuture_.valid()); if (cyui::button(tr("Build project"))) task("build.run"); }
         ImGui::SameLine(); if (cyui::button(tr("Project tasks"))) showPanel("Project tasks","projectTasks");
-        if (taskFuture_.valid() && taskMethod_.starts_with("project.")) { ImGui::SameLine(); if (cyui::button(tr("Cancel task"))) engine_->dispatch("project.cancel"); }
+        if ((taskFuture_.valid() && taskMethod_.starts_with("project.")) || engine_->dispatch("project.status").value("running",false)) { ImGui::SameLine(); if (cyui::button(tr("Cancel task"))) cancelProjectTask(); }
         ImGui::SameLine(); if (cyui::ghostButton(tr("Copy output"))) ImGui::SetClipboardText(output_.c_str());
-        outputLog_.synchronize(output_); cyui::logView("##output", outputLog_.state, outputLog_.buffer);
+        outputLog_.synchronize(output_); navigableOutput("##output", outputLog_);
         ImGui::End(); return;
     }
     if (msbuildActive_) {
         cyui::textDim("%s | %s",msbuildConfiguration_.c_str(),msbuildPlatform_.c_str()); ImGui::SameLine();
         { cyui::ScopedDisabled disabled(taskFuture_.valid()); if (cyui::button(tr("Build project"))) task("build.run"); ImGui::SameLine(); if (cyui::button(tr("MSBuild settings"))) showPanel("MSBuild","msbuild"); }
         ImGui::SameLine(); if (cyui::ghostButton(tr("Copy output"))) ImGui::SetClipboardText(output_.c_str());
-        outputLog_.synchronize(output_); cyui::logView("##output", outputLog_.state, outputLog_.buffer);
+        outputLog_.synchronize(output_); navigableOutput("##output", outputLog_);
         ImGui::End(); return;
     }
     ImGui::SetNextItemWidth(cyui::dp(100));
@@ -1588,7 +1892,7 @@ void Application::outputPanel() {
     if (cyui::ghostButton(tr(unreal_.value("available", false) ? "Unreal Engine" : "CMake settings")))
         showPanel(unreal_.value("available", false) ? "Unreal Engine" : "CMake",
                   unreal_.value("available", false) ? "unreal" : "cmake");
-    outputLog_.synchronize(output_); cyui::logView("##output", outputLog_.state, outputLog_.buffer);
+    outputLog_.synchronize(output_); navigableOutput("##output", outputLog_);
     ImGui::End();
 }
 void Application::applyUnreal(const Json &value) {
@@ -1680,6 +1984,9 @@ void Application::unrealPanel() {
                                     "navigation. The engine SDK and generated headers are required."));
     cyui::textDim("%s: %zu  |  %s: %zu  |  %s: %zu", tr("Targets"), unreal_.at("targets").size(),
                   tr("Modules"), unreal_.at("modules").size(), tr("Plugins"), unreal_.at("plugins").size());
+    unrealLaunchControls();
+    unrealArtifactsControls();
+    unrealAutomationControls();
     ImGui::BeginChild("##unreal-rules");
     for (const auto *section : {"targets", "modules", "plugins"})
         for (const auto &item : unreal_.at(section)) {
@@ -1726,55 +2033,123 @@ void Application::cmakePanel() {
             if (cyui::beginProperties("##cmake-settings", cyui::dp(120))) {
                 cyui::property(tr("CMake source directory"));
                 buildEdited_ |= ImGui::InputText("##cmake-source", &buildSource_);
-                cyui::property(tr("Build directory"));
-                buildEdited_ |= ImGui::InputText("##cmake-build", &buildDirectory_);
-                cyui::property(tr("Toolchain"));
-                std::string selected = tr("Automatic");
-                for (const auto &entry : toolchains_.value("toolchains", Json::array()))
-                    if (entry.at("id") == buildToolchain_)
-                        selected = entry.at("name");
-                if (buildToolchain_ != "automatic" && selected == tr("Automatic"))
-                    selected = buildToolchain_;
-                if (ImGui::BeginCombo("##toolchain", selected.c_str())) {
-                    if (ImGui::Selectable(tr("Automatic"), buildToolchain_ == "automatic")) {
-                        buildToolchain_ = "automatic";
+                const auto presets = buildState_.value("presets", Json::object());
+                cyui::property(tr("Configure preset"));
+                if (ImGui::BeginCombo("##configure-preset", buildConfigurePreset_.empty()
+                                                                ? tr("Manual settings")
+                                                                : buildConfigurePreset_.c_str())) {
+                    if (ImGui::Selectable(tr("Manual settings"), buildConfigurePreset_.empty())) {
+                        buildConfigurePreset_.clear();
+                        buildBuildPreset_.clear();
+                        if(configuration_!="Debug" && configuration_!="Release" && configuration_!="RelWithDebInfo" && configuration_!="MinSizeRel")configuration_="Debug";
                         buildEdited_ = true;
+                        refreshBuild();
                     }
-                    for (const auto &entry : toolchains_.value("toolchains", Json::array())) {
-                        if (ImGui::Selectable(entry.at("name").get_ref<const std::string &>().c_str(),
-                                              entry.at("id") == buildToolchain_)) {
-                            buildToolchain_ = entry.at("id");
+                    for (const auto &preset : presets.value("configurePresets", Json::array())) {
+                        const auto name = preset.at("name").get<std::string>();
+                        cyui::ScopedDisabled disabled(preset.value("error", "") != "");
+                        if (ImGui::Selectable(name.c_str(), name == buildConfigurePreset_)) {
+                            buildConfigurePreset_ = name;
+                            buildBuildPreset_.clear();
+                            buildTarget_.clear();
+                            buildToolchain_ = buildGenerator_ = "automatic";
                             buildEdited_ = true;
+                            refreshBuild();
                         }
-                        cyui::tooltip(entry.at("cxxCompiler").get_ref<const std::string &>().c_str());
+                        cyui::tooltip(preset.value("error", "") != ""
+                                          ? preset.at("error").get_ref<const std::string &>().c_str()
+                                          : preset.value("description", "").c_str());
                     }
                     ImGui::EndCombo();
                 }
-                cyui::property(tr("Generator"));
-                if (ImGui::BeginCombo("##generator", buildGenerator_ == "automatic"
-                                                         ? tr("Automatic")
-                                                         : buildGenerator_.c_str())) {
-                    if (ImGui::Selectable(tr("Automatic"), buildGenerator_ == "automatic")) {
-                        buildGenerator_ = "automatic";
-                        buildEdited_ = true;
-                    }
-                    for (const auto &entry : toolchains_.value("generators", Json::array())) {
-                        const auto name = entry.at("name").get<std::string>();
-                        if (ImGui::Selectable(name.c_str(), name == buildGenerator_)) {
-                            buildGenerator_ = name;
+                if (!buildConfigurePreset_.empty()) {
+                    cyui::property(tr("Build preset"));
+                    if (ImGui::BeginCombo("##build-preset", buildBuildPreset_.empty()
+                                                                ? tr("Default build")
+                                                                : buildBuildPreset_.c_str())) {
+                        if (ImGui::Selectable(tr("Default build"), buildBuildPreset_.empty())) {
+                            buildBuildPreset_.clear();
                             buildEdited_ = true;
+                            refreshBuild();
                         }
+                        for (const auto &preset : presets.value("buildPresets", Json::array()))
+                            if (preset.value("configurePreset", "") == buildConfigurePreset_) {
+                                const auto name = preset.at("name").get<std::string>();
+                                cyui::ScopedDisabled disabled(preset.value("error", "") != "");
+                                if (ImGui::Selectable(name.c_str(), name == buildBuildPreset_)) {
+                                    buildBuildPreset_ = name;
+                                    buildTarget_.clear();
+                                    buildEdited_ = true;
+                                    refreshBuild();
+                                }
+                            }
+                        ImGui::EndCombo();
                     }
-                    ImGui::EndCombo();
                 }
-                cyui::property(tr("Configuration"));
-                if (ImGui::BeginCombo("##configuration", configuration_.c_str())) {
-                    for (const auto *config : {"Debug", "Release", "RelWithDebInfo", "MinSizeRel"})
-                        if (ImGui::Selectable(config, configuration_ == config)) {
-                            configuration_ = config;
+                if (presets.value("error", "") != "")
+                    ImGui::TextWrapped("%s", presets.at("error").get_ref<const std::string &>().c_str());
+                {
+                    cyui::ScopedDisabled presetFields(!buildConfigurePreset_.empty());
+                    cyui::property(tr("Build directory"));
+                    buildEdited_ |= ImGui::InputText("##cmake-build", &buildDirectory_);
+                    cyui::property(tr("Toolchain"));
+                    std::string selected = tr("Automatic");
+                    for (const auto &entry : toolchains_.value("toolchains", Json::array()))
+                        if (entry.at("id") == buildToolchain_)
+                            selected = entry.at("name");
+                    if (buildToolchain_ != "automatic" && selected == tr("Automatic"))
+                        selected = buildToolchain_;
+                    if (ImGui::BeginCombo("##toolchain", selected.c_str())) {
+                        if (ImGui::Selectable(tr("Automatic"), buildToolchain_ == "automatic")) {
+                            buildToolchain_ = "automatic";
                             buildEdited_ = true;
                         }
-                    ImGui::EndCombo();
+                        for (const auto &entry : toolchains_.value("toolchains", Json::array())) {
+                            if (ImGui::Selectable(entry.at("name").get_ref<const std::string &>().c_str(),
+                                                  entry.at("id") == buildToolchain_)) {
+                                buildToolchain_ = entry.at("id");
+                                buildEdited_ = true;
+                            }
+                            cyui::tooltip(entry.at("cxxCompiler").get_ref<const std::string &>().c_str());
+                        }
+                        ImGui::EndCombo();
+                    }
+                    cyui::property(tr("Generator"));
+                    if (ImGui::BeginCombo("##generator", buildGenerator_ == "automatic"
+                                                             ? tr("Automatic")
+                                                             : buildGenerator_.c_str())) {
+                        if (ImGui::Selectable(tr("Automatic"), buildGenerator_ == "automatic")) {
+                            buildGenerator_ = "automatic";
+                            buildEdited_ = true;
+                        }
+                        for (const auto &entry : toolchains_.value("generators", Json::array())) {
+                            const auto name = entry.at("name").get<std::string>();
+                            if (ImGui::Selectable(name.c_str(), name == buildGenerator_)) {
+                                buildGenerator_ = name;
+                                buildEdited_ = true;
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
+                }
+                const auto list = buildBuildPreset_.empty() ? presets.value("configurePresets", Json::array())
+                                                            : presets.value("buildPresets", Json::array());
+                bool fixedConfiguration = false;
+                for (const auto &preset : list)
+                    if (preset.value("name", "") ==
+                        (buildBuildPreset_.empty() ? buildConfigurePreset_ : buildBuildPreset_))
+                        fixedConfiguration = preset.value("configuration", "") != "";
+                {
+                    cyui::ScopedDisabled fixed(fixedConfiguration);
+                    cyui::property(tr("Configuration"));
+                    if (ImGui::BeginCombo("##configuration", configuration_.c_str())) {
+                        for (const auto *config : {"Debug", "Release", "RelWithDebInfo", "MinSizeRel"})
+                            if (ImGui::Selectable(config, configuration_ == config)) {
+                                configuration_ = config;
+                                buildEdited_ = true;
+                            }
+                        ImGui::EndCombo();
+                    }
                 }
                 cyui::property(tr("Target"));
                 if (ImGui::BeginCombo("##target",
@@ -1824,97 +2199,29 @@ void Application::cmakePanel() {
 void Application::problemsPanel() {
     if (!beginPanel("Problems", "problems"))
         return;
-    const auto servers = languageState_.value("servers",Json::object());
-    for (const auto &[key,server] : servers.items()) {
-        ImGui::PushID(key.c_str());
-        const auto label = server.value("name","") + " : " + tr(server.value("ready",false) ? "Connected" : server.value("running",false) ? "Starting..." : server.value("enabled",false) ? "Idle" : "Disabled");
-        cyui::badge(label.c_str(),server.value("ready",false) ? cyui::Tone::success : cyui::Tone::neutral);
-        ImGui::SameLine();
-        { cyui::ScopedDisabled disabled(smoke_ || !server.value("available",false));
-          if (cyui::button(tr(server.value("enabled",false) ? "Restart language server" : "Enable"))) {
-              languageDecisions_.insert(key);
-              try { engine_->dispatch("language.configure",{{"language",key}}); } catch (const std::exception &e) { error(e.what()); }
-          }
-        }
-        if (server.value("enabled",false)) {
-            ImGui::SameLine();
-            if (cyui::button(tr("Disable"))) { languageDecisions_.insert(key); engine_->dispatch("language.configure",{{"language",key},{"enabled",false}}); }
-        } else if (!server.value("available",false)) { ImGui::SameLine(); ImGui::TextDisabled("%s",tr("Language server is not installed")); }
-        ImGui::PopID();
-    }
+    languageServerControls();
     problemRows();
     auto message = languageState_.value("error", std::string{});
     if (!message.empty())
         ImGui::TextWrapped("%s", message.c_str());
     ImGui::End();
 }
-void Application::navigate(bool references) {
-    if (navigationFuture_.valid())
-        return;
-    for (const auto &tab : tabs_) {
-        if (tab->path != active_ || !LanguageService::supports(tab->path))
-            continue;
-        navigationPosition_ = tab->editor.GetMainCursorPosition();
-        navigationPath_ = tab->path;
-        navigationReferences_ = references;
-        const auto prefix = tab->editor.GetSectionText({navigationPosition_.line, 0}, navigationPosition_);
-        Json parameters = {
-            {"path", tab->path},
-            {"includeExternal", true},
-            {"expectedRevision", tab->revision},
-            {"position",
-             {{"line", navigationPosition_.line}, {"character", LanguageClient::utf16Length(prefix)}}}};
-        auto engine = engine_;
-        navigationFuture_ = std::async(std::launch::async, [engine, parameters, references] {
-            return engine->dispatch(references ? "language.references" : "language.definition", parameters);
-        });
-        showPanel("References", "references");
-        return;
-    }
-    cyui::notify(tr("Open a C/C++ document to navigate symbols."), cyui::Tone::neutral);
-}
-void Application::referencesPanel() {
-    if (!beginPanel("References", "references"))
-        return;
-    cyui::textDim("%s", navigationReferences_ ? tr("Find references") : tr("Go to definition"));
-    if (navigationFuture_.valid()) {
-        ImGui::SameLine();
-        cyui::spinner("##navigation");
-    }
-    if (!navigation_.contains("locations")) {
-        cyui::emptyState(tr("Symbol navigation"), tr("F12: definition. Shift+F12: references."),
-                         cyui::icon::search);
-    } else {
-        const auto &locations = navigation_["locations"];
-        cyui::textDim("%zu %s", locations.size(), tr("matches"));
-        if (navigation_.value("outsideWorkspace", 0) > 0)
-            ImGui::TextWrapped("%s", tr("Some locations are outside this workspace."));
-        if (navigation_.value("truncated", false))
-            cyui::textDim("%s", tr("Results limited"));
-        cyui::divider();
-        ImGuiListClipper clipper;
-        clipper.Begin(static_cast<int>(locations.size()));
-        while (clipper.Step())
-            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
-                const auto &location = locations[static_cast<size_t>(i)];
-                const auto &start = location["range"]["start"];
-                const auto line = start["line"].get<size_t>() + 1,
-                           column = start["character"].get<size_t>() + 1;
-                const auto text = location.value("displayPath", location["path"].get<std::string>()) + ":" + std::to_string(line) + ":" +
-                                  std::to_string(column);
-                ImGui::PushID(i);
-                if (ImGui::Selectable(text.c_str()))
-                    open(location["path"], line, column, true);
-                ImGui::PopID();
-            }
-    }
-    ImGui::End();
-}
 void Application::extensionsPanel() {
     if (!beginPanel("Extensions", "extensions"))
         return;
-    cyui::textDim("%s 1", tr("Plugin ABI"));
+    cyui::textDim("%s 1 / 2", tr("Plugin ABI"));
+    if (pluginInfo_.contains("host")) {
+        const auto &host = pluginInfo_.at("host");
+        cyui::textDim("CyCode %s | %s", host.value("version", std::string{}).c_str(),
+                      host.value("platform", std::string{}).c_str());
+    }
+    if(disablePlugins_)cyui::callout(cyui::Tone::warning,tr("Extensions are disabled for this session (--disable-plugins)."));
+    packageControls();
+    cyui::filterBox("##extensions-filter",extensionsFilter_);
+    if(cyui::button(tr("Refresh extensions")))task("plugins.list");
     for (const auto &plugin : pluginInfo_.value("plugins", Json::array())) {
+        if(!extensionsFilter_.matches(plugin.value("name",plugin.value("id",std::string{})),plugin.value("id",std::string{})))continue;
+        ImGui::PushID(plugin.value("id",plugin.value("manifest",std::string("error"))).c_str());
         cyui::sectionTitle(plugin.value("name", plugin.value("id", std::string("Plugin"))).c_str());
         cyui::badge(plugin.value("state", std::string{}).c_str(),
                     plugin.value("state", std::string{}) == "loaded" ? cyui::Tone::success
@@ -1923,15 +2230,37 @@ void Application::extensionsPanel() {
         cyui::textDim("%s", plugin.value("version", std::string{}).c_str());
         if (plugin.contains("error"))
             ImGui::TextWrapped("%s", plugin["error"].get<std::string>().c_str());
+        const auto lifecycle = plugin.value("lifecycle", Json::object());
+        if (lifecycle.value("supported", Json(false)) == true)
+            cyui::textDim("%s", tr("Activation notifications supported"));
+        if (lifecycle.contains("error"))
+            cyui::callout(cyui::Tone::error, lifecycle.at("error").get_ref<const std::string &>().c_str());
+        if(plugin.contains("enabled")) {
+            cyui::ScopedDisabled disabled(taskFuture_.valid() || plugin.contains("error"));
+            if(cyui::button(tr(plugin.at("enabled").get<bool>()?"Disable for this project":"Enable for this project")))
+                task("plugins.configure",{{"id",plugin.at("id")},{"enabled",!plugin.at("enabled").get<bool>()},{"expectedRevision",pluginInfo_.at("revision")}});
+        }
+        ImGui::PopID();
+    }
+    for(const auto &panel:pluginInfo_.value("panels",Json::array())) {
+        const auto title=panel.value("title",panel.at("id").get<std::string>());
+        if(extensionsFilter_.matches(title,"Panels")&&extensionVisible(panel))if(cyui::button(tr(title.c_str())))executeCommand("extension.panel."+panel.at("id").get<std::string>());
+    }
+    for(const auto &subscription:pluginInfo_.value("eventSubscriptions",Json::array())) {
+        const auto title=subscription.value("title",subscription.at("id").get<std::string>());
+        if(!extensionsFilter_.matches(title,"Events"))continue;
+        cyui::textDim("%s: %s",tr("Event subscription"),title.c_str());
+        if(subscription.value("error","")!="") {
+            cyui::callout(cyui::Tone::warning,subscription.at("error").get_ref<const std::string &>().c_str());
+            cyui::textDim("%s",tr("Disable and enable the plugin to restart its event subscription."));
+        }
     }
     for (const auto &command : pluginInfo_.value("commands", Json::array())) {
-        if (cyui::button(command["title"].get<std::string>().c_str())) {
-            std::string text;
-            for (auto &tab : tabs_)
-                if (tab->path == active_)
-                    text = tab->editor.GetText();
-            task("plugins.invoke", {{"command", command["id"]}, {"input", {{"text", text}}}});
-        }
+        const std::string id=command.at("id"),title=command.at("title");
+        if(!extensionVisible(command)||!extensionsFilter_.matches(title,id))continue;
+        ImGui::PushID(id.c_str());cyui::ScopedDisabled disabled(!commandEnabled(id));
+        if(cyui::button(tr(title.c_str())))executeCommand(id);
+        ImGui::PopID();
     }
     ImGui::End();
 }
@@ -1983,6 +2312,9 @@ void Application::optionsPanel() {
         cancelPropertyDrafts(optionsInspector_); ImGui::End(); return;
     }
     optionsProperties();
+    auto buildLimit=desktopBuildTimeout(settings_);
+    if(ImGui::InputInt(tr("Build time limit (seconds)"),&buildLimit,60,600))settings_["buildTimeoutSeconds"]=std::clamp(buildLimit,1,86400);
+    cyui::textDim("%s",tr("Applies to CMake, MSBuild and Unreal build processes. Cancel remains available."));
     keymapOptions();
     if (cyui::button(tr("Save preferences")))
         saveSettings();
@@ -2004,8 +2336,9 @@ void Application::optionsPanel() {
             textScale_ = std::clamp(value.at("textScale").get<float>() * (value.value("schemaVersion", 1) < 3 ? 1.15f : 1.0f), .8f, 2.0f);
             auto profile = value.value("keymap", std::string("rider"));
             auto overrides = value.value("keymapOverrides", Json::object());
-            keymap_.load(profile, overrides.value(profile, Json::object())); keymapProfile_ = profile; keymapOverrides_ = overrides;
+            applyKeymap(profile, overrides.value(profile, Json::object())); keymapProfile_ = profile; keymapOverrides_ = overrides;
             clangd_ = value.at("clangd");
+            settings_["buildTimeoutSeconds"]=desktopBuildTimeout(value);
             applyEditorTheme(theme_);
             ImGui::GetStyle().FontScaleMain = textScale_;
         } catch (const std::exception &e) {
@@ -2026,33 +2359,34 @@ void Application::optionsPanel() {
     ImGui::End();
 }
 void Application::palette() {
+    const auto catalogue=commandCatalogue();
     if (paletteOpen_ && paletteMode_ == "actions") {
         actionPaletteOpen_ = true; paletteOpen_ = false;
     }
     std::vector<cyui::Command> actions;
     const auto loadActions = [&] {
         if (!actions.empty()) return;
-        for (const auto &command : commands()) actions.push_back({uiId("command/" + command.id),
+        for (const auto &command : catalogue) actions.push_back({uiId("command/" + command.id),
             command.title, keymap_.hint(command.id), command.category + " " + command.id, commandEnabled(command.id)});
     };
     if (actionPaletteOpen_) loadActions();
     const auto requested = cyui::commandPalette("Find action...", actionPaletteOpen_, actionPaletteState_, actions, cyui::dp(850, 570));
-    if (requested) for (const auto &command : commands()) if (uiId("command/" + command.id) == requested) { executeCommand(command.id); break; }
+    if (requested) for (const auto &command : catalogue) if (uiId("command/" + command.id) == requested) { executeCommand(command.id); break; }
     quickOpenVisible_ = actionPaletteOpen_;
     if (actionPaletteOpen_) { paletteFilter_ = actionPaletteState_.query; return; }
     if (paletteOpen_) {
         ImGui::OpenPopup("##quickopen"); paletteOpen_ = false; paletteFilter_.clear(); paletteSelection_ = 0;
-        symbolWantedKey_.clear(); symbolSentKey_.clear(); symbolResults_ = Json::object(); symbolError_.clear(); symbolAttempts_ = 0;
+        symbolWantedKey_.clear(); symbolSentKey_.clear(); symbolResults_ = Json::object(); symbolError_.clear(); symbolAttempts_ = 0; symbolResolveKey_.clear(); symbolResolved_=Json::object();
     }
     ImGui::SetNextWindowSize(cyui::dp(850, 570), ImGuiCond_Appearing);
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(.5f, .5f));
-    if (!ImGui::BeginPopup("##quickopen")) return;
+    if (!ImGui::BeginPopup("##quickopen")) { symbolWantedKey_.clear(); symbolResolveKey_.clear(); symbolResolved_=Json::object(); return; }
     quickOpenVisible_ = true;
     const char *heading = paletteMode_ == "actions" ? "Find action..." : paletteMode_ == "everywhere" ? "Search Everywhere" : paletteMode_ == "recent" ? "Recent files" : paletteMode_ == "types" ? "Go to type..." : paletteMode_ == "symbols" ? "Go to symbol..." : paletteMode_ == "members" ? "File structure" : "Go to file...";
     cyui::heading(tr(heading), 2);
     for (const auto &[id, text] : std::initializer_list<std::pair<const char *, const char *>>{{"everywhere", "All"}, {"files", "Files"}, {"types", "Types"}, {"symbols", "Symbols"}, {"members", "Members"}, {"actions", "Actions"}, {"recent", "Recent files"}}) {
         bool selected = paletteMode_ == id;
-        ImGui::BeginDisabled(std::string(id) == "members" && !LanguageService::supports(active_));
+        ImGui::BeginDisabled(std::string(id) == "members" && !engine_->supportsLanguage(active_));
         if (cyui::toggleButton(tr(text), &selected)) { paletteMode_ = id; paletteSelection_ = 0; }
         ImGui::EndDisabled(); ImGui::SameLine();
     }
@@ -2066,30 +2400,44 @@ void Application::palette() {
         mode = query[0] == '>' ? "actions" : query[0] == '@' ? "members" : "symbols";
         query.erase(0,1); while (query.starts_with(" ")) query.erase(0,1);
     }
-    const bool wantSymbols = !smoke_ && (mode == "types" || mode == "symbols" || mode == "members" || (mode == "everywhere" && !query.empty()));
+    const bool backendChanged = (mode == "types" || mode == "symbols" || mode == "everywhere") && symbolBackendSelector();
+    if (backendChanged) paletteSelection_ = 0;
+    const bool memberSource = engine_->supportsLanguage(active_) && !active_.starts_with("debug://");
+    if (mode == "members" && !memberSource) cyui::textDim("%s", tr("Open a source file with a language server."));
+    const bool wantSymbols = !smoke_ && (mode == "types" || mode == "symbols" || (mode == "members" && memberSource) || (mode == "everywhere" && !query.empty()));
+    bool symbolRefresh=false;
     if (wantSymbols) {
-        auto backend=languageBackend(active_); if (backend.empty()) backend="cpp";
-        Json parameters = {{"query", query}, {"language",backend}, {"typesOnly", mode == "types"}, {"includeExternal", true}, {"limit", 500}};
+        if (cyui::button(tr("Refresh symbols"))) { ++symbolSearchSerial_; symbolRefresh=true; }
+        auto backend=mode=="members" || symbolBackend_.empty() ? engine_->languageBackendFor(active_) : symbolBackend_;
+        if (backend.empty()) backend="cpp";
+        const auto emptyServer = Json::object();
+        const auto servers = languageState_.find("servers");
+        const auto &server = servers != languageState_.end() && servers->contains(backend) ? servers->at(backend) : emptyServer;
+        Json parameters = {{"query", query}, {"expectedEpoch",server.value("epoch",uint64_t(0))}, {"language",backend}, {"typesOnly", mode == "types"}, {"includeExternal", true}, {"limit", 500}};
         std::string method = "language.symbols";
         if (mode == "members") {
             method = "language.documentSymbols";
-            parameters = {{"path", active_}, {"includeExternal", true}, {"limit", 1000}};
-            for (const auto &tab : tabs_) if (tab->path == active_) parameters["expectedRevision"] = tab->revision;
+            parameters = {{"path", active_}, {"expectedEpoch",server.value("epoch",uint64_t(0))}, {"includeExternal", true}, {"limit", 1000}};
+            for (const auto &tab : tabs_) if (tab->path == active_) { parameters["expectedRevision"] = tab->revision; parameters["expectedDocumentId"] = tab->identity; }
         }
-        auto key = method + parameters.dump();
-        if (key != symbolWantedKey_) { symbolWantedKey_ = key; symbolWantedParams_ = parameters; symbolWantedMethod_ = method; symbolResults_ = Json::object(); symbolError_.clear(); symbolChanged_ = ImGui::GetTime(); symbolAttempts_ = 0; }
-        if (!symbolFuture_.valid() && symbolSentKey_ != symbolWantedKey_ && ImGui::GetTime()-symbolChanged_ > .12 && unrealAnalysisState_ != "preparing" && parameters.contains(mode == "members" ? "expectedRevision" : "query")) {
+        auto key = method + parameters.dump() + ":" + std::to_string(symbolSearchSerial_);
+        if (key != symbolWantedKey_) { paletteSelection_ = 0; symbolWantedKey_ = key; symbolWantedParams_ = parameters; symbolWantedMethod_ = method; symbolResults_ = Json::object(); symbolError_.clear(); symbolResolveKey_.clear(); symbolResolved_=Json::object(); symbolChanged_ = ImGui::GetTime(); symbolAttempts_ = 0; }
+        if (!symbolFuture_.valid() && symbolSentKey_ != symbolWantedKey_ && ImGui::GetTime()-symbolChanged_ > .12 && !(backend=="cpp" && unrealAnalysisState_ == "preparing") && parameters.contains(mode == "members" ? "expectedRevision" : "query")) {
             auto engine = engine_; symbolSentKey_ = symbolWantedKey_; ++symbolAttempts_;
-            symbolFuture_ = std::async(std::launch::async, [engine, parameters, method] { return engine->dispatch(method, parameters); });
+            symbolFuture_ = std::async(std::launch::async, [engine, parameters, method, key] {
+                try { return Json{{"key", key}, {"result", engine->dispatch(method, parameters)}}; }
+                catch (const std::exception &e) { return Json{{"key", key}, {"error", e.what()}}; }
+            });
         }
     }
+    if (!wantSymbols) { symbolWantedKey_.clear(); symbolResolveKey_.clear(); symbolResolved_=Json::object(); }
     struct Item { std::string id, title; int kind, score; Json location; };
     std::vector<Item> items;
     if (mode == "actions" || mode == "everywhere") {
         loadActions();
         const auto ranked = cyui::rankCommands(actions, query);
-        for (size_t commandIndex = 0; commandIndex < commands().size(); ++commandIndex) {
-            const auto &command = commands()[commandIndex];
+        for (size_t commandIndex = 0; commandIndex < catalogue.size(); ++commandIndex) {
+            const auto &command = catalogue[commandIndex];
             const auto name = std::string(tr(command.title.c_str()));
             auto title = std::string(tr(command.category.c_str())) + ": " + name;
             int score = std::max({fuzzyScore(query, name),fuzzyScore(query, title),fuzzyScore(query, command.id)});
@@ -2109,13 +2457,13 @@ void Application::palette() {
             items.push_back({path, path, 0, score, nullptr});
         }
     }
-    if (wantSymbols && symbolResults_.contains("symbols")) {
+    if (wantSymbols && symbolResultCurrent(symbolResults_) && symbolResults_.contains("symbols")) {
         for (const auto &symbol : symbolResults_.at("symbols")) {
             const auto name = symbol.at("name").get<std::string>(), container = symbol.value("container", "");
             auto score = std::max(fuzzyScore(query, name), fuzzyScore(query, container+"::"+name));
             if (score < 0) continue;
             auto display = symbol.value("displayPath", symbol.at("path").get<std::string>());
-            auto title = name + (container.empty() ? "" : "  ("+container+")") + "   " + pathUtf8(utf8Path(display).filename()) + ":" + std::to_string(symbol.at("range").at("start").at("line").get<size_t>()+1);
+            auto title = std::string(tr(symbolKindName(symbol.at("kind")))) + "  " + name + (container.empty() ? "" : "  ("+container+")") + "   " + pathUtf8(utf8Path(display).filename()) + (symbol.value("unresolved", false) ? std::string("  [")+tr("Location on selection")+"]" : ":" + std::to_string(symbol.at("range").at("start").at("line").get<size_t>()+1));
             items.push_back({symbol.at("path"), title, 2, score+30, symbol});
         }
     }
@@ -2124,10 +2472,12 @@ void Application::palette() {
     else std::sort(items.begin(), items.end(), compare);
     paletteSelection_ = std::clamp(paletteSelection_, 0, std::max(0, static_cast<int>(items.size())-1));
     bool moved = false;
-    if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) && !items.empty()) { paletteSelection_ = (paletteSelection_+1) % items.size(); moved = true; }
-    if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) && !items.empty()) { paletteSelection_ = (paletteSelection_+items.size()-1) % items.size(); moved = true; }
-    const bool enter = ImGui::IsKeyPressed(ImGuiKey_Enter);
+    const bool paletteKeys = !backendChanged && !symbolRefresh && ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows | ImGuiFocusedFlags_NoPopupHierarchy);
+    if (paletteKeys && ImGui::IsKeyPressed(ImGuiKey_DownArrow) && !items.empty()) { paletteSelection_ = (paletteSelection_+1) % items.size(); moved = true; }
+    if (paletteKeys && ImGui::IsKeyPressed(ImGuiKey_UpArrow) && !items.empty()) { paletteSelection_ = (paletteSelection_+items.size()-1) % items.size(); moved = true; }
+    const bool enter = paletteKeys && ImGui::IsKeyPressed(ImGuiKey_Enter);
     if (wantSymbols && (symbolFuture_.valid() || symbolSentKey_ != symbolWantedKey_)) { cyui::spinner("##symbols"); ImGui::SameLine(); cyui::textDim("%s", tr("Searching symbols...")); }
+    if (wantSymbols && !symbolResolveKey_.empty() && symbolResolveFuture_.valid()) { cyui::spinner("##symbolresolve"); ImGui::SameLine(); cyui::textDim("%s", tr("Resolving symbol location...")); }
     if (wantSymbols && !symbolError_.empty()) cyui::textColoured(cyui::palette().warning, "%s", symbolError_.c_str());
     if (wantSymbols && symbolResults_.value("truncated", false)) cyui::textDim("%s", tr("Results limited. Refine the symbol name."));
     std::string chosen; int kind = 0; Json destination;
@@ -2135,13 +2485,17 @@ void Application::palette() {
     for (size_t i = 0; i < items.size(); ++i) {
         const auto &item = items[i]; bool clicked = false;
         ImGui::PushID(static_cast<int>(i));
-        const bool enabled = item.kind != 1 || commandEnabled(item.id);
+        const bool enabled = (item.kind != 1 || commandEnabled(item.id)) && (item.kind != 2 || !symbolResolveFuture_.valid());
         ImGui::BeginDisabled(!enabled);
         if (item.kind == 1) {
             clicked = ImGui::Selectable(item.title.c_str(), paletteSelection_ == static_cast<int>(i));
             const auto shortcut = keymap_.hint(item.id);
             if (!shortcut.empty()) { ImGui::SameLine(); cyui::textFaint("  %s", shortcut.c_str()); }
-        } else if (item.kind == 2) clicked = ImGui::Selectable(item.title.c_str(), paletteSelection_ == static_cast<int>(i));
+        } else if (item.kind == 2) {
+            clicked = ImGui::Selectable(item.title.c_str(), paletteSelection_ == static_cast<int>(i));
+            const auto detail = item.location.value("detail", std::string{});
+            if (!detail.empty()) cyui::tooltip(detail.c_str());
+        }
         else clicked = fileSelectable(item.id, item.title, paletteSelection_ == static_cast<int>(i), theme_);
         if (moved && paletteSelection_ == static_cast<int>(i)) ImGui::SetScrollHereY();
         ImGui::EndDisabled();
@@ -2150,6 +2504,25 @@ void Application::palette() {
     }
     if (items.empty()) cyui::textDim("%s", tr("No matching results"));
     ImGui::EndChild();
+    if (!chosen.empty() && kind==2 && destination.value("unresolved", false)) {
+        const auto session=symbolResults_.at("session").get<std::string>();
+        const auto index=destination.at("resolveIndex");
+        const auto selection=session+":"+index.dump();
+        const auto key=symbolWantedKey_; const auto epoch=symbolResults_.at("epoch");
+        auto engine=engine_; symbolResolveKey_=selection; symbolError_.clear(); symbolResolved_=Json::object();
+        symbolResolveFuture_=std::async(std::launch::async,[engine,session,index,key,selection,epoch] {
+            try { return Json{{"key",key},{"selection",selection},{"result",engine->dispatch("language.symbolResolve",{{"session",session},{"index",index},{"expectedEpoch",epoch}})}}; }
+            catch (const std::exception &e) { return Json{{"key",key},{"selection",selection},{"error",e.what()}}; }
+        });
+        chosen.clear();
+    }
+    if (!chosen.empty()) { symbolResolved_=Json::object(); symbolResolveKey_.clear(); }
+    if (symbolResolved_.contains("result")) {
+        if (symbolResolved_.at("key")==symbolWantedKey_ && symbolResolved_.at("selection")==symbolResolveKey_ && symbolResultCurrent(symbolResolved_.at("result"))) {
+            destination=symbolResolved_.at("result").at("symbol"); chosen=destination.at("path"); kind=2;
+        }
+        symbolResolved_=Json::object(); symbolResolveKey_.clear();
+    }
     if (!chosen.empty()) ImGui::CloseCurrentPopup();
     ImGui::EndPopup();
     if (!chosen.empty()) {
@@ -2161,7 +2534,7 @@ void Application::palette() {
 void Application::windowTest() {
     ++windowTestFrame_;
     auto build = ImGui::FindWindowByName(label("Build", "build").c_str());
-    auto document = tabs_.empty() ? nullptr : ImGui::FindWindowByName(documentTitle(tabs_[0]->path).c_str());
+    auto document = tabs_.empty() ? nullptr : ImGui::FindWindowByName(tabTitle(tabs_[0]).c_str());
     if (windowTestFrame_ == 20 && build) {
         windowTest_.push_back({{"stage", "initial"}, {"buildDock", build->DockId}});
         ImGui::SetWindowDock(build, 0, ImGuiCond_Always);
@@ -2249,22 +2622,32 @@ void Application::frame() {
         resetLayout_ = false;
     }
     projectPanel();
+    resourcePanel();
+    projectTemplatePanel();
     searchPanel();
     editorPanel();
     outputPanel();
     unrealPanel();
     cmakePanel();
+    presetActionsPanel();
     msbuildPanel();
     projectTasksPanel();
+    testsPanel();
     gitPanel();
     problemsPanel();
     referencesPanel();
     informationPanel();
+    hierarchyPanel();
+    structurePanel();
+    occurrencePanel();
+    applicationUpdatesPanel();
     codeActionsPanel();
     refactorPanel();
     terminalPanel();
     debugPanel();
     extensionsPanel();
+    extensionPanels();
+    recoveryPanel();
     mcpPanel();
     if (rebuiltLayout) {
         panels_["build"] = true;
@@ -2282,10 +2665,13 @@ void Application::frame() {
         focusUnreal_ = false;
     }
     optionsPanel();
+    updateWorkspaceSession();
     palette();
     goToLine();
     renamePopup();
-    if (closeAll_ && pendingClose_.empty()) { if (tabs_.empty()) closeAll_ = false; else closeTab(tabs_.back()->path); }
+    if (closeAll_ && pendingClose_.empty() && !saveAsDocument_ && saveAsQueue_.empty()) { if (tabs_.empty()) closeAll_ = false; else closeTab(tabs_.back()->path); }
+    documentDraftDialogs();
+    gitWorktreeConfirmation();
     if (newFile_) {
         ImGui::OpenPopup(tr("New file..."));
         newFile_ = false;
@@ -2293,6 +2679,14 @@ void Application::frame() {
     if (ImGui::BeginPopupModal(tr("New file..."), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::SetNextItemWidth(cyui::dp(420));
         ImGui::InputTextWithHint("##newpath", tr("Workspace-relative path"), &newFilePath_);
+        if (cyui::button(tr("Open unsaved"))) {
+            try {
+                const auto doc = engine_->dispatch("documents.createUntitled", {{"name",newFilePath_}});
+                open(doc.at("path"));
+                ImGui::CloseCurrentPopup();
+            } catch (const std::exception &e) { error(e.what()); }
+        }
+        ImGui::SameLine();
         if (cyui::primaryButton(tr("Create"))) {
             try {
                 engine_->dispatch("documents.create", {{"path", newFilePath_}});
@@ -2308,14 +2702,16 @@ void Application::frame() {
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
-    if (!pendingClose_.empty()) {
+    if (!pendingClose_.empty() && !saveAsDocument_ && saveAsQueue_.empty()) {
         ImGui::OpenPopup(tr("Unsaved changes"));
         if (ImGui::BeginPopupModal(tr("Unsaved changes"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             ImGui::TextUnformatted(pendingClose_.c_str());
             if (cyui::primaryButton(tr("Save"))) {
+                const bool draft = isUntitledDocument(pendingClose_);
                 for (auto &tab : tabs_)
                     if (tab->path == pendingClose_)
                         save(tab);
+                if (draft) ImGui::CloseCurrentPopup();
                 bool dirty = false;
                 for (auto &tab : tabs_)
                     if (tab->path == pendingClose_)
@@ -2343,7 +2739,7 @@ void Application::frame() {
             ImGui::EndPopup();
         }
     }
-    if (quitRequested_) {
+    if (quitRequested_ && !saveAsDocument_ && saveAsQueue_.empty()) {
         bool dirty = std::any_of(tabs_.begin(), tabs_.end(), [](const auto &tab) { return tab->dirty; });
         if (!dirty)
             done_ = true;
@@ -2353,15 +2749,23 @@ void Application::frame() {
                 ImGui::TextUnformatted(tr("Some documents have unsaved changes."));
                 if (cyui::primaryButton(tr("Save all"))) {
                     saveAll();
+                    if (!saveAsQueue_.empty()) ImGui::CloseCurrentPopup();
                     done_ =
                         std::none_of(tabs_.begin(), tabs_.end(), [](const auto &tab) { return tab->dirty; });
                 }
                 ImGui::SameLine();
-                if (cyui::dangerButton(tr("Discard")))
-                    done_ = true;
+                if (cyui::dangerButton(tr("Discard"))) {
+                    try {
+                        // An explicit discard must retire recovery data as well as live tabs.
+                        const auto closing=tabs_;
+                        for(const auto &tab:closing)closeTab(tab->path,true);
+                        done_=tabs_.empty();
+                    } catch(const std::exception &e) { error(e.what()); }
+                }
                 ImGui::SameLine();
                 if (cyui::button(tr("Cancel"))) {
                     quitRequested_ = false;
+                    updateInstallRequested_ = false;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();
