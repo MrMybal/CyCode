@@ -27,7 +27,7 @@ def package_path(name):
         key = part.lower()
         stem = key.split('.')[0]
         if (not re.fullmatch(r'[A-Za-z0-9_.-]+', part) or part in {'.', '..'} or
-                part.endswith('.') or key in {'data', 'runtime', '.git'} or
+                part.endswith('.') or key in {'data', 'runtime', '.git', '.cydocbuild'} or
                 stem in {'con', 'nul', 'prn', 'aux'} or re.fullmatch(r'(com|lpt)[1-9]', stem)):
             return False
     return (name in {'CyCode.exe', 'CyCodeUpdater.exe', 'cycode_cli.exe', 'manifest.json',

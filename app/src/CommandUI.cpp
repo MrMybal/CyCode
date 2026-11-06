@@ -271,7 +271,7 @@ void Application::executeCommand(const std::string &id) {
                     if (marker != std::string_view::npos) { page = app_help::topic(name.substr(marker + 3)); break; }
                 }
             }
-            app_help::open(root_, "app/help", locale_, page, page == "tour" ? "interface" : "", smoke_ || testSession_, page == "tour" ? "interface-image" : "");
+            app_help::open(root_, "app/Documentation", locale_, page, page == "tour" ? "interface" : "", smoke_ || testSession_, page == "tour" ? "interface-image" : "");
             return;
         }
         if(id.starts_with("problem.")) {navigateProblem(id=="problem.previous"||id=="problem.previousInFile",id.ends_with("InFile"));return;}

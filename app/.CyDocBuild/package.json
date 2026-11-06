@@ -1,0 +1,7 @@
+{
+  "name": "cycode-documentation-build",
+  "private": true,
+  "dependencies": {
+    "cydoc": "file:packages/cydoc-6ddf9a5.tgz"
+  }
+}

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.2.2 — 2026-11-06
+
+- Update the bundled CyDoc reader with complete English/French task guides,
+  nested navigation, header search/Ctrl+K, six themes and local images/diagrams.
+- Present all 227 SDK/MCP operations as public contracts, plus the plugin ABI;
+  remove implementation browsing and development reports from the human manual.
+- Route Help/context actions to Documentation/Documentation.html and include the
+  complete local export in portable/update packages.
+- Keep old documentation addresses compatible and automate the shared Pages
+  publication alongside the CyCodeReader manual.
+
 ## 0.2.1 — 2026-11-06
 
 - Bundle the complete illustrated CyDoc manual, EN/FR Help actions, contextual

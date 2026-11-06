@@ -1387,7 +1387,7 @@ bool Application::beginPanel(const char *text, const char *id) {
     }
     if (ImGui::Begin(label(text, id).c_str(), &found->second)) {
         if (cyui::iconButton(cyui::icon::help, tr("Context help"))) {
-            try { app_help::open(root_, "app/help", locale_, app_help::topic(id), "", smoke_ || testSession_); }
+            try { app_help::open(root_, "app/Documentation", locale_, app_help::topic(id), "", smoke_ || testSession_); }
             catch (const std::exception &exception) { error(exception.what()); }
         }
         return true;

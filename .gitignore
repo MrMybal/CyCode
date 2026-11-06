@@ -31,5 +31,6 @@ __pycache__/
 *.cycode-save-*
 /extensions-managed/
 
-# Complete generated local help (authoring sources live in app/documentation).
+# Complete generated local help (sources and tools live in app/.CyDocBuild).
 /app/help/
+/app/Documentation/

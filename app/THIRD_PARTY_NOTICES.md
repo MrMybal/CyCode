@@ -108,6 +108,6 @@ development/runtime prerequisites and are not added to the application ZIP.
 
 
 Local help uses [CyDoc](https://github.com/MrMybal/CyDoc), MIT, pinned by
-`app/documentation/cydoc.lock.json`. The exported help includes its MIT notice
-and the Marked, PrismJS and esbuild notices in its own `licenses/` directory.
+`app/.CyDocBuild/cydoc.lock.json`. The exported help includes its MIT notice
+and the Marked, PrismJS and esbuild notices in `Documentation/DocData/licenses/`.
 Only image/gallery runtime modules are distributed; no Three.js runtime is included.

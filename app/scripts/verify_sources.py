@@ -13,9 +13,9 @@ def main():
     for path in sorted(APP.rglob('*')):
         if path.suffix not in counts or not path.is_file():
             continue
-        if path.is_relative_to(APP / 'help'):
+        if path.is_relative_to(APP / 'help') or path.is_relative_to(APP / 'Documentation'):
             continue
-        if any(part in {'__pycache__', '.git', 'runtime', 'node_modules', '.venv', 'venv'}
+        if any(part in {'__pycache__', '.git', 'runtime', 'node_modules', '.cache', 'packages', '.venv', 'venv'}
                for part in path.relative_to(APP).parts):
             continue
         if not path.resolve().is_relative_to(APP):

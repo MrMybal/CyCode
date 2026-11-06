@@ -1,0 +1,7 @@
+/.cache/
+/node_modules/
+/packages/
+/manual/en/api-generated/
+/manual/fr/api-generated/
+/internal/*.log
+/internal/*-results.json

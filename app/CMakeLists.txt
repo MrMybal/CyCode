@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(CyCode VERSION 0.2.1 LANGUAGES C CXX)
+project(CyCode VERSION 0.2.2 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -257,31 +257,20 @@ if(CYCODE_BUILD_GUI)
   add_executable(CyCode src/main.cpp)
   target_link_libraries(CyCode PRIVATE cycode_ui)
   option(CYCODE_BUILD_DOCUMENTATION "Generate and distribute the local CyDoc manual" ON)
-  set(CYDOC_DIR "" CACHE PATH "Optional clean CyDoc checkout matching documentation/cydoc.lock.json")
   if(CYCODE_BUILD_DOCUMENTATION)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/documentation/cydoc.lock.json" CYDOC_LOCK)
-    string(JSON CYDOC_REVISION GET "${CYDOC_LOCK}" revision)
-    string(SUBSTRING "${CYDOC_REVISION}" 0 7 CYDOC_SHORT_REVISION)
-    set(CYDOC_CACHE "${CYCODE_ROOT}/runtime/deps/cydoc-${CYDOC_SHORT_REVISION}")
-    set(CYDOC_SOURCE_ARGUMENTS)
-    if(CYDOC_DIR)
-      list(APPEND CYDOC_SOURCE_ARGUMENTS --cydoc-source "${CYDOC_DIR}")
-    endif()
     add_custom_target(CyCode_documentation
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/build_documentation.py" ${CYDOC_SOURCE_ARGUMENTS}
-        --output "${CMAKE_BINARY_DIR}/help" --output "$<TARGET_FILE_DIR:CyCode>/app/help" --output "${CYCODE_ROOT}/app/help"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/.CyDocBuild/build.py"
+        --output "${CMAKE_BINARY_DIR}/Documentation" --output "$<TARGET_FILE_DIR:CyCode>/app/Documentation"
       WORKING_DIRECTORY "${CYCODE_ROOT}"
       COMMENT "Compiling the offline CyDoc manual" VERBATIM)
     add_dependencies(cycode_ui CyCode_documentation)
-    target_include_directories(cycode_ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/documentation/native" "${CYDOC_CACHE}/examples/integrations")
+    target_include_directories(cycode_ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/.CyDocBuild/node_modules/cydoc/examples/integrations")
     target_compile_definitions(cycode_ui PRIVATE CYCODE_LOCAL_HELP)
     if(WIN32)
       target_link_libraries(cycode_ui PRIVATE shlwapi)
     endif()
-    install(DIRECTORY "${CMAKE_BINARY_DIR}/help/" DESTINATION app/help)
-  else()
-    target_include_directories(cycode_ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/documentation/native")
+    install(DIRECTORY "${CMAKE_BINARY_DIR}/Documentation/" DESTINATION app/Documentation)
   endif()
 
   if(BUILD_TESTING)

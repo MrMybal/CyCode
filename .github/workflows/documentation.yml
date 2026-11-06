@@ -29,7 +29,7 @@ jobs:
       - name: Verify owned files, resources and translated routes
         run: python app/scripts/verify_documentation.py runtime/pages
       - name: Verify reader interactions without native applications
-        run: node app/scripts/verify_documentation_dom.mjs runtime/pages runtime/deps/cydoc-774f2a7
+        run: node app/.CyDocBuild/verify_dom.mjs runtime/pages
 
       # The source repository stays private. This key can write only to the
       # existing Reader repository; never use a personal token here.

@@ -4,7 +4,10 @@
   <img src="icons/CyCode.png" alt="CyCode" width="160" height="160">
 </p>
 
-[Documentation](https://mrmybal.github.io/CyCodeReader/cycode/#/en/overview) · [Documentation en français](https://mrmybal.github.io/CyCodeReader/cycode/#/fr/overview)
+[Documentation](https://mrmybal.github.io/CyCodeReader/cycode/Documentation.html#/en/overview) · [Documentation en français](https://mrmybal.github.io/CyCodeReader/cycode/Documentation.html#/fr/overview)
+
+Version **0.2.2** updates the complete English/French user manual, public API
+references and local Help integration. Downloads: [GitHub Releases](https://github.com/MrMybal/CyCode/releases/latest).
 
 CyCode includes stable GitHub release checks, explicit Windows portable updates,
 resume/fresh downloads, SHA-256 verification and categorized EN/FR feedback.
@@ -335,4 +338,5 @@ for supported formats and remaining scope.
 
 
 Local illustrated English/French help is generated and bundled with GUI builds.
-See [CyDoc documentation and build instructions](app/Docs/Documentation.md).
+After generation, open `app/Documentation/Documentation.html` directly. See the
+[private documentation toolchain instructions](app/.CyDocBuild/README.md) to rebuild it.

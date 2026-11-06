@@ -34,10 +34,11 @@ class ReleasePackageTests(unittest.TestCase):
     def test_managed_paths_preserve_private_data(self):
         for name in ('../CyCode.exe', 'data/settings/x.json', 'app/data/token.json', '/CyCode.exe',
                      'app/runtime/config.json', 'app/CON.txt', 'app/x.', 'app/x\\y',
-                     'app/.git/config', 'app//x', 'app/AUX', 'tools/lpt1.txt', 'app/c:y'):
+                     'app/.git/config', 'app/.CyDocBuild/cydoc.config.json', 'app//x', 'app/AUX', 'tools/lpt1.txt', 'app/c:y'):
             with self.subTest(name=name):
                 self.assertFalse(api['package_path'](name))
         self.assertTrue(api['package_path']('app/Docs/Updates.md'))
+        self.assertTrue(api['package_path']('app/Documentation/DocData/viewer.js'))
 
     def test_reject_missing_case_collision_prefix_conflict(self):
         for patch in ({'cycode.exe': b'collision'}, {'app': b'not a package file'},

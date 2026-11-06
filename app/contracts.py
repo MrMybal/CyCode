@@ -1067,7 +1067,7 @@ for _id, _method, _description, _inputs, _outputs, _permissions in OPERATIONS:
 def write_manifest():
     path = Path(__file__).with_name('CyTool.json')
     manifest = json.loads(path.read_text('utf-8'))
-    manifest.update(description='Native C++ IDE services, shared by CyUI and CyToolsCore MCP.', version='0.2.0',
+    manifest.update(description='Native C++ IDE services, shared by CyUI and CyToolsCore MCP.', version='0.2.2',
                     executable='python app/tool.py', standaloneExecutable='CyCode.exe', categories=['development'], tags=['IDE', 'C++', 'plugins'],
                     capabilities=['jobs', 'cancellation', 'live-documents', 'text-search', 'cpp-navigation', 'cpp-symbols', 'cpp-refactoring', 'csharp-language', 'multilingual-lsp', 'project-tasks', 'readonly-sdk-sources', 'terminal', 'dap-debugger', 'git', 'native-plugins', 'msbuild'],
                     concurrency={'policy': 'Concurrent', 'maxWorkers': 4}, distributionStatus='Development milestone; see app/Docs/Validation.md')

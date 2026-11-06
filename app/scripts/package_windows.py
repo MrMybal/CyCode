@@ -47,16 +47,16 @@ def main():
         if not source.is_file() or source.is_symlink():
             raise RuntimeError(f'Missing or non-regular package file: {source}')
         parts = Path(target).parts
-        if any(p in {'.git', 'data', 'runtime', '__pycache__'} for p in parts):
+        if any(p in {'.git', '.CyDocBuild', 'data', 'runtime', '__pycache__'} for p in parts):
             raise RuntimeError(f'Private package path refused: {target}')
         entries[target] = source.read_bytes()
 
-    help_root = args.build.resolve() / 'help'
-    if not (help_root / 'cydoc-export.json').is_file():
+    help_root = args.build.resolve() / 'Documentation'
+    if not (help_root / 'DocData/export-files.json').is_file():
         raise RuntimeError('Build the complete local documentation before packaging')
     verify_documentation(help_root)
     for source in sorted(help_root.rglob('*')):
-        if source.is_file(): include(source, 'app/help/' + source.relative_to(help_root).as_posix())
+        if source.is_file(): include(source, 'app/Documentation/' + source.relative_to(help_root).as_posix())
     include(build / 'CyCode.exe', 'CyCode.exe')
     include(cli, 'cycode_cli.exe')
     include(build / 'CyCodeUpdater.exe', 'CyCodeUpdater.exe')
@@ -70,10 +70,12 @@ def main():
                  'app/README.md', 'app/THIRD_PARTY_NOTICES.md', 'app/tool.py', 'app/contracts.py',
                  'app/locales/ui.json', 'app/include/cycode/PluginAPI.h']:
         include(ROOT / name)
-    for pattern in ['app/*lock.json', 'app/Docs/*.md', 'app/licenses/*', 'app/scripts/*.py',
+    for pattern in ['app/*lock.json', 'app/licenses/*', 'app/scripts/*.py',
                     'app/examples/hello/*']:
         for source in sorted(ROOT.glob(pattern)):
             if source.is_file():
+                if source.name in {'build_documentation.py', 'verify_documentation.py', 'cydoc_dependency.py', 'publish_documentation.py'}:
+                    continue
                 include(source)
     tools = ROOT / 'runtime/tools'
     stamp = json.loads((tools / 'ripgrep.json').read_text(encoding='utf-8'))

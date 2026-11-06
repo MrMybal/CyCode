@@ -4,7 +4,10 @@
   <img src="icons/CyCode.png" alt="CyCode" width="160" height="160">
 </p>
 
-[Documentation](https://mrmybal.github.io/CyCodeReader/cycode/#/fr/overview) · [English documentation](https://mrmybal.github.io/CyCodeReader/cycode/#/en/overview)
+[Documentation](https://mrmybal.github.io/CyCodeReader/cycode/Documentation.html#/fr/overview) · [English documentation](https://mrmybal.github.io/CyCodeReader/cycode/Documentation.html#/en/overview)
+
+La version **0.2.2** actualise le manuel anglais/français complet, les références
+de l’API publique et l’aide locale. Téléchargements : [GitHub Releases](https://github.com/MrMybal/CyCode/releases/latest).
 
 CyCode dispose d’une gestion des mises à jour GitHub avec reprise ou téléchargement
 neuf, vérification SHA-256 et indications en français et en anglais. L’espace

@@ -290,5 +290,5 @@ module. Immutable work/source records are application metadata, not build inputs
 or published payload. Production tests stay OFF; see [Recovery](UpdateRecovery.md).
 
 GUI builds also generate the bundled offline manual with Node.js 22+ / npm and
-the pinned private CyDoc source. See [Documentation](Documentation.md) for cache,
+the pinned CyDoc package. See [Documentation](../.CyDocBuild/README.md) for cache,
 checkout, regeneration and validation options. Core-only builds do not need Node.

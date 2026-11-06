@@ -1,0 +1,1712 @@
+[
+  {
+    "id": "api-links",
+    "title": "API / MCP",
+    "kind": "guide"
+  },
+  {
+    "id": "editing",
+    "title": "Editing and files",
+    "kind": "guide"
+  },
+  {
+    "id": "languages",
+    "title": "Languages and highlighting",
+    "kind": "guide"
+  },
+  {
+    "id": "limits",
+    "title": "Scope and limits",
+    "kind": "guide"
+  },
+  {
+    "id": "mcp",
+    "title": "SDK and MCP",
+    "kind": "guide"
+  },
+  {
+    "id": "overview",
+    "title": "CyCode",
+    "kind": "media"
+  },
+  {
+    "id": "plugins",
+    "title": "Plugins",
+    "kind": "guide"
+  },
+  {
+    "id": "projects",
+    "title": "Projects and tools",
+    "kind": "guide"
+  },
+  {
+    "id": "quickstart",
+    "title": "Quick start",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-advanceddebugging",
+    "title": "Advanced DAP inspection and breakpoints",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-architecture",
+    "title": "Architecture",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-branding",
+    "title": "CyCode branding",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-build",
+    "title": "C/C++ toolchains and CMake",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-buildcancellation",
+    "title": "Cancelling native build operations",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-capabilitycoverage",
+    "title": "Capability coverage",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-cargobuilds",
+    "title": "Cargo workspaces, features and targets",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-changeannotations",
+    "title": "Annotated language-server edits",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-cmakepresetactions",
+    "title": "Test, package and workflow presets",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-commands",
+    "title": "Commands and keyboard profiles",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-compilerlocations",
+    "title": "Compiler output source links",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-csharp",
+    "title": "C# language services",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-customversioncontrol",
+    "title": "Adding a revision-control provider",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-cyui-migration",
+    "title": "CyCode modular CyUI integration",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-databreakpoints",
+    "title": "Data breakpoints",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-debugexecution",
+    "title": "Stepping, reverse execution and frame restart",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-debugvalueediting",
+    "title": "Debugger value and memory editing",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-developmentworkflows",
+    "title": "Development workflows and language extensions",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-diagnosticnavigation",
+    "title": "Diagnostic keyboard navigation",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-diversion",
+    "title": "Diversion provider",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-documentation",
+    "title": "Local documentation with CyDoc",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-editordiagnostics",
+    "title": "In-editor language diagnostics",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-events",
+    "title": "Workspace events and native subscriptions",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-execution",
+    "title": "Run, terminal and debugging",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-gitconflicts",
+    "title": "Git conflict catalogue and reviewed index resolution",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-gitmergeworkflow",
+    "title": "Reviewed merge completion and quit",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-gitreplay",
+    "title": "Reviewed cherry-pick and revert",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-gitsubmodules",
+    "title": "Git submodules",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-gitworkingfiles",
+    "title": "Working files after Git conflict resolution",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-gitworktrees",
+    "title": "Multiple Git repositories and linked worktrees",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-gototargets",
+    "title": "Set next statement",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-hierarchies",
+    "title": "Call and type hierarchies",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-images",
+    "title": "Image previews",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-instructionbreakpoints",
+    "title": "Instruction breakpoints",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-javadebugging",
+    "title": "Java debugging",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-jvmbuilds",
+    "title": "Maven and Gradle project tasks",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-languagepreferences",
+    "title": "Language-server preferences",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-languages",
+    "title": "Language support",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-livebuildoutput",
+    "title": "Live native build output",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-mcp",
+    "title": "Integrated MCP",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-mercurial",
+    "title": "Mercurial provider",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-msbuild",
+    "title": "Visual Studio and MSBuild projects",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-occurrences",
+    "title": "Document occurrences",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-perforce",
+    "title": "Perforce provider",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-plugindebuggers",
+    "title": "Plugin-owned adapter definitions, host-owned DAP sessions",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-pluginpackages",
+    "title": "Signed local plugin packages",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-plugins",
+    "title": "Native extension SDK — ABI 1 and ABI 2",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-projectformats",
+    "title": "XML solutions and CMake Presets",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-projecttaskoutput",
+    "title": "Project task status and live output",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-projecttasks",
+    "title": "Cargo, npm and Java projects",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-projecttemplates",
+    "title": "Project creation",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-recovery",
+    "title": "Unsaved-document recovery",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-releases-v0-2-1",
+    "title": "CyCode 0.2.1",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-resources",
+    "title": "Workspace file operations",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-roadmap",
+    "title": "Roadmap",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-runtocursor",
+    "title": "Run to cursor",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-rustanalysis",
+    "title": "Cargo options for Rust analysis",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-rusttoolchains",
+    "title": "Named Rustup toolchains",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-semantic",
+    "title": "C++ and C# semantic editing",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-semantictokenupdates",
+    "title": "Incremental semantic token updates",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-shaderbuilds",
+    "title": "HLSL and GLSL compilation",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-sourcenavigation",
+    "title": "Source navigation and result locations",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-stepintargets",
+    "title": "Targeted step-in",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-subversion",
+    "title": "Subversion provider",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-symbolnavigation",
+    "title": "Document structure and symbol navigation",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-testing",
+    "title": "Local verification and native tests",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-unreal",
+    "title": "Solutions and Unreal Engine",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-unrealartifacts",
+    "title": "Unreal Editor output inspection",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-unrealautomation",
+    "title": "Reviewed Unreal cooking and packaging",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-unreallaunch",
+    "title": "Unreal editor, game and server launch profiles",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-untitleddocuments",
+    "title": "Untitled documents and Save as",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-updatedownloads",
+    "title": "Resuming interrupted application downloads",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-updatehistory",
+    "title": "Update history and recovery receipts",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-updateinstallation",
+    "title": "Installation space and failure outcomes",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-updaterecovery",
+    "title": "Interrupted application-update recovery",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-updates",
+    "title": "Application updates from GitHub Releases",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-updatestorage",
+    "title": "Reversible update-cache management",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-validation",
+    "title": "Validation — 2026-11-05",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-versioncontrol",
+    "title": "Git and revision control",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-workspace",
+    "title": "Workspace monitoring and path index",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-docs-workspacesessions",
+    "title": "Workspace sessions",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-examples-hello-cmakelists-txt",
+    "title": "CMakeLists",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-licenses-cyui-txt",
+    "title": "CyUI",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-licenses-monocypher-txt",
+    "title": "Monocypher",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-licenses-tinyxml2-txt",
+    "title": "TinyXML2",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-readme",
+    "title": "CyCode",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-app-third-party-notices",
+    "title": "Third-party notices",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-copyright",
+    "title": "COPYRIGHT",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-license",
+    "title": "LICENSE",
+    "kind": "guide"
+  },
+  {
+    "id": "reference-readme",
+    "title": "CyCode",
+    "kind": "media"
+  },
+  {
+    "id": "reference",
+    "title": "Technical reference",
+    "kind": "guide"
+  },
+  {
+    "id": "search",
+    "title": "Search and navigation",
+    "kind": "guide"
+  },
+  {
+    "id": "shortcuts",
+    "title": "Keyboard shortcuts",
+    "kind": "guide"
+  },
+  {
+    "id": "tour",
+    "title": "Visual tour",
+    "kind": "media"
+  },
+  {
+    "id": "updates",
+    "title": "Updates",
+    "kind": "guide"
+  },
+  {
+    "id": "version-control",
+    "title": "Version control",
+    "kind": "guide"
+  },
+  {
+    "id": "help-routing",
+    "title": "Native help routing",
+    "kind": "api"
+  },
+  {
+    "id": "operation-unreal-automation-plan-unreal-automation-plan",
+    "title": "unreal_automation_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-unreal-automation-run-unreal-automation-run",
+    "title": "unreal_automation_run",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-replay-state-vcs-replay-state",
+    "title": "vcs_replay_state",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-replay-plan-vcs-replay-plan",
+    "title": "vcs_replay_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-replay-apply-vcs-replay-apply",
+    "title": "vcs_replay_apply",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-merge-state-vcs-merge-state",
+    "title": "vcs_merge_state",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-merge-plan-vcs-merge-plan",
+    "title": "vcs_merge_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-merge-commit-vcs-merge-commit",
+    "title": "vcs_merge_commit",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-merge-quit-vcs-merge-quit",
+    "title": "vcs_merge_quit",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-checkout-plan-vcs-checkout-plan",
+    "title": "vcs_checkout_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-checkout-apply-vcs-checkout-apply",
+    "title": "vcs_checkout_apply",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-checkout-undo-vcs-checkout-undo",
+    "title": "vcs_checkout_undo",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-conflict-list-vcs-conflict-list",
+    "title": "vcs_conflict_list",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-conflict-inspect-vcs-conflict-inspect",
+    "title": "vcs_conflict_inspect",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-conflict-plan-vcs-conflict-plan",
+    "title": "vcs_conflict_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-conflict-apply-vcs-conflict-apply",
+    "title": "vcs_conflict_apply",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-worktree-plan-vcs-worktree-plan",
+    "title": "vcs_worktree_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-worktree-move-vcs-worktree-move",
+    "title": "vcs_worktree_move",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-worktree-repair-vcs-worktree-repair",
+    "title": "vcs_worktree_repair",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodule-settings-plan-vcs-submodule-settings-plan",
+    "title": "vcs_submodule_settings_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodule-settings-vcs-submodule-settings",
+    "title": "vcs_submodule_settings",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodule-deinit-plan-vcs-submodule-deinit-plan",
+    "title": "vcs_submodule_deinit_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodule-deinit-vcs-submodule-deinit",
+    "title": "vcs_submodule_deinit",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodule-add-plan-vcs-submodule-add-plan",
+    "title": "vcs_submodule_add_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodule-add-vcs-submodule-add",
+    "title": "vcs_submodule_add",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodules-vcs-submodules",
+    "title": "vcs_submodules",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodule-init-vcs-submodule-init",
+    "title": "vcs_submodule_init",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodule-sync-vcs-submodule-sync",
+    "title": "vcs_submodule_sync",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-submodule-update-vcs-submodule-update",
+    "title": "vcs_submodule_update",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-preset-plan-build-preset-plan",
+    "title": "build_preset_plan",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-preset-run-build-preset-run",
+    "title": "build_preset_run",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-hierarchy-prepare-language-hierarchy-prepare",
+    "title": "language_hierarchy_prepare",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-hierarchy-expand-language-hierarchy-expand",
+    "title": "language_hierarchy_expand",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-hierarchy-status-language-hierarchy-status",
+    "title": "language_hierarchy_status",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-repositories-vcs-repositories",
+    "title": "vcs_repositories",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-worktrees-vcs-worktrees",
+    "title": "vcs_worktrees",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-worktree-add-vcs-worktree-add",
+    "title": "vcs_worktree_add",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-worktree-remove-vcs-worktree-remove",
+    "title": "vcs_worktree_remove",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-worktree-lock-vcs-worktree-lock",
+    "title": "vcs_worktree_lock",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-worktree-unlock-vcs-worktree-unlock",
+    "title": "vcs_worktree_unlock",
+    "kind": "api"
+  },
+  {
+    "id": "operation-packages-list-packages-list",
+    "title": "packages_list",
+    "kind": "api"
+  },
+  {
+    "id": "operation-packages-inspect-packages-inspect",
+    "title": "packages_inspect",
+    "kind": "api"
+  },
+  {
+    "id": "operation-packages-install-packages-install",
+    "title": "packages_install",
+    "kind": "api"
+  },
+  {
+    "id": "operation-packages-remove-packages-remove",
+    "title": "packages_remove",
+    "kind": "api"
+  },
+  {
+    "id": "operation-packages-rollback-packages-rollback",
+    "title": "packages_rollback",
+    "kind": "api"
+  },
+  {
+    "id": "operation-packages-clean-packages-clean",
+    "title": "packages_clean",
+    "kind": "api"
+  },
+  {
+    "id": "operation-events-read-events-read",
+    "title": "events_read",
+    "kind": "api"
+  },
+  {
+    "id": "operation-tests-discover-tests-discover",
+    "title": "tests_discover",
+    "kind": "api"
+  },
+  {
+    "id": "operation-tests-run-tests-run",
+    "title": "tests_run",
+    "kind": "api"
+  },
+  {
+    "id": "operation-tests-cancel-tests-cancel",
+    "title": "tests_cancel",
+    "kind": "api"
+  },
+  {
+    "id": "operation-templates-list-templates-list",
+    "title": "templates_list",
+    "kind": "api"
+  },
+  {
+    "id": "operation-templates-preview-templates-preview",
+    "title": "templates_preview",
+    "kind": "api"
+  },
+  {
+    "id": "operation-templates-create-templates-create",
+    "title": "templates_create",
+    "kind": "api"
+  },
+  {
+    "id": "operation-resources-preview-resources-preview",
+    "title": "resources_preview",
+    "kind": "api"
+  },
+  {
+    "id": "operation-resources-apply-resources-apply",
+    "title": "resources_apply",
+    "kind": "api"
+  },
+  {
+    "id": "operation-resources-undo-resources-undo",
+    "title": "resources_undo",
+    "kind": "api"
+  },
+  {
+    "id": "operation-resources-trash-resources-trash",
+    "title": "resources_trash",
+    "kind": "api"
+  },
+  {
+    "id": "operation-resources-children-resources-children",
+    "title": "resources_children",
+    "kind": "api"
+  },
+  {
+    "id": "operation-resources-events-resources-events",
+    "title": "resources_events",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-inspect-project-inspect",
+    "title": "project_inspect",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-status-project-status",
+    "title": "project_status",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-output-project-output",
+    "title": "project_output",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-configure-project-configure",
+    "title": "project_configure",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-build-project-build",
+    "title": "project_build",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-test-project-test",
+    "title": "project_test",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-install-project-install",
+    "title": "project_install",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-script-project-script",
+    "title": "project_script",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-launch-project-launch",
+    "title": "project_launch",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-debug-target-project-debug-target",
+    "title": "project_debug_target",
+    "kind": "api"
+  },
+  {
+    "id": "operation-project-cancel-project-cancel",
+    "title": "project_cancel",
+    "kind": "api"
+  },
+  {
+    "id": "operation-msbuild-inspect-msbuild-inspect",
+    "title": "msbuild_inspect",
+    "kind": "api"
+  },
+  {
+    "id": "operation-msbuild-tools-msbuild-tools",
+    "title": "msbuild_tools",
+    "kind": "api"
+  },
+  {
+    "id": "operation-msbuild-build-msbuild-build",
+    "title": "msbuild_build",
+    "kind": "api"
+  },
+  {
+    "id": "operation-msbuild-rebuild-msbuild-rebuild",
+    "title": "msbuild_rebuild",
+    "kind": "api"
+  },
+  {
+    "id": "operation-msbuild-clean-msbuild-clean",
+    "title": "msbuild_clean",
+    "kind": "api"
+  },
+  {
+    "id": "operation-msbuild-restore-msbuild-restore",
+    "title": "msbuild_restore",
+    "kind": "api"
+  },
+  {
+    "id": "operation-msbuild-evaluate-msbuild-evaluate",
+    "title": "msbuild_evaluate",
+    "kind": "api"
+  },
+  {
+    "id": "operation-msbuild-prepare-msbuild-prepare",
+    "title": "msbuild_prepare",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-inspect-vcs-inspect",
+    "title": "vcs_inspect",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-init-vcs-init",
+    "title": "vcs_init",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-history-vcs-history",
+    "title": "vcs_history",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-show-vcs-show",
+    "title": "vcs_show",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-blame-vcs-blame",
+    "title": "vcs_blame",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-branch-create-vcs-branch-create",
+    "title": "vcs_branch_create",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-branch-switch-vcs-branch-switch",
+    "title": "vcs_branch_switch",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-branch-rename-vcs-branch-rename",
+    "title": "vcs_branch_rename",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-branch-delete-vcs-branch-delete",
+    "title": "vcs_branch_delete",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-remote-add-vcs-remote-add",
+    "title": "vcs_remote_add",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-remote-set-vcs-remote-set",
+    "title": "vcs_remote_set",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-remote-remove-vcs-remote-remove",
+    "title": "vcs_remote_remove",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-fetch-vcs-fetch",
+    "title": "vcs_fetch",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-pull-vcs-pull",
+    "title": "vcs_pull",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-push-vcs-push",
+    "title": "vcs_push",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-merge-vcs-merge",
+    "title": "vcs_merge",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-stash-save-vcs-stash-save",
+    "title": "vcs_stash_save",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-stash-apply-vcs-stash-apply",
+    "title": "vcs_stash_apply",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-stash-pop-vcs-stash-pop",
+    "title": "vcs_stash_pop",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-stash-drop-vcs-stash-drop",
+    "title": "vcs_stash_drop",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-conflicts-vcs-conflicts",
+    "title": "vcs_conflicts",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-resolve-vcs-resolve",
+    "title": "vcs_resolve",
+    "kind": "api"
+  },
+  {
+    "id": "operation-documents-reload-documents-reload",
+    "title": "documents_reload",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-adapters-debug-adapters",
+    "title": "debug_adapters",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-profile-debug-profile",
+    "title": "debug_profile",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-configure-debug-configure",
+    "title": "debug_configure",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-status-debug-status",
+    "title": "debug_status",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-breakpoints-debug-breakpoints",
+    "title": "debug_breakpoints",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-launch-debug-launch",
+    "title": "debug_launch",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-attach-debug-attach",
+    "title": "debug_attach",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-run-debug-run",
+    "title": "debug_run",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-continue-debug-continue",
+    "title": "debug_continue",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-pause-debug-pause",
+    "title": "debug_pause",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-hot-reload-debug-hot-reload",
+    "title": "debug_hot_reload",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-cancel-reload-debug-cancel-reload",
+    "title": "debug_cancel_reload",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-next-debug-next",
+    "title": "debug_next",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-step-in-debug-step-in",
+    "title": "debug_step_in",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-step-out-debug-step-out",
+    "title": "debug_step_out",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-step-back-debug-step-back",
+    "title": "debug_step_back",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-reverse-continue-debug-reverse-continue",
+    "title": "debug_reverse_continue",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-restart-frame-debug-restart-frame",
+    "title": "debug_restart_frame",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-step-in-targets-debug-step-in-targets",
+    "title": "debug_step_in_targets",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-step-into-target-debug-step-into-target",
+    "title": "debug_step_into_target",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-stop-debug-stop",
+    "title": "debug_stop",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-run-to-cursor-debug-run-to-cursor",
+    "title": "debug_run_to_cursor",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-restore-run-to-cursor-debug-restore-run-to-cursor",
+    "title": "debug_restore_run_to_cursor",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-goto-targets-debug-goto-targets",
+    "title": "debug_goto_targets",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-goto-target-debug-goto-target",
+    "title": "debug_goto_target",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-evaluate-debug-evaluate",
+    "title": "debug_evaluate",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-variables-debug-variables",
+    "title": "debug_variables",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-memory-debug-memory",
+    "title": "debug_memory",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-set-variable-debug-set-variable",
+    "title": "debug_set_variable",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-set-expression-debug-set-expression",
+    "title": "debug_set_expression",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-write-memory-debug-write-memory",
+    "title": "debug_write_memory",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-disassemble-debug-disassemble",
+    "title": "debug_disassemble",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-exception-info-debug-exception-info",
+    "title": "debug_exception_info",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-data-breakpoint-info-debug-data-breakpoint-info",
+    "title": "debug_data_breakpoint_info",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-data-breakpoints-debug-data-breakpoints",
+    "title": "debug_data_breakpoints",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-instruction-breakpoints-debug-instruction-breakpoints",
+    "title": "debug_instruction_breakpoints",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-function-breakpoints-debug-function-breakpoints",
+    "title": "debug_function_breakpoints",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-exception-breakpoints-debug-exception-breakpoints",
+    "title": "debug_exception_breakpoints",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-frame-debug-frame",
+    "title": "debug_frame",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-thread-debug-thread",
+    "title": "debug_thread",
+    "kind": "api"
+  },
+  {
+    "id": "operation-debug-source-debug-source",
+    "title": "debug_source",
+    "kind": "api"
+  },
+  {
+    "id": "operation-terminal-create-terminal-create",
+    "title": "terminal_create",
+    "kind": "api"
+  },
+  {
+    "id": "operation-terminal-list-terminal-list",
+    "title": "terminal_list",
+    "kind": "api"
+  },
+  {
+    "id": "operation-terminal-read-terminal-read",
+    "title": "terminal_read",
+    "kind": "api"
+  },
+  {
+    "id": "operation-terminal-write-terminal-write",
+    "title": "terminal_write",
+    "kind": "api"
+  },
+  {
+    "id": "operation-terminal-key-terminal-key",
+    "title": "terminal_key",
+    "kind": "api"
+  },
+  {
+    "id": "operation-terminal-resize-terminal-resize",
+    "title": "terminal_resize",
+    "kind": "api"
+  },
+  {
+    "id": "operation-terminal-clear-terminal-clear",
+    "title": "terminal_clear",
+    "kind": "api"
+  },
+  {
+    "id": "operation-terminal-close-terminal-close",
+    "title": "terminal_close",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-symbols-language-symbols",
+    "title": "language_symbols",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-symbol-resolve-language-symbol-resolve",
+    "title": "language_symbol_resolve",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-document-symbols-language-document-symbols",
+    "title": "language_document_symbols",
+    "kind": "api"
+  },
+  {
+    "id": "operation-sources-read-sources-read",
+    "title": "sources_read",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-rename-language-rename",
+    "title": "language_rename",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-format-language-format",
+    "title": "language_format",
+    "kind": "api"
+  },
+  {
+    "id": "operation-changes-preview-changes-preview",
+    "title": "changes_preview",
+    "kind": "api"
+  },
+  {
+    "id": "operation-changes-apply-changes-apply",
+    "title": "changes_apply",
+    "kind": "api"
+  },
+  {
+    "id": "operation-changes-undo-changes-undo",
+    "title": "changes_undo",
+    "kind": "api"
+  },
+  {
+    "id": "operation-unreal-prepare-unreal-prepare",
+    "title": "unreal_prepare",
+    "kind": "api"
+  },
+  {
+    "id": "operation-unreal-inspect-unreal-inspect",
+    "title": "unreal_inspect",
+    "kind": "api"
+  },
+  {
+    "id": "operation-unreal-artifacts-unreal-artifacts",
+    "title": "unreal_artifacts",
+    "kind": "api"
+  },
+  {
+    "id": "operation-unreal-launch-profile-unreal-launch-profile",
+    "title": "unreal_launch_profile",
+    "kind": "api"
+  },
+  {
+    "id": "operation-unreal-generate-unreal-generate",
+    "title": "unreal_generate",
+    "kind": "api"
+  },
+  {
+    "id": "operation-unreal-database-unreal-database",
+    "title": "unreal_database",
+    "kind": "api"
+  },
+  {
+    "id": "operation-unreal-build-unreal-build",
+    "title": "unreal_build",
+    "kind": "api"
+  },
+  {
+    "id": "operation-workspace-describe-workspace-describe",
+    "title": "workspace_describe",
+    "kind": "api"
+  },
+  {
+    "id": "operation-workspace-files-workspace-files",
+    "title": "workspace_files",
+    "kind": "api"
+  },
+  {
+    "id": "operation-workspace-poll-workspace-poll",
+    "title": "workspace_poll",
+    "kind": "api"
+  },
+  {
+    "id": "operation-search-text-search-text",
+    "title": "search_text",
+    "kind": "api"
+  },
+  {
+    "id": "operation-recovery-status-recovery-status",
+    "title": "recovery_status",
+    "kind": "api"
+  },
+  {
+    "id": "operation-recovery-list-recovery-list",
+    "title": "recovery_list",
+    "kind": "api"
+  },
+  {
+    "id": "operation-recovery-preview-recovery-preview",
+    "title": "recovery_preview",
+    "kind": "api"
+  },
+  {
+    "id": "operation-recovery-restore-recovery-restore",
+    "title": "recovery_restore",
+    "kind": "api"
+  },
+  {
+    "id": "operation-recovery-discard-recovery-discard",
+    "title": "recovery_discard",
+    "kind": "api"
+  },
+  {
+    "id": "operation-recovery-flush-recovery-flush",
+    "title": "recovery_flush",
+    "kind": "api"
+  },
+  {
+    "id": "operation-documents-list-documents-list",
+    "title": "documents_list",
+    "kind": "api"
+  },
+  {
+    "id": "operation-documents-read-documents-read",
+    "title": "documents_read",
+    "kind": "api"
+  },
+  {
+    "id": "operation-documents-create-documents-create",
+    "title": "documents_create",
+    "kind": "api"
+  },
+  {
+    "id": "operation-documents-create-untitled-documents-create-untitled",
+    "title": "documents_create_untitled",
+    "kind": "api"
+  },
+  {
+    "id": "operation-documents-save-as-documents-save-as",
+    "title": "documents_save_as",
+    "kind": "api"
+  },
+  {
+    "id": "operation-documents-replace-documents-replace",
+    "title": "documents_replace",
+    "kind": "api"
+  },
+  {
+    "id": "operation-documents-save-documents-save",
+    "title": "documents_save",
+    "kind": "api"
+  },
+  {
+    "id": "operation-documents-close-documents-close",
+    "title": "documents_close",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-configure-language-configure",
+    "title": "language_configure",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-preferences-language-preferences",
+    "title": "language_preferences",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-preferences-forget-language-preferences-forget",
+    "title": "language_preferences_forget",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-status-language-status",
+    "title": "language_status",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-highlight-language-highlight",
+    "title": "language_highlight",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-complete-language-complete",
+    "title": "language_complete",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-completion-resolve-language-completion-resolve",
+    "title": "language_completion_resolve",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-completion-prepare-language-completion-prepare",
+    "title": "language_completion_prepare",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-code-actions-language-code-actions",
+    "title": "language_code_actions",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-code-action-prepare-language-code-action-prepare",
+    "title": "language_code_action_prepare",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-hover-language-hover",
+    "title": "language_hover",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-signature-language-signature",
+    "title": "language_signature",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-declaration-language-declaration",
+    "title": "language_declaration",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-type-definition-language-type-definition",
+    "title": "language_type_definition",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-implementation-language-implementation",
+    "title": "language_implementation",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-document-highlights-language-document-highlights",
+    "title": "language_document_highlights",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-definition-language-definition",
+    "title": "language_definition",
+    "kind": "api"
+  },
+  {
+    "id": "operation-language-references-language-references",
+    "title": "language_references",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-status-vcs-status",
+    "title": "vcs_status",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-diff-vcs-diff",
+    "title": "vcs_diff",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-log-vcs-log",
+    "title": "vcs_log",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-stage-vcs-stage",
+    "title": "vcs_stage",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-hunks-vcs-hunks",
+    "title": "vcs_hunks",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-apply-hunks-vcs-apply-hunks",
+    "title": "vcs_apply_hunks",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-unstage-vcs-unstage",
+    "title": "vcs_unstage",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-commit-vcs-commit",
+    "title": "vcs_commit",
+    "kind": "api"
+  },
+  {
+    "id": "operation-toolchains-detect-toolchains-detect",
+    "title": "toolchains_detect",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-inspect-build-inspect",
+    "title": "build_inspect",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-presets-build-presets",
+    "title": "build_presets",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-status-build-status",
+    "title": "build_status",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-location-build-location",
+    "title": "build_location",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-output-build-output",
+    "title": "build_output",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-cancel-build-cancel",
+    "title": "build_cancel",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-configure-build-configure",
+    "title": "build_configure",
+    "kind": "api"
+  },
+  {
+    "id": "operation-build-run-build-run",
+    "title": "build_run",
+    "kind": "api"
+  },
+  {
+    "id": "operation-plugins-list-plugins-list",
+    "title": "plugins_list",
+    "kind": "api"
+  },
+  {
+    "id": "operation-plugins-invoke-plugins-invoke",
+    "title": "plugins_invoke",
+    "kind": "api"
+  },
+  {
+    "id": "operation-plugins-configure-plugins-configure",
+    "title": "plugins_configure",
+    "kind": "api"
+  },
+  {
+    "id": "operation-plugins-project-plugins-project",
+    "title": "plugins_project",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-providers-vcs-providers",
+    "title": "vcs_providers",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-context-vcs-context",
+    "title": "vcs_context",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-configure-vcs-configure",
+    "title": "vcs_configure",
+    "kind": "api"
+  },
+  {
+    "id": "operation-vcs-provider-action-vcs-provider-action",
+    "title": "vcs_provider_action",
+    "kind": "api"
+  },
+  {
+    "id": "source-api-sources-applicationhelp-h",
+    "title": "ApplicationHelp.h",
+    "kind": "source"
+  },
+  {
+    "id": "source-api-sources-commands-cpp",
+    "title": "Commands.cpp",
+    "kind": "source"
+  },
+  {
+    "id": "source-api-sources-commands-h",
+    "title": "Commands.h",
+    "kind": "source"
+  },
+  {
+    "id": "source-api-sources-pluginapi-h",
+    "title": "PluginAPI.h",
+    "kind": "source"
+  },
+  {
+    "id": "source-api-sources-projecttemplate-h",
+    "title": "ProjectTemplate.h",
+    "kind": "source"
+  },
+  {
+    "id": "source-api-sources-contracts-py",
+    "title": "contracts.py",
+    "kind": "source"
+  },
+  {
+    "id": "source-api-sources-diversion-cpp",
+    "title": "diversion.cpp",
+    "kind": "source"
+  },
+  {
+    "id": "source-api-sources-main-cpp",
+    "title": "main.cpp",
+    "kind": "source"
+  },
+  {
+    "id": "translation-report",
+    "title": "Translation status",
+    "kind": "guide"
+  }
+]
