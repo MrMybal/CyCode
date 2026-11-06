@@ -43,6 +43,7 @@ def verify(site):
     for ref in shell.assets: local(ref)
     assert manifest['defaultLocale']=='en'
     assert {locale['code'] for locale in manifest['locales']}=={'en','fr'}
+    assert {locale['code']:locale['label'] for locale in manifest['locales']}=={'en':'English','fr':'Français'}, 'Review displayed language labels'
     pages={(page['locale'],page['id']):page for page in manifest['pages']}
     parsed={key:References(page['html']) for key,page in pages.items()}
     aliases=manifest.get('aliases',{})

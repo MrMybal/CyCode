@@ -155,8 +155,8 @@ def main():
         (project/'manual'/('fr' if french else 'en')/f'{page}.md').write_text(metadata+body,encoding='utf-8')
     references='\n'.join(f'- [{path.stem}](doc:{mapping[path]})' for path in originals)
     for locale in ['en','fr']:
-        title='Technical reference' if locale=='en' else 'RÃ©fÃ©rences techniques'
-        intro='Original application documentation, preserved in English. Missing translations fall back to English.' if locale=='en' else 'Documentation originale conservÃ©e en anglais. Les traductions absentes utilisent le repli anglais.'
+        title='Technical reference' if locale=='en' else 'Références techniques'
+        intro='Original application documentation, preserved in English. Missing translations fall back to English.' if locale=='en' else 'Documentation originale conservée en anglais. Les traductions absentes utilisent le repli anglais.'
         (project/'manual'/locale/'reference.md').write_text(f'---\nid: reference\ntitle: {title}\nsection: Reference\norder: 80\n'+('revision: 1' if locale=='en' else 'sourceRevision: 1')+f'\n---\n\n{intro}\n\n{references}\n',encoding='utf-8')
     for name in settings['sources']:
         source=root/name;target=project/'api-sources'/source.name
@@ -172,8 +172,8 @@ def main():
     (project/'api.json').write_text(json.dumps({'symbols':symbols},ensure_ascii=False)+'\n',encoding='utf-8')
     api_links='\n'.join(f'- [`{s["name"]}`](doc:operation-{slug(s["name"])}-{slug(s["key"])})' for s in symbols)
     for locale in ['en','fr']:
-        (project/'manual'/locale/'api-links.md').write_text(f'---\nid: api-links\ntitle: API / MCP\nsection: Reference\norder: 70\n'+('revision: 1' if locale=='en' else 'sourceRevision: 1')+f'\n---\n\n'+('Generated from the application descriptor. This is a schema reference, not a C++ compiler index.\n\n' if locale=='en' else 'RÃ©fÃ©rence gÃ©nÃ©rÃ©e depuis le descripteur de lâ€™application. Les schÃ©mas anglais utilisent le repli de langue ; cet index ne remplace pas un compilateur C++.\n\n')+api_links+'\n',encoding='utf-8')
-    config={'name':settings['name'],'version':descriptor['version'],'defaultLocale':'en','homePage':'overview','locales':[{'code':'en','label':'English'},{'code':'fr','label':'FranÃ§ais'}],
+        (project/'manual'/locale/'api-links.md').write_text(f'---\nid: api-links\ntitle: API / MCP\nsection: Reference\norder: 70\n'+('revision: 1' if locale=='en' else 'sourceRevision: 1')+f'\n---\n\n'+('Generated from the application descriptor. This is a schema reference, not a C++ compiler index.\n\n' if locale=='en' else 'Référence générée depuis le descripteur de l’application. Les schémas anglais utilisent le repli de langue ; cet index ne remplace pas un compilateur C++.\n\n')+api_links+'\n',encoding='utf-8')
+    config={'name':settings['name'],'version':descriptor['version'],'defaultLocale':'en','homePage':'overview','locales':[{'code':'en','label':'English'},{'code':'fr','label':'Français'}],
         'content':'manual','assets':'assets','out':'site','modules':['image','gallery'],'translationReport':True,
         'sources':['api-sources'],'sourceIndex':{'enabled':True,'includeDirs':['api-sources']},
         'apiImports':[{'format':'cydoc','path':'api.json','prefix':'operation','locale':'en'}],
