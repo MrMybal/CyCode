@@ -7,6 +7,12 @@
 namespace cycode {
 const std::vector<Command> &commands() {
     static const std::vector<Command> value = {
+        {"help.documentation", "Documentation", "Help"},
+        {"help.context", "Context help", "Help"},
+        {"help.tour", "Illustrated tour", "Help"},
+        {"help.shortcuts", "Keyboard shortcuts", "Help"},
+        {"help.plugins", "Extension documentation", "Help"},
+        {"help.mcp", "MCP documentation", "Help"},
         {"file.new", "New file...", "File"}, {"file.open", "Open solution...", "File"},
         {"file.newProject", "New project...", "File"},
         {"file.newUntitled", "New text document", "File"},
@@ -186,6 +192,8 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
     add("search.document", {"Ctrl+F"}); add("search.workspace", {"Ctrl+Shift+F"}); add("search.files", {"Ctrl+Alt+F"});
     add("search.everywhere", {"Double Shift"}); add("search.next", {"F3"}); add("view.options", {"Ctrl+Alt+S"});
     add("view.terminal", {"Alt+F12"});
+    add("help.documentation", {"Ctrl+F1"}); add("help.context", {"Shift+F1"});
+    if (profile != "vscode") add("help.documentation", {"F1"});
     add("navigate.nextTab", {"Ctrl+Tab"}); add("navigate.previousTab", {"Ctrl+Shift+Tab"});
     add("edit.indent", {"Ctrl+RightBracket"}); add("edit.unindent", {"Ctrl+LeftBracket"});
     if(profile!="rider") {add("problem.next",{"F8"});add("problem.previous",{"Shift+F8"});}

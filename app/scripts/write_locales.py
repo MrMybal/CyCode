@@ -1002,4 +1002,6 @@ translations.update({
     'The receipt does not record pending-marker removal.': 'Le reçu n’indique pas de suppression du marqueur de récupération.',
     'Copy selected history entry': 'Copier l’entrée d’historique sélectionnée'
 })
+translations.update({'Help': 'Aide', 'Documentation': 'Documentation', 'Context help': 'Aide contextuelle', 'Illustrated tour': 'Visite illustrée', 'Keyboard shortcuts': 'Raccourcis clavier', 'Extension documentation': 'Documentation des extensions', 'MCP documentation': 'Documentation MCP', 'Editor documentation': 'Documentation de l’éditeur'})
+
 path.write_text(json.dumps({key: {'en': key, 'fr': value} for key,value in translations.items()}, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')

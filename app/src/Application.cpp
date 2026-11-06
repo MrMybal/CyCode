@@ -1,4 +1,5 @@
 #include "cycode/Application.h"
+#include "ApplicationHelp.h"
 #include "cycode/SymbolCatalogue.h"
 #include "cycode/DiagnosticAnnotations.h"
 #include "cycode/Solution.h"
@@ -1384,8 +1385,13 @@ bool Application::beginPanel(const char *text, const char *id) {
         ImGui::SetNextWindowFocus();
         focusPanel_.clear();
     }
-    if (ImGui::Begin(label(text, id).c_str(), &found->second))
+    if (ImGui::Begin(label(text, id).c_str(), &found->second)) {
+        if (cyui::iconButton(cyui::icon::help, tr("Context help"))) {
+            try { app_help::open(root_, "app/help", locale_, app_help::topic(id), "", smoke_ || testSession_); }
+            catch (const std::exception &exception) { error(exception.what()); }
+        }
         return true;
+    }
     ImGui::End();
     return false;
 }
@@ -1397,7 +1403,7 @@ void Application::showPanel(const char *text, const char *id) {
 }
 void Application::menu() {
     if (!ImGui::BeginMainMenuBar()) return;
-    for (const auto *category : {"File", "Edit", "Search", "Navigate", "Refactor", "Build", "Run", "View", "Project", "Version control", "Extensions"}) {
+    for (const auto *category : {"File", "Edit", "Search", "Navigate", "Refactor", "Build", "Run", "View", "Project", "Version control", "Extensions", "Help"}) {
         if (!ImGui::BeginMenu(tr(category))) continue;
         std::vector<cyui::FilterMenuItem> items;
         const auto catalogue=commandCatalogue();

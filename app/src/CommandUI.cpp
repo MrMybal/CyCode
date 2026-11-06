@@ -1,4 +1,5 @@
 #include "cycode/Application.h"
+#include "ApplicationHelp.h"
 #include "cycode/FileIcons.h"
 #include "cycode/DebugExecution.h"
 #include "cycode/StepInTargets.h"
@@ -259,6 +260,20 @@ void Application::executeCommand(const std::string &id) {
     for (const auto &item : tabs_) if (item->path == active_) tab = item;
     try {
         if (executeExtensionCommand(id)) return;
+        if (id.starts_with("help.")) {
+            std::string page = id.substr(5);
+            if (page == "documentation") page = "overview";
+            else if (page == "context") {
+                page = tab ? "editing" : "overview";
+                for (auto *window = ImGui::GetCurrentContext()->NavWindow; window; window = window->ParentWindow) {
+                    const std::string_view name(window->Name);
+                    const auto marker = name.find("###");
+                    if (marker != std::string_view::npos) { page = app_help::topic(name.substr(marker + 3)); break; }
+                }
+            }
+            app_help::open(root_, "app/help", locale_, page, page == "tour" ? "interface" : "", smoke_ || testSession_, page == "tour" ? "interface-image" : "");
+            return;
+        }
         if(id.starts_with("problem.")) {navigateProblem(id=="problem.previous"||id=="problem.previousInFile",id.ends_with("InFile"));return;}
         if(id=="build.presetTest" || id=="build.presetPackage" || id=="build.presetWorkflow") {
             presetKind_=id=="build.presetTest" ? 0 : id=="build.presetPackage" ? 1 : 2;

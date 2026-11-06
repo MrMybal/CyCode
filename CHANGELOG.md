@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.2.1 — 2026-11-06
+
+- Bundle the complete illustrated CyDoc manual, EN/FR Help actions, contextual
+  links and keyboard shortcuts. Keep local resources and offline operation.
+- Publish the same verified reader to GitHub Pages from a documentation-only
+  repository, with automated export deployment and language-specific README links.
+- Display the CyCode logo at the top of both repository README languages.
+- Include the following native development milestones; their recorded runtime
+  acceptance limitations still apply.
+
 - Add explicit metadata-only update history beyond the short startup summary:
   bounded installation/recovery receipt inspection, cached CyUI text/category
   filters, UTC dates, twelve-row pages and selected receipt details/copying.

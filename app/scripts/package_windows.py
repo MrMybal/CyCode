@@ -8,6 +8,7 @@ import re
 import subprocess
 import time
 from release_package import payload, write_archive, executable_version, version_tuple
+from verify_documentation import verify as verify_documentation
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -50,6 +51,12 @@ def main():
             raise RuntimeError(f'Private package path refused: {target}')
         entries[target] = source.read_bytes()
 
+    help_root = args.build.resolve() / 'help'
+    if not (help_root / 'cydoc-export.json').is_file():
+        raise RuntimeError('Build the complete local documentation before packaging')
+    verify_documentation(help_root)
+    for source in sorted(help_root.rglob('*')):
+        if source.is_file(): include(source, 'app/help/' + source.relative_to(help_root).as_posix())
     include(build / 'CyCode.exe', 'CyCode.exe')
     include(cli, 'cycode_cli.exe')
     include(build / 'CyCodeUpdater.exe', 'CyCodeUpdater.exe')

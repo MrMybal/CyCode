@@ -1,0 +1,52 @@
+name: Documentation
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate the complete pinned CyDoc reader
+        run: python app/scripts/build_documentation.py --output runtime/pages
+      - name: Verify owned files, resources and translated routes
+        run: python app/scripts/verify_documentation.py runtime/pages
+      - name: Verify reader interactions without native applications
+        run: node app/scripts/verify_documentation_dom.mjs runtime/pages runtime/deps/cydoc-774f2a7
+
+      # The source repository stays private. This key can write only to the
+      # public documentation repository; never use a personal token here.
+      - uses: actions/checkout@v4
+        with:
+          repository: MrMybal/CyCode-docs
+          path: runtime/documentation-publish
+          ssh-key: ${{ secrets.DOCS_DEPLOY_KEY }}
+          persist-credentials: true
+      - name: Publish only the verified export
+        run: python app/scripts/publish_documentation.py runtime/pages runtime/documentation-publish
+      - name: Commit documentation changes
+        working-directory: runtime/documentation-publish
+        run: |
+          git config user.name MrMybal
+          git config user.email 9800352+MrMybal@users.noreply.github.com
+          git add -- site
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Update CyCode manual from ${{ github.sha }}"
+          git push origin HEAD:main

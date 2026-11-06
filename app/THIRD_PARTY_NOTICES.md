@@ -105,3 +105,9 @@ Optional GLSL analysis uses nolanderc/glsl_analyzer 1.7.1 under GNU GPL v3, with
 the original text in licenses/GLSL-Analyzer.txt and corresponding source at
 https://github.com/nolanderc/glsl_analyzer/tree/v1.7.1. Language-server archives are
 development/runtime prerequisites and are not added to the application ZIP.
+
+
+Local help uses [CyDoc](https://github.com/MrMybal/CyDoc), MIT, pinned by
+`app/documentation/cydoc.lock.json`. The exported help includes its MIT notice
+and the Marked, PrismJS and esbuild notices in its own `licenses/` directory.
+Only image/gallery runtime modules are distributed; no Three.js runtime is included.

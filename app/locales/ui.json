@@ -6354,5 +6354,33 @@
   "Copy selected history entry": {
     "en": "Copy selected history entry",
     "fr": "Copier l’entrée d’historique sélectionnée"
+  },
+  "Help": {
+    "en": "Help",
+    "fr": "Aide"
+  },
+  "Documentation": {
+    "en": "Documentation",
+    "fr": "Documentation"
+  },
+  "Context help": {
+    "en": "Context help",
+    "fr": "Aide contextuelle"
+  },
+  "Illustrated tour": {
+    "en": "Illustrated tour",
+    "fr": "Visite illustrée"
+  },
+  "Extension documentation": {
+    "en": "Extension documentation",
+    "fr": "Documentation des extensions"
+  },
+  "MCP documentation": {
+    "en": "MCP documentation",
+    "fr": "Documentation MCP"
+  },
+  "Editor documentation": {
+    "en": "Editor documentation",
+    "fr": "Documentation de l’éditeur"
   }
 }

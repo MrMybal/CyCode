@@ -30,3 +30,6 @@ __pycache__/
 /gitleaks-report.*
 *.cycode-save-*
 /extensions-managed/
+
+# Complete generated local help (authoring sources live in app/documentation).
+/app/help/

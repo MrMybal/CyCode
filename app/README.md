@@ -1,5 +1,7 @@
 # CyCode
 
+[Documentation](https://mrmybal.github.io/CyCode-docs/#/en/overview) · [Documentation en français](https://mrmybal.github.io/CyCode-docs/#/fr/overview)
+
 CyCode includes stable GitHub release checks, explicit Windows portable updates,
 resume/fresh downloads, SHA-256 verification and categorized EN/FR feedback.
 Download/staging space checks precede transfer, full fallback and preparation;

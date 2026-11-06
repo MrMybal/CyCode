@@ -1,5 +1,11 @@
 # CyCode
 
+<p align="center">
+  <img src="icons/CyCode.png" alt="CyCode" width="160" height="160">
+</p>
+
+[Documentation](https://mrmybal.github.io/CyCode-docs/#/en/overview) · [Documentation en français](https://mrmybal.github.io/CyCode-docs/#/fr/overview)
+
 CyCode includes stable GitHub release checks, explicit Windows portable updates,
 resume/fresh downloads, SHA-256 verification and categorized EN/FR feedback.
 Download/staging space checks precede transfer, full fallback and preparation;
@@ -44,8 +50,6 @@ shared with SDK/MCP build_location and ABI2 plugins (222 operations). No new UI
 module, dependency or executable target is added. Runtime acceptance remains
 pending; see [Diagnostics](app/Docs/DiagnosticNavigation.md) and
 [Compiler locations](app/Docs/CompilerLocations.md).
-
-<img src="icons/CyCode.png" alt="CyCode" width="96">
 
 CyCode is a native C++20 IDE built with CyUI, Dear ImGui and SDL3. Development
 focuses on C/C++ and Unreal Engine projects, with C#/.NET services and a shared
@@ -280,7 +284,7 @@ Language servers, compilers, debugger adapters and the optional private MCP runt
 are installed separately. Clean-machine installation and Linux/macOS binaries are
 not validated for this milestone.
 
-The official [CyUI repository](https://github.com/MrMybal/CyUI) is currently private.
+The official [CyUI repository](https://github.com/MrMybal/CyUI) is available on GitHub.
 CyUI is MIT-licensed: [license at the pinned revision](https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE)
 or [included local copy](app/licenses/CyUI.txt). This license applies to CyUI;
 CyCode's original code is covered by the GPL v3 notice above.
@@ -328,3 +332,7 @@ for exact dependency pins, build instructions and retained IDE adapters.
 Image files open in read-only tabs through CyUI Images/Canvas, with background
 decoding, transparency, zoom/pan and reload. See [image previews](app/Docs/Images.md)
 for supported formats and remaining scope.
+
+
+Local illustrated English/French help is generated and bundled with GUI builds.
+See [CyDoc documentation and build instructions](app/Docs/Documentation.md).
