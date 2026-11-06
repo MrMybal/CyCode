@@ -57,7 +57,7 @@ def main():
             raise RuntimeError('Node.js 22+ is required')
     else: node,library=resolve(root,lock,args.cydoc_source)
     descriptor=json.loads((root/settings['descriptor']).read_text(encoding='utf-8'))
-    originals=sorted({p.resolve() for pattern in settings['documents'] for p in root.glob(pattern) if p.is_file()})
+    originals=sorted({p.resolve() for pattern in settings['documents'] for p in root.glob(pattern) if p.is_file()},key=lambda p:p.relative_to(root).as_posix().casefold())
     authored=sorted((DOC/'manual').rglob('*.md'))
     assets=sorted(p for p in (DOC/'assets').rglob('*') if p.is_file())
     source_files=[root/name for name in settings['sources']]
