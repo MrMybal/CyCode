@@ -4,7 +4,7 @@
   <img src="icons/CyCode.png" alt="CyCode" width="160" height="160">
 </p>
 
-[Documentation](https://mrmybal.github.io/CyCode-docs/#/fr/overview) · [English documentation](https://mrmybal.github.io/CyCode-docs/#/en/overview)
+[Documentation](https://mrmybal.github.io/CyCodeReader/cycode/#/fr/overview) · [English documentation](https://mrmybal.github.io/CyCodeReader/cycode/#/en/overview)
 
 CyCode dispose d’une gestion des mises à jour GitHub avec reprise ou téléchargement
 neuf, vérification SHA-256 et indications en français et en anglais. L’espace

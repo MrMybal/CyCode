@@ -32,10 +32,11 @@ jobs:
         run: node app/scripts/verify_documentation_dom.mjs runtime/pages runtime/deps/cydoc-774f2a7
 
       # The source repository stays private. This key can write only to the
-      # public documentation repository; never use a personal token here.
+      # existing Reader repository; never use a personal token here.
       - uses: actions/checkout@v4
         with:
-          repository: MrMybal/CyCode-docs
+          repository: MrMybal/CyCodeReader
+          ref: cycode-docs
           path: runtime/documentation-publish
           ssh-key: ${{ secrets.DOCS_DEPLOY_KEY }}
           persist-credentials: true
@@ -49,4 +50,4 @@ jobs:
           git add -- site
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Update CyCode manual from ${{ github.sha }}"
-          git push origin HEAD:main
+          git push origin HEAD:cycode-docs

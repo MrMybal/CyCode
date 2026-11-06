@@ -103,7 +103,7 @@ These generated directories are ignored by Git; edit the authoring sources inste
 
 ## Published reader
 
-[English documentation](https://mrmybal.github.io/CyCode-docs/#/en/overview) · [Documentation française](https://mrmybal.github.io/CyCode-docs/#/fr/overview)
+[English documentation](https://mrmybal.github.io/CyCodeReader/cycode/#/en/overview) · [Documentation française](https://mrmybal.github.io/CyCodeReader/cycode/#/fr/overview)
 
 `.github/workflows/documentation.yml` regenerates the same complete export on
 every main-branch push or manual dispatch, using the pinned CyDoc revision and
@@ -120,9 +120,12 @@ python app/scripts/verify_documentation.py runtime/pages
 ```
 
 The private source repository cannot use Pages on the current GitHub plan.
-`MrMybal/CyCode-docs` is a public documentation-only repository: its workflow
-deploys `site/` to Pages. The source workflow writes only that directory, using
-the `DOCS_DEPLOY_KEY` Actions secret. Its dedicated write deploy key is scoped
-to the documentation repository and grants no access to private source code.
-The publication helper preserves unknown or locally modified generated files
-by refusing replacement. Keep this secret configured when transferring CI.
+The existing public `MrMybal/CyCodeReader` repository hosts both manuals. Its
+`cycode-docs` branch contains only the generated CyCode export in `site/`.
+The CyCode source workflow updates that branch using `DOCS_DEPLOY_KEY`, a write
+deploy key scoped to CyCodeReader, with no access to private CyCode source.
+The Reader workflow builds its own manual from main, checks the generated branch,
+and composes the Pages artifact: Reader at `/`, CyCode at `/cycode/`.
+No extra repository, private source checkout or local application data is needed.
+The publication helper refuses unknown or locally modified generated files.
+Keep the deploy secret configured when transferring CI.
