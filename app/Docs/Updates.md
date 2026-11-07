@@ -53,8 +53,10 @@ an installation lease while serving native workspace operations.
 The endpoint is fixed to `https://api.github.com/repos/MrMybal/CyCode/releases/latest`.
 The default stable selection follows the documented
 [GitHub Releases API](https://docs.github.com/en/rest/releases/releases#get-the-latest-release).
-A compatible asset must be named exactly
-`CyCode-VERSION-windows-x64-update.zip`, be uploaded, have a positive size no greater
+Installed copies select `CyCode-VERSION-windows-x64-setup.exe`; portable copies
+select `CyCode-VERSION-windows-x64.zip`. Legacy `-update.zip` names remain accepted
+for portable cached/release data, but are no longer produced. Assets must be
+uploaded, have a positive size no greater
 than 256 MiB, and belong to this repository's numeric release-asset endpoint.
 At most 1024 assets and 4 MiB of release metadata are accepted. Notes are capped at
 32 KiB on a UTF-8 boundary. Only one cache inspection, check or download runs in a desktop instance.
@@ -303,3 +305,42 @@ clean-machine acceptance remain pending under the existing Kaspersky suspension.
 No app, helper, server, SDK Runtime or native fixture is launched during this work.
 The connected GitHub service could not read the repository (404), so no claim of
 an authenticated live-release check is made.
+
+
+## Windows installer and shared portable payload (0.2.3)
+
+Build and compose both formats from a clean source checkout:
+
+```sh
+python app/scripts/fetch_dependencies.py
+python app/scripts/build.py --distribution --no-install
+python app/scripts/package_windows.py --build runtime/build-vs
+```
+
+Inno Setup 6.7+ is required; `--iscc PATH_TO_ISCC` selects its compiler. The
+distribution build omits optional language/debug toolchain downloads. The package
+contains app-local MSVC runtime DLLs and the complete offline CyDoc manual. These
+runtime DLLs retain Microsoft's separate terms. Outputs are the installer,
+portable ZIP and SHA256SUMS.txt under runtime/releases. The portable ZIP uses
+stored entries so the existing native archive validation/transaction can read it.
+
+Setup installs for the current user under `%LOCALAPPDATA%/Programs/CyCode`, adds
+Start menu/optional desktop shortcuts and uninstall registration. Settings and
+optional tools remain in its writable data/runtime directories and are retained
+by uninstall. The setup-owned installed.flag is deliberately outside the portable
+managed manifest. Setup/uninstall hold the native installation ownership file
+exclusively, refuse a pending recovery, and never forcibly close a running copy.
+
+Installed copies download verified Setup, close through the ordinary save flow,
+then hand ownership to Setup and validate the resulting manifest version before
+restart. Setup maintains its uninstall/version registration. Portable copies
+retain the native managed-file transaction and recovery/rollback. Installed
+package modifications are checked before handoff; changing a managed file blocks
+the in-app installation until reviewed. The staged helper receives hash-checked
+copies of its app-local runtime, with that space included in transfer preparation.
+
+Versions through 0.2.2 only know the historical asset name. Install/extract 0.2.3
+once to adopt the edition-aware flow; no older release asset is replaced.
+Installer execution and the full online update cycle remain unverified locally
+while native acceptance runs are suspended. CI runs native model contracts on
+its own runners; those checks do not prove Windows desktop/installer acceptance.

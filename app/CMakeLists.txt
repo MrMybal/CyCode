@@ -12,6 +12,12 @@ if(MSVC)
 endif()
 get_filename_component(CYCODE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 set(CYCODE_DEPS "${CYCODE_ROOT}/runtime/deps" CACHE PATH "Downloaded dependency sources")
+if(MSVC)
+  # Apply to C and C++ dependencies too: SDL assertions retain __FILE__ in Release.
+  add_compile_options("$<$<CONFIG:Release>:/experimental:deterministic>"
+    "$<$<CONFIG:Release>:/pathmap:${CYCODE_ROOT}=.>"
+    "$<$<CONFIG:Release>:/pathmap:${CYCODE_DEPS}=external>")
+endif()
 set(CYUI_DIR "" CACHE PATH "Optional clean CyUI checkout matching app/cyui-source.lock.json")
 option(CYCODE_BUILD_GUI "Build the desktop interface" ON)
 # Native fixtures include debuggers, child processes and generated programs.
