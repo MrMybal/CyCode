@@ -33,7 +33,7 @@ def package_path(name):
     return (name in {'CyCode.exe', 'CyCodeUpdater.exe', 'cycode_cli.exe', 'manifest.json',
                      'PACKAGE.md', 'README.md', 'README.fr.md', 'VERSION.fr.md', 'LISEZ-MOI.md', 'CHANGELOG.md', 'LICENSE', 'COPYRIGHT',
                      'msvcp140.dll', 'msvcp140_1.dll', 'msvcp140_2.dll', 'msvcp140_atomic_wait.dll',
-                     'msvcp140_codecvt_ids.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'concrt140.dll'} or
+                     'msvcp140_codecvt_ids.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'concrt140.dll', 'website/assets/workspace.png', 'website/assets/git-conflicts.png'} or
             name.startswith(('app/', 'icons/', 'tools/', 'extensions/')))
 
 

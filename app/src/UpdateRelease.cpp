@@ -124,6 +124,7 @@ bool packagePath(std::string_view path) {
     }
     return path == "CyCode.exe" || path == "cycode_cli.exe" || path == "CyCodeUpdater.exe" ||
            path == "manifest.json" || path == "PACKAGE.md" || path == "README.md" || path == "LISEZ-MOI.md" ||
+           path == "website/assets/workspace.png" || path == "website/assets/git-conflicts.png" ||
            path == "CHANGELOG.md" || path == "README.fr.md" || path == "VERSION.fr.md" ||
            path == "msvcp140.dll" || path == "msvcp140_1.dll" || path == "msvcp140_2.dll" ||
            path == "msvcp140_atomic_wait.dll" || path == "msvcp140_codecvt_ids.dll" ||

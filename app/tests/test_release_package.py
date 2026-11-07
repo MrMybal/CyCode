@@ -52,7 +52,7 @@ class ReleasePackageTests(unittest.TestCase):
 
     def test_standalone_payload_is_the_shared_stored_archive(self):
         files = dict(self.entries(), **{'README.fr.md': b'French readme', 'VERSION.fr.md': b'Notes',
-                                      'msvcp140.dll': b'runtime fixture data', 'vcruntime140.dll': b'runtime fixture data'})
+                                      'website/assets/workspace.png': b'capture fixture data', 'msvcp140.dll': b'runtime fixture data', 'vcruntime140.dll': b'runtime fixture data'})
         output = io.BytesIO()
         api['write_archive'](output, api['payload'](files, '0.2.3', {}), '0.2.3', (2026, 1, 1, 0, 0, 0), update=True)
         with zipfile.ZipFile(output) as archive:
