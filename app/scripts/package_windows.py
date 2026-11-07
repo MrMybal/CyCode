@@ -66,7 +66,9 @@ def main():
         library = 'cycode_' + plugin
         include(ROOT / 'runtime/plugins' / (library + '.dll'), 'extensions/' + library + '.dll')
         include(ROOT / 'app/plugins' / plugin / 'plugin.json', 'extensions/' + plugin + '.json')
-    for name in ['LICENSE', 'COPYRIGHT', 'README.md', 'LISEZ-MOI.md', 'CHANGELOG.md', 'app/CyTool.json',
+    for name in ['LICENSE', 'COPYRIGHT', 'README.md', 'README.fr.md', 'LISEZ-MOI.md',
+                 'VERSION.fr.md', 'CHANGELOG.md', 'app/Docs/Releases/v0.2.2.md',
+                 'website/assets/workspace.png', 'website/assets/git-conflicts.png', 'app/CyTool.json',
                  'app/README.md', 'app/THIRD_PARTY_NOTICES.md', 'app/tool.py', 'app/contracts.py',
                  'app/locales/ui.json', 'app/include/cycode/PluginAPI.h']:
         include(ROOT / name)
