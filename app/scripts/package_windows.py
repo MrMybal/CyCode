@@ -8,6 +8,7 @@ import re
 import subprocess
 import time
 from release_package import payload, write_archive, executable_version, version_tuple
+from windows_installer import compile_installer, system_runtime
 from verify_documentation import verify as verify_documentation
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -21,6 +22,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build', type=Path, required=True, help='Built CMake directory')
     parser.add_argument('--configuration', default='Release')
+    parser.add_argument('--iscc', type=Path, help='Inno Setup 6.7+ compiler')
     parser.add_argument('--output', type=Path, default=ROOT / 'runtime/releases')
     args = parser.parse_args()
     descriptor = json.loads((ROOT / 'app/CyTool.json').read_text(encoding='utf-8'))
@@ -67,7 +69,7 @@ def main():
         include(ROOT / 'runtime/plugins' / (library + '.dll'), 'extensions/' + library + '.dll')
         include(ROOT / 'app/plugins' / plugin / 'plugin.json', 'extensions/' + plugin + '.json')
     for name in ['LICENSE', 'COPYRIGHT', 'README.md', 'README.fr.md', 'LISEZ-MOI.md',
-                 'VERSION.fr.md', 'CHANGELOG.md', 'app/Docs/Releases/v0.2.2.md',
+                 'VERSION.fr.md', 'CHANGELOG.md', f'app/Docs/Releases/v{version}.md',
                  'website/assets/workspace.png', 'website/assets/git-conflicts.png', 'app/CyTool.json',
                  'app/README.md', 'app/THIRD_PARTY_NOTICES.md', 'app/tool.py', 'app/contracts.py',
                  'app/locales/ui.json', 'app/include/cycode/PluginAPI.h']:
@@ -92,8 +94,8 @@ def main():
     entries['PACKAGE.md'] = f'''# CyCode {version} — Windows x64
 
 Extract the complete archive to a writable folder and run CyCode.exe. Keep app/,
-icons/ and tools/ beside the executable. Visual C++ 2022 x64 runtime and an OpenGL 3.3
-driver are required. cycode_cli.exe --version reports the bundled version.
+icons/ and tools/ beside the executable. The app-local MSVC runtime is included; an OpenGL 3.3
+driver is required. cycode_cli.exe --version reports the bundled version.
 
 IDE, text/image editing, project search and native services are included. Git, SVN, Perforce, Mercurial, Diversion,
 compilers/build tools and language servers/debug adapters are external tools.
@@ -104,7 +106,7 @@ The scripts and notices describe local installation of additional toolchains.
 No settings, credentials, SDK wheels, downloaded dependency source trees or
 development runtime directories are included. data/ and runtime/ are created
 locally when needed. This is unsigned and has not been tested on a clean machine.
-Automatic updates use stable GitHub Releases and the matching -update.zip asset.
+Automatic updates use stable GitHub Releases and this same portable ZIP payload.
 The application checks at startup and asks before download or installation.
 Close every instance of this installation before replacement. data/ and unknown
 files are preserved. Local changes to package-owned files block replacement.
@@ -113,28 +115,31 @@ the environment; credentials are never stored in preferences.
 Linux/macOS binaries are not provided by this release.
 
 Source commit: {revision}
-CyUI: https://github.com/MrMybal/CyUI (currently private)
+CyUI: https://github.com/MrMybal/CyUI
 CyUI MIT license: app/licenses/CyUI.txt; official link in app/THIRD_PARTY_NOTICES.md.
 CyCode project license: GPL-3.0-only. See LICENSE, COPYRIGHT and app/THIRD_PARTY_NOTICES.md.
 Corresponding source: https://github.com/MrMybal/CyCode/tree/{revision}
 Pinned dependency sources are identified in manifest.json and the app/*source.lock.json
 files. Binary recipients must also have access to those sources and build scripts.
 '''.encode('utf-8')
+    entries.update(system_runtime(args.build.resolve(), args.configuration, args.output.resolve()))
     entries = payload(entries, version, {
         'license': 'GPL-3.0-only', 'sourceCommit': revision,
         'cyui': json.loads((ROOT / 'app/cyui-source.lock.json').read_text(encoding='utf-8')),
         'sharedEditor': json.loads((ROOT / 'app/editor-source.lock.json').read_text(encoding='utf-8'))})
     args.output.mkdir(parents=True, exist_ok=True)
     archive = args.output / f'CyCode-{version}-windows-x64.zip'
-    update = args.output / f'CyCode-{version}-windows-x64-update.zip'
-    write_archive(archive, entries, version, timestamp, update=False)
-    write_archive(update, entries, version, timestamp, update=True)
-    if update.stat().st_size > 256 * 1024 * 1024:
-        raise RuntimeError('Update archive exceeds native download limit')
-    checksums = {file.name: sha256(file.read_bytes()) for file in (archive, update)}
+    # The native update reader accepts stored ZIP entries. One portable archive
+    # now serves downloads and in-app updates, with the same complete manifest.
+    write_archive(archive, entries, version, timestamp, update=True)
+    if archive.stat().st_size > 256 * 1024 * 1024:
+        raise RuntimeError('Portable archive exceeds native download limit')
+    installer = compile_installer(entries, version, args.output.resolve(), args.iscc)
+    checksums = {file.name: sha256(file.read_bytes()) for file in (installer, archive)}
     (args.output / 'SHA256SUMS.txt').write_text(''.join(f'{digest}  {name}\n' for name,digest in checksums.items()), encoding='utf-8')
-    print(json.dumps({'archive': str(archive), 'update': str(update), 'sha256': checksums,
+    print(json.dumps({'installer': str(installer), 'archive': str(archive), 'sha256': checksums,
                       'files': len(entries), 'commit': revision}, indent=2))
+
 
 
 

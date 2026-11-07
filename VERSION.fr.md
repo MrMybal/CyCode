@@ -1,51 +1,26 @@
-# CyCode 0.2.2 — Alpha
+# CyCode 0.2.3
 
-[README français](README.fr.md) · [English release notes](app/Docs/Releases/v0.2.2.md)
+Windows x64 · ALPHA · 7 novembre 2026.
 
-Version publiée le **6 novembre 2026**, disponible en paquet portable **Windows x64**.
-Le statut du produit reste **Alpha** : une version expérimentale pour les essais
-et les retours, avec des fonctions incomplètes et des outils externes à installer.
+Cette version ajoute l’installateur Windows par utilisateur, en anglais/français,
+avec raccourcis, runtime MSVC fourni et désinstallation Windows. Les données de
+l’application et les outils supplémentaires sont conservés à la désinstallation.
 
-## Changements de cette version
+Les copies installées téléchargent et lancent l’installateur vérifié pour leurs mises à jour.
+Les copies portables utilisent le même ZIP pour l’extraction et les mises à jour intégrées. Aucun `-update.zip` séparé n’est publié. Le moteur existant conserve
+vérification SHA-256, contrôle des fichiers, sauvegardes et restauration.
+L’installateur refuse les instances ouvertes et les récupérations en attente.
 
-- Manuel local et en ligne fondé sur le lecteur CyDoc, avec guides anglais/français,
-  sommaire imbriqué, recherche globale dans l’en-tête (`Ctrl+K`), six thèmes, images,
-  galeries et schémas statiques.
-- 40 guides pratiques sur l’édition, les projets et Unreal, les langages, le
-  débogage, les extensions, le contrôle de versions et les mises à jour.
-- Références publiques traduites et schémas JSON des 227 opérations SDK/MCP de cette
-  release, ainsi que le contrat C public des plugins.
-- Aide et raccourcis contextuels vers `Documentation.html`. Lecteur complet dans
-  les archives portable et de mise à jour, avec compatibilité des anciens liens.
+Les versions jusqu’à 0.2.2 utilisent l’ancien nom de paquet : installez 0.2.3 une
+première fois avec Setup ou extrayez son ZIP dans un dossier distinct. Les mises
+à jour suivantes passent par l’application. La vérification au démarrage reste
+activée par défaut ; les préférences déjà enregistrées sont conservées.
 
-Les ajouts ultérieurs du code en développement, notamment navigation C++ et
-catalogues d’extraits, ne sont pas annoncés comme livrés dans le ZIP 0.2.2.
-Consulter l’[historique](CHANGELOG.md) et le [guide développeur](app/README.md).
+- [Installateur Windows](https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64-setup.exe).
+- [ZIP portable](https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64.zip).
+- [Notes anglaises et limites](app/Docs/Releases/v0.2.3.md).
 
-## Limites connues
-
-- Seul le paquet Windows x64 est publié. Les compilations graphiques complètes et
-  le fonctionnement Linux/macOS restent à valider.
-- La couverture fonctionnelle complète de Rider n’est pas atteinte. Les capacités
-  des serveurs de langage, débogueurs et fournisseurs VCS dépendent des outils
-  installés. Coloration, compilation et services sémantiques sont distincts.
-- Compilateurs, SDK, Unreal Engine, serveurs de langage et débogueurs sont fournis
-  séparément ; le MCP optionnel nécessite le SDK CyToolsCore et son environnement.
-- La validation d’exécution de l’application, du MCP et de la mise à jour de cette
-  release reste à compléter. Les essais d’installation sur machine vierge et les
-  contrôles hors ligne réels, tactiles et DPI restent des vérifications distinctes.
-
-Ces limites ne constituent pas une liste de bugs confirmés. La release ne publie
-pas de liste bug par bug ; les problèmes reproductibles peuvent être signalés
-dans le [suivi des problèmes](https://github.com/MrMybal/CyCode/issues).
-
-## Téléchargement et documentation
-
-- [Release 0.2.2 et empreintes](https://github.com/MrMybal/CyCode/releases/tag/v0.2.2).
-- [Paquet portable Windows x64](https://github.com/MrMybal/CyCode/releases/download/v0.2.2/CyCode-0.2.2-windows-x64.zip).
-- [Documentation française](https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview).
-
-Extraire l’archive complète dans un dossier accessible en écriture. Visual C++ 2022
-x64 et OpenGL 3.3 sont nécessaires. L’archive `-update.zip` sert uniquement au
-parcours explicite de mise à jour. CyCode est sous [GPL-3.0-only](LICENSE) ; ses
-bibliothèques conservent leurs licences respectives.
+La compilation Windows Release et les contrôles de sources, données et paquets
+sont effectués. L’installateur, l’application et l’assistant n’ont pas été exécutés
+localement ; le parcours complet de mise à jour et Linux/macOS restent à valider.
+Windows 10/11 x64 et OpenGL 3.3 sont requis. CyCode reste en alpha sous GPL-3.0-only.

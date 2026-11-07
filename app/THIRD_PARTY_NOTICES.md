@@ -111,3 +111,11 @@ Local help uses [CyDoc](https://github.com/MrMybal/CyDoc), MIT, pinned by
 `app/.CyDocBuild/cydoc.lock.json`. The exported help includes its MIT notice
 and the Marked, PrismJS and esbuild notices in `Documentation/DocData/licenses/`.
 Only image/gallery runtime modules are distributed; no Three.js runtime is included.
+
+
+## Microsoft Visual C++ runtime
+
+Windows packages include app-local Microsoft Visual C++ runtime DLLs from the
+Visual Studio toolchain. These Microsoft redistributables retain their separate
+Microsoft terms and are not covered by CyCode’s GPL license. The update helper
+stages verified copies of the same runtime.

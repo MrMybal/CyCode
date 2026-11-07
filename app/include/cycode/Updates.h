@@ -75,9 +75,30 @@ std::array<uint32_t, 3> version(std::string_view);
 bool newer(std::string_view candidate, std::string_view current);
 std::string platform();
 std::optional<Release> parseRelease(const nlohmann::json &, std::string_view current,
-                                    std::string_view target);
+                                    std::string_view target, bool installed = false);
+// The portable distribution is also the update payload; retain legacy caches.
+constexpr bool packageArchiveName(std::string_view name, std::string_view release, std::string_view target, bool installed = false) {
+    if (!name.starts_with("CyCode-")) return false;
+    name.remove_prefix(7);
+    if (!name.starts_with(release)) return false;
+    name.remove_prefix(release.size());
+    if (!name.starts_with('-')) return false;
+    name.remove_prefix(1);
+    if (!name.starts_with(target)) return false;
+    name.remove_prefix(target.size());
+    return installed ? name == "-setup.exe" : (name == ".zip" || name == "-update.zip");
+}
+static_assert(packageArchiveName("CyCode-0.3.0-windows-x64.zip", "0.3.0", "windows-x64"));
+static_assert(packageArchiveName("CyCode-0.3.0-windows-x64-update.zip", "0.3.0", "windows-x64"));
+static_assert(!packageArchiveName("CyCode-0.3.0-windows-x64-setup.exe", "0.3.0", "windows-x64"));
+static_assert(!packageArchiveName("../CyCode-0.3.0-windows-x64.zip", "0.3.0", "windows-x64"));
+static_assert(!packageArchiveName("CyCode-0.3.0-windows-x64.zip", "0.3.1", "windows-x64"));
+static_assert(!packageArchiveName("CyCode-0.3.0-windows-x64.zip", "0.3.0", "linux-x64"));
+static_assert(packageArchiveName("CyCode-0.3.0-windows-x64-setup.exe", "0.3.0", "windows-x64", true));
+static_assert(!packageArchiveName("CyCode-0.3.0-windows-x64.zip", "0.3.0", "windows-x64", true));
 bool packagePath(std::string_view);
 bool portableInstallation(const std::filesystem::path &);
+bool installedInstallation(const std::filesystem::path &);
 std::unique_ptr<NativeFileLease> installationUse(const std::filesystem::path &);
 std::string sha256File(const std::filesystem::path &, const std::atomic<bool> *cancel = nullptr);
 // Read-only, bounded local discovery; never downloads, installs or resumes consent.
@@ -85,7 +106,7 @@ Inventory inspect(const std::filesystem::path &, const std::atomic<bool> &);
 void verifyPrepared(const Prepared &, const std::atomic<bool> &);
 // Helper-owned outcome, separate from installation recovery journals.
 void recordOutcome(const Prepared &, std::string_view state, std::string_view failure = {});
-std::optional<Release> check(const std::atomic<bool> &cancel);
+std::optional<Release> check(const std::atomic<bool> &cancel, bool installed = false);
 Prepared download(const Release &, const std::filesystem::path &, const std::atomic<bool> &,
                   std::atomic<uint64_t> &, DownloadMode = DownloadMode::resume,
                   const std::shared_ptr<DownloadStatus> & = {});

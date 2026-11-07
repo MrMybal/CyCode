@@ -63,7 +63,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
         const auto relative = package.lexically_relative(installation / "data/updates");
         if (relative.empty() || std::distance(relative.begin(), relative.end()) != 2 ||
             !pathUtf8(*relative.begin()).starts_with("download-") ||
-            package.filename() != utf8Path("CyCode-" + expected + "-" + platform() + "-update.zip"))
+            !packageArchiveName(pathUtf8(package.filename()), expected, platform(), installedInstallation(installation)))
             throw std::runtime_error("Update package is outside the application staging area");
         trustedPackage = true;
         if (!portableInstallation(installation))
@@ -89,7 +89,28 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
                                      "update. No application was forcibly closed.");
         if (sha256File(package) != digest)
             throw std::runtime_error("Update package SHA-256 verification failed");
-        apply(package, installation, expected);
+        if (installedInstallation(installation)) {
+            verifyPrepared(*prepared, cancel);
+            // Setup takes the same ownership file before writing. If another
+            // instance starts in this handoff gap, Setup asks the user to close it.
+            lease.reset();
+            std::wstring command = L"\"" + package.wstring() + L"\" /SP- /NORESTART /NOCLOSEAPPLICATIONS /DIR=\"" + installation.wstring() + L"\"";
+            STARTUPINFOW startup{}; startup.cb = sizeof(startup);
+            PROCESS_INFORMATION process{};
+            if (!CreateProcessW(package.c_str(), command.data(), nullptr, nullptr, FALSE, 0, nullptr,
+                                package.parent_path().c_str(), &startup, &process))
+                throw std::runtime_error("Cannot start the verified Windows installer");
+            CloseHandle(process.hThread);
+            const auto wait = WaitForSingleObject(process.hProcess, INFINITE);
+            DWORD exitCode = 1;
+            const auto gotExit = GetExitCodeProcess(process.hProcess, &exitCode);
+            CloseHandle(process.hProcess);
+            if (wait != WAIT_OBJECT_0 || !gotExit || exitCode != 0)
+                throw std::runtime_error("Windows installation was cancelled or failed");
+            const auto result = nlohmann::json::parse(detail::read(installation / "manifest.json", 2 * 1024 * 1024));
+            if (result.at("version") != expected)
+                throw std::runtime_error("Windows installation did not produce the expected version");
+        } else apply(package, installation, expected);
         installed = true;
         report("installed");
         lease.reset();

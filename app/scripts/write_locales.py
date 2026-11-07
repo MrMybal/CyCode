@@ -1004,4 +1004,17 @@ translations.update({
 })
 translations.update({'Help': 'Aide', 'Documentation': 'Documentation', 'Context help': 'Aide contextuelle', 'Illustrated tour': 'Visite illustrée', 'Keyboard shortcuts': 'Raccourcis clavier', 'Extension documentation': 'Documentation des extensions', 'MCP documentation': 'Documentation MCP', 'Editor documentation': 'Documentation de l’éditeur'})
 
+translations.update({
+    'Automatic installation currently supports Windows x64 installed and portable packages. Use GitHub Releases for other platforms.': 'L’installation automatique prend en charge les éditions Windows x64 installées et portables. Utilisez GitHub Releases pour les autres plateformes.',
+    'This copy is a development checkout or a legacy package. Download a current installed or portable release to enable installation updates.': 'Cette copie est un dépôt de développement ou un ancien paquet. Téléchargez une édition installée ou portable actuelle pour activer les mises à jour intégrées.'
+})
+translations.update({
+    'Installed package files changed; review them before updating': 'Des fichiers du programme installé ont changé ; examinez-les avant la mise à jour',
+    'Update package differs from the installation edition': 'Le paquet de mise à jour ne correspond pas à l’édition installée',
+    'Installed update runtime changed': 'Le runtime installé de mise à jour a changé',
+    'Staged update runtime changed': 'Le runtime préparé pour la mise à jour a changé',
+    'Cannot start the verified Windows installer': 'Impossible de lancer l’installateur Windows vérifié',
+    'Windows installation was cancelled or failed': 'L’installation Windows a été annulée ou a échoué',
+    'Windows installation did not produce the expected version': 'L’installation Windows n’a pas produit la version attendue'
+})
 path.write_text(json.dumps({key: {'en': key, 'fr': value} for key,value in translations.items()}, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')

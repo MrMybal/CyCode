@@ -50,6 +50,18 @@ class ReleasePackageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             api['payload'](entries, '0.2.1', {})
 
+    def test_standalone_payload_is_the_shared_stored_archive(self):
+        files = dict(self.entries(), **{'README.fr.md': b'French readme', 'VERSION.fr.md': b'Notes',
+                                      'msvcp140.dll': b'runtime fixture data', 'vcruntime140.dll': b'runtime fixture data'})
+        output = io.BytesIO()
+        api['write_archive'](output, api['payload'](files, '0.2.3', {}), '0.2.3', (2026, 1, 1, 0, 0, 0), update=True)
+        with zipfile.ZipFile(output) as archive:
+            self.assertEqual(set(archive.namelist()), {'CyCode-0.2.3/' + name for name in files} | {'CyCode-0.2.3/manifest.json'})
+            self.assertTrue(all(item.compress_type == zipfile.ZIP_STORED for item in archive.infolist()))
+            self.assertEqual(archive.read('CyCode-0.2.3/README.fr.md'), b'French readme')
+            self.assertIsNone(archive.testzip())
+        self.assertFalse(api['package_path']('unknown-runtime.dll'))
+
     def test_pe_architecture_without_loading_a_binary(self):
         header = bytearray(64 + 26)
         header[:2] = b'MZ'

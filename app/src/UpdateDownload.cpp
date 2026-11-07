@@ -36,7 +36,7 @@ void downloadBinding(const Release &release) {
     (void)version(release.version);
     const auto prefix = "https://api.github.com/repos/" + std::string(repository) + "/releases/assets/";
     const auto &asset = release.asset;
-    if (asset.name != "CyCode-" + release.version + "-" + platform() + "-update.zip" ||
+    if (!packageArchiveName(asset.name, release.version, platform(), asset.name.ends_with("-setup.exe")) ||
         !digest(asset.digest) || !asset.size || asset.size > maximumPackage ||
         !asset.url.starts_with(prefix) || asset.url.size() <= prefix.size() ||
         asset.url.size() > prefix.size() + 20 ||

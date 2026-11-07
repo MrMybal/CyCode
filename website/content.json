@@ -9,7 +9,7 @@
   "chapters": {"en":"Page chapters", "fr":"Chapitres de la page"},
   "intro": {"en":"A native workspace for code, projects and the tools around them.", "fr":"Un espace natif pour le code, les projets et les outils qui les accompagnent."},
   "introDetail": {"en":"Built around C++ and Unreal Engine. Open a solution, explore your code and bring your development workflow together.", "fr":"Pensé autour de C++ et d’Unreal Engine. Ouvrez une solution, explorez votre code et rassemblez vos outils de développement."},
-  "downloadWindows": {"en":"Download for Windows", "fr":"Télécharger pour Windows"},
+  "downloadWindows": {"en": "Windows installer (.exe)", "fr": "Installateur Windows (.exe)"},
   "readGuide": {"en":"Read the guide", "fr":"Lire le guide"},
   "status": {"en":"Alpha · Windows x64 · GPL-3.0-only", "fr":"Version alpha · Windows x64 · GPL-3.0-only"},
   "workspaceCaption": {"en":"CyCode · C++ editor, project tree and the integrated MCP panel", "fr":"CyCode · Éditeur C++, arborescence et panneau MCP intégré"},
@@ -87,7 +87,7 @@
   "faq4": {"en":"Can I read the manual without a connection?", "fr":"Puis-je lire le manuel sans connexion ?"},
   "faq4Text": {"en":"Yes. The installed Documentation.html opens locally with its complete DocData folder, without a web server or CDN. Repository and release links still need a connection.", "fr":"Oui. Le fichier installé Documentation.html s’ouvre localement avec tout son dossier DocData, sans serveur web ni CDN. Les liens vers le dépôt et les releases exigent toujours une connexion."},
   "downloadTitle": {"en":"Try CyCode. Follow its development.", "fr":"Essayez CyCode. Suivez son développement."},
-  "downloadText": {"en":"Get the Windows x64 portable package, browse the source or start with the manual. Review the release notes and tool requirements before getting started.", "fr":"Téléchargez le paquet portable Windows x64, parcourez le code ou commencez par le manuel. Consultez les notes de version et les outils requis avant de démarrer."},
+  "downloadText": {"en": "Install CyCode 0.2.3 for the current Windows user, or extract the complete portable ZIP. The MSVC runtime is included; an OpenGL 3.3 driver is required. Startup checks propose updates inside the application.", "fr": "Installez CyCode 0.2.3 pour l’utilisateur Windows courant, ou extrayez le ZIP portable complet. Le runtime MSVC est fourni ; un pilote OpenGL 3.3 est requis. Les vérifications au démarrage proposent les mises à jour dans l’application."},
   "releases": {"en":"Release notes & checksums", "fr":"Notes de version et empreintes"},
   "footer": {"en":"Created by Cyberalien. Built for code.", "fr":"Créé par Cyberalien. Pensé pour le code."},
   "source": {"en":"Source", "fr":"Sources"},
@@ -95,5 +95,6 @@
   "close": {"en":"Close image (Escape)", "fr":"Fermer l’image (Échap)"},
   "enlarge": {"en":"Enlarge image", "fr":"Agrandir l’image"},
   "previous": {"en":"Previous image", "fr":"Image précédente"},
-  "next": {"en":"Next image", "fr":"Image suivante"}
+  "next": {"en":"Next image", "fr":"Image suivante"},
+  "downloadPortable": {"en": "Portable ZIP", "fr": "ZIP portable"}
 }

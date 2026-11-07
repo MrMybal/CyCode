@@ -43,7 +43,10 @@ void Application::checkApplicationUpdates(bool manual) {
     latestUpdate_.reset();
     updateCancellation_ = std::make_shared<std::atomic<bool>>(false);
     const auto cancel = updateCancellation_;
-    updateCheckFuture_ = std::async(std::launch::async, [cancel] { return updates::check(*cancel); });
+    const auto root = root_;
+    updateCheckFuture_ = std::async(std::launch::async, [cancel, root] {
+        return updates::check(*cancel, updates::installedInstallation(root));
+    });
     if (manual)
         showPanel("Application updates", "updates");
 }
@@ -349,7 +352,7 @@ void Application::applicationUpdatesContent() {
     }
     if (updates::platform() == "unsupported")
         cyui::callout(cyui::Tone::neutral, tr("Automatic installation currently supports Windows x64 "
-                                              "portable packages. Use GitHub Releases for other platforms."));
+                                              "installed and portable packages. Use GitHub Releases for other platforms."));
     if (ImGui::CollapsingHeader(tr("Update history"))) {
         updateHistoryContent();
         if (!updateHistory_ && updateInventory_.attempts.empty())
@@ -436,7 +439,7 @@ void Application::applicationUpdatesContent() {
     if (!portable && updates::platform() != "unsupported")
         cyui::callout(cyui::Tone::neutral,
                       tr("This copy is a development checkout or a legacy package. Download a current "
-                         "portable release to enable installation updates."));
+                         "installed or portable release to enable installation updates."));
     if (preparedUpdate_) {
         cyui::sectionTitle(tr("Verified downloaded update"));
         cyui::textDim("%s -> %s", CYCODE_VERSION, preparedUpdate_->version.c_str());

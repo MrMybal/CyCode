@@ -38,7 +38,7 @@ std::string platform() {
 #endif
 }
 std::optional<Release> parseRelease(const nlohmann::json &json, std::string_view current,
-                                    std::string_view target) {
+                                    std::string_view target, bool installed) {
     if (json.at("draft").get<bool>() || json.at("prerelease").get<bool>())
         throw std::runtime_error("Only stable published releases are accepted");
     const auto tag = json.at("tag_name").get<std::string>();
@@ -55,9 +55,14 @@ std::optional<Release> parseRelease(const nlohmann::json &json, std::string_view
             --cut;
         result.notes.resize(cut);
     }
-    const auto name = "CyCode-" + result.version + "-" + std::string(target) + "-update.zip";
     if (!json.at("assets").is_array() || json.at("assets").size() > 1024)
         throw std::runtime_error("Invalid release asset list");
+    const auto portable = "CyCode-" + result.version + "-" + std::string(target) + ".zip";
+    const auto legacy = "CyCode-" + result.version + "-" + std::string(target) + "-update.zip";
+    const auto &assets = json.at("assets");
+    const auto name = installed ? "CyCode-" + result.version + "-" + std::string(target) + "-setup.exe" : std::any_of(assets.begin(), assets.end(), [&](const auto &asset) {
+        return asset.value("name", std::string{}) == portable;
+    }) ? portable : legacy;
     unsigned matches = 0;
     for (const auto &asset : json.at("assets"))
         if (asset.value("name", std::string{}) == name) {
@@ -119,8 +124,19 @@ bool packagePath(std::string_view path) {
     }
     return path == "CyCode.exe" || path == "cycode_cli.exe" || path == "CyCodeUpdater.exe" ||
            path == "manifest.json" || path == "PACKAGE.md" || path == "README.md" || path == "LISEZ-MOI.md" ||
-           path == "CHANGELOG.md" || path == "LICENSE" || path == "COPYRIGHT" || path.starts_with("app/") ||
+           path == "CHANGELOG.md" || path == "README.fr.md" || path == "VERSION.fr.md" ||
+           path == "msvcp140.dll" || path == "msvcp140_1.dll" || path == "msvcp140_2.dll" ||
+           path == "msvcp140_atomic_wait.dll" || path == "msvcp140_codecvt_ids.dll" ||
+           path == "vcruntime140.dll" || path == "vcruntime140_1.dll" || path == "concrt140.dll" || path == "LICENSE" || path == "COPYRIGHT" || path.starts_with("app/") ||
            path.starts_with("icons/") || path.starts_with("tools/") || path.starts_with("extensions/");
+}
+bool installedInstallation(const std::filesystem::path &root) {
+    const auto flag = root / "installed.flag";
+    detail::safe(flag);
+    if (!std::filesystem::exists(flag)) return false;
+    if (detail::read(flag, 128) != "CyCode per-user installation\n")
+        throw std::runtime_error("Invalid installed distribution marker");
+    return true;
 }
 bool portableInstallation(const std::filesystem::path &root) {
     try {

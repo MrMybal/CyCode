@@ -48,6 +48,7 @@ def main():
     parser.add_argument('--configuration', default='Release')
     parser.add_argument('--cyui', type=Path, help='Clean checkout at app/cyui-source.lock.json (default: pinned cache)')
     parser.add_argument('--editor-root', type=Path, help='Development checkout of CyCodeReader (default: pinned dependency)')
+    parser.add_argument('--distribution', action='store_true', help='Build packaged GUI/CLI without downloading optional language/debug toolchains')
     parser.add_argument('--no-install', action='store_true', help='Keep all build outputs in runtime; do not copy a root executable')
     parser.add_argument('--build-tests', action='store_true', help='Opt in to compiling native test executables in a separate build; does not run them or install the app')
     parser.add_argument('--run-tests', action='store_true', help='Opt in to building and running native tests (debuggers, child processes and generated programs included)')
@@ -69,7 +70,7 @@ def main():
         return 0
     from editor_dependency import ensure_editor
     editor=ensure_editor(args.editor_root)
-    if not args.core_only and not args.reader_only:
+    if not args.core_only and not args.reader_only and not args.distribution:
         from fetch_runtime_tools import ensure_runtime_tools
         ensure_runtime_tools()
         from setup_debugger import ensure_debugger
@@ -83,6 +84,9 @@ def main():
             ensure_web()
         else:
             print('Node.js 20+ is required for web language services; syntax coloring remains available.',flush=True)
+    if args.distribution:
+        from fetch_runtime_tools import ensure_runtime_tools
+        ensure_runtime_tools()
     environment = dict(os.environ)
     cmake = shutil.which('cmake')
     ninja = shutil.which('ninja')

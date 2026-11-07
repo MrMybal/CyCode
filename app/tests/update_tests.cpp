@@ -135,6 +135,24 @@ void updateContracts(const std::filesystem::path &parent) {
         raw.update(patch);
         rejects([&] { updates::parseRelease(raw, "0.2.0", "windows-x64"); });
     }
+    auto setup = release();
+    setup["assets"][0]["name"] = "CyCode-0.3.0-windows-x64-setup.exe";
+    check(updates::parseRelease(setup, "0.2.0", "windows-x64", true)->asset.name.ends_with("-setup.exe"),
+          "Installed edition did not select Setup");
+    check(updates::parseRelease(setup, "0.2.0", "windows-x64")->asset.url.empty(),
+          "Portable edition selected an installer");
+    auto normal = release();
+    normal["assets"][0]["name"] = "CyCode-0.3.0-windows-x64.zip";
+    const auto portable = updates::parseRelease(normal, "0.2.0", "windows-x64");
+    check(portable && portable->asset.name == "CyCode-0.3.0-windows-x64.zip", "Portable release was not selected");
+    normal["assets"].push_back(release()["assets"][0]);
+    check(updates::parseRelease(normal, "0.2.0", "windows-x64")->asset.name == portable->asset.name,
+          "Legacy archive shadowed the portable payload");
+    normal["assets"].push_back(normal["assets"][0]);
+    rejects([&] { updates::parseRelease(normal, "0.2.0", "windows-x64"); });
+    check(updates::packagePath("README.fr.md") && updates::packagePath("VERSION.fr.md") &&
+          updates::packagePath("msvcp140.dll") && updates::packagePath("vcruntime140.dll"),
+          "Standalone distribution files were rejected");
     auto raw = release();
     raw["assets"][0]["url"] = "https://example.org/update";
     rejects([&] { updates::parseRelease(raw, "0.2.0", "windows-x64"); });

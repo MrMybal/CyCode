@@ -236,12 +236,12 @@ bool http(const std::string &initial, const std::string &accept, uint64_t maximu
 }
 #endif
 } // namespace
-std::optional<Release> check(const std::atomic<bool> &cancel) {
+std::optional<Release> check(const std::atomic<bool> &cancel, bool installed) {
 #ifdef _WIN32
     std::string body;
     http(apiRoot() + "/latest", "application/vnd.github+json", 4 * 1024 * 1024, cancel,
          [&](const char *data, size_t size) { body.append(data, size); });
-    return parseRelease(nlohmann::json::parse(body), CYCODE_VERSION, platform());
+    return parseRelease(nlohmann::json::parse(body), CYCODE_VERSION, platform(), installed);
 #else
     (void)cancel;
     throw std::runtime_error("Automatic application updates currently require Windows x64; open GitHub "
@@ -255,12 +255,21 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
     namespace fs = std::filesystem;
     detail::downloadBinding(release);
     const auto root = fs::absolute(installation).lexically_normal();
+    if (!packageArchiveName(release.asset.name, release.version, platform(), installedInstallation(root)))
+        throw DownloadError(DownloadIssue::installation, "Update package differs from the installation edition");
     if (!portableInstallation(root))
         throw DownloadError(DownloadIssue::installation,
                             "Install an update-enabled portable distribution before updating in place");
     auto instances = installationUse(root);
     const auto manifest = nlohmann::json::parse(detail::read(root / "manifest.json", 2 * 1024 * 1024));
     const auto managed = detail::managedManifest(manifest);
+    uint64_t helperBytes = 0;
+    for (const auto &[name, file] : managed)
+        if (name == "CyCodeUpdater.exe" || (name.find('/') == std::string::npos && name.ends_with(".dll"))) {
+            if (file.size > 64 * 1024 * 1024 || helperBytes > maximumPackage - file.size)
+                throw std::runtime_error("Update helper runtime exceeds its size limit");
+            helperBytes += file.size;
+        }
     if (!newer(release.version, CYCODE_VERSION) ||
         !newer(release.version, manifest.at("version").get<std::string>()))
         throw DownloadError(DownloadIssue::installation,
@@ -283,7 +292,7 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
     if (status)
         status->resumed = initialOffset;
     detail::requireDownloadSpace(root / "data/updates", release.asset.size, initialOffset,
-                                 helper->second.size, status);
+                                 helperBytes, status);
     auto directory = previous ? previous->directory : detail::work(root, "download-");
     if (!previous)
         detail::createPartialMetadata(root, directory, release);
@@ -316,7 +325,7 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
                     status->phase = DownloadPhase::preparing;
                 }
                 detail::requireDownloadSpace(root / "data/updates", release.asset.size, 0,
-                                             helper->second.size, status);
+                                             helperBytes, status);
                 directory = detail::work(root, "download-");
                 detail::createPartialMetadata(root, directory, release);
                 offset = 0;
@@ -344,7 +353,7 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
         if (status)
             status->phase = DownloadPhase::staging;
         detail::requireDownloadSpace(root / "data/updates", release.asset.size, release.asset.size,
-                                     helper->second.size, status);
+                                     helperBytes, status);
         if (payload != archive)
             detail::moveFile(payload, archive);
         Prepared result{archive, directory / "CyCodeUpdater.exe", root, release.version,
@@ -366,6 +375,17 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
             throw DownloadError(DownloadIssue::integrity,
                                 "Staged update helper changed; retained and excluded from retry");
         }
+        for (const auto &[name, file] : managed)
+            if (name.find('/') == std::string::npos && name.ends_with(".dll")) {
+                const auto source = root / utf8Path(name), target = directory / utf8Path(name);
+                detail::safe(source); detail::safe(target);
+                if (detail::hashFile(source, 64 * 1024 * 1024, &cancel) != file.digest)
+                    throw std::runtime_error("Installed update runtime changed");
+                if (!fs::exists(target)) fs::copy_file(source, target);
+                if (!fs::is_regular_file(target) || fs::hard_link_count(target) != 1 || fs::file_size(target) != file.size ||
+                    detail::hashFile(target, 64 * 1024 * 1024, &cancel) != file.digest)
+                    throw std::runtime_error("Staged update runtime changed");
+            }
         const auto messages = directory / "updater-messages.json";
         if (!fs::exists(messages)) {
             try {

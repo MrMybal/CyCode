@@ -1,6 +1,7 @@
 #include "UpdateDownload.h"
 #include "UpdateFiles.h"
 #include "UpdateInstall.h"
+#include "UpdateManifest.h"
 #include "cycode/Paths.h"
 #include "cycode/TextFile.h"
 #include <algorithm>
@@ -25,7 +26,7 @@ void binding(const Prepared &p) {
         p.helper != p.package.parent_path() / "CyCodeUpdater.exe" ||
         p.package.parent_path().parent_path() != p.installation / "data/updates" ||
         !directoryName(pathUtf8(p.package.parent_path().filename())) ||
-        p.package.filename() != utf8Path("CyCode-" + p.version + "-" + platform() + "-update.zip"))
+        !packageArchiveName(pathUtf8(p.package.filename()), p.version, platform(), installedInstallation(p.installation)))
         throw std::runtime_error("Invalid prepared update binding");
     detail::safe(p.package);
     detail::safe(p.helper);
@@ -103,6 +104,25 @@ static void verify(const Prepared &p, const std::atomic<bool> &cancel, uint64_t 
         detail::hashFile(p.helper, 64 * 1024 * 1024, &cancel) != expected ||
         detail::hashFile(p.installation / "CyCodeUpdater.exe", 64 * 1024 * 1024, &cancel) != expected)
         throw std::runtime_error("Prepared or installed update helper changed; download again or reinstall");
+    for (const auto &file : files) {
+        const auto name = file.at("path").get<std::string>();
+        if (name.find('/') != std::string::npos || !name.ends_with(".dll")) continue;
+        const auto size = file.at("size").get<uint64_t>();
+        const auto digest = file.at("sha256").get<std::string>();
+        if (!size || size > 64 * 1024 * 1024 || !detail::digest(digest) ||
+            ordinarySize(p.helper.parent_path() / utf8Path(name), 64 * 1024 * 1024) != size ||
+            detail::hashFile(p.helper.parent_path() / utf8Path(name), 64 * 1024 * 1024, &cancel) != digest)
+            throw std::runtime_error("Staged update runtime changed");
+    }
+    if (installedInstallation(p.installation)) {
+        const auto owned = detail::managedManifest(manifest);
+        for (const auto &[name, file] : owned) {
+            const auto source = p.installation / utf8Path(name);
+            if (ordinarySize(source, 64 * 1024 * 1024) != file.size ||
+                detail::hashFile(source, 64 * 1024 * 1024, &cancel) != file.digest)
+                throw std::runtime_error("Installed package files changed; review them before updating");
+        }
+    }
     ordinarySize(p.package, archiveLimit);
     if (detail::hashFile(p.package, archiveLimit, &cancel) != p.digest)
         throw std::runtime_error("Prepared update SHA-256 verification failed; download it again");

@@ -12,8 +12,8 @@
     </td>
     <td width="300" align="right" valign="top">
       <p><sub>Licence de l’application</sub><br><a href="LICENSE"><strong>GPL-3.0-only</strong></a></p>
-      <p><sub>Version</sub><br><a href="VERSION.fr.md"><strong>0.2.2</strong></a><br><strong>ALPHA</strong></p>
-      <p><a href="https://github.com/MrMybal/CyCode/releases/download/v0.2.2/CyCode-0.2.2-windows-x64.zip"><strong>Télécharger CyCode</strong></a><br><sub>Windows x64 · portable</sub></p>
+      <p><sub>Version</sub><br><a href="VERSION.fr.md"><strong>0.2.3</strong></a><br><strong>ALPHA</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64-setup.exe"><strong>Installer CyCode</strong></a><br><sub>Windows x64</sub><br><a href="https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64.zip">ZIP portable</a></p>
     </td>
   </tr>
 </table>
@@ -25,11 +25,11 @@ et sur d’autres types de projets. Modifiez le code, parcourez une solution,
 compilez avec vos outils, déboguez et examinez les changements dans un espace
 de travail construit avec CyUI.
 
-> **ALPHA · 0.2.2**
+> **ALPHA · 0.2.3**
 >
 > Une version expérimentale destinée aux essais et aux retours. Certaines fonctions
-> restent incomplètes ou dépendent d’outils externes. La version 0.2.2 actualise le
-> manuel illustré anglais/français et l’aide contextuelle. Consultez les
+> restent incomplètes ou dépendent d’outils externes. La version 0.2.3 ajoute l’installateur Windows
+> et un paquet commun pour la version portable et les mises à jour. Consultez les
 > [notes de version et limites connues](VERSION.fr.md).
 
 [![CyCode avec l’éditeur C++, l’arbre du projet et le panneau MCP intégré](website/assets/workspace.png)](website/assets/workspace.png)
@@ -79,7 +79,7 @@ revendique pas une parité complète avec Rider, Visual Studio ou VS Code.
   ressources locales.
 
 Le développement local approfondit la navigation entre en-têtes/sources C++ et
-les catalogues d’extraits. Ces ajouts ne sont pas livrés dans la version 0.2.2 et
+les catalogues d’extraits. Ces ajouts ne sont pas livrés dans la version 0.2.3 et
 restent séparés de cet instantané publié des sources. Le [guide développeur](app/README.md)
 et l’[historique des changements](CHANGELOG.md) décrivent l’implémentation publiée
 et ses limites.
@@ -88,27 +88,22 @@ et ses limites.
 
 ## Installation
 
-Le paquet publié est destiné à **Windows x64**. Il nécessite le **runtime
-Visual C++ 2022 x64** et un pilote **OpenGL 3.3**. Linux et macOS sont des cibles
-prévues ; leurs compilations graphiques complètes et leur fonctionnement ne sont
-pas validés ici, et cette version ne propose aucun paquet pour ces plateformes.
+1. [Télécharger l’installateur Windows](https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64-setup.exe), exécuter Setup pour l’utilisateur courant, puis ouvrir CyCode depuis le menu Démarrer.
+2. Pour une copie portable, [télécharger le ZIP complet](https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64.zip), l’extraire dans un dossier accessible en écriture et lancer `CyCode.exe`.
 
-1. [Télécharger CyCode 0.2.2 pour Windows x64](https://github.com/MrMybal/CyCode/releases/download/v0.2.2/CyCode-0.2.2-windows-x64.zip).
-2. Extraire le ZIP complet dans un dossier accessible en écriture. Conserver
-   `app/`, `icons/`, `tools/` et les autres fichiers fournis à côté de `CyCode.exe`.
-3. Lancer `CyCode.exe`, puis ouvrir un projet ou une solution. Installer le
-   compilateur, le SDK, le serveur de langage et le débogueur requis par ce projet.
+Windows 10/11 x64 et un pilote OpenGL 3.3 sont requis. Le runtime MSVC est fourni.
+L’installateur utilise normalement `%LOCALAPPDATA%/Programs/CyCode` ; `data/` et
+l’éventuel `runtime/` restent dans cette installation et sont conservés à la désinstallation.
 
-Les [notes de release et empreintes de contrôle](https://github.com/MrMybal/CyCode/releases/tag/v0.2.2)
-accompagnent le téléchargement. L’archive `-update.zip` sert au parcours explicite
-de mise à jour de l’application, pas à une première installation. Le paquet
-portable ne comprend ni Unreal Engine, ni les serveurs de langage, les adaptateurs
-de débogage ou le runtime MCP privé.
+CyCode vérifie GitHub Releases au démarrage par défaut, propose les nouvelles
+versions, puis télécharge et vérifie l’installateur pour les copies installées ou le ZIP pour les copies portables, avant installation et redémarrage explicites. Aucun téléchargement `-update.zip` séparé n’est nécessaire.
+Les préférences existantes sont conservées ; activez **Vérifier les mises à jour au
+démarrage** dans le panneau de mise à jour si cette option était désactivée.
+Les versions jusqu’à 0.2.2 nécessitent une première installation ou extraction
+manuelle pour adopter le paquet partagé. Les versions suivantes utilisent le parcours intégré.
 
-Ouvrir `app/Documentation/Documentation.html` avec son dossier `DocData/` complet
-pour consulter l’aide hors ligne. Sa lecture ne nécessite ni serveur web ni CDN.
-La [documentation en ligne](https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview)
-utilise le même lecteur CyDoc.
+Les paquets Linux/macOS, l’exécution de l’installateur et le parcours complet de
+mise à jour en ligne restent à valider. Voir les [notes de version](VERSION.fr.md).
 
 ## Sources, compilation et bibliothèques nécessaires
 

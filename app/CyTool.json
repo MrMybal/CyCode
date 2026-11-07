@@ -3,7 +3,7 @@
   "protocolVersion": "1.0",
   "id": "cy.code",
   "name": "CyCode",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Native C++ IDE services, shared by CyUI and CyToolsCore MCP.",
   "vendor": "Cyberalien",
   "author": "Cyberalien",

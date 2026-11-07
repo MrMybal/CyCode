@@ -6382,5 +6382,41 @@
   "Editor documentation": {
     "en": "Editor documentation",
     "fr": "Documentation de l’éditeur"
+  },
+  "Automatic installation currently supports Windows x64 installed and portable packages. Use GitHub Releases for other platforms.": {
+    "en": "Automatic installation currently supports Windows x64 installed and portable packages. Use GitHub Releases for other platforms.",
+    "fr": "L’installation automatique prend en charge les éditions Windows x64 installées et portables. Utilisez GitHub Releases pour les autres plateformes."
+  },
+  "This copy is a development checkout or a legacy package. Download a current installed or portable release to enable installation updates.": {
+    "en": "This copy is a development checkout or a legacy package. Download a current installed or portable release to enable installation updates.",
+    "fr": "Cette copie est un dépôt de développement ou un ancien paquet. Téléchargez une édition installée ou portable actuelle pour activer les mises à jour intégrées."
+  },
+  "Installed package files changed; review them before updating": {
+    "en": "Installed package files changed; review them before updating",
+    "fr": "Des fichiers du programme installé ont changé ; examinez-les avant la mise à jour"
+  },
+  "Update package differs from the installation edition": {
+    "en": "Update package differs from the installation edition",
+    "fr": "Le paquet de mise à jour ne correspond pas à l’édition installée"
+  },
+  "Installed update runtime changed": {
+    "en": "Installed update runtime changed",
+    "fr": "Le runtime installé de mise à jour a changé"
+  },
+  "Staged update runtime changed": {
+    "en": "Staged update runtime changed",
+    "fr": "Le runtime préparé pour la mise à jour a changé"
+  },
+  "Cannot start the verified Windows installer": {
+    "en": "Cannot start the verified Windows installer",
+    "fr": "Impossible de lancer l’installateur Windows vérifié"
+  },
+  "Windows installation was cancelled or failed": {
+    "en": "Windows installation was cancelled or failed",
+    "fr": "L’installation Windows a été annulée ou a échoué"
+  },
+  "Windows installation did not produce the expected version": {
+    "en": "Windows installation did not produce the expected version",
+    "fr": "L’installation Windows n’a pas produit la version attendue"
   }
 }
