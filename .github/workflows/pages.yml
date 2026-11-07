@@ -1,0 +1,71 @@
+name: CyCode website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'app/.CyDocBuild/**'
+      - 'app/Docs/**'
+      - 'app/include/cycode/PluginAPI.h'
+      - 'app/contracts.py'
+      - 'app/CyTool.json'
+      - 'app/README.md'
+      - 'app/THIRD_PARTY_NOTICES.md'
+      - 'README.md'
+      - 'LISEZ-MOI.md'
+      - 'LICENSE'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cycode-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/configure-pages@v5
+      - name: Generate the website and complete pinned CyDoc reader
+        run: python website/build.py
+      - name: Check links, translations, owned resources and licence
+        run: python website/verify.py runtime/showcase
+      - name: Check JavaScript and reader interactions without native applications
+        run: |
+          node --check website/site.js
+          node app/.CyDocBuild/verify_dom.mjs app/Documentation
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: runtime/showcase
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish the verified website
+        id: deployment
+        uses: actions/deploy-pages@v4

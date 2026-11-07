@@ -4,7 +4,7 @@
   <img src="icons/CyCode.png" alt="CyCode" width="160" height="160">
 </p>
 
-[Documentation](https://mrmybal.github.io/CyCodeReader/cycode/Documentation.html#/en/overview) · [Documentation en français](https://mrmybal.github.io/CyCodeReader/cycode/Documentation.html#/fr/overview)
+[Website](https://mrmybal.github.io/CyCode/) · [Documentation](https://mrmybal.github.io/CyCode/Documentation.html#/en/overview) · [Documentation en français](https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview)
 
 Version **0.2.2** updates the complete English/French user manual, public API
 references and local Help integration. Downloads: [GitHub Releases](https://github.com/MrMybal/CyCode/releases/latest).

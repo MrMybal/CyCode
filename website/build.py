@@ -73,6 +73,7 @@ def build(output, regenerate=True):
     assert keys <= content.keys(), 'Missing page translations'
     assets = {}
     source_assets = sorted((HERE / 'assets').glob('*')) + [HERE / 'style.css', HERE / 'site.js']
+    (ROOT / 'runtime').mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='showcase-', dir=ROOT / 'runtime') as temporary:
         stage = Path(temporary)
         for path in source_assets:
@@ -92,6 +93,15 @@ def build(output, regenerate=True):
         source = source.replace('{{config}}', json.dumps({'documentation':doc_base, 'assets':assets}, ensure_ascii=False).replace('</', '<\\/'))
         assert not re.search(r'\{\{(?:asset:|doc:|content|config|description)', source), 'Unresolved template token'
         (stage / 'index.html').write_text(source, 'utf-8')
+        # Stable public entry point; the actual, unchanged reader keeps its
+        # content-versioned resource URLs and the requested language/section.
+        redirect = ('<!doctype html><html lang="en"><meta charset="utf-8">'
+            '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            '<title>CyCode documentation</title><script>location.replace('
+            + json.dumps(doc_base) + ' + location.search + (location.hash || "#/en/overview"));</script>'
+            '<body><p><a href="' + doc_base + '#/en/overview">English documentation</a> · '
+            '<a href="' + doc_base + '#/fr/overview">Documentation française</a></p></body></html>')
+        (stage / 'Documentation.html').write_text(redirect, 'utf-8')
         (stage / '.nojekyll').write_text('', 'utf-8')
         shutil.copyfile(ROOT / 'LICENSE', stage / 'LICENSE.txt')
         shutil.copytree(manual, stage / 'manual' / doc_revision)

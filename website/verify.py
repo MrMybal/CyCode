@@ -51,7 +51,7 @@ def verify(output):
         assert not path.is_symlink(), f'Linked output: {path.name}'
         if path.is_file() and path.name != 'showcase-files.json':
             name = path.relative_to(output).as_posix()
-            assert name in ('.nojekyll', 'index.html', 'LICENSE.txt') or name.startswith(('assets/', 'manual/')), f'Unexpected published file: {name}'
+            assert name in ('.nojekyll', 'index.html', 'Documentation.html', 'LICENSE.txt') or name.startswith(('assets/', 'manual/')), f'Unexpected published file: {name}'
             assert not {'.git', '.CyDocBuild', 'runtime', 'data', 'node_modules'} & set(path.relative_to(output).parts), f'Private build material: {name}'
             files[name] = sha(path.read_bytes())
     assert files == marker['files'], 'Output ownership or file hashes differ'
@@ -72,6 +72,10 @@ def verify(output):
     original_manual = HERE.parent / 'app/Documentation'
     original_files = {path.relative_to(original_manual).as_posix(): sha(path.read_bytes()) for path in original_manual.rglob('*') if path.is_file()}
     assert manual_files == original_files, 'The official local CyDoc export was altered or omitted'
+    redirect = Page()
+    redirect.feed((output / 'Documentation.html').read_text('utf-8'))
+    assert {attrs['href'] for tag, attrs in redirect.nodes if tag == 'a'} == {
+        config['documentation'] + '#/en/overview', config['documentation'] + '#/fr/overview'}
     manifest = json.loads((manual.parent / 'DocData/manifest.json').read_text('utf-8'))
     pages = {item['id'] for item in manifest['pages']}
     assert manifest['defaultLocale'] == 'en' and {'en', 'fr'} <= {item['code'] for item in manifest['locales']}
