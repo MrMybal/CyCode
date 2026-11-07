@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project(Aurora LANGUAGES CXX)
+add_library(aurora STATIC src/SceneIndex.cpp)
+target_include_directories(aurora PUBLIC include)
+target_compile_features(aurora PUBLIC cxx_std_20)
