@@ -319,7 +319,15 @@ std::string Keymap::pending(double time) const {
     auto comma = result.find(',');
     return result.substr(0, comma) + ", ...";
 }
-Keymap::Result Keymap::press(const std::string &stroke, double time, bool editor, bool document) {
+Keymap::Result Keymap::press(const std::string &input, double time, bool editor, bool document) {
+    // Hosts may send either the canonical event spelling or the displayed shortcut.
+    // One call is one stroke; a complete chord still needs its individual events.
+    std::string stroke;
+    try {
+        const auto parsed = parse(input == "DoubleShift" ? "Double Shift" : input);
+        if (parsed.size() != 1) { cancel(); return {}; }
+        stroke = parsed.front();
+    } catch (const std::exception &) { cancel(); return {}; }
     if (time > until_) cancel();
     if (stroke == "escape" && !candidates_.empty()) { cancel(); return {{}, true}; }
     auto allowed = [&](const KeyBinding &b) {

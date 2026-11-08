@@ -13,6 +13,12 @@ int main() {
         require(findCommand("navigate.include")!=nullptr,"Include navigation command missing");
         require(findCommand("navigate.relatedFiles")!=nullptr,"Related-file inspector command missing");
         map.load("rider");
+        require(map.press("F2",0,true,true).command=="problem.nextInFile","Display-form Rider diagnostic shortcut");
+        require(map.press("Alt+Shift+F2",0,true,true).command=="problem.previous","Display modifier order");
+        require(map.press("DoubleShift",0,true,true).command=="search.everywhere","Canonical double shift");
+        require(map.press("Double Shift",0,true,true).command=="search.everywhere","Displayed double shift");
+        require(map.press("Ctrl+K, Ctrl+C",0,true,true).command.empty(),"A complete chord is not a stroke");
+        require(map.press("unknown key",0,true,true).command.empty(),"Invalid host event must not dispatch");
         require(map.press("ctrl+j",.001,true,true).command=="edit.snippet","Rider snippet shortcut");
         require(map.press("ctrl+alt+j",.0015,true,true).command=="edit.surroundSnippet","Rider surround snippet shortcut");
         require(map.press("alt+o",.0016,true,true).command=="navigate.counterpart","Rider header/source binding missing");
