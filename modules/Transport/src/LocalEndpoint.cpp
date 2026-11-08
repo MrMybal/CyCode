@@ -139,8 +139,7 @@ struct LocalEndpoint::Impl {
                 if(controlOnly && (!options.control || !options.control(method)))throw std::runtime_error("Native connection capacity reached; retry later");
                 response=options.respond(input);
             } catch(const std::exception &error){response=failure(error.what());}
-            auto payload=response.dump(-1,' ',false,Json::error_handler_t::replace)+"\n";
-            if(payload.size()>maximumResponseBytes)payload=failure("Native response exceeds 20 MiB").dump()+"\n";
+            const auto payload=encodeNativeResponse(response);
             const auto sendDeadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);
             for(size_t at=0;at<payload.size() && !stopping;) {
                 if(std::chrono::steady_clock::now()>sendDeadline)break;

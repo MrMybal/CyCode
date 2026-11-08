@@ -22,7 +22,7 @@ Json CoreService::status() const {
         // epochs, diagnostics/revisions and capabilities through language.status.
         {"analysis",{{"statusMethod","language.status"},{"projectIndexCompleteness","unknown"},
                      {"readyMeaning","backend-initialized-only"}}},
-        {"limits",{{"requestBytes",maximumRequestBytes}}}};
+        {"limits",{{"requestBytes",maximumRequestBytes},{"responseBytes",maximumNativeResponseBytes}}}};
 }
 Json CoreService::error(const std::string &code,const std::string &message,const Json &id) {
     return nativeErrorResponse(code,message,id);

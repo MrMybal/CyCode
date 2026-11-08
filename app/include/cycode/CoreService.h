@@ -10,7 +10,7 @@ namespace cycode {
 class CoreService {
   public:
     static constexpr const char *protocol = coreProtocol;
-    static constexpr size_t maximumRequestBytes = 8 * 1024 * 1024;
+    static constexpr size_t maximumRequestBytes = maximumNativeRequestBytes;
     explicit CoreService(Engine &);
     Json status() const;
     Json respond(const Json &request) noexcept;

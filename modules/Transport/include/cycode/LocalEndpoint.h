@@ -1,4 +1,5 @@
 #pragma once
+#include "cycode/ServiceProtocol.h"
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -21,8 +22,8 @@ class LocalEndpoint {
     void stop() noexcept;
     LocalEndpoint(const LocalEndpoint &)=delete;
     LocalEndpoint &operator=(const LocalEndpoint &)=delete;
-    static constexpr size_t maximumRequestBytes=8*1024*1024;
-    static constexpr size_t maximumResponseBytes=20*1024*1024;
+    static constexpr size_t maximumRequestBytes=maximumNativeRequestBytes;
+    static constexpr size_t maximumResponseBytes=maximumNativeResponseBytes;
     static constexpr size_t maximumClients=8;
   private:
     struct Impl;

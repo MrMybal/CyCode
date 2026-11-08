@@ -1,21 +1,28 @@
 ---
 id: native-core
-title: Séparation du Core natif et de l’IDE
-description: Réutiliser le moteur natif indépendamment de l’interface graphique.
+title: Core natif et intégration des applications
+description: Documents natifs communs, analyse des projets et services persistants sans interface.
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 ## Propriété des services {#ownership}
 
-CyCode possède désormais le moteur C++20 et son CLI/service. CyCodeIDE possède
-l’interface SDL/OpenGL/CyUI. CyCodeReader et l’éditeur graphique partagé consomment
-les implémentations natives Paths, TextFile et Snippet de CyCode (API source 1).
-La session de documents et de recherche de Reader n’a pas encore été transférée
-vers Engine. Les guides IDE existants restent utiles pour l’interface extraite ;
-les téléchargements 0.2.3 décrivent l’application avant cette séparation des dépôts.
+CyCode fournit le moteur C++20 et son CLI/service. CyCodeIDE possède l’interface
+SDL/OpenGL/CyUI. CyCodeReader utilise la session de texte autonome du Core :
+documents, encodages, recherche, plugins de texte et transport natif. Son éditeur
+graphique reste un adaptateur de présentation partagé. Les deux profils natifs
+utilisent le même BufferState et les mêmes primitives de fichiers protégées ;
+leurs règles de chemins restent explicites. Le profil texte de Reader ne lance
+pas les serveurs de langage et n’ajoute pas implicitement l’analyse des projets.
+
+Les guides et médias IDE restent utiles pour l’application extraite. Les paquets
+0.2.3 publiés précèdent cette séparation ; les sources de développement ne
+constituent pas un nouvel installateur ni une nouvelle version. Les ABI C des
+plugins restent compatibles dans leur profil d’origine ; les binaires des
+plugins de projet et de texte ne sont pas interchangeables.
 
 ## Compiler sans interface {#build}
 
@@ -25,49 +32,82 @@ cmake -S . -B runtime/core -DBUILD_TESTING=OFF
 cmake --build runtime/core --config Release --target cycode_cli
 ```
 
-Le Core ne demande aucun checkout Reader, SDL, ImGui, CyUI, OpenGL ou Tree-sitter.
-Un hôte natif ajoute les sources et lie `CyCode::Core`. Un petit éditeur peut
-importer seulement `common/` et lier `CyCode::Files` / `CyCode::Snippets`. Chaque
-Engine possède son projet. Un build ordinaire ne lance ni application ni tests natifs.
+La configuration et les dépendances du Core ne demandent ni Reader, ni SDL,
+ImGui, CyUI, OpenGL ou Tree-sitter. CyCode::Core fournit le moteur de projet.
+Un hôte léger sélectionne Documents, TextSession, TextBridge, Process, Transport,
+Protocol, Files et Snippets via CYCODE_COMPONENTS ou cmake/CyCodeComponents.cmake.
+Les dépendances sont résolues automatiquement ; seul JSON épinglé est nécessaire
+au profil texte autonome. L’API source 1 décrit l’intégration des sources,
+sans promettre une ABI binaire C++ stable.
+
+```sh
+python app/scripts/fetch_dependencies.py --components TextSession TextBridge Process
+cmake -S . -B runtime/text -DCYCODE_COMPONENTS="TextSession;TextBridge;Process" -DBUILD_TESTING=OFF
+cmake --build runtime/text --config Release
+```
+
+Chaque Engine possède un projet. Conservez-le entre les requêtes et attendez
+les appelants avant sa destruction. Un build ordinaire ne lance ni application
+ni tests natifs.
 
 ## Service persistant {#contract}
 
-`cycode_cli --disable-plugins <projet> --stdio` émet une ligne JSON de disponibilité,
-puis accepte des requêtes avec `cycode-core/1`, un id, une méthode et des paramètres
-objets. `service.status` expose le cycle de vie et l’identité du contexte.
-`service.shutdown` ou EOF ferme proprement l’hôte via la destruction existante
-d’Engine, sans enregistrer les documents. Les requêtes réutilisent le même Engine
-et ses moteurs de langage. Les erreurs ont un code et un message ; les échecs
-historiques d’Engine utilisent prudemment OperationFailed.
+`cycode_cli --disable-plugins <projet> --stdio` reçoit des objets cycode-core/1
+avec un id, une méthode et des paramètres objets. La réponse conserve l’id et
+retourne result ou une erreur structurée avec code/message et des détails
+facultatifs. Les conflits de révision/disque, modifications en lecture seule et
+échecs de moteurs migrés conservent le code de leur propriétaire. Les échecs
+historiques restent OperationFailed ; aucun code n’est déduit du texte d’erreur.
+Les requêtes sont bornées à 8 Mio, les réponses à 20 Mio et les ids texte à 256 octets.
 
-Le mode authentifié `--serve <descripteur>` reste compatible avec
-`cycode-native/1`. Son parent contrôle l’arrêt par stdin/EOF. Les commandes stdio
-ne sont pas de nouvelles opérations SDK/MCP. `language.status` conserve les états,
-capacités, époques et diagnostics liés aux révisions des moteurs. Un moteur
-initialisé ne prouve pas que l’index sémantique couvre tout le projet.
+service.shutdown ou EOF ferme proprement l’hôte stdio sans enregistrer les
+documents. Les descripteurs locaux cycode-native/1 et cycodereader-native/1
+restent compatibles et annoncent coreProtocol. Le parent contrôle l’arrêt du
+socket par stdin/EOF. Le transport attend ses appelants, borne les connexions
+et messages et préserve le descripteur d’une instance plus récente. CyToolsCore
+possède toujours le MCP, les jobs, identités, permissions et l’ordonnanceur ;
+ces contrôles d’hôte ne sont pas de nouvelles opérations SDK/MCP.
+
+service.status décrit le cycle de vie et le contexte. language.status.servers
+décrit chaque moteur : configuration, lancement observé, initialisation,
+capacités, époque, révisions envoyées et diagnostics liés aux versions. Un
+moteur initialisé ou une notification de texte envoyée ne prouve pas une analyse
+complète. La couverture de l’index sémantique global reste inconnue ; les caches
+de chemins et la recherche littérale sont distincts de l’index de clangd.
 
 ## Vérification et mesures {#validation}
 
-La compilation de production Windows couvre Core/CLI, l’IDE extrait et le CLI
-Reader. Les exécutions natives locales restent suspendues pendant le diagnostic
-des suppressions antivirus. Les contrôles de données et de syntaxe du compilateur
-ne prouvent pas le fonctionnement après extraction. Linux/macOS nécessitent de
-nouveaux builds et des vérifications d’exécution.
+La révision Core 28c455b a passé 63 tests natifs sur Windows, Linux et macOS ; le
+cas MSBuild réservé à Windows est ignoré sur POSIX. Le scénario de replay macOS
+a aussi passé trois répétitions, mais ses échecs intermittents antérieurs restent
+à diagnostiquer. Reader 9cbd8d3 a passé sept tests d’intégration sur les trois
+plateformes : encodages, plugins, révisions actives, conflits disque, IPC et arrêt.
+Les changements ultérieurs nécessitent leur propre validation.
 
-Le workflow explicite `app/scripts/benchmark_semantic.py --ci`, réservé aux runners,
-mesure les vraies requêtes natives/clangd sur un corpus synthétique déterministe :
-transport JSON, démarrage, diagnostics liés aux versions, navigation, références,
-complétion, préparation de renommage, éditions non enregistrées et mémoire délimitée.
-`--prepare-only` crée les données sources sans exécution native. Aucun temps n’a
-encore été relevé pour cette extraction. Un résultat synthétique ne démontrera
-ni les performances sur de grands projets ni une équivalence avec un autre IDE.
+Le benchmark sémantique réservé aux runners a terminé un corpus synthétique
+déterministe et le véritable projet CMake du Core : 121 unités de compilation,
+230 fichiers sources et en-têtes. Sur un runner Linux, les médianes à chaud ont
+été de 8,88 ms pour la définition, 8,79 ms pour les références, 303,82 ms pour la
+complétion et 18,55 ms pour l’aperçu de renommage. Les premiers diagnostics liés
+à une version ont pris 2,91 secondes ; la somme RSS instantanée CLI/moteur était
+de 1 234 755 584 octets. Cinq échantillons constituent une référence, pas une
+promesse universelle. La RSS peut compter deux fois des pages partagées et ne
+mesure ni le pic ni la mémoire privée. Les réponses ne prouvent pas la couverture
+complète des références. Aucune comparaison CLion/IntelliJ n’a été réalisée.
+Le guide d’architecture conserve les rapports bruts et les liens CI exacts.
+
+`app/scripts/benchmark_semantic.py --ci` s’exécute uniquement sur un runner
+explicitement autorisé. `--prepare-only` crée des données sans exécution native.
+Les lancements natifs locaux restent suspendus pendant le diagnostic antivirus ;
+les builds et contrôles de données/syntaxe sont distingués des essais d’exécution.
 
 ## Étapes restantes {#limits}
 
-Les références sur de vrais projets CMake/MSBuild/Unreal, l’invalidation du contexte,
-la synchronisation incrémentale, les transformations avancées et la réutilisation
-plus large d’Engine dans Reader restent à traiter. L’identité de l’installateur et
-des mises à jour IDE doit être migrée avant publication. Ce build de développement
-désactive l’ancien updater pour éviter de proposer l’installateur de l’application
-précédente. Les transactions, révisions, contrôles du disque et sauvegardes explicites
-existants restent les références.
+Les mesures sur de grands projets Unreal/MSBuild, la couverture complète de
+l’invalidation du contexte et des dépendances, la synchronisation incrémentale,
+les mesures concurrentes/annulables et les transformations avancées par commandes
+restent à poursuivre. Les éditions sémantiques existantes conservent les aperçus,
+contrôles de révision/disque, sauvegardes explicites et annulations. Les actions
+non prises en charge restent indisponibles. La présentation IDE et l’identité
+de son installateur/updater exigent leur propre validation avant publication ;
+l’ancien updater reste désactivé dans cette version de développement.

@@ -21,12 +21,14 @@ def download(url, destination):
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--core-only', action='store_true')
+    parser.add_argument('--components',nargs='+',choices=['Core','Files','Snippets','Protocol','Documents','TextSession','TextBridge','Process','Transport'],help='Fetch only sources required by the selected native components')
     options = parser.parse_args(argv)
     DEPS.mkdir(parents=True, exist_ok=True)
     lock_path = ROOT / 'app' / 'dependencies.lock.json'
     lock = json.loads(lock_path.read_text('utf-8'))
     for key, item in lock.items():
-        if key not in ('json', 'vterm', 'tinyxml2', 'monocypher', 'pcre2', 'utf8proc'):
+        required=('json',) if options.components and 'Core' not in options.components else ('json','vterm','tinyxml2','monocypher','pcre2','utf8proc')
+        if key not in required:
             continue
         target = DEPS / key
         if (target / '.cycode-dependency').exists():

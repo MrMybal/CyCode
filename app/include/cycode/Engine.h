@@ -1,5 +1,6 @@
 #pragma once
 #include "cycode/CompletionSelection.h"
+#include "cycode/text/DocumentState.h"
 #include "cycode/BuildSystem.h"
 #include "cycode/BuildOperations.h"
 #include "cycode/Events.h"
@@ -60,16 +61,7 @@ class Engine {
     Json configureLanguageBackend(const Json &);
     void applyLanguageConfiguration(const std::string &, const Json &, bool prewarm);
     Json buildOperation(const std::string &, const Json &, const std::atomic<bool> *);
-    struct Document {
-        uint64_t identity = 0;
-        std::string text, saved, disk, diskConflict;
-        std::uint64_t revision = 1;
-        bool bom = false;
-        bool crlf = false;
-        bool crOnly = false;
-        bool dirty = false;
-        bool diskExisted = true;
-    };
+    using Document = text::BufferState;
     Json documentJson(const std::string &, const Document &) const;
     std::string documentKey(const std::string &) const;
     Json createUntitled(const Json &);

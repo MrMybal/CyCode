@@ -179,19 +179,12 @@ Engine::Document &Engine::openLocked(const std::string &path, bool publish) {
     auto found = documents_.find(key);
     if (found != documents_.end())
         return found->second;
-    auto raw = readFile(full);
-    Document doc;
+    const auto raw=readFile(full);
+    // Preserve the project's UTF-8-only policy. Standalone text sessions may
+    // explicitly select other encodings through the same native buffer service.
+    Document doc=text::decodeBuffer(raw,raw.starts_with("\xef\xbb\xbf")?"utf-8-bom":"utf-8");
     doc.identity=nextDocumentIdentity_++;
-    doc.revision = nextRevision_++;
-    doc.disk = raw;
-    doc.bom = raw.starts_with("\xef\xbb\xbf");
-    if (doc.bom)
-        raw.erase(0, 3);
-    validateText(raw);
-    doc.crlf = raw.find("\r\n") != std::string::npos;
-    doc.crOnly = raw.find('\r') != std::string::npos && raw.find('\n') == std::string::npos;
-    doc.text = normalize(raw);
-    doc.saved = doc.text;
+    doc.revision=nextRevision_++;
     auto &opened = documents_.emplace(key, std::move(doc)).first->second;
     language_.sync(key, opened.text, opened.revision, opened.identity);
     if(publish)documentEvent("document.opened",key,opened);
@@ -807,13 +800,11 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         if ((doc.diskExisted&&readFile(full)!=doc.disk)||(!doc.diskExisted&&std::filesystem::exists(full)))
             throw NativeError(ErrorCode::DiskConflict,"DiskConflict: file changed outside CyCode");
         if (!doc.dirty&&doc.diskExisted) { auto result=documentJson(key,doc);guard.unlock();retireRecovery(key);return result; }
-        const auto bytes = encodeEditorText(doc.text, doc.bom, doc.crlf, doc.crOnly);
+        const auto bytes=text::encodeBuffer(doc);
         if(!doc.diskExisted)std::filesystem::create_directories(full.parent_path());
         writeTextFileAtomic(full, bytes, doc.diskExisted?std::optional<std::string>(doc.disk):std::nullopt);
-        doc.saved = doc.text;
-        doc.dirty = false;
-        doc.disk = bytes;
-        doc.diskExisted=true;doc.diskConflict.clear();documentEvent("document.saved",key,doc);auto result=documentJson(key, doc);guard.unlock();retireRecovery(key);return result;
+        text::markBufferSaved(doc,bytes);
+        documentEvent("document.saved",key,doc);auto result=documentJson(key, doc);guard.unlock();retireRecovery(key);return result;
     }
     if (method == "documents.close") {
         auto key = documentKey(params.at("path"));

@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
                         } else response=service.respond(input);
                     }
                 } catch (const cycode::Json::exception &e) {response=cycode::CoreService::error("InvalidJson",e.what());}
-                std::cout << response.dump(-1,' ',false,cycode::Json::error_handler_t::replace) << '\n' << std::flush;
+                std::cout << cycode::encodeNativeResponse(response) << std::flush;
                 if (shutdown) break;
             }
             service.beginShutdown();

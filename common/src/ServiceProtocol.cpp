@@ -21,6 +21,12 @@ Json nativeErrorResponse(const std::string &code,const std::string &message,cons
     if(!details.empty())error["details"]=details;
     return {{"protocol",coreProtocol},{"id",id},{"error",std::move(error)}};
 }
+std::string encodeNativeResponse(const Json &response) {
+    auto payload=response.dump(-1,' ',false,Json::error_handler_t::replace)+"\n";
+    if(payload.size()>maximumNativeResponseBytes)
+        payload=nativeErrorResponse("ResponseTooLarge","Native response exceeds 20 MiB",response.is_object()?response.value("id",Json()):Json()).dump()+"\n";
+    return payload;
+}
 Json respondNative(const Json &input,const NativeDispatch &dispatch) noexcept {
     Json id;
     try {

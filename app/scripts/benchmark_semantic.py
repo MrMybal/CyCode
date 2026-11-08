@@ -200,7 +200,7 @@ def run_host(cli, clangd, workspace, report_directory, iteration, samples, probe
         status = wait_diagnostics(host,doc['revision'],path=source_path)
         analysis_ms = (time.perf_counter()-analysis_begin)*1000
         epoch = status['epoch']
-        timings = {}
+        timings = {}; result_shapes = {}
         location = position(doc['text'],probe['expression'],len(probe['expression'])-len(probe['member']))
         base = {'path':source_path,'expectedRevision':doc['revision'],'position':location}
         operations = [('definition','language.definition',base),
@@ -223,6 +223,12 @@ def run_host(cli, clangd, workspace, report_directory, iteration, samples, probe
                     if result.get('state')!='preview' or not result.get('editCount',0): raise RuntimeError('Rename returned no guarded preview')
                     # No apply/save here: preview timings include native preparation only.
             timings[name]=summarize(observed)
+            if name in ('definition','references'):
+                result_shapes[name]={'locations':len(result['locations']),'paths':sorted({item.get('path','') for item in result['locations']})[:32],
+                    'truncated':result.get('truncated'),'projectIndexCompleteness':'unknown'}
+            elif name=='completion':result_shapes[name]={'items':len(items),'isIncomplete':payload.get('isIncomplete') if isinstance(payload,dict) else None}
+            else:result_shapes[name]={'editCount':result['editCount'],'files':len(result.get('files',[])),'state':result['state']}
+
         if cpp_status(host)['epoch']!=epoch: raise RuntimeError('Warm requests restarted the language backend')
         # Unsaved declarations and references must be visible together, disk bytes unchanged.
         disk_before={name:hashlib.sha256((workspace/name).read_bytes()).hexdigest() for name in [source_path,header_path]}
@@ -240,7 +246,7 @@ def run_host(cli, clangd, workspace, report_directory, iteration, samples, probe
         if host.call('service.status')['engine']['context']!=host.context: raise RuntimeError('Warm operations replaced the Engine')
         return {'processColdStartupMilliseconds':host.startup_ms,
                 'firstVersionBoundDiagnosticsMilliseconds':analysis_ms,
-                'warmOperations':timings,'unsavedEditDiagnosticsAndDefinition':summarize(overlay),
+                'warmOperations':timings,'semanticResultShapes':result_shapes,'probe':probe,'unsavedEditDiagnosticsAndDefinition':summarize(overlay),
                 'backendEpoch':epoch,'memory':linux_memory(host.process.pid),
                 'checks':{'persistentContext':True,'persistentBackendEpoch':True,'diskSourcesUnchanged':True}}
     finally:
@@ -303,6 +309,7 @@ def main(argv=None):
     report={'format':'cycode-semantic-baseline/1','corpus':description,
             'scope':('Actual native CyCode CMake project' if args.core_project else 'Synthetic C++ workload')+', production CLI JSON/stdio overhead included; process-cold is not OS-cache cold; no GUI, no file-search proxy',
             'platform':sys.platform if args.prepare_only else platform.platform(),'python':sys.version.split()[0],
+            'sourceRevision':os.environ.get('GITHUB_SHA'),'workflowRun':os.environ.get('GITHUB_RUN_ID'),
             'limits':['No Unreal/MSBuild performance acceptance or comparative IDE benchmark; real Core CMake is a separate workload','No whole-project index completion signal',
                       'No concurrent/cancellation/load-invalidation benchmark yet','No peak/private memory measurement'],
             'runs':[]}

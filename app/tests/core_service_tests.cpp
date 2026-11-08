@@ -19,6 +19,8 @@ void coreServiceChecks(const std::filesystem::path &root) {
     };
     check(a.status().at("engine").at("context")!=b.status().at("engine").at("context"),"Project contexts are not isolated");
     check(a.status().at("analysis").at("projectIndexCompleteness")=="unknown","Service inferred full semantic coverage");
+    const auto bounded=Json::parse(encodeNativeResponse({{"id",77},{"result",std::string(maximumNativeResponseBytes+1,'x')}}));
+    check(bounded.at("id")==77 && bounded.at("error").at("code")=="ResponseTooLarge","Native stdio/socket encoding lost bounded failure identity");
     const auto disabled=first.languageStatus().at("servers").at("cpp");
     check(!disabled.at("available").get<bool>() && disabled.at("state")=="disabled","Disabled backend was reported as available");
     check(disabled.at("analysis").at("projectIndexCompleteness")=="unknown","Configured backend claimed semantic index completion");

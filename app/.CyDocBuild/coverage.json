@@ -97,7 +97,7 @@
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-coreextraction",
-      "sourceSha256": "bd63a6db37349f3ff5b10e5e567843f2e0d878ee07b3f8423ec42f5dd07d0f7d"
+      "sourceSha256": "c25736b71007c371a1a2a581c6147f5581b537f4b97cd8a8c722d24c6f341bc8"
     },
     {
       "source": "Docs/CppCounterparts.md",

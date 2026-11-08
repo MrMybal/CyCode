@@ -1,51 +1,63 @@
-# CyCode native Core extraction — first delivery
+# CyCode native architecture and source integration
 
-## Diagnosis and evidence
+CyCode is the shared native C++20 library and headless service. CyCodeIDE owns the
+desktop presentation; CyCodeReader owns its standalone editor presentation. The
+existing Engine, language backends, project adapters, native plugins and guarded
+transactions are reused. This development branch is not a new application release.
 
-The Engine, LanguageService/LanguageClient, document revisions, compiler adapters,
-semantic transactions and authenticated `--serve` bridge already existed. They
-are reused. Previously the CMake graph unconditionally added Reader/editor to
-obtain Paths, TextFile and Snippet; the fetcher also checked out Reader in headless
-mode. GUI targets and 66 UI/host translation units lived beside the Engine.
-
-The native `didChange` implementation currently sends full document contents.
-clangd runs with `--background-index`; its initialized/ready flag does not prove
-that background indexing has covered a project. The path cache and literal
-search are separate services and supply no semantic-index performance evidence.
-Existing capability checks gate navigation, rename, formatting and code actions;
-a backend capability is not acceptance of every possible refactoring.
-
-Before extraction, native CI at ab827913944da95155e61f281cbe92aa2c337ec0
-passed 64 Windows tests and 63 Linux/macOS tests, with the Windows-only MSBuild
-case skipped on POSIX. These runs predate this extraction and are NOT runtime
-validation of the new layout. No semantic latency or real-project memory baseline
-has yet been established. No equivalence with CLion/IntelliJ is claimed.
-
-## Ownership and dependency direction
+## Ownership
 
 ```mermaid
 flowchart TB
-  IDE[CyCodeIDE: SDL / CyUI interface] --> Engine[CyCode::Core: existing native Engine]
-  CLI[CyCode CLI / persistent service] --> Engine
-  Reader[CyCodeReader: editor application] --> Common[CyCode common: Files / Snippets]
-  IDE --> Editor[Reader editor API 1: graphical adapters]
-  Editor --> Common
-  Engine --> Common
-  Engine --> LSP[Persistent language backends: clangd first]
+  IDE[CyCodeIDE: windows and CyUI views] --> Engine[CyCode::Core: project Engine]
+  CLI[Persistent CLI / native service] --> Engine
+  Reader[CyCodeReader] --> Text[CyCode::TextSession]
+  IDE --> Editor[Reader graphical editor API 1]
+  Engine --> Buffers[CyCode::Documents: canonical buffers and codecs]
+  Text --> Buffers
+  Engine --> Backend[Persistent language servers and their semantic indexes]
+  Text --> Bridge[CyCode::TextBridge]
+  Bridge --> Transport[CyCode::Transport / Protocol]
+  Engine --> Transport
+  Editor --> Common[Files and Snippets]
+  Buffers --> Common
 ```
 
-CyCode owns the Engine, native contracts, compiler/project adapters and the common
-native utilities. CyCodeIDE owns window lifecycle, UI views and their resources.
-Reader currently consumes the canonical common targets; migrating Reader's richer
-Document/Search/Bridge services to an optional Engine-based session is a subsequent
-lot, not implemented merely by changing a dependency. No semantic model was added.
+The native Core owns both project and standalone text profiles. They share
+BufferState, encoding/newline primitives, guarded atomic I/O, native search,
+process ownership, protocol envelopes and loopback transport. Reader's former
+Document, Encoding, Search, Core, Plugins, NativeProcess and Bridge implementations
+are retired from its build/source; compatibility headers retain its source names.
+Core's duplicated app-level process sources/headers are retired too.
 
-`common/` API 1 preserves headers, namespace and legacy target names. Reader's
-six former native utility sources/headers are retired in its companion branch.
-Source consumers use `CyCode::Core`, `CyCode::Files` and `CyCode::Snippets`.
-Dependencies are locked archive sources. Core configuration/fetch/build has no
-Reader/CyUI/SDL/ImGui/OpenGL/Tree-sitter requirement. Graphical dependency locks
-and the desktop CMake graph moved to CyCodeIDE.
+Project Engine retains workspace path restrictions, UTF-8 sources, identities,
+revision issuance, recovery and multi-file transactions. TextSession retains
+standalone paths, UTF-16/Windows-1252 support, read-only state, text transforms and
+the existing text-plugin ABI. These are explicit profiles, not two semantic models.
+Reader does not acquire project/LSP analysis just by linking the text profile.
+Application-owned editor Undo/Redo and project change transactions are preserved.
+
+## Source components
+
+The root native source API, common source API and Reader graphical editor source
+API are each version 1. These are source contracts, not a stable C++ binary ABI.
+Use one pinned Core checkout per target graph; mixing Core copies is refused.
+
+| Target | Responsibility |
+| --- | --- |
+| CyCode::Core | Existing project Engine, build/language/debug/VCS services and transactions |
+| CyCode::Files | Paths and explicit guarded atomic text-file I/O |
+| CyCode::Snippets | Native snippet parsing/expansion and byte ranges |
+| CyCode::Documents | BufferState, codecs, Document and literal text search |
+| CyCode::TextSession | Standalone live documents, revisions and text plugins |
+| CyCode::TextBridge | Text-profile adapter for the common native protocol |
+| CyCode::Process | Bounded argv-based processes, environment filtering and owned termination |
+| CyCode::Transport | Authenticated loopback JSONL transport and endpoint lifecycle |
+| CyCode::Protocol | Versioned request validation, typed failures and bounded response encoding |
+
+Project plugins retain the versioned C ABI 1/2; text plugins retain their existing
+ABI 1 names. Binaries from those two plugin profiles are not interchangeable. No
+STL or ImGui object crosses either C boundary. Native plugins remain trusted code.
 
 ## Build and embed
 
@@ -55,76 +67,119 @@ cmake -S . -B runtime/core -DBUILD_TESTING=OFF
 cmake --build runtime/core --config Release --target cycode_cli
 ```
 
-The historical `cmake -S app` and `python app/scripts/build.py --core-only`
-entry points remain available. Ordinary builds do not execute binaries or tests.
-On Windows the wrapper finds Visual Studio 2022; direct CMake requires the normal
-compiler environment/generator. For an existing dependency cache, set
-`-DCYCODE_DEPS=<cache>`. There is no automatic dependency download at configuration.
+Core fetch/configuration never requires Reader, CyUI, SDL, ImGui, OpenGL or
+Tree-sitter. Native dependencies are pinned JSON, vterm, TinyXML2, Monocypher,
+PCRE2 and utf8proc. The full Engine is the default. CLI, bundled providers and
+update support default OFF when embedded; ordinary builds keep native tests OFF.
 
-A native host sets `CYCODE_DEPS` and adds this repository with `add_subdirectory`,
-then links `CyCode::Core`. CLI, bundled providers and installation services default
-to OFF when embedded and may be enabled explicitly. A small text editor may add
-only `common/` with `CYCODE_COMMON_DEPS` instead of importing the whole Engine.
-Each `Engine(workspace)` owns its project context; do not share an Engine between
-unrelated projects. Keep it alive across requests and destroy it after joining
-callers. Existing Engine destruction owns backend/plugin/job shutdown.
-
-The old `CYCODE_BUILD_GUI=ON` now reports the new IDE repository explicitly.
-It never silently substitutes a headless build for a requested IDE.
-
-## Headless contract
+Text applications can fetch JSON only and select their components:
 
 ```sh
-cycode_cli --disable-plugins /path/to/project --stdio
-cycode_cli /path/to/project --serve /private/endpoint.json
-cycode_cli /path/to/project workspace.describe '{}'
+python app/scripts/fetch_dependencies.py --components TextSession TextBridge Process
+cmake -S . -B runtime/text -DCYCODE_COMPONENTS="TextSession;TextBridge;Process" -DBUILD_TESTING=OFF
+cmake --build runtime/text --config Release
 ```
 
-`--stdio` emits a ready JSON line, then reads one bounded request object per line:
+An embedding may set CYCODE_COMMON_DEPS to its pinned dependency directory, include
+`cmake/CyCodeComponents.cmake`, call `cycode_add_components(TextSession TextBridge)`
+and link the explicit targets. Dependencies resolve automatically; unused optional
+session/plugin or snippet libraries are not compiled. A full project host adds
+the root Core directory and links CyCode::Core. Each Engine owns one project;
+keep it alive across requests, join callers, then destroy it. TextSession does
+not initialize project adapters or language workers.
+
+## Native service contract
+
+```sh
+cycode_cli --disable-plugins <project> --stdio
+cycode_cli <project> --serve <private-endpoint.json>
+```
+
+The stdio host emits a ready event, then accepts one bounded JSON object per line:
 
 ```json
 {"protocol":"cycode-core/1","id":1,"method":"service.status","params":{}}
 ```
 
-Responses retain `id`, `protocol` and either `result` or a structured `error`
-with `code` and `message`. Request limit: 8 MiB; string ids: 256 bytes. Protocol
-and id are optional for legacy requests. The stdio host control
-`service.shutdown` drains/cancels owned build/test/project work, responds, then
-exits through Engine destruction; EOF follows the same shutdown path. It does
-not save documents. No Python, SDK or graphical initialization is involved.
+Responses preserve id/protocol and exactly result or error. Errors contain code,
+message and optional details. Native owners emit RevisionConflict, DiskConflict,
+ReadOnly, BackendUnavailable, Cancelled, DeadlineExceeded, CapacityExceeded and
+UnsupportedOperation where migrated; other legacy runtime failures conservatively
+remain OperationFailed. Classification never parses exception prose.
 
-`service.status` separates service lifecycle, Engine context identity and analysis
-status. `language.status` remains the authoritative existing backend report,
-including enabled/running/ready, capabilities, epoch and version-bound diagnostics.
-Backend initialization does not certify full-project semantic completeness;
-`projectIndexCompleteness` is explicitly unknown. Existing runtime_error-based
-operations conservatively return OperationFailed rather than guessing error codes
-from human-readable messages. Typed revision/backend errors are a later lot.
+Request bound is 8 MiB; response bound is 20 MiB; string request IDs are at most
+256 bytes. Stdio and socket output share one encoder. Oversized replies return a
+correlated ResponseTooLarge. Socket transport bounds ordinary clients to eight,
+with a control path for status/cancellation, timed reads and owned sockets. Failed
+construction unwinds its resources; stopping joins handlers before borrowed state
+can die. An old endpoint does not remove a newer instance's descriptor.
 
-The existing loopback descriptor protocol remains `cycode-native/1` for SDK
-compatibility and adds `coreProtocol`. Socket requests reuse CoreService's native
-response envelope. Authenticated shutdown remains owned by the parent stdin/EOF;
-the new stdio host command is not an added SDK/MCP operation.
+The descriptor protocols cycode-native/1 and cycodereader-native/1 remain compatible
+and advertise coreProtocol. Text reports profile=text and no project analysis.
+Protocol/id remain optional for legacy callers. Stdio service.shutdown or EOF
+drains the host without saving buffers. Socket shutdown remains parent stdin/EOF;
+these controls are not additional SDK/MCP operations. CyToolsCore still owns MCP,
+jobs, identities, permissions and scheduling. One-shot CLI JSON remains legacy.
 
-## Reproducible measurements and next lots
+## Analysis and compilation context
 
-`app/scripts/benchmark_semantic.py --ci --cli <binary> --clangd <binary>
---output <owned-report-directory>` is an explicit GitHub-runner-only benchmark.
-`--prepare-only --output <directory>` generates its deterministic C++ corpus
-without executing a native binary. The workflow is manual, distinct from normal
-builds. Reports include raw samples, environment/compiler/backend identity,
-process-cold versus persistent calls, version-bound diagnostics, guarded queries,
-unsaved overlay checks and memory scope. Synthetic corpus results are not a
-large CMake/MSBuild/Unreal project acceptance or a comparison with another IDE.
+service.status separates the service lifecycle from its Engine context.
+language.status.servers reports each backend's configuration, observed launch,
+initialization, capabilities, epoch, sent document revisions and version-bound
+diagnostics. available means an observed running backend; an idle configured
+command is not evidence of installation/readiness. Top-level ready/running remain
+legacy aggregates; inspect the per-backend records. Sent revisions prove queued
+notifications, not completed analysis. Whole-project index completeness is unknown.
 
-Subsequent coherent lots: run/capture the baseline; compilation-context and
-invalidation acceptance on real CMake/MSBuild/Unreal projects; capability-driven
-C++ transformations; incremental sync/cancellation only after measurement;
-Reader session reuse and the standalone SDK/package API. Preserve prepared
-transactions/revisions/disk guards and explicit saves throughout.
+CMake, MSBuild and Unreal continue to supply actual compiler commands, macros,
+include/SDK/generated-file paths through their existing native adapters. clangd's
+command model and index remain authoritative; path caches/literal search are
+separate. Header command inference and background indexing have limits described
+by [clangd compilation commands](https://clangd.llvm.org/design/compile-commands)
+and [clangd indexing](https://clangd.llvm.org/design/indexing). Backend initialization
+does not establish complete references across a project. Existing rename, code
+actions and formatting retain previews, revisions, disk guards, explicit saves
+and Undo; unsupported command-based transformations remain unavailable.
 
-The historical application manual and old desktop verification scripts remain
-preserved in this Core history during extraction. CyCodeIDE builds the same
-canonical offline CyDoc export from Core, rather than forking its content or
-contracts. Desktop packaging, installer/update repository identity and public
-Pages relocation need a separate delivery before publishing an IDE release.
+## Verified evidence and limits
+
+Core 28c455be3bdbb0da1a46fb5222941151013ac5c8 passed 63 native tests on each runner:
+[Windows/Linux/macOS native run](https://github.com/MrMybal/CyCode/actions/runs/42480778728).
+The Windows-only MSBuild test is skipped on POSIX. The macOS replay scenario also
+passed three repeats. Earlier intermittent replay failures remain a diagnostic
+item; a passing repeat is not a root-cause fix. New buffer/component changes after
+that revision require their own acceptance run.
+
+Reader 9cbd8d3b7664476f148642b435f0ab1e41be231a passed seven tests on all three systems:
+[native Reader integration](https://github.com/MrMybal/CyCodeReader/actions/runs/42481303220).
+These include real text/native plugins, encodings, unsaved documents, revisions,
+disk conflicts, Git plugin environment handling, IPC compatibility and EOF shutdown.
+Windows production builds cover the CLI, minimal libraries and Reader GUI without
+executing local app/test binaries. IDE presentation acceptance is a separate run.
+
+[Semantic run at 28c455b](https://github.com/MrMybal/CyCode/actions/runs/42480779142)
+completed both a deterministic synthetic workload and the actual Core CMake project
+(121 translation units, 230 owned source/header files, 1,773,202 bytes). Raw reports
+are retained in Benchmarks/semantic-baseline-28c455b. On that Linux runner, five real-project
+warm samples gave medians of 8.88 ms definition, 8.79 ms references, 303.82 ms
+completion and 18.55 ms rename preview; first version-bound diagnostics took 2.91 s.
+Instantaneous CLI/descendant RSS summed to 1,234,755,584 bytes. Shared pages may be
+counted more than once; this is neither peak nor private memory. These are recorded
+responses, not complete-index coverage, universal performance or an IDE comparison.
+
+Regenerate only on an explicit GitHub runner with benchmark_semantic.py --ci.
+--prepare-only produces source data locally without native execution. Reports carry
+raw samples, corpus/compiler identity, source revision, response shapes and scope.
+Process-cold is not OS-cache cold. Native execution remains suspended locally while
+the existing antivirus removals are unresolved; no exclusions/restores are used.
+
+## Remaining development
+
+Real large Unreal/MSBuild performance acceptance, complete context/dependency
+invalidation coverage, incremental sync, concurrent/cancellation load baselines and
+advanced clangd command-based transformations remain further engine work. No
+CLion/IntelliJ parity is claimed. IDE installer/update identity and complete desktop
+acceptance must be finished before a CyCodeIDE release; the historical updater is
+disabled in this development build. The existing bilingual CyDoc manual stays
+canonical in Core and is generated/staged by the IDE, preserving useful guides,
+media, routes and public API schemas without a second documentation tree.

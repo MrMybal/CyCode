@@ -2,6 +2,17 @@ name: Native semantic baseline
 on:
   push:
     branches: [codex/core-intelligence]
+    paths:
+      - CMakeLists.txt
+      - cmake/**
+      - common/**
+      - modules/**
+      - app/include/**
+      - app/src/**
+      - app/dependencies.lock.json
+      - app/scripts/benchmark_semantic.py
+      - app/tests/test_semantic_baseline_data.py
+      - .github/workflows/semantic-baseline.yml
   workflow_dispatch:
 permissions:
   contents: read

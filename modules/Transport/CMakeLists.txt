@@ -1,7 +1,7 @@
 find_package(Threads REQUIRED)
 add_library(cycode_transport STATIC EXCLUDE_FROM_ALL src/LocalEndpoint.cpp)
 target_include_directories(cycode_transport PUBLIC include)
-target_link_libraries(cycode_transport PUBLIC CyCode::Files Threads::Threads)
+target_link_libraries(cycode_transport PUBLIC CyCode::Files CyCode::Protocol Threads::Threads)
 set_target_properties(cycode_transport PROPERTIES POSITION_INDEPENDENT_CODE ON)
 if(WIN32)
   target_link_libraries(cycode_transport PUBLIC ws2_32)
