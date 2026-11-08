@@ -20,6 +20,9 @@ class RunnerLaunchGuards(unittest.TestCase):
             ('verify_mcp_runtime_ci.py', ['--installation', 'not-used', '--fixture-root', 'not-used', '--reports', 'not-used']),
             ('verify_shortcuts.py', ['--ci', '--executable', 'not-used']),
             ('verify_information.py', ['--ci', '--executable', 'not-used']),
+            ('verify_semantic.py', ['--ci', '--executable', 'not-used']),
+            ('verify_navigation.py', ['--ci', '--executable', 'not-used']),
+            ('verify_semantic_highlights.py', ['--ci', '--executable', 'not-used', '--cpp-only']),
         ]
         for name, arguments in cases:
             with self.subTest(script=name):

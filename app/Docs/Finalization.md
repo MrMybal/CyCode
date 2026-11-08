@@ -264,3 +264,15 @@ require llvmpipe on Windows. Font checks retain Windows system fonts and require
 real glyph availability; keyboard source bytes are explicit LF on every host.
 The new Windows path remains pending runner execution. It does not imply physical
 keyboard/IME/DPI/multi-monitor or real-GPU performance verification.
+
+## Shared semantic desktop acceptance prepared — 2026-11-08
+
+Existing native GUI navigation/highlight/refactoring scripts now have explicit
+runner guards, production executable selection and separate owned fixtures.
+The next matrix requests three Unicode definition/reference cases, two actual
+clangd color views and fifteen keyboard-driven symbol/rename/format/apply/Undo
+cases. Six diff themes plus French are retained for later visual inspection.
+Actual command-availability waits bound startup/apply/Undo without bypassing
+input handlers. C# managed semantic acceptance remains separate; no backend or
+process is simulated and no new native fixture executable is added. This is
+prepared coverage, still awaiting actual remote results.

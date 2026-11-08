@@ -28,30 +28,43 @@ int Disabled = TRACE_COUNT;
 '''
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--managed-only',action='store_true'); options=parser.parse_args()
-    base=ROOT/'data/validation'; base.mkdir(parents=True,exist_ok=True)
-    reports=ROOT/'data/reports/semantic-highlights'; reports.mkdir(parents=True,exist_ok=True)
+    mode=parser.add_mutually_exclusive_group()
+    mode.add_argument('--managed-only',action='store_true')
+    mode.add_argument('--cpp-only',action='store_true')
+    parser.add_argument('--ci',action='store_true')
+    parser.add_argument('--executable',type=Path,default=Path(os.environ.get('CYCODE_TEST_GUI',ROOT/('CyCode.exe' if sys.platform=='win32' else 'CyCode'))))
+    parser.add_argument('--output',type=Path)
+    options=parser.parse_args()
+    if options.ci and os.environ.get('GITHUB_ACTIONS')!='true':
+        parser.error('--ci requires an explicitly configured GitHub Actions runner')
+    executable=options.executable.resolve(strict=True)
+    if options.ci and not executable.is_relative_to(ROOT/'runtime'):
+        parser.error('Use this checkout production executable.')
+    base=ROOT/('runtime/test-workspaces/semantic-highlights-ci' if options.ci else 'data/validation'); base.mkdir(parents=True,exist_ok=True)
+    reports=options.output or ROOT/('runtime/reports/semantic-highlights-ci' if options.ci else 'data/reports/semantic-highlights'); reports.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='highlight-',dir=base) as folder:
         root=Path(folder)
         (root/'types.hpp').write_text('#pragma once\nstruct Widget { int Field; int Compute(int Parameter) { return Parameter + Field; } };\ninline int Calculate(int Input) { return Input * 2; }\n','utf-8')
-        (root/'main.cpp').write_text(SOURCE,'utf-8')
+        (root/'main.cpp').write_bytes(SOURCE.encode('utf-8'))
         (root/'compile_commands.json').write_text(json.dumps([{'directory':str(root),'file':str(root/'main.cpp'),'arguments':['clang++','-std=c++20','-I'+str(root),'-c',str(root/'main.cpp')]}]),'utf-8')
         for theme,language in ([] if options.managed_only else [('graphite','en'),('light-grey','fr')]):
             report=reports/f'{theme}.json'
-            executable=Path(os.environ.get('CYCODE_TEST_GUI',ROOT/'CyCode.exe'))
             result=subprocess.run([str(executable),'--workspace',str(root),'--open','main.cpp','--theme',theme,'--language',language,
                 '--test-frames','180','--test-wait-idle','--test-hidden','--test-highlights','--test-report',str(report),'--test-capture',str(reports/f'{theme}.bmp')],capture_output=True,timeout=50)
             if result.returncode:
-                raise RuntimeError(result.stderr.decode(errors='replace')+' '+(ROOT/'data/reports/startup-error.txt').read_text('utf-8'))
+                raise RuntimeError(result.stderr.decode(errors='replace'))
             state=json.loads(report.read_text('utf-8'))
             assert state['hiddenWindow'] and state['highlight']['count']>0 and state['highlight']['revision']>0,state
             assert not state['error'] and not state['highlight']['error'] and not state['dirty'],state
-            assert state['text']==SOURCE and (root/'main.cpp').read_text('utf-8')==SOURCE,'Coloring changed source text'
+            assert state['text']==SOURCE and (root/'main.cpp').read_bytes()==SOURCE.encode('utf-8'),'Coloring changed source text'
             print(f'{theme}/{language}: real Engine/clangd semantic colors in hidden desktop, {state["highlight"]["count"]} spans',flush=True)
+        if options.cpp_only:
+            print('Actual C++ semantic colors passed in both hidden themes; C# is a separate acceptance path.')
+            return
         sys.path.insert(0,str(ROOT/'app/tests'))
         from csharp_fixture import create_csharp_fixture, CONSUMER
         solution=create_csharp_fixture(root/'managed')
-        report=reports/'csharp.json'; executable=Path(os.environ.get('CYCODE_TEST_GUI',ROOT/'CyCode.exe'))
+        report=reports/'csharp.json'
         result=subprocess.run([str(executable),'--workspace',str(solution),'--open','App/Consumer.cs','--theme','graphite',
             '--test-frames','180','--test-wait-idle','--test-hidden','--test-highlights','--test-report',str(report),'--test-capture',str(reports/'csharp.bmp')],capture_output=True,timeout=85)
         if result.returncode: raise RuntimeError(result.stderr.decode(errors='replace')+' '+(ROOT/'data/reports/startup-error.txt').read_text('utf-8'))

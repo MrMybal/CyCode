@@ -25,6 +25,30 @@ are explicitly LF on all platforms, avoiding text-mode CRLF fixture differences.
 These runner checks do not establish physical multi-monitor, DPI, IME, GPU-driver
 or performance acceptance. No local driver/application execution was performed.
 
+## Shared semantic desktop acceptance on runners
+
+The existing navigation, semantic-highlight and refactoring scripts now accept
+`--ci --executable PATH` and optional `--output DIR`. Each refuses a local CI
+invocation before creating fixtures, importing any managed fixture, or spawning
+an application. The production workflow runs them on Linux/Xvfb, macOS and the
+isolated Windows renderer fixture. These new cases remain pending execution.
+
+- `verify_navigation.py`: three real clangd definition/reference jumps, including
+  an accented filename, spaces, `#`, emoji, UTF-16 coordinates and source hashes.
+- `verify_semantic_highlights.py --cpp-only`: two actual native/clangd semantic
+  color captures, EN graphite and FR light-grey, with unchanged Unicode source.
+  C#/Roslyn is preserved as a separate explicit path; cpp-only does not claim it.
+- `verify_semantic.py --hidden`: fifteen real ImGui-input scenarios for types,
+  members, rename previews across six themes/FR, multi-file apply/Undo and
+  formatting/Undo. Startup and apply/Undo wait on actual command availability,
+  with bounded deadlines rather than dispatching commands directly or replacing
+  their services. Fixtures are unique owned directories; failed refactoring
+  cases retain evidence. Disk source bytes must remain exact on every platform.
+
+No visible application is launched locally by the data/safety-contract checks.
+The fixtures do not substitute for physical keyboard, screen-reader, IME or DPI
+acceptance. The color captures still need visual inspection after actual CI.
+
 ## Current remote evidence and historical entries
 
 Finalization.md records the latest actual platform results. The milestone notes

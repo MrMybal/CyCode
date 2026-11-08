@@ -115,6 +115,36 @@ jobs:
       - name: Exercise real macOS detached windows and simultaneous native instances
         if: runner.os == 'macOS'
         run: python app/scripts/verify_viewports_ci.py --executable runtime/build/CyCode
+      - name: Exercise actual Linux Unicode navigation, semantic colors and transactional refactoring
+        if: runner.os == 'Linux'
+        env:
+          GALLIUM_DRIVER: llvmpipe
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          xvfb-run -a python app/scripts/verify_navigation.py --ci --executable runtime/build/CyCode
+          xvfb-run -a python app/scripts/verify_semantic_highlights.py --ci --cpp-only --executable runtime/build/CyCode
+          xvfb-run -a python app/scripts/verify_semantic.py --ci --hidden --executable runtime/build/CyCode
+      - name: Exercise actual macOS Unicode navigation, semantic colors and transactional refactoring
+        if: runner.os == 'macOS'
+        env:
+          GALLIUM_DRIVER: llvmpipe
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          python app/scripts/verify_navigation.py --ci --executable runtime/build/CyCode
+          python app/scripts/verify_semantic_highlights.py --ci --cpp-only --executable runtime/build/CyCode
+          python app/scripts/verify_semantic.py --ci --hidden --executable runtime/build/CyCode
+      - name: Exercise actual Windows Unicode navigation, semantic colors and transactional refactoring
+        if: runner.os == 'Windows'
+        env:
+          GALLIUM_DRIVER: llvmpipe
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          python app/scripts/verify_navigation.py --ci --executable "${{ steps.windows_graphics.outputs.executable }}"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python app/scripts/verify_semantic_highlights.py --ci --cpp-only --executable "${{ steps.windows_graphics.outputs.executable }}"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python app/scripts/verify_semantic.py --ci --hidden --executable "${{ steps.windows_graphics.outputs.executable }}"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - name: Locate or install the Windows installer compiler
         if: runner.os == 'Windows'
         shell: pwsh
@@ -161,5 +191,8 @@ jobs:
             runtime/reports/viewports-ci/*
             runtime/reports/information-ci/*
             runtime/reports/mcp-ci/result.json
+            runtime/reports/navigation-ci/*
+            runtime/reports/semantic-highlights-ci/*
+            runtime/reports/semantic-ci/*
           if-no-files-found: ignore
           retention-days: 7
