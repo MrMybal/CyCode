@@ -1,3 +1,4 @@
+#include "cycode/DebugRuntime.h"
 #include "cycode/DebugInspection.h"
 #include "cycode/JavaDebug.h"
 #include <functional>
@@ -26,6 +27,19 @@ void stepInTargetContracts();
 void gotoTargetContracts();
 void runToCursorContracts();
 void debugInspectionContracts() {
+    using namespace cycode;
+    for (const bool windows : {false,true}) {
+        require(netCoreDebugArgument("été # \"quoted\" $(safe)",windows)=="été # \\\"quoted\\\" $(safe)",
+                "Managed debugger quote preservation failed");
+        require(netCoreDebugArgument(R"(C:\\plain\\)",windows)==R"(C:\\plain\\)",
+                "Managed debugger unquoted backslashes changed");
+        rejects([&]{netCoreDebugArgument("",windows);});
+        rejects([&]{netCoreDebugArgument("quoted\"tail\\",windows);});
+    }
+    require(netCoreDebugArgument("space tail\\",true)=="space tail\\",
+            "Windows adapter trailing slash compensation failed");
+    rejects([&]{netCoreDebugArgument("space tail\\",false);});
+
     dataBreakpointContracts();
     debugMutationContracts();
     debugExecutionContracts();
@@ -33,7 +47,6 @@ void debugInspectionContracts() {
     stepInTargetContracts();
     gotoTargetContracts();
     runToCursorContracts();
-    using namespace cycode;
     const auto incremental = javaIncrementalBuildParams();
     require(incremental.is_array() && incremental.size() == 1 && incremental[0].is_boolean() && incremental[0] == false,
             "JDT incremental build must send one positional boolean, not a scalar/named object");

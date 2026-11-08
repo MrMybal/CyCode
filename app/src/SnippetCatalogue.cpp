@@ -107,9 +107,12 @@ void validateSnippetContribution(const Json &info) {
         if (key!="id" && key!="title" && key!="definitions" && key!="order")
             throw std::runtime_error("Unsupported snippet contribution property");
     if (info.contains("title")) (void)stringValue(info.at("title"),160,true);
-    if (info.contains("order") && (!info.at("order").is_number_integer() ||
-        info.at("order") < -10000 || info.at("order") > 10000))
-        throw std::runtime_error("Snippet catalogue order must be an integer from -10000 to 10000");
+    if (info.contains("order")) {
+        const auto &order = info.at("order");
+        const bool valid = order.is_number_unsigned() ? order.get<uint64_t>() <= 10000
+            : order.is_number_integer() && order.get<int64_t>() >= -10000 && order.get<int64_t>() <= 10000;
+        if (!valid) throw std::runtime_error("Snippet catalogue order must be an integer from -10000 to 10000");
+    }
     (void)snippetCatalogueItems(info.at("definitions").dump(),""); // Validate excluded scopes too.
 }
 Json mergedSnippetItems(std::string_view workspace, const Json &catalogues, const std::string &language,std::string_view user) {

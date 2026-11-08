@@ -16,9 +16,9 @@ runtime behavior, and an unavailable external tool is a skipped test, not a pass
 
 | Gate | Current evidence | Required before completion |
 |---|---|---|
-| Windows/Linux/macOS core | Complete c2c72ba matrix collected failures and explicit skips on all three platforms | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
-| Production GUI and CLI | Merged Windows Release app/CLI/helper/providers compile; 61 UI files pass strict Clang syntax | Complete Linux/macOS production builds and actual Linux render evidence |
-| Source/schema checks | 233 descriptors / 466 schemas match; 26 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
+| Windows/Linux/macOS core | Complete 1f56042 matrix: 50 Windows, 50 Linux and 49 macOS native tests passed, with 7/6/6 failures and 1/2/3 explicit skips | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
+| Production GUI and CLI | Full production app/CLI builds pass on Windows, Linux and macOS; Linux EN graphite / FR light-grey hidden rendering passes; 61 UI files pass strict Clang syntax | Finish actual keyboard/Undo, font/icon resources, detached windows and platform interaction acceptance |
+| Source/schema checks | 233 descriptors / 466 schemas match; 27 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
 | Offline help and website | Merged 610-page / 6316-route reader and DOM controls pass | Keep exports current with final fixes; validate actual browser/desktop help handoff |
 | Installer and application updates | Actual c2c72ba Windows runner Setup, payload hashes, busy/pending guards, French repair and uninstall/data retention pass | Full installed/portable online update, cancellation/recovery/restart and pristine-machine runtime acceptance |
 | Editor and SDK/plugins | Implemented milestones are documented individually | Runtime source/selection/Undo/lifecycle/permission and graphical acceptance |
@@ -51,3 +51,34 @@ No signing key, Perforce/Diversion server or Unreal installation is fabricated.
 
 The ledger does not mark advanced Roadmap.md work complete. No new release is
 published from a failing development matrix.
+
+## Second native correction pass — 2026-11-08
+
+- Actual signed-package loading on Windows reported an inaccessible lease file.
+  Native lease opens now use extended absolute Windows paths without renaming the
+  existing lease identity. The existing core suite adds shared/exclusive long-path
+  coverage; no new fixture executable is introduced.
+- Git submodule ignore preflight previously forced literal pathspec magic on a
+  command that accepts filenames. A read-only Git query reproduced exit 128;
+  other Git commands keep their literal pathspec protection.
+- POSIX terminal supervision now distinguishes traced stop/continue reports and
+  EINTR from an actual exit, avoiding premature termination during debugger attach.
+- NetCoreDbg launch arguments distinguish the PAL and CRT quote rules. The real
+  Unicode argv/environment test is retained; unsupported argument lists fail
+  explicitly instead of silently changing the target's argv.
+- Snippet order validates signed and unsigned JSON separately. Negative-case
+  fixture failures report the caller line. Host-validation refusals are asserted
+  through the actual plugin exception contract. Rust semantic refresh retries are
+  bounded and still reject changed document revisions.
+- Byte-preservation fixtures write binary streams on Windows. The C++ action
+  fixture requests a deterministic missing-semicolon compiler fix rather than
+  relying on optional typo correction. MSBuild failure reports include payloads
+  so missing navigation is actionable; that remaining failure is not marked fixed.
+- The Linux-only CI keyboard step exercises the existing twelve Rider/VS/VS Code
+  input scenarios in hidden windows. A data-only test proves runner checks refuse
+  local execution before spawning. These newly scheduled keyboard cases have not
+  yet passed. No native test/application was launched locally.
+
+Production run 42443628690 and native run 42443628691 retain the exact evidence
+for 1f56042. Subsequent fixes require a new run. The Linux captures expose fallback
+font/icon rendering, which remains a real interface issue, despite pixel checks.

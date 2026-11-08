@@ -12,14 +12,24 @@ Windows production GUI/CLI/helper/providers compile with BUILD_TESTING=OFF.
 Strict Clang syntax checks pass all 61 interface translation units, including the
 revised outline comparator. Targeted MSVC /Zs checks evaluate production UTF-8 and
 integer policies and compile native regression bodies without producing or
-running fixtures. Twenty-six Python data-only tests cover build-plan boundaries,
+running fixtures. Twenty-seven Python data-only tests cover build-plan boundaries,
 release authoring, navigation and snippet/schema contracts. Source syntax/data and
 the complete EN/FR reader remain separate checks from native behavior.
 
-The c2c72ba remote matrix actually executes the native suite and exposes failures,
-including absent optional servers, stale fixture assumptions, Windows legacy log
-encoding, signed/unsigned breakpoint IDs and worktree directory spelling. New
-fixes require another complete run; configured jobs are not claimed as passes.
+The 1f56042 production matrix compiles the full GUI and CLI on Windows, Linux
+and macOS. Linux hidden English/graphite and French/light-grey renders preserve
+the source buffers and actual pixels. Visual inspection also exposes missing
+portable fonts/icons; a successful render does not establish visual parity.
+The actual c2c72ba Windows runner installed Setup, verified managed-file hashes,
+refused busy/pending changes, repaired in French and uninstalled while retaining
+user data. A complete installed/portable online update remains a separate gate.
+
+Native run 42443628691 passed 50 Windows, 50 Linux and 49 macOS cases; it also
+recorded 7/6/6 failures and 1/2/3 skips respectively. Real Java/TypeScript/Rust
+completion/actions, native debugging on Linux/Windows and semantic highlighting
+now execute, but the remaining failures require correction and rerun. No skipped
+case is included in the passed counts. See Finalization.md for the correction
+ledger and the Actions artifacts for full logs.
 Local application/installer/helper/native fixture execution remains suspended
 during the antivirus issue. See Finalization.md for the current gates and the
 workflow artifacts for actual runner results.

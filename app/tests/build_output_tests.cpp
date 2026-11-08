@@ -127,7 +127,13 @@ void buildOutputContracts() {
                 "Output retention is unbounded or miscounted");
         observer(std::string("\0\x1b\xff", 3));
         const auto repaired = builds.output().at("output").get<std::string>();
+        require(repaired.substr(repaired.find_last_of('x')+1).starts_with("??"),
+                "Process display control bytes are not repaired");
+        require(Json::parse(Json(repaired).dump()).get<std::string>()==repaired,
+                "Malformed process output cannot cross the JSON display boundary");
+#ifndef _WIN32
         require(repaired.ends_with("??\xef\xbf\xbd"), "Display output is not repaired");
+#endif
         require(builds.cancel({{"operationId", "reused"}}).at("requested"), "Cancellation failed");
         const auto cancelling = builds.output();
         require(cancelling.at("running") && cancelling.at("cancelling"), "Tail lost live cancellation");

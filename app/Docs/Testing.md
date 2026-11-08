@@ -702,3 +702,13 @@ per-test timeout still takes precedence). CTest writes a JUnit result alongside
 its ordinary LastTest.log; CI retains both with the build log, including passing
 and skipped evidence. Obsolete runs on the same branch are cancelled by workflow
 concurrency so newer fixes do not queue behind repeated full builds.
+
+
+The existing twelve keyboard scenarios can also run with an explicit executable,
+output directory and hidden-window flag. Production Linux CI reuses them under
+Xvfb, including actual key chords, search/file palettes, double Shift, live edits
+and Undo, while verifying the fixture files are not saved. Successful source
+fixtures are retired; failures retain them. --ci refuses ordinary local invocation.
+The graphical/installer scripts and this CI mode have a data-only CLI guard test
+that mocks all process creation and proves refusal occurs before any native spawn.
+These guard tests do not substitute for the actual remote keyboard results.

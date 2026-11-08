@@ -60,6 +60,8 @@ jobs:
         run: choco install ripgrep -y --no-progress
       - name: Install the pinned real language backends used by the integration tests
         run: python app/scripts/setup_languages.py --rust --java --web --python --glsl
+      - name: Install the pinned C# server and its private SDK
+        run: python app/scripts/setup_csharp.py
       - name: Install checksum-pinned debugger adapters for native integration
         run: python app/scripts/setup_debugger.py
       - run: python app/scripts/fetch_dependencies.py --core-only

@@ -57,6 +57,11 @@ jobs:
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
         run: xvfb-run -a python app/scripts/verify_graphical_ci.py --executable runtime/build/CyCode
+      - name: Exercise actual Rider, Visual Studio and VS Code keyboard workflows
+        if: runner.os == 'Linux'
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run -a python app/scripts/verify_shortcuts.py --ci --hidden --executable runtime/build/CyCode --output runtime/reports/keyboard-ci
       - name: Locate or install the Windows installer compiler
         if: runner.os == 'Windows'
         shell: pwsh
@@ -82,5 +87,6 @@ jobs:
             runtime/build*/build.log
             runtime/reports/graphical-ci/*
             runtime/reports/installer-ci/*
+            runtime/reports/keyboard-ci/*
           if-no-files-found: ignore
           retention-days: 7

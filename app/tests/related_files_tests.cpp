@@ -125,7 +125,7 @@ template<class F> void rejects(F action){bool failed=false;try{action();}catch(.
 }
 void relatedFileContracts(const std::filesystem::path &base) {
     namespace fs=std::filesystem;const auto root=base/utf8Path("related files été");
-    const auto write=[&](const char *path){const auto file=root/utf8Path(path);fs::create_directories(file.parent_path());std::ofstream(file)<<"// fixture\n";};
+    const auto write=[&](const char *path){const auto file=root/utf8Path(path);fs::create_directories(file.parent_path());std::ofstream(file,std::ios::binary)<<"// fixture\n";};
     write("Source/Module/Public/Audio/Actor.h");write("Source/Module/Private/Audio/Actor.cpp");
     write("Source/Module/Private/Actor.cc");write("Source/Module/Public/Audio/Actor.cpp");
     const auto header=root/"Source/Module/Public/Audio/Actor.h";
@@ -163,7 +163,7 @@ void relatedFileContracts(const std::filesystem::path &base) {
         require(cppIncludedFiles(root,root/"src/include-driver.cpp","../../outside-related.cpp",false).at("candidates").empty());
         rejects([&]{cppIncludedFiles(root,root/"src/include-driver.cpp","/outside.h",false);});
         const auto disk="#include \"../include/lib/Widget.inc\"\n";
-        std::ofstream(root/"src/include-driver.cpp")<<disk;
+        std::ofstream(root/"src/include-driver.cpp",std::ios::binary)<<disk;
         Engine engine(root);const auto source="src/include-driver.cpp";
         const auto doc=engine.dispatch("documents.read",{{"path",source}});
         Json parameters={{"path",source},{"expectedRevision",doc.at("revision")},{"expectedDocumentId",doc.at("id")},
@@ -240,7 +240,7 @@ void relatedFileContracts(const std::filesystem::path &base) {
         rejects([&]{engine.dispatch("workspace.counterparts",params);});
         require(readTextFileBytes(header)=="// fixture\n");
     }
-    const auto outside=base/"outside-related.cpp";std::ofstream(outside)<<"// outside\n";
+    const auto outside=base/"outside-related.cpp";std::ofstream(outside,std::ios::binary)<<"// outside\n";
     rejects([&]{cppCounterparts(root,outside);});
     std::error_code error;fs::create_symlink(outside,root/"Alone.cpp",error);
     if(!error) {

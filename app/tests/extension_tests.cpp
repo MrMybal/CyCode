@@ -5,7 +5,7 @@
 #include <iostream>
 using namespace cycode;
 void pluginPackageContracts(const std::filesystem::path &,const std::filesystem::path &);
-static void require(bool ok, const char *message) {
+static void require(bool ok, const std::string &message) {
     if (!ok)
         throw std::runtime_error(message);
 }
@@ -183,11 +183,13 @@ int main(int argc, char **argv) {
             auto document = first.dispatch("documents.read", {{"path", "main.cpp"}});
             for(const auto *method:{"language.codeActions","language.codeActionPrepare","language.rename", "language.format",
                                     "changes.preview","changes.apply","changes.undo"}) {
-                const auto response=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},
-                    {"parameters",{{"id","not-issued"},{"path",""}}}});
-                require(!response.at("ok").get<bool>() &&
-                    response.at("error").get<std::string>().find("not exported")==std::string::npos,
-                    "Refactoring host request did not reach native validation");
+                std::string failure;
+                try {
+                    first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},
+                        {"parameters",{{"id","not-issued"},{"path",""}}}});
+                } catch (const std::exception &error) { failure=error.what(); }
+                require(!failure.empty() && failure.find("not exported")==std::string::npos,
+                    "Refactoring host request did not reach native validation: "+failure);
             }
             {
                 const auto readDirectory=root/"read-extensions";

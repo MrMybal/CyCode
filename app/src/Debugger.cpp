@@ -527,27 +527,14 @@ struct Debugger::Impl {
                 // UTF-8 strings again through NetCoreDbg's Windows ANSI env block
                 // corrupts accented values. The debuggee inherits the native block.
                 profile["env"] = Json::object();
+                for (auto &argument : profile["args"])
+                    argument = netCoreDebugArgument(argument.get<std::string>(),
 #ifdef _WIN32
-                // NetCoreDbg wraps each string itself instead of applying CRT argv
-                // quoting. Escape embedded quotes/backslashes before that wrapper.
-                for (auto &argument : profile["args"]) {
-                    const auto text = argument.get<std::string>();
-                    if (text.empty()) throw std::runtime_error("NetCoreDbg cannot preserve empty launch arguments; use Run without debugging for this argument list");
-                    size_t trailing = 0; while (trailing < text.size() && text[text.size()-trailing-1] == '\\') ++trailing;
-                    if (trailing && text.find(' ') == std::string::npos) {
-                        if (text.find_first_of("\"\t") != std::string::npos) throw std::runtime_error("NetCoreDbg cannot preserve this trailing-backslash argument");
-                        continue;
-                    }
-                    std::string escaped; size_t slashes = 0;
-                    for (size_t i=0;i<text.size()-trailing;++i) {
-                        const auto c = text[i]; if (c == '\\') { ++slashes; continue; }
-                        escaped.append(c == '"' ? slashes*2+1 : slashes,'\\'); slashes = 0; escaped += c;
-                    }
-                    // For a spaced trailing backslash, NetCoreDbg adds one itself.
-                    if (trailing) escaped.append(trailing*2-1,'\\');
-                    argument = escaped;
-                }
+                                                    true
+#else
+                                                    false
 #endif
+                    );
             }
             profile.erase("adapterId");profile.erase("adapterOptions");profile.erase("javaAttach");launchParameters=profile;
             }

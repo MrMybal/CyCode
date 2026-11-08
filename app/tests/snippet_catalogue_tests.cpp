@@ -39,7 +39,7 @@ static_assert(!snippetRegistryFits(0,size_t(-1)));
 void require(bool value, const std::source_location location = std::source_location::current()) {
     if (!value) throw std::runtime_error("Snippet catalogue contract failed at line " + std::to_string(location.line()));
 }
-template<class F> void rejects(F function) { bool failed=false;try{function();}catch(...){failed=true;}require(failed); }
+template<class F> void rejects(F function, const std::source_location location = std::source_location::current()) { bool failed=false;try{function();}catch(...){failed=true;}require(failed,location); }
 }
 void snippetCatalogueContracts() {
     using Json=nlohmann::json;
@@ -52,6 +52,9 @@ void snippetCatalogueContracts() {
     require(snippetCatalogueItems(data.dump(),"java").at("items").size()==1);
     Json descriptor={{"id","fixture.native.snippets"},{"title","Fixture snippets"},{"definitions",data},{"order",-10}};
     validateSnippetContribution(descriptor);
+    for (const auto &order : {Json(-10000), Json(10000), Json(uint64_t(10000))}) {
+        auto valid=descriptor; valid["order"]=order; validateSnippetContribution(valid);
+    }
     auto entry=descriptor;entry["plugin"]="fixture.native";
     const auto merged=mergedSnippetItems(data.dump(),Json::array({entry}),"verse");
     require(merged.at("items").size()==6 && !merged.at("isIncomplete").get<bool>());

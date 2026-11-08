@@ -66,7 +66,7 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
     for (const auto *name : {"one", "two"}) {
         const auto folder = workspace / name;
         git(folder, {"init", "--initial-branch=main"});
-        std::ofstream(folder / "file.cpp") << "int original=1;\n";
+        std::ofstream(folder / "file.cpp",std::ios::binary) << "int original=1;\n";
         git(folder, {"add", "."});
         git(folder, {"commit", "-m", "Initial"});
     }
@@ -93,14 +93,14 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
                 other.at("revision"),
             "Other repository buffer was touched");
     reject([&] { call("vcs.stage", "one", {{"path", "two/file.cpp"}}); });
-    std::ofstream(workspace / "one/file.cpp") << "int changed=2;\n";
+    std::ofstream(workspace / "one/file.cpp",std::ios::binary) << "int changed=2;\n";
     const auto status = call("vcs.status", "one", Json::object());
     require(status.at("files")[0].at("path") == "one/file.cpp",
             "Git returned repository-relative editor paths");
     const auto hunks = call("vcs.hunks", "one", {{"path", "one/file.cpp"}});
     reject([&] { call("vcs.applyHunks", "two", {{"id", hunks.at("id")}, {"hunks", Json::array({0})}}); });
     std::filesystem::create_directories(workspace / "one/folder");
-    std::ofstream(workspace / "one/folder/nested.cpp") << "int nested;\n";
+    std::ofstream(workspace / "one/folder/nested.cpp",std::ios::binary) << "int nested;\n";
     call("vcs.stage", "one", {{"path", "one/folder"}});
     call("vcs.unstage", "one", {{"path", "one/folder"}});
     auto catalogue = call("vcs.worktrees", "one", Json::object());
@@ -120,11 +120,11 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
                     {{"path", "linked/file.cpp"}, {"expectedRevision", opened.at("revision")}});
     // Move/repair fixtures are only executed by a separately authorized native run.
     std::filesystem::create_directory(workspace / "trees");
-    std::ofstream(workspace / "one/.git/info/exclude", std::ios::app) << "\nignored.bin\n";
-    std::ofstream(workspace / "linked/file.cpp") << "int stagedLocal=7;\n";
+    std::ofstream(workspace / "one/.git/info/exclude", std::ios::binary | std::ios::app) << "\nignored.bin\n";
+    std::ofstream(workspace / "linked/file.cpp",std::ios::binary) << "int stagedLocal=7;\n";
     git(workspace / "linked", {"add", "file.cpp"});
-    std::ofstream(workspace / "linked/untracked.txt") << "keep untracked\n";
-    std::ofstream(workspace / "linked/ignored.bin") << "keep ignored\n";
+    std::ofstream(workspace / "linked/untracked.txt",std::ios::binary) << "keep untracked\n";
+    std::ofstream(workspace / "linked/ignored.bin",std::ios::binary) << "keep ignored\n";
     const auto movedIndex = git(workspace / "linked", {"ls-files", "--stage", "-z"});
     auto maintenanceParameters = [&](const std::string &source, const std::string &destination) {
         const auto actual = call("vcs.worktrees", "one", Json::object());
@@ -227,7 +227,7 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
     catalogue = call("vcs.worktree.unlock", "one",
                      {{"path", "linked"}, {"expectedRevision", catalogue.at("revision")}})
                     .at("catalog");
-    std::ofstream(workspace / "linked/untracked.txt") << "preserve\n";
+    std::ofstream(workspace / "linked/untracked.txt",std::ios::binary) << "preserve\n";
     const auto refused =
         engine.dispatch("vcs.worktree.remove", {{"provider", "git"},
                                                 {"repository", "one"},
@@ -299,20 +299,20 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
     reject([&] { call("vcs.submodule.addPlan", "one", add); });
     git(workspace / "one", {"config", "--remove-section", "submodule.vendor/new-module"});
     refreshModules();
-    std::ofstream(workspace / "one/vendor/deleted.cpp") << "tracked but absent\n";
+    std::ofstream(workspace / "one/vendor/deleted.cpp",std::ios::binary) << "tracked but absent\n";
     git(workspace / "one", {"add", "vendor/deleted.cpp"});
     std::filesystem::remove(workspace / "one/vendor/deleted.cpp");
     auto trackedAdd = add;
     trackedAdd["path"] = "vendor/deleted.cpp";
     reject([&] { call("vcs.submodule.addPlan", "one", trackedAdd); });
     git(workspace / "one", {"rm", "--cached", "--", "vendor/deleted.cpp"});
-    std::ofstream(workspace / "one/.gitmodules") << "# tracked metadata\n";
+    std::ofstream(workspace / "one/.gitmodules",std::ios::binary) << "# tracked metadata\n";
     refreshModules();
     reject([&] { call("vcs.submodule.addPlan", "one", add); });
     git(workspace / "one", {"add", ".gitmodules"});
     git(workspace / "one", {"commit", "-m", "Plain submodule metadata fixture"});
     git(workspace / "one", {"update-index", "--skip-worktree", ".gitmodules"});
-    std::ofstream(workspace / "one/.gitmodules") << "# hidden metadata edit\n";
+    std::ofstream(workspace / "one/.gitmodules",std::ios::binary) << "# hidden metadata edit\n";
     require(git(workspace / "one", {"status", "--porcelain=v1", "--", ".gitmodules"}).empty(),
             "Fixture did not hide its working-tree edit");
     refreshModules();
@@ -327,7 +327,7 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
     require(call("vcs.submodule.addPlan", "one", add).at("remoteCommit").is_null(),
             "Closing metadata did not permit a read-only preview");
     // Local fixture only, reserved for an explicitly authorized future native run.
-    std::ofstream(workspace / "two/.gitignore") << "build.log\n";
+    std::ofstream(workspace / "two/.gitignore",std::ios::binary) << "build.log\n";
     git(workspace / "two", {"add", ".gitignore"});
     git(workspace / "two", {"commit", "-m", "Ignored output fixture"});
     git(workspace / "one", {"-c", "protocol.file.allow=always", "submodule", "add", "--name", "protected",
@@ -336,7 +336,7 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
     // Settings fixtures retain pre-existing staged and unstaged metadata changes.
     git(workspace / "one", {"config", "--file", ".gitmodules", "custom.staged", "retained"});
     git(workspace / "one", {"add", ".gitmodules"});
-    std::ofstream(workspace / "one/.gitmodules", std::ios::app) << "\n# retain this metadata comment\n";
+    std::ofstream(workspace / "one/.gitmodules", std::ios::binary | std::ios::app) << "\n# retain this metadata comment\n";
     git(workspace / "one", {"config", "--file", ".gitmodules", "custom.unstaged", "retained"});
     const auto settingsIndex = git(workspace / "one", {"ls-files", "--stage", "-z", "--", ".gitmodules"});
     Json settings;
@@ -438,7 +438,7 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
     removeCheckout["expectedPlanRevision"] = "obsolete-preview";
     reject([&] { call("vcs.submodule.deinit", "one", removeCheckout); });
     removeCheckout["expectedPlanRevision"] = deinitPreview.at("revision");
-    std::ofstream(protectedFolder / "build.log") << "ignored output must survive\n";
+    std::ofstream(protectedFolder / "build.log",std::ios::binary) << "ignored output must survive\n";
     reject([&] { call("vcs.submodule.deinit", "one", removeCheckout); });
     require(std::filesystem::exists(protectedFolder / "build.log"), "Ignored output was deleted");
     std::filesystem::remove(protectedFolder / "build.log");
@@ -448,12 +448,12 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
     engine.dispatch("documents.close", {{"path", "one/vendor/protected/file.cpp"},
                                         {"expectedRevision", childDoc.at("revision")}});
     git(protectedFolder, {"update-index", "--skip-worktree", "file.cpp"});
-    std::ofstream(protectedFolder / "file.cpp") << "hidden local changes\n";
+    std::ofstream(protectedFolder / "file.cpp",std::ios::binary) << "hidden local changes\n";
     refreshDeinit();
     reject([&] { call("vcs.submodule.deinitPlan", "one", deinit); });
     git(protectedFolder, {"update-index", "--no-skip-worktree", "file.cpp"});
     git(protectedFolder, {"restore", "--", "file.cpp"});
-    std::ofstream(protectedFolder / "untracked.txt") << "preserve\n";
+    std::ofstream(protectedFolder / "untracked.txt",std::ios::binary) << "preserve\n";
     refreshDeinit();
     reject([&] { call("vcs.submodule.deinitPlan", "one", deinit); });
     std::filesystem::remove(protectedFolder / "untracked.txt");
@@ -471,11 +471,11 @@ void gitRepositoryContracts(const std::filesystem::path &temporary) {
                 git(workspace / "one", {"ls-files", "--stage", "-z"}) == preservedIndex,
             "Deinitialization lost parent index/metadata/history or falsely confirmed removal");
     git(workspace / "one", {"switch", "-c", "merge-conflict"});
-    std::ofstream(workspace / "one/file.cpp") << "int theirs=3;\n";
+    std::ofstream(workspace / "one/file.cpp",std::ios::binary) << "int theirs=3;\n";
     git(workspace / "one", {"add", "file.cpp"});
     git(workspace / "one", {"commit", "-m", "Conflict branch"});
     git(workspace / "one", {"switch", "feature"});
-    std::ofstream(workspace / "one/file.cpp") << "int ours=4;\n";
+    std::ofstream(workspace / "one/file.cpp",std::ios::binary) << "int ours=4;\n";
     git(workspace / "one", {"add", "file.cpp"});
     git(workspace / "one", {"commit", "-m", "Conflicting change"});
     const auto merge =

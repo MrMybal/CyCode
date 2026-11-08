@@ -55,7 +55,7 @@ int main() {
         call("msbuild.build",parameters); check(fs::exists(root/"Release/Cpp.One.exe"),"MSBuild honors solution mapping");
         write(root/"src/main.cpp","int main() { UnknownValue; }\n");
         const auto failure = engine.dispatch("msbuild.build",parameters);
-        check(failure.at("exitCode") != 0 && !failure.at("diagnostics").empty() && failure.at("diagnostics")[0].at("path") == "src/main.cpp","Actual compiler diagnostics are navigable");
+        check(failure.at("exitCode") != 0 && !failure.at("diagnostics").empty() && failure.at("diagnostics")[0].at("path") == "src/main.cpp",("Actual compiler diagnostics are navigable: "+failure.dump()).c_str());
         write(root/"managed/Managed.csproj","<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework><OutputType>Exe</OutputType></PropertyGroup></Project>");
         write(root/"managed/Program.cs","System.Console.WriteLine(\"CSHARP_42\");\n");
         write(root/"managed/NuGet.Config","<configuration><packageSources><clear /></packageSources></configuration>");

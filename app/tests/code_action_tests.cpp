@@ -82,7 +82,7 @@ int main(int argc,char **argv) {
     const auto root=fs::temp_directory_path()/("cycode-actions-"+mode+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));fs::create_directory(root);
     try {
         const auto path=mode=="java" ? "Main.java" : mode=="rust" ? "src/main.rs" : mode=="typescript" ? "main.ts" : "main.cpp";
-        const std::string source=mode=="cpp" ? "int main() { int value = 1; return vlaue; }\n" : mode=="typescript" ? "const answer = greet('hello');\n" : mode=="java" ? "class Main { void run() { ArrayList<String> values; } }\n" : mode=="rust" ? "fn main() { let value = 1; let answer = value; }\n" : "int vlaue;\n";
+        const std::string source=mode=="cpp" ? "int main() { int value = 1 return value; }\n" : mode=="typescript" ? "const answer = greet('hello');\n" : mode=="java" ? "class Main { void run() { ArrayList<String> values; } }\n" : mode=="rust" ? "fn main() { let value = 1; let answer = value; }\n" : "int vlaue;\n";
         if (mode=="rust") { fs::create_directory(root/"src");write(root/"Cargo.toml","[package]\nname=\"actions\"\nversion=\"0.1.0\"\nedition=\"2021\"\n"); }
         if (mode=="typescript") { write(root/"model.ts","export function greet(name: string) { return name; }\n");write(root/"tsconfig.json",R"({"compilerOptions":{"strict":true},"include":["*.ts"]})"); }
         write(root/path,source);write(root/"other.hpp","int old;\n");write(root/"lazy.hpp","int old;\n");
@@ -101,10 +101,10 @@ int main(int argc,char **argv) {
             if (actual && mode!="cpp") engine.dispatch("language.configure",{{"language",mode}});
             const auto kind=mode=="rust" ? "refactor.rewrite" : mode=="java" ? "source.organizeImports" : "quickfix";
             auto list=[&] { return engine.dispatch("language.codeActions",{{"path",path},{"range",range(0,static_cast<int>(source.size()-1))},{"expectedRevision",doc.at("revision")},{"only",Json::array({kind})}}); };
-            Json actions;size_t selected=0;const auto title=mode=="cpp" ? "vlaue" : mode=="typescript" ? "Add import" : mode=="java" ? "Organize imports" : mode=="rust" ? "Change visibility to pub(crate)" : "Fix two files";
+            Json actions;size_t selected=0;const auto title=mode=="cpp" ? ";" : mode=="typescript" ? "Add import" : mode=="java" ? "Organize imports" : mode=="rust" ? "Change visibility to pub(crate)" : "Fix two files";
             const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(100);bool found=false;
             do { actions=list();for (const auto &item : actions.at("actions")) if (item.at("title").get<std::string>().find(title)!=std::string::npos && item.at("available")==true) { selected=item.at("index");found=true;break; }if (!found) std::this_thread::sleep_for(std::chrono::milliseconds(100)); } while (!found && std::chrono::steady_clock::now()<end);
-            require(found,"Actual action missing: "+actions.dump());
+            require(found,"Actual action missing: "+actions.dump()+" server: "+engine.languageStatus().dump());
             auto query=Json{{"sessionId",actions.at("sessionId")},{"item",selected},{"expectedRevision",doc.at("revision")}};
             const auto plan=engine.dispatch("language.codeActionPrepare",query);require(plan.at("editCount").get<int>()>0,"Empty fix plan: "+plan.dump());
             const auto preview=engine.dispatch("changes.preview",{{"id",plan.at("id")},{"path",path}});
@@ -113,7 +113,7 @@ int main(int argc,char **argv) {
             for(const auto &annotation:plan.at("annotations"))if(annotation.at("needsConfirmation")==true)confirmations.push_back(annotation.at("id"));
             engine.dispatch("changes.apply",{{"id",plan.at("id")},{"confirmedAnnotations",confirmations}});require(engine.dispatch("documents.read",{{"path",path}}).at("text")==preview.at("after"),"Apply mismatch");
             const auto after=preview.at("after").get<std::string>();
-            require(mode=="typescript" ? after.find("import { greet }")!=std::string::npos : mode=="java" ? after.find("import java.util.ArrayList;")!=std::string::npos : mode=="rust" ? after.starts_with("pub(crate)") : after.find("vlaue")==std::string::npos,"Wrong actual correction: "+after);
+            require(mode=="typescript" ? after.find("import { greet }")!=std::string::npos : mode=="java" ? after.find("import java.util.ArrayList;")!=std::string::npos : mode=="rust" ? after.starts_with("pub(crate)") : mode=="cpp" ? after=="int main() { int value = 1; return value; }\n" : after.find("vlaue")==std::string::npos,"Wrong actual correction: "+after);
             require(readTextFileBytes(root/path)==source,"Action saved disk source");
             engine.dispatch("changes.undo",{{"id",plan.at("id")}});doc=engine.dispatch("documents.read",{{"path",path}});require(doc.at("text")==source,"Undo mismatch");
             rejects([&] { engine.dispatch("language.codeActionPrepare",query); },"Old action ticket survived apply/undo");

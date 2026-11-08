@@ -1,3 +1,7 @@
+#include "cycode/NativeFileLease.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "cycode/Engine.h"
 #include "cycode/Tools.h"
 #include <cstdlib>
@@ -22,6 +26,27 @@ template <class F> static void rejects(F fn, const char *message) {
 static void write(const std::filesystem::path &path, const std::string &text) {
     std::ofstream out(path, std::ios::binary);
     out << text;
+}
+static void longLeaseChecks(const std::filesystem::path &root) {
+    const auto file = root / utf8Path("lease-" + std::string(224, 'x') + ".lock");
+    {
+        NativeFileLease first(file, NativeFileLeaseMode::shared);
+        NativeFileLease second(file, NativeFileLeaseMode::shared);
+        NativeFileLease blocked(file);
+        check(first.acquired() && second.acquired() && !blocked.acquired(),
+              "Long-path shared leases do not retain their common file identity");
+    }
+    {
+        NativeFileLease exclusive(file);
+        NativeFileLease blocked(file, NativeFileLeaseMode::shared);
+        check(exclusive.acquired() && !blocked.acquired(), "Long-path exclusive lease failed");
+    }
+#ifdef _WIN32
+    const auto filename = L"\\\\?\\" + std::filesystem::absolute(file).lexically_normal().make_preferred().native();
+    check(DeleteFileW(filename.c_str()), "Cannot retire the owned long-path lease fixture");
+#else
+    check(std::filesystem::remove(file), "Cannot retire the owned lease fixture");
+#endif
 }
 static void toolAliasChecks(const std::filesystem::path &root) {
     check(sameExecutableInvocation(root / "compiler-cpp", root / "." / "compiler-cpp"),
@@ -179,6 +204,7 @@ int main(int argc, char **argv) {
         ("cycode-test-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     try {
         std::filesystem::create_directories(root);
+        longLeaseChecks(root);
         toolAliasChecks(root);
         relatedFileContracts(root);
         workspaceSessionContracts(root);

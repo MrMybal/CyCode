@@ -6,6 +6,9 @@ namespace cycode {
 bool isManagedProgram(const std::filesystem::path &);
 bool isRunnableArtifact(const std::filesystem::path &);
 std::string debugRuntime(const std::filesystem::path &, const std::string &requested);
+// Encode one argv item for NetCoreDbg's command-line wrapper and dbgshim.
+// No shell is involved. Lists that the pinned adapter cannot retain are refused.
+std::string netCoreDebugArgument(const std::string &, bool windows);
 struct DebugProgram { std::string runtime; std::vector<std::string> argv; };
 DebugProgram debugProgram(const std::filesystem::path &root,const nlohmann::json &profile);
 }
