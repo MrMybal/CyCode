@@ -102,9 +102,11 @@ Json Engine::gitMerge(const std::string &method, const Json &params) {
                            {"GIT_EDITOR", ":"}});
     };
     auto checked = [&](std::vector<std::string> args) {
-        const auto result = git(std::move(args));
+        const auto result = git(args);
         if (result.exitCode || result.timedOut || result.truncated)
-            throw std::runtime_error("Git merge inspection failed: " + result.output);
+            throw std::runtime_error("Git merge inspection failed: " +
+                Json({{"arguments",args},{"exitCode",result.exitCode},{"timedOut",result.timedOut},
+                      {"cancelled",result.cancelled},{"truncated",result.truncated},{"output",result.output}}).dump());
         return result.output;
     };
     auto ref = [&](const std::string &name) {

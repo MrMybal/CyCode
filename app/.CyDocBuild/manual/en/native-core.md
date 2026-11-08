@@ -5,7 +5,7 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 3
+revision: 4
 ---
 
 ## Ownership {#ownership}
@@ -100,6 +100,15 @@ The architecture guide retains both raw reports and exact workflow revisions.
 `--prepare-only` creates source data without native execution. Local native runs
 remain suspended during the existing antivirus investigation; production builds
 and data/syntax checks are recorded separately from runtime acceptance.
+
+The native response path now wakes its owner when a backend message arrives.
+Protocol/semantic callbacks remain on that owner thread, with joined transport
+lifetime and a guarded wake predicate. On the identical synthetic corpus, two
+runner process runs observed definition medians near 5.08 ms instead of 8.3 ms,
+and rename preview near 10–11 ms instead of 19 ms. The real Core project run
+also completed, but completion and edit-to-analysis were slower in that
+observation. This is not a general speedup claim or a same-machine comparison.
+The architecture guide retains every raw report and exact workflow revision.
 
 ## Remaining stages {#limits}
 

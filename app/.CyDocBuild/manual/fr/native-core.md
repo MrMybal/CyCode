@@ -5,7 +5,7 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 ## Propriété des services {#ownership}
@@ -109,6 +109,17 @@ les rapports bruts et les révisions exactes des workflows.
 explicitement autorisé. `--prepare-only` crée des données sans exécution native.
 Les lancements natifs locaux restent suspendus pendant le diagnostic antivirus ;
 les builds et contrôles de données/syntaxe sont distingués des essais d’exécution.
+
+Le chemin de réponse natif réveille maintenant son propriétaire à la réception
+d’un message du moteur. Les callbacks sémantiques restent sur ce thread ; le
+transport est rejoint avant destruction et le prédicat de réveil est protégé.
+Sur le corpus synthétique identique, deux processus de runner ont observé une
+médiane de définition vers 5,08 ms au lieu de 8,3 ms, et un aperçu de renommage
+vers 10–11 ms au lieu de 19 ms. Le projet réel du Core a aussi terminé, mais
+la complétion et le délai modification/analyse étaient plus lents sur cette
+exécution. Cela ne prouve pas une accélération générale ni une comparaison
+contrôlée sur une même machine. Le guide conserve les rapports bruts et leurs
+révisions exactes.
 
 ## Étapes restantes {#limits}
 

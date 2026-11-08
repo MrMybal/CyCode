@@ -185,6 +185,38 @@ raw samples, corpus/compiler identity, source revision, response shapes and scop
 Process-cold is not OS-cache cold. Native execution remains suspended locally while
 the existing antivirus removals are unresolved; no exclusions/restores are used.
 
+## First measured response-path improvement
+
+LanguageClient now signals its owning LanguageService when complete incoming
+messages or transport termination arrive. A coalesced predicate under the service
+mutex prevents a lost wake between predicate evaluation and waiting. Protocol and
+semantic callbacks still run on the owner thread; the reader never edits Engine
+state. The client joins its transport before captured wake state is destroyed.
+The existing 8 ms timed housekeeping remains for deadlines and cancellation.
+No second index, semantic model or unsaved-text cache was introduced.
+
+The [93fe01c semantic run](https://github.com/MrMybal/CyCode/actions/runs/42488130338)
+passed on the production CLI with real clangd. Both process runs retain the exact
+same synthetic corpus hash, 33 translation units and compiler arguments as d0b179.
+Observed warm medians, in milliseconds (first / second process run):
+
+| Operation | d0b179, periodic wake | 93fe01c, incoming-response wake |
+| --- | --- | --- |
+| Definition | 8.28 / 8.30 | 5.08 / 5.08 |
+| References | 9.03 / 9.00 | 5.14 / 5.13 |
+| Completion | 8.37 / 8.54 | 5.07 / 5.10 |
+| Rename preview | 18.75 / 19.27 | 10.89 / 10.37 |
+
+These are separate hosted-runner observations, not a same-machine controlled
+comparison or an IDE benchmark. The actual 121-unit Core CMake run also completed:
+5.09 ms definition, 5.08 ms references, 454.13 ms completion, 10.18 ms rename
+preview and 878.37 ms unsaved edit/diagnostics/definition median. Completion and
+edit-to-analysis were slower in that observation than d0b179, so this does not
+establish an overall analysis-speed improvement. Its own source corpus changed
+with the implementation. Raw reports, result shapes and coverage/memory limits
+are retained in Benchmarks/semantic-wakeup-93fe01c. Both workloads retained the
+same Engine context/backend epoch and left source files unchanged on disk.
+
 ## Remaining development
 
 Real large Unreal/MSBuild performance acceptance, complete context/dependency

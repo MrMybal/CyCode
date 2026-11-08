@@ -37,7 +37,9 @@ GitRepositorySelection Engine::gitSelection(const Json &params) const {
             runProcess({"git", "-C", pathUtf8(folder), "rev-parse", "--show-toplevel"}, folder);
         if (probe.exitCode || probe.truncated || probe.timedOut ||
             !fs::equivalent(utf8Path(trimmed(probe.output)), folder))
-            throw std::runtime_error("Git reports a different repository root; refresh the selection");
+            throw std::runtime_error("Git reports a different repository root; refresh the selection: " +
+                Json({{"exitCode",probe.exitCode},{"timedOut",probe.timedOut},{"truncated",probe.truncated},
+                      {"output",probe.output}}).dump());
     }
     return selection;
 }

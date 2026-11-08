@@ -4,9 +4,6 @@ on:
     paths-ignore: ['**/*.md', 'app/.CyDocBuild/**', 'app/Docs/Benchmarks/**']
   pull_request:
     paths-ignore: ['**/*.md', 'app/.CyDocBuild/**', 'app/Docs/Benchmarks/**']
-concurrency:
-  group: native-${{ github.ref }}
-  cancel-in-progress: false
 jobs:
   core:
     strategy:
@@ -14,6 +11,9 @@ jobs:
       matrix:
         # Match the supported Visual Studio 2022 generator, as Reader does.
         os: [windows-2022, ubuntu-latest, macos-latest]
+    concurrency:
+      group: native-${{ github.ref }}-${{ matrix.os }}
+      cancel-in-progress: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     steps:
