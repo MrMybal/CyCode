@@ -5,9 +5,9 @@ This repository provides the native C++20 Core and CLI/service. UI sources live 
 Read Docs/CoreExtraction.md before changing the build or shared APIs.
 
 - Preserve the common native services used by the GUI and MCP; do not add an independent Python editor model.
-- Use the configured CyUI checkout. Read its docs/AI_GUIDE.md. Palette roles for colours, cyui::dp/style for dimensions. Do not edit its vendored ImGui.
+- Keep native components independent of CyUI/SDL/ImGui. Graphical adapters, palettes and widget patches belong to CyCodeIDE / CyCodeReader.
 - Keep the native core free of SDL/ImGui. Keep plugin contracts in the versioned C ABI; no STL or ImGui objects across that boundary.
-- English by default, French selectable. Add source labels to scripts/write_locales.py and regenerate locales/ui.json.
+- UI translations are owned by CyCodeIDE app/scripts/write_locales.py and CyCodeReader scripts/write_locales.py. The legacy Core entry requires an explicit --ide-root and does not maintain another UI catalogue.
 - Workspace document references are persistent project files, not temporary CyTools task artifacts. Validate paths, revisions and disk conflicts before editing or saving.
 - Use CyToolsCore's real schemas/runtime/scheduler/identities/MCP. Do not reimplement them. Read the SDK Docs/AgentGuide.md, MCP.md, Protocol.md and TaskFiles.md before changing the bridge.
 - Spawn external tools with argv, never a shell command assembled from project data. Keep process output bounded and cancellation tied to actual process termination.

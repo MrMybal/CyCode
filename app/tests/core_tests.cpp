@@ -3,11 +3,14 @@
 #include "cycode/NativeFileLease.h"
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 #include "cycode/Engine.h"
 #include "cycode/Tools.h"
 #include <cstdlib>
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
@@ -260,6 +263,13 @@ void semanticTokenContracts();
 void annotationContracts();
 void updateContracts(const std::filesystem::path &);
 int main(int argc, char **argv) {
+#ifndef _WIN32
+    if (argc>1 && std::string(argv[1])=="--group-child") {
+        if (getpgrp()!=getpid()) return 3;
+        std::cout << "owned-group\n";
+        return 0;
+    }
+#endif
     if (argc > 1 && std::string(argv[1]) == "--sleep-child") {
         std::this_thread::sleep_for(std::chrono::seconds(2));
         return 0;
@@ -391,6 +401,31 @@ int main(int argc, char **argv) {
             cancellation.join();
             check(stopped.cancelled && stopped.exitCode != 0,
                   "Cancellation terminates the actual child process");
+#ifndef _WIN32
+            {
+                const auto executable=pathUtf8(std::filesystem::absolute(argv[0]));
+                std::vector<std::future<ProcessResult>> groups;
+                groups.reserve(4);
+                for (int worker=0;worker<4;++worker)
+                    groups.push_back(std::async(std::launch::async,[executable,root] {
+                        for (int attempt=0;attempt<20;++attempt) {
+                            auto result=runProcess({executable,"--group-child"},root,std::chrono::seconds(5),4096);
+                            if (result.exitCode || result.timedOut || result.output!="owned-group\n") {
+                                if (!result.exitCode) result.exitCode=-1;
+                                return result;
+                            }
+                        }
+                        ProcessResult result;result.exitCode=0;return result;
+                    }));
+                std::string failure;
+                for (auto &group:groups) {
+                    const auto result=group.get();
+                    if (result.exitCode || result.timedOut)
+                        failure="Concurrent child group setup failed: "+std::to_string(result.exitCode)+" "+result.output;
+                }
+                if (!failure.empty()) throw std::runtime_error(failure);
+            }
+#endif
             auto process = runProcess({"git", "-c", "alias.cycode=!echo unsafe", "--version"}, root);
             check(process.exitCode == 0 && process.output.starts_with("git version"),
                   "Process argv execution");

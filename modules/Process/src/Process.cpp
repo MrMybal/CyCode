@@ -17,6 +17,29 @@ extern char **environ;
 namespace cycode {
 namespace {
 thread_local ProcessOutputScope *outputScope = nullptr;
+#ifndef _WIN32
+// Child setup runs after fork: use only stack data and async-signal-safe writes.
+void writeSetupError(int output, const char *bytes, size_t length) noexcept {
+    while (length) {
+        const auto written=write(output,bytes,length);
+        if (written<0 && errno==EINTR) continue;
+        if (written<=0) break;
+        bytes+=written;length-=static_cast<size_t>(written);
+    }
+}
+template<size_t N> [[noreturn]] void childSetupFailure(int output, const char (&stage)[N], int error) noexcept {
+    constexpr char prefix[]="Native child setup failed: ";
+    writeSetupError(output,prefix,sizeof(prefix)-1);
+    writeSetupError(output,stage,N-1);
+    constexpr char label[]=" errno=";
+    writeSetupError(output,label,sizeof(label)-1);
+    char digits[24];size_t length=0;auto number=static_cast<unsigned>(error);
+    do { digits[length++]=static_cast<char>('0'+number%10);number/=10; } while (number);
+    while (length) writeSetupError(output,&digits[--length],1);
+    writeSetupError(output,"\n",1);
+    _exit(126);
+}
+#endif
 }
 ProcessOutputScope::ProcessOutputScope(const std::atomic<bool> *owner, ProcessOutputObserver observer)
     : owner_(owner), observer_(std::move(observer)), previous_(outputScope) {
@@ -288,8 +311,12 @@ ProcessResult runProcessFiltered(const std::vector<std::string> &argv, const std
     }
     pid_t pid = fork();
     if (pid == 0) {
-        if (setpgid(0, 0) != 0)
-            _exit(126);
+        const auto grouped=setpgid(0,0);
+        const auto groupError=grouped<0 ? errno : 0;
+        // Parent and child both establish the group. A redundant syscall result
+        // is not the ownership contract: verify the actual child-only group.
+        if (getpgrp()!=getpid())
+            childSetupFailure(pipes[1],"process-group",groupError);
         close(pipes[0]);
         dup2(pipes[1], STDOUT_FILENO);
         dup2(pipes[1], STDERR_FILENO);
@@ -300,7 +327,7 @@ ProcessResult runProcessFiltered(const std::vector<std::string> &argv, const std
             close(input);
         }
         if (!cwd.empty() && chdir(cwd.c_str()) != 0)
-            _exit(126);
+            childSetupFailure(STDERR_FILENO,"working-directory",errno);
         if (overrides.empty() && removed.empty())
             execvp(args[0], args.data());
         else
