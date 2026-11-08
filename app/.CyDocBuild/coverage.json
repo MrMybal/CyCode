@@ -594,7 +594,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "47c73911d79bce8afabca8cbd1cfc8699f060eecd333cce71a35b6970b7c436e"
+      "sourceSha256": "84171657cda9c7e91162d96ef0c5ab058efb198d9e78e8cbe8d9f6fdf4baffff"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -622,7 +622,7 @@
       "kind": "developer-reference",
       "target": "overview#getting-started",
       "legacyId": "reference-app-docs-finalization",
-      "sourceSha256": "4579c90d5804e6ae3c887037e8c82d3010bbe320c1a0cfa3b19cc0af2b11326b"
+      "sourceSha256": "7d73773d212c878bcb7830e2b8d2bfadaadd960072e79b57f091c08fae77c1ba"
     },
     {
       "source": "Docs/Releases/v0.2.3.md",

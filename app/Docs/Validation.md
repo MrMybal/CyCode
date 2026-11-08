@@ -16,23 +16,29 @@ running fixtures. Thirty Python data-only tests cover build-plan boundaries,
 release authoring, navigation and snippet/schema contracts. Source syntax/data and
 the complete EN/FR reader remain separate checks from native behavior.
 
-Production run 42447475064 at a176a31 passes full GUI/CLI builds on Windows,
+Production run 42457286801 at 8490f94 passes full GUI/CLI builds on Windows,
 Linux and macOS. Linux and macOS actually render English graphite and French
-light-grey views with checked-in fonts and icon glyphs. Linux visual inspection
-confirms readable text, accents and portable controls; its twelve real keyboard
-scenarios all pass. Windows actually installs Setup, checks payload hashes,
-refuses busy/pending changes, repairs in French and uninstalls while retaining
-user data. Full installed/portable online updating remains a separate gate.
+light-grey with the checked-in fonts and mapped icon glyphs. Captures from both
+platforms were visually inspected. Linux's twelve actual keyboard cases pass.
+Windows installs Setup, checks payload hashes, refuses busy/pending changes,
+repairs in French and uninstalls while retaining user data. Full installed/
+portable online updating remains a separate gate.
 
-Native run 42447474984 reports Linux 57 passed / 1 platform skip, Windows 55
-passed / 3 failed, and macOS 55 passed / 1 timeout / 2 skipped. Real C#/Java/
-TypeScript/Rust services, native debugger attach/detach and Windows/Linux managed
-debugging execute. The macOS NetCoreDbg preparation bug is corrected in source,
-but its managed-debug execution is still pending. Windows session-root and
-worktree containment corrections, long-path cleanup, seven separately bounded
-VCS workflow groups and new unsaved Unicode search regressions require a fresh
-native run. No skipped or timed-out case is counted as passed. See Finalization.md
-and the Actions artifacts for exact evidence.
+Native run 42457286802 completes 64 CTest cases per platform: Windows 63 passed /
+1 failed, Linux 63 passed / 1 platform skip, macOS 62 passed / 1 failed / 1
+platform skip. Real managed debugging now passes on all three platforms, including
+macOS after its executable-mode fix. All Windows repository/worktree, extension
+and session guards pass. Its remaining core fixture used text-mode CRLF output
+against an LF assertion; the occupied-file refusal itself passed. The corrected
+fixture retains exact byte preservation and must still execute. macOS retains a
+Git replay reference-inspection failure; strict diagnostics now include the exact
+reference, child status and bounded UTF-8 output. No failure or skip is a pass.
+
+The next batch adds real six-theme/EN-FR renders, native detached-window and two-
+instance isolation, actual clangd hover/signature keyboard cases and document-
+observation lifetime guards. These still require runner execution. The distributed
+MCP runtime remains incomplete; candidate dependency provenance/inventory alone
+does not establish a packaged or working SDK. See Finalization.md for evidence.
 
 Local application/installer/helper/native fixture execution remains suspended
 during the antivirus issue. See Finalization.md for the current gates and the

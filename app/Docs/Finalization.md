@@ -16,7 +16,7 @@ runtime behavior, and an unavailable external tool is a skipped test, not a pass
 
 | Gate | Current evidence | Required before completion |
 |---|---|---|
-| Windows/Linux/macOS core | 8490f94: Linux 63 passed / 1 platform skip; macOS 62 passed / 1 Git reference failure / 1 platform skip; Windows still running | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
+| Windows/Linux/macOS core | 8490f94: Windows 63 passed / 1 core-fixture failure; Linux 63 passed / 1 platform skip; macOS 62 passed / 1 Git reference failure / 1 platform skip | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
 | Production GUI and CLI | Full production app/CLI builds pass on Windows, Linux and macOS; Linux EN graphite / FR light-grey hidden rendering passes; 62 UI files pass strict Clang syntax | Linux 12 keyboard/Undo/search/keymap cases pass; Linux/macOS actual EN/FR font/icon rendering passes; detached windows and wider platform interaction acceptance remain |
 | Source/schema checks | 233 descriptors / 466 schemas match; 30 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
 | Offline help and website | Merged 610-page / 6316-route reader and DOM controls pass | Keep exports current with final fixes; validate actual browser/desktop help handoff |
@@ -197,3 +197,22 @@ normal wheel installation mapping. The official Python 3.13.17 embedded archive
 matches its published SHA-256. These are inventory/provenance checks only: no
 new interpreter, downloaded package, native application or fixture was executed
 locally, and the candidate environment is not yet packaged or runtime-validated.
+
+## Windows 8490f94 completed — 2026-11-08
+
+Native job 128658905967 completed: 63 passes and one core-fixture failure, with
+no skips. Actual extensions/package loading and long-path cleanup pass. All
+seven Git groups pass, including the previously refused open-sibling repair
+and complete repository maintenance assertions. Session path rejection also
+passes. The remaining failure is an occupied Save-as byte fixture: its text-mode
+ofstream produced CRLF on Windows while the assertion expected LF. Save-as had
+already correctly refused the existing file. The fixture now deliberately writes
+and compares exact CRLF bytes on every platform, retaining the refusal assertion
+and adding source locations. Its next Windows run must continue through the
+remaining composite core/update/search contracts; those were not reached here.
+
+The next correction batch retains the document-observation ownership fixes,
+bounded macOS Git-reference diagnostics and extended actual desktop acceptance.
+Production-only Windows compilation, MSVC syntax checks, data contracts and the
+full local CyDoc export pass locally. No native application/helper/test was run
+locally, no antivirus setting was changed, and no new public release is claimed.

@@ -3,12 +3,13 @@
 #include "cycode/TextFile.h"
 #include "cycode/WorkspaceSession.h"
 #include <fstream>
+#include <source_location>
 #include <stdexcept>
 namespace {
 using namespace cycode;
-void require(bool value, const char *message) {
+void require(bool value, const char *message, const std::source_location location=std::source_location::current()) {
     if (!value)
-        throw std::runtime_error(message);
+        throw std::runtime_error(std::string(message)+" at draft line "+std::to_string(location.line()));
 }
 template <class F> void reject(F action) {
     try {
@@ -45,13 +46,14 @@ void draftDocumentContracts(const std::filesystem::path &temporary) {
         reject([&] {
             engine.dispatch("documents.save", {{"path", ref}, {"expectedRevision", changed.at("revision")}});
         });
-        std::ofstream(root / "occupied.cpp") << "original\n";
+        const std::string occupied="original\r\n";
+        std::ofstream(root / "occupied.cpp",std::ios::binary) << occupied;
         reject([&] {
             engine.dispatch("documents.saveAs", {{"path", ref},
                                                  {"destination", "occupied.cpp"},
                                                  {"expectedRevision", changed.at("revision")}});
         });
-        require(readTextFileBytes(root / "occupied.cpp") == "original\n", "Save as overwrote a file");
+        require(readTextFileBytes(root / "occupied.cpp") == occupied, "Save as overwrote a file");
         auto saved = engine.dispatch(
             "documents.saveAs",
             {{"path", ref}, {"destination", "saved.cpp"}, {"expectedRevision", changed.at("revision")}});
