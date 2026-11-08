@@ -75,10 +75,12 @@ compatible. CyToolsCore continues to own SDK/MCP jobs, identities and permission
 
 ## Evidence and limits
 
-Extracted Core 28c455b passed 63 native tests on each Windows/Linux/macOS runner
-(MSBuild is Windows-only), with three additional macOS replay passes. Reader
-9cbd8d3 passed seven native integration cases on all three systems. Later source
-changes need their own acceptance. Local native execution stays suspended during
+Core 84e4c78 passed the 63-case native suite on Windows x64, Ubuntu x64 and macOS
+arm64 (MSBuild is skipped on POSIX), including concurrent child ownership checks.
+The corrected macOS Git replay also passed three additional repetitions. Reader
+671c588 passed 17 service/view cases on those systems and its separate headless
+profile. Exact CI links and tested limits are recorded in the integration guide.
+Local native execution stays suspended during
 the existing antivirus investigation; source checks and production compilation
 are reported separately.
 

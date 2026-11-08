@@ -5,7 +5,7 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 4
+revision: 5
 ---
 
 ## Ownership {#ownership}
@@ -72,12 +72,13 @@ are separate from clangd's semantic index.
 
 ## Validation and measurements {#validation}
 
-Core revision d0b1791 passed 63 native tests on Windows, Linux and macOS; the
-Windows-only MSBuild case is skipped on POSIX. macOS replay also passed three
-repeats, while earlier intermittent failures remain a diagnostic item. Reader
-revision c4a013b passed seven native integration tests on all three platforms,
-including encodings, plugins, live revisions, disk conflicts, IPC and shutdown.
-Changes after those revisions require their own acceptance run.
+Core revision 84e4c78 passed the 63-case native suite on Windows x64, Ubuntu x64
+and macOS arm64 (MSBuild is skipped on POSIX). Its POSIX Core case includes
+80 concurrent child ownership probes. The corrected process-group postcondition
+also passed the formerly failing macOS Git replay and three extra repetitions.
+Reader 671c588 passed 17 service/view cases on those systems, including native
+plugins, codecs, live edits, guarded IPC, snippets, comparison and Git history.
+Those headless views do not establish GPU, IME or physical desktop acceptance.
 
 The runner-only semantic benchmark completed both a deterministic synthetic
 corpus and the actual native Core CMake project: 121 translation units and 230

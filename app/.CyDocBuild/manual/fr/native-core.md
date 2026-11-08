@@ -5,7 +5,7 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 ## Propriété des services {#ownership}
@@ -77,12 +77,13 @@ de chemins et la recherche littérale sont distincts de l’index de clangd.
 
 ## Vérification et mesures {#validation}
 
-La révision Core d0b1791 a passé 63 tests natifs sur Windows, Linux et macOS ; le
-cas MSBuild réservé à Windows est ignoré sur POSIX. Le scénario de replay macOS
-a aussi passé trois répétitions, mais ses échecs intermittents antérieurs restent
-à diagnostiquer. Reader c4a013b a passé sept tests d’intégration sur les trois
-plateformes : encodages, plugins, révisions actives, conflits disque, IPC et arrêt.
-Les changements ultérieurs nécessitent leur propre validation.
+Le Core 84e4c78 a passé la suite native de 63 cas sur Windows x64, Ubuntu x64 et
+macOS arm64 (MSBuild est ignoré sur POSIX). Le cas Core POSIX inclut 80 contrôles
+concurrents de propriété des processus enfants. Le contrôle corrigé du groupe a
+aussi passé le replay Git macOS qui échouait, puis trois répétitions supplémentaires.
+Reader 671c588 a passé 17 cas de services/vues sur ces systèmes : plugins natifs,
+encodages, éditions actives, IPC protégé, extraits, comparaison et historique Git.
+Ces vues sans fenêtre OS ne valident pas le GPU, l’IME ni le bureau physique.
 
 Le benchmark sémantique réservé aux runners a terminé un corpus synthétique
 déterministe et le véritable projet CMake du Core : 121 unités de compilation,

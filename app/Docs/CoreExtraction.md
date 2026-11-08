@@ -59,6 +59,16 @@ Project plugins retain the versioned C ABI 1/2; text plugins retain their existi
 ABI 1 names. Binaries from those two plugin profiles are not interchangeable. No
 STL or ImGui object crosses either C boundary. Native plugins remain trusted code.
 
+The Core catalogue exposes native services and no former desktop executable.
+IDE staging derives only its display name and actual executable name; operation
+IDs, schemas and permission declarations remain the canonical Core registry.
+The IDE has its own CYCODE_IDE_VERSION, independent of the Core runtime version.
+UI translations have one IDE-owned generator; Core's old write_locales.py entry
+requires --ide-root and delegates explicitly, preserving the earlier script link.
+Legacy application update compatibility code/resources remain available for the
+historical release contract. The new IDE does not build the old updater helper,
+and its development update panel does not offer the old product's update stream.
+
 ## Build and embed
 
 ```sh
@@ -143,19 +153,32 @@ and Undo; unsupported command-based transformations remain unavailable.
 
 ## Verified evidence and limits
 
-Core d0b1791118c2d75eb85654dba8f8802560cebacd passed 63 native tests on each runner:
-[Windows/Linux/macOS native run](https://github.com/MrMybal/CyCode/actions/runs/42485288416).
-The Windows-only MSBuild test is skipped on POSIX. The macOS replay scenario also
-passed three repeats. Earlier intermittent replay failures remain a diagnostic
-item; a passing repeat is not a root-cause fix. This run includes the canonical Engine BufferState, shared I/O, component selection
-and bounded native response changes. Changes after that revision require their own run.
+Core 84e4c7831afeab27406a958a957db23fe005eae8 passed the native suite of 63
+collected cases on Windows x64, Ubuntu x64 and macOS arm64:
+[native acceptance](https://github.com/MrMybal/CyCode/actions/runs/42492881492).
+The Windows-only MSBuild case is skipped on POSIX. The suite includes actual
+language/debug backends, shared documents, protocol/lifecycle, endpoint ownership,
+native projects and guarded transactions. Its existing POSIX Core case now also
+checks 80 child processes launched by four concurrent callers, each verifying that
+it actually owns the expected process group. No additional test executable was added.
 
-Reader c4a013bb04ee77c43ac1be0bac51a6ec6c522976 passed seven tests on all three systems:
-[native Reader integration](https://github.com/MrMybal/CyCodeReader/actions/runs/42485861029).
-These include real text/native plugins, encodings, unsaved documents, revisions,
-disk conflicts, Git plugin environment handling, IPC compatibility and EOF shutdown.
-Windows production builds cover the CLI, minimal libraries and Reader GUI without
-executing local app/test binaries. IDE presentation acceptance is a separate run.
+The repeated macOS Git failures were captured as pre-execution setup exit 126,
+not timeouts. The process launcher now checks the actual group postcondition
+after the parent/child group requests and retains refusal when ownership is absent.
+Failure paths report the setup stage and errno using allocation-free child writes.
+The formerly failing replay passed the full suite (124.39 s) and three additional
+repeats (120.42 / 122.06 / 118.46 s) on that revision. This records the tested scope;
+it does not assert that every future Git or platform failure is eliminated.
+
+Reader 671c588b924f9da2655843f64615b6b6bc7076e6 passed its 17 native/view contracts
+on those three systems, plus the separate seven-case headless graph:
+[Reader acceptance](https://github.com/MrMybal/CyCodeReader/actions/runs/42493128377).
+This covers actual plugins, encodings, live revisions, disk conflicts, IPC/EOF,
+shared syntax/editor, snippets with platform/custom completion chords, comparison,
+Git history, filtering and CyUI views. These view cases open no OS windows. They
+do not establish GPU, IME, physical desktop or multi-monitor acceptance.
+Windows production builds of minimal libraries, CLI, Reader GUI and the IDE are
+separate compile evidence; no app/helper/test binary was executed locally.
 
 [Semantic run at 28c455b](https://github.com/MrMybal/CyCode/actions/runs/42480779142)
 completed both a deterministic synthetic workload and the actual Core CMake project
@@ -216,6 +239,16 @@ establish an overall analysis-speed improvement. Its own source corpus changed
 with the implementation. Raw reports, result shapes and coverage/memory limits
 are retained in Benchmarks/semantic-wakeup-93fe01c. Both workloads retained the
 same Engine context/backend epoch and left source files unchanged on disk.
+
+The [final 84e4c78 semantic run](https://github.com/MrMybal/CyCode/actions/runs/42492881444)
+also completed both workloads. Raw reports are in Benchmarks/semantic-final-84e4c78.
+Its real Core warm medians were 5.08 ms definition, 5.10 ms references, 498.33 ms
+completion and 10.33 ms rename preview. First current diagnostics took 3.87 s and
+the unsaved edit/diagnostics/definition median was 981.78 ms. Instantaneous summed
+CLI/backend RSS was 1,223,716,864 bytes, with the same shared-page/coverage caveats.
+The persistent context/backend epoch and unchanged disk sources checks passed.
+These later observations continue to show that a faster short response path is
+not an overall parsing/indexing/completion speed guarantee.
 
 ## Remaining development
 

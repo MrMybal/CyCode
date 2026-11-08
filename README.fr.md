@@ -79,11 +79,12 @@ gestion des jobs SDK/MCP, identités et permissions.
 
 ## Vérifications et limites
 
-Le Core extrait 28c455b a passé 63 tests natifs sur chaque runner Windows/Linux/macOS
-(MSBuild est réservé à Windows), avec trois répétitions supplémentaires du replay
-macOS. Reader 9cbd8d3 a passé sept cas d’intégration natifs sur les trois systèmes.
-Les sources ultérieures nécessitent leur propre validation. Les exécutions
-natives locales restent suspendues pendant le diagnostic antivirus ; les
+Le Core 84e4c78 a passé la suite native de 63 cas sur Windows x64, Ubuntu x64 et
+macOS arm64 (MSBuild est ignoré sur POSIX), dont les contrôles concurrents de
+propriété des processus. Le replay Git corrigé sur macOS a aussi passé trois
+répétitions supplémentaires. Reader 671c588 a passé 17 cas de services/vues et son
+profil headless séparé sur ces systèmes. Le guide donne les liens CI et les limites
+exactes. Les exécutions natives locales restent suspendues pendant le diagnostic antivirus ; les
 contrôles de sources et compilations sont distingués des tests d’exécution.
 
 La référence sémantique mesure les vraies requêtes clangd sur le projet CMake du
