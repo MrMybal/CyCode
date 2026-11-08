@@ -16,12 +16,12 @@ runtime behavior, and an unavailable external tool is a skipped test, not a pass
 
 | Gate | Current evidence | Required before completion |
 |---|---|---|
-| Windows/Linux/macOS core | 8490f94: Windows 63 passed / 1 core-fixture failure; Linux 63 passed / 1 platform skip; macOS 62 passed / 1 Git reference failure / 1 platform skip | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
-| Production GUI and CLI | Full production app/CLI builds pass on Windows, Linux and macOS; Linux EN graphite / FR light-grey hidden rendering passes; 62 UI files pass strict Clang syntax | Linux 12 keyboard/Undo/search/keymap cases pass; Linux/macOS actual EN/FR font/icon rendering passes; detached windows and wider platform interaction acceptance remain |
-| Source/schema checks | 233 descriptors / 466 schemas match; 30 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
+| Windows/Linux/macOS core | 32ff605: Windows 64 passed; Linux/macOS 63 passed each / 1 MSBuild platform skip each | Preserve real installed adapter coverage; repeat the previously intermittent Mac Git replay path; complete remaining Roadmap workflows |
+| Production GUI and CLI | 32ff605: full production app/CLI builds on all three; eight Linux/Mac EN/FR renders; Linux 12 keyboard, 6 clangd information and detached-window/two-instance cases pass | Execute corrected Mac primary-modifier/keyboard/information/viewports cases; obtain actual Windows graphical and wider physical keyboard/IME/DPI acceptance |
+| Source/schema checks | 233 descriptors / 466 schemas match; 36 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
 | Offline help and website | Merged 610-page / 6316-route reader and DOM controls pass | Keep exports current with final fixes; validate actual browser/desktop help handoff |
-| Installer and application updates | Actual 8490f94 Windows runner Setup, payload hashes, busy/pending guards, French repair and uninstall/data retention pass | Full installed/portable online update, cancellation/recovery/restart and pristine-machine runtime acceptance |
-| Editor and SDK/plugins | Implemented milestones are documented individually; distribution currently omits Python/SDK | Package the real CyToolsCore/MCP runtime; execute official-client, source/selection/Undo/lifecycle/permission and graphical acceptance |
+| Installer and application updates | Actual 32ff605 Windows runner Setup, payload hashes, busy/pending guards, French repair and uninstall/data retention pass | Full installed/portable online update, cancellation/recovery/restart and pristine-machine runtime acceptance |
+| Editor and SDK/plugins | Pinned Windows Python/SDK authoring is implemented; both source/wheel authoring give the same reviewed payload | Execute installed official-client/shared-Core/permission/plugin/lifecycle acceptance and remaining source/selection/Undo/graphical workflows |
 | Advanced development workflows | See Roadmap.md | Complete explicitly missing services and validate against real tools |
 
 Local native fixture/application launches remain suspended while the reported
@@ -216,3 +216,38 @@ bounded macOS Git-reference diagnostics and extended actual desktop acceptance.
 Production-only Windows compilation, MSVC syntax checks, data contracts and the
 full local CyDoc export pass locally. No native application/helper/test was run
 locally, no antivirus setting was changed, and no new public release is claimed.
+
+## Complete native matrix and MCP distribution implementation — 2026-11-08
+
+Native run 42459406339 passes all 64 Windows tests, and 63 each on Linux/macOS
+with only MSBuild platform-skipped there. Windows now reaches the actual owned
+update staging, rollback/recovery, draft and Unicode search contracts. Mac's
+previous Git-reference refusal does not recur; it is not called root-caused from
+one pass. The next workflow repeats only that path three times with diagnostics.
+
+Production run 42459406453 passes Linux's eight EN/FR theme renders, twelve
+keyboard cases, six actual clangd hover/signature cases and real detached editor/
+panel plus two-instance Engine isolation. Mac's eight renders pass but the first
+information-keyboard case fails: injected physical Control becomes ImGui Super
+under macOS behavior. Scripted Primary now supplies the actual platform primary
+modifier through the same event queue; explicit Control input remains available.
+The next Mac run also executes the twelve editing/search/keymap cases. No result
+is substituted for actual system/physical-keyboard/IME/DPI acceptance.
+
+The Windows MCP runtime is implemented in release authoring: pinned official
+CPython, all 32 wheel inputs, published SDK code and exact installed payload.
+Provided-wheel and clean Git-source builds produce the same 1,567 files /
+60,974,548 bytes. No venv or local settings are copied. Native startup and copied
+MCP config prefer tools/python, with -B -X utf8 and no system-Python fallback.
+The ordinary private development interpreter remains available for source builds.
+Original dependency notices and the full CPython license remain in the package.
+
+Six additional data-only cases pass for raw ZIP names, links/traversal, SDK source
+identity, wheel layout/import isolation, pinned-inventory forgery and corrupt-cache
+preservation. Their malformed ZIP writer preserves raw names before CPython's
+Windows separator/NUL normalization. The loader rejects original malformed names.
+Actual installed MCP/official-client execution is scheduled only on Windows CI,
+after repair and before uninstall. It is still pending. It checks shared Core,
+private identities/jobs, Unicode live edits, stale guards, plugins and shutdown.
+No new interpreter, application, native fixture or SDK Runtime was run locally.
+The SDK wheel backend was rebuilt with isolated pure authoring tools only.

@@ -16,6 +16,7 @@ class RunnerLaunchGuards(unittest.TestCase):
             ('verify_graphical_ci.py', ['--executable', 'not-used']),
             ('verify_viewports_ci.py', ['--executable', 'not-used']),
             ('verify_installer_ci.py', ['--setup', 'not-used.exe']),
+            ('verify_mcp_runtime_ci.py', ['--installation', 'not-used', '--fixture-root', 'not-used', '--reports', 'not-used']),
             ('verify_shortcuts.py', ['--ci', '--executable', 'not-used']),
             ('verify_information.py', ['--ci', '--executable', 'not-used']),
         ]

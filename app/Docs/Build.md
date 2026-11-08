@@ -361,3 +361,38 @@ ImGui host contract, so common icon buttons and host resource rows can render
 without copying CyUI widgets. Some optional CyUI decorations still consult that
 Windows-only state and remain omitted outside Windows. Do not represent that
 library limit as complete cross-platform icon parity.
+
+## Redistributable MCP runtime
+
+The Windows release packager requires a verified app-owned runtime under
+runtime/mcp-bundles/<lock fingerprint>. It never copies an existing venv or
+user settings. Prepare it without executing the embedded interpreter:
+
+```sh
+python app/scripts/prepare_mcp_runtime.py --core-wheel /path/to/cytools_core-0.10.1-py3-none-any.whl
+python app/scripts/package_windows.py --build runtime/build-vs
+```
+
+Alternatively provide --core-source /path/to/CyToolsCore containing published
+commit 05352e1d2f58f423fa2ad57b8eec48d2609f2626. Its exact Git archive is exported
+to an owned authoring directory and built with setuptools==84.0.0 / wheel==0.45.1.
+No modified source checkout or development environment is executed/copied.
+SDK package contents and the resulting installed bytes must match the reviewed
+lock even if the wheel ZIP timestamps or checkout line endings differ.
+The source-rebuilt and provided-wheel paths were verified to produce identical
+1,567-file / 60,974,548-byte payloads without launching that runtime locally.
+
+All other wheels and CPython's official embedded archive are downloaded once
+with exact size/hash/origin verification. Corrupt cached files are retained with
+an error; no automatic replacement or executable retry occurs. --cache selects
+an explicit authoring cache; --output must stay beneath this checkout runtime.
+Preparation creates a new owned directory and preserves failed staging evidence.
+The final packager rechecks every pinned file and refuses extra/changed files.
+No pip, downloaded SDK wheel archives, build tree, credentials or user data ship.
+
+Windows production CI rebuilds the SDK at that commit, composes Setup/portable
+packages and uses only the runner to execute the installed MCP acceptance after
+repair and before uninstall. The actual SDK scheduler/official MCP clients are
+used, without a replacement Python document model. Reports exclude endpoint
+tokens and private job databases. This check does not prove Windows GUI rendering
+or complete online updating. POSIX builds keep their existing runtime setup.

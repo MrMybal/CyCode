@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstdlib>
 #include <sstream>
+#include <stdexcept>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -68,6 +69,17 @@ fs::path findExecutableOnPath(const std::string &name, const std::vector<fs::pat
     auto candidates = pathCandidates(name);
     candidates.insert(candidates.end(), hints.begin(), hints.end());
     return firstExecutable(candidates);
+}
+fs::path mcpInterpreterPath(const fs::path &installation) {
+    if (!installation.is_absolute()) throw std::runtime_error("Expected an absolute application installation");
+#ifdef _WIN32
+    const auto bundled=installation/"tools/python/python.exe";
+    const auto development=installation/"runtime/python/Scripts/python.exe";
+#else
+    const auto bundled=installation/"tools/python/bin/python3";
+    const auto development=installation/"runtime/python/bin/python";
+#endif
+    return firstExecutable({bundled}).empty() ? development : bundled;
 }
 bool sameExecutableInvocation(const fs::path &a, const fs::path &b) {
     if (!a.is_absolute() || !b.is_absolute() || a.filename().empty() || b.filename().empty()) return false;

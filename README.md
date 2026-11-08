@@ -135,8 +135,11 @@ uses pinned dependency sources and does not run native tests. See the
 [developer guide](app/README.md) for core-only builds, explicit source overrides,
 platform requirements and optional tool setup.
 
-The optional MCP bridge needs the separately supplied CyToolsCore wheel and its
-private Python environment. The desktop application itself runs without Python.
+Windows packages built from this development revision include the isolated
+CyToolsCore/MCP companion. Public releases through 0.2.3 and Linux/macOS source
+builds still need the separate runtime setup. Native editing runs independently.
+See [MCP packaging](app/Docs/Build.md#redistributable-mcp-runtime) for exact commands
+and [current validation](app/Docs/Finalization.md) for runtime evidence.
 Language toolchains and adapters have separate installation requirements.
 
 To regenerate documentation or the website:
@@ -176,7 +179,7 @@ Third-party components keep their own licenses.
 | [ripgrep](https://github.com/BurntSushi/ripgrep) | [MIT OR Unlicense](https://github.com/BurntSushi/ripgrep/blob/15.2.0/COPYING) | Search executable; the Windows archive retains its notices. |
 | [PCRE2](https://github.com/PCRE2Project/pcre2) | [BSD-3-Clause WITH PCRE2-exception](https://github.com/PCRE2Project/pcre2/blob/6f9d7c1373262c541324a16a358785b33ef116cf/LICENCE.md) | Local snippet-transform work, outside the published application/source snapshot. |
 | [utf8proc](https://github.com/JuliaStrings/utf8proc) | [MIT and Unicode data terms](https://github.com/JuliaStrings/utf8proc/blob/79cdd5ab40c79afa559f689ffc13b76812dee1ac/LICENSE.md) | Unicode snippet casing in local development. |
-| CyToolsCore SDK — private distribution | [MIT](app/licenses/CyToolsCore.txt) | Optional local SDK/MCP runtime, supplied separately. |
+| [CyToolsCore SDK](https://github.com/MrMybal/CyToolsCore) | [MIT](app/licenses/CyToolsCore.txt) | Shared SDK/MCP companion; bundled in new Windows packages. |
 | [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) | [MIT](app/licenses/MCP-Python.txt) | Transport in the optional Python MCP environment. |
 | [CyDoc](https://github.com/MrMybal/CyDoc) | [MIT](https://github.com/MrMybal/CyDoc/blob/6ddf9a582defb2f11fbb3f992afef6f98dcadc93/LICENSE) | Bundled reader with image/gallery modules; no Three.js runtime. |
 | [marked](https://github.com/markedjs/marked) · [PrismJS](https://github.com/PrismJS/prism) · [esbuild](https://github.com/evanw/esbuild) | [MIT](https://github.com/markedjs/marked/blob/v17.0.6/LICENSE.md) · [MIT](https://github.com/PrismJS/prism/blob/v1.30.0/LICENSE) · [MIT](https://github.com/evanw/esbuild/blob/v0.25.12/LICENSE.md) | Build-time documentation compilation and highlighting. |

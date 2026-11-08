@@ -5,12 +5,14 @@ description: Connect to the running IDE with a read or editing identity.
 section: Work in CyCode
 order: 260
 parent: plugins
-revision: 2
+revision: 3
 ---
 
 ## Connect {#connection}
 
-CyCode uses the real CyToolsCore companion. A compatible private SDK/runtime must be installed locally; it is not included in the public application archive. Open the MCP panel and copy the connection configuration for this running IDE instance into your MCP client.
+Windows packages built from this revision include the real CyToolsCore companion and its isolated Python/MCP runtime. No system Python or startup download is required. Open the MCP panel and copy the connection configuration for this running IDE instance into your MCP client.
+
+Released versions through 0.2.3 and Linux/macOS source builds still need the separate development runtime. Building the desktop alone does not prepare the redistributable environment; use the documented packaging command.
 
 The default configuration is read-only. Select editing access deliberately for document writes, version-control changes, process execution or plugin calls. Each application instance has its own connection context. Do not share private endpoint/identity files.
 

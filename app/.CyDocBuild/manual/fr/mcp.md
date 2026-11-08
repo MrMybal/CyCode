@@ -5,12 +5,14 @@ description: Connectez-vous à l’IDE actif avec une identité de lecture ou d�
 section: Travailler dans CyCode
 order: 260
 parent: plugins
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Se connecter {#connection}
 
-CyCode utilise le véritable compagnon CyToolsCore. Un SDK et un runtime privés compatibles doivent être installés localement ; ils ne sont pas inclus dans l’archive publique de l’application. Ouvrez le panneau MCP et copiez dans votre client la configuration de connexion de cette instance active de l’IDE.
+Les paquets Windows construits depuis cette révision incluent le véritable compagnon CyToolsCore et son environnement Python/MCP isolé. Aucun Python système ni téléchargement au démarrage n’est requis. Ouvrez le panneau MCP et copiez dans votre client la configuration de connexion de cette instance active de l’IDE.
+
+Les versions publiées jusqu’à 0.2.3 et les compilations Linux/macOS nécessitent encore le runtime de développement séparé. Compiler le bureau seul ne prépare pas l’environnement redistribuable ; utilisez la commande de packaging documentée.
 
 La configuration par défaut est en lecture seule. Sélectionnez volontairement l’accès en édition pour modifier les documents ou le contrôle de versions, exécuter des processus ou appeler des plugins. Chaque instance possède son propre contexte de connexion. Ne partagez pas les fichiers privés d’identités ou de points de connexion.
 

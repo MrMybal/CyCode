@@ -218,7 +218,13 @@ int main(int argc, char **argv) {
                 for (const auto &event : testKeys) if (advanceTestFrame && event.at("frame") == frames) {
                     for (const auto &value : event.at("keys")) {
                         const auto key = value.get<std::string>(); const bool down = event.value("down", true);
-                        if (key == "Ctrl") { io.AddKeyEvent(ImGuiMod_Ctrl, down); io.AddKeyEvent(ImGuiKey_LeftCtrl, down); }
+                        if (key == "Primary") {
+                            // Script the same physical primary modifier as the platform.
+                            // ImGui swaps Command/Control in macOS behavior mode.
+                            io.AddKeyEvent(io.ConfigMacOSXBehaviors ? ImGuiMod_Super : ImGuiMod_Ctrl, down);
+                            io.AddKeyEvent(io.ConfigMacOSXBehaviors ? ImGuiKey_LeftSuper : ImGuiKey_LeftCtrl, down);
+                        }
+                        else if (key == "Ctrl") { io.AddKeyEvent(ImGuiMod_Ctrl, down); io.AddKeyEvent(ImGuiKey_LeftCtrl, down); }
                         else if (key == "Shift") { io.AddKeyEvent(ImGuiMod_Shift, down); io.AddKeyEvent(ImGuiKey_LeftShift, down); }
                         else if (key == "Alt") { io.AddKeyEvent(ImGuiMod_Alt, down); io.AddKeyEvent(ImGuiKey_LeftAlt, down); }
                         else if (key.size() == 1 && key[0] >= 'A' && key[0] <= 'Z') io.AddKeyEvent(static_cast<ImGuiKey>(ImGuiKey_A + key[0] - 'A'), down);

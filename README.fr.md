@@ -143,8 +143,11 @@ Le [guide développeur](app/README.md) détaille les compilations du noyau seul,
 les sources de développement explicites, les prérequis par plateforme et les outils
 optionnels.
 
-Le pont MCP optionnel nécessite le wheel CyToolsCore fourni séparément et son
-environnement Python privé. L’application de bureau fonctionne sans Python.
+Les paquets Windows construits depuis cette révision de développement incluent
+le compagnon CyToolsCore/MCP isolé. Les versions publiées jusqu’à 0.2.3 et les
+compilations Linux/macOS nécessitent encore l’installation séparée du runtime.
+L’édition native reste indépendante. Consultez les [commandes de packaging](app/Docs/Build.md#redistributable-mcp-runtime)
+et les [preuves de validation actuelles](app/Docs/Finalization.md).
 Les compilateurs et adaptateurs de langage/débogage ont leurs propres prérequis.
 
 Pour régénérer la documentation ou la vitrine :
@@ -184,7 +187,7 @@ voir [COPYRIGHT](COPYRIGHT). Les composants tiers conservent leurs propres licen
 | [ripgrep](https://github.com/BurntSushi/ripgrep) | [MIT OR Unlicense](https://github.com/BurntSushi/ripgrep/blob/15.2.0/COPYING) | Exécutable de recherche ; ses notices accompagnent l’archive Windows. |
 | [PCRE2](https://github.com/PCRE2Project/pcre2) | [BSD-3-Clause WITH PCRE2-exception](https://github.com/PCRE2Project/pcre2/blob/6f9d7c1373262c541324a16a358785b33ef116cf/LICENCE.md) | Transformations d’extraits locales, hors application et sources publiées. |
 | [utf8proc](https://github.com/JuliaStrings/utf8proc) | [MIT et conditions des données Unicode](https://github.com/JuliaStrings/utf8proc/blob/79cdd5ab40c79afa559f689ffc13b76812dee1ac/LICENSE.md) | Changement de casse Unicode des extraits en développement local. |
-| SDK CyToolsCore — distribution privée | [MIT](app/licenses/CyToolsCore.txt) | Runtime SDK/MCP local optionnel, fourni séparément. |
+| [SDK CyToolsCore](https://github.com/MrMybal/CyToolsCore) | [MIT](app/licenses/CyToolsCore.txt) | Compagnon SDK/MCP commun ; inclus dans les nouveaux paquets Windows. |
 | [SDK Python MCP](https://github.com/modelcontextprotocol/python-sdk) | [MIT](app/licenses/MCP-Python.txt) | Transport dans l’environnement Python MCP optionnel. |
 | [CyDoc](https://github.com/MrMybal/CyDoc) | [MIT](https://github.com/MrMybal/CyDoc/blob/6ddf9a582defb2f11fbb3f992afef6f98dcadc93/LICENSE) | Lecteur embarqué avec les modules image/gallery, sans runtime Three.js. |
 | [marked](https://github.com/markedjs/marked) · [PrismJS](https://github.com/PrismJS/prism) · [esbuild](https://github.com/evanw/esbuild) | [MIT](https://github.com/markedjs/marked/blob/v17.0.6/LICENSE.md) · [MIT](https://github.com/PrismJS/prism/blob/v1.30.0/LICENSE) · [MIT](https://github.com/evanw/esbuild/blob/v0.25.12/LICENSE.md) | Compilation et coloration de la documentation lors de la génération. |

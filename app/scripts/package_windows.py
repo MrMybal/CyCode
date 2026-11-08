@@ -10,6 +10,7 @@ import time
 from release_package import payload, write_archive, executable_version, version_tuple
 from windows_installer import compile_installer, system_runtime
 from verify_documentation import verify as verify_documentation
+from mcp_bundle import load_bundle,lock_digest
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -22,6 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build', type=Path, required=True, help='Built CMake directory')
     parser.add_argument('--configuration', default='Release')
+    parser.add_argument('--mcp-bundle',type=Path,help='Verified redistributable MCP bundle prepared with prepare_mcp_runtime.py')
     parser.add_argument('--iscc', type=Path, help='Inno Setup 6.7+ compiler')
     parser.add_argument('--output', type=Path, default=ROOT / 'runtime/releases')
     args = parser.parse_args()
@@ -91,6 +93,11 @@ def main():
     include(tools / 'rg.exe', 'tools/rg.exe')
     for name in ['COPYING', 'LICENSE-MIT', 'UNLICENSE']:
         include(tools / 'licenses/ripgrep' / name, 'tools/licenses/ripgrep/' + name)
+    mcp_lock=json.loads((ROOT/'app/mcp-runtime.lock.json').read_text('utf-8'))
+    mcp_root=args.mcp_bundle or ROOT/'runtime/mcp-bundles'/lock_digest(mcp_lock)
+    mcp_entries=load_bundle(mcp_root,mcp_lock)
+    if entries.keys() & mcp_entries.keys():raise RuntimeError('MCP bundle collides with another package component')
+    entries.update(mcp_entries)
     entries['PACKAGE.md'] = f'''# CyCode {version} — Windows x64
 
 Extract the complete archive to a writable folder and run CyCode.exe. Keep app/,
@@ -99,12 +106,15 @@ driver is required. cycode_cli.exe --version reports the bundled version.
 
 IDE, text/image editing, project search and native services are included. Git, SVN, Perforce, Mercurial, Diversion,
 compilers/build tools and language servers/debug adapters are external tools.
-This development package does not include a private Python/SDK environment.
-Optional MCP setup: python app/scripts/setup_runtime.py --core-wheel PATH_TO_WHEEL.
-The scripts and notices describe local installation of additional toolchains.
+The MCP environment is included under tools/python: pinned CPython and the real
+CyToolsCore 0.10.1 / official MCP SDK. No system Python, pip command or first-start
+download is needed for that integration. Native editing remains independent of it.
+Application startup and the copied MCP command use isolated imports and UTF-8;
+bytecode caching is disabled for the managed runtime. Additional language and
+build toolchains are installed separately as described in the bundled help.
 
-No settings, credentials, SDK wheels, downloaded dependency source trees or
-development runtime directories are included. data/ and runtime/ are created
+No settings, credentials, SDK wheel archives, build source trees or development
+runtime directories are included. Dependency licenses ship beside their packages. data/ and runtime/ are created
 locally when needed. This is unsigned and has not been tested on a clean machine.
 Automatic updates use stable GitHub Releases and this same portable ZIP payload.
 The application checks at startup and asks before download or installation.

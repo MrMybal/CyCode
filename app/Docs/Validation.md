@@ -1,5 +1,34 @@
 # Validation — 2026-11-08
 
+## Complete native matrix and redistributable MCP implementation — 2026-11-08
+
+Native run 42459406339 at 32ff605 passes all 64 Windows cases and 63 cases on
+Linux/macOS, with only MSBuild platform-skipped on each POSIX platform. This
+includes real installed language/debug adapters, Git/worktree groups, document
+observation ownership, Unicode live search and the previously unreached Windows
+update staging/rollback/recovery paths. The earlier intermittent macOS replay
+reference failure did not recur; it remains under a targeted three-pass check.
+
+Production run 42459406453 builds the full GUI/CLI on all three platforms.
+Windows Setup, payload hashes, busy/pending guards, French repair and uninstall
+with user-data retention pass. Linux passes eight EN/FR theme renders, twelve
+keyboard cases, six actual clangd hover/signature cases, detached native windows
+and two simultaneous native Engine/bridge instances. Mac's eight renders pass;
+its first information shortcut fails because the fixture injected physical
+Control instead of the ImGui platform primary modifier. The corrected fixture
+and added Mac editing/search cases still need actual runner execution. Physical
+system shortcuts, IME and DPI behavior are not established by these fixtures.
+
+The new Windows distribution includes a pinned CPython 3.13.17/CyToolsCore
+0.10.1 runtime. Provided-wheel and clean published-source authoring produce the
+same reviewed 1,567-file payload. Six new data-only bundle contracts pass;
+the current local data-only suite totals 36 cases. Installed official MCP-client
+execution, native/Core lifecycle and permissions remain pending Windows CI.
+No newly downloaded interpreter, SDK Runtime, native app/helper or native test
+has been executed locally. Original 0.2.3 public assets remain unchanged.
+
+The sections below retain earlier milestone evidence and their original status.
+
 ## Finalization integration and real platform matrix — 2026-11-08
 
 The published 0.2.3 installer/updater and the preceding local editor/navigation

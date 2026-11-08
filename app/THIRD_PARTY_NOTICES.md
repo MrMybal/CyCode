@@ -134,3 +134,56 @@ CC BY 4.0, https://github.com/microsoft/vscode-codicons). Its glyphs are subset,
 mapped to CyUI's public icon codepoints and the family renamed. Codicons' original
 license is retained in `app/resources/fonts/Codicons-LICENSE.txt`. This resource
 does not redistribute Microsoft's Windows Segoe fonts. CyUI itself is unchanged.
+
+## Bundled MCP environment (new Windows packages)
+
+The official CPython 3.13.17 embedded distribution is pinned from python.org in
+mcp-runtime.lock.json. Its complete LICENSE.txt ships in tools/python, covering
+Python/PSF and the original bundled component notices. No system Python is copied.
+CyToolsCore 0.10.1 is MIT at published commit
+05352e1d2f58f423fa2ad57b8eec48d2609f2626. Its 53 package files match that source;
+source checkout line endings are normalized. Original SDK/dependency license files
+remain in Lib/site-packages/<distribution>.dist-info/licenses or the upstream
+license paths. Generated RECORD files describe the actual installed locations.
+
+The exact wheel hashes/URLs, source pin and installed-payload hash are recorded
+in app/mcp-runtime.lock.json and tools/python/cycode-runtime.json. Only dependency
+CLI entrypoint scripts and pywin32's unrelated GUI/service launchers, plus the
+upstream SDK manual, are omitted; the application's own CyDoc help remains bundled.
+Authoring setuptools/wheel and downloaded wheel archives are not distributed.
+The separate licenses below remain applicable; CyCode's GPL does not replace them.
+
+| Distribution | Version | Upstream declared license |
+|---|---|---|
+| annotated-types | 0.8.0 | MIT |
+| anyio | 4.16.0 | MIT |
+| attrs | 26.1.0 | MIT |
+| certifi | 2026.10.23 | MPL-2.0 |
+| cffi | 2.1.1 | MIT-0 |
+| click | 8.5.1 | BSD-3-Clause |
+| cryptography | 50.0.2 | Apache-2.0 OR BSD-3-Clause |
+| cytools-core | 0.10.1 | MIT |
+| h11 | 0.16.0 | MIT |
+| httpcore | 1.0.9 | BSD-3-Clause |
+| httpx | 0.28.1 | BSD-3-Clause |
+| httpx-sse | 0.4.3 | MIT |
+| idna | 3.20 | BSD-3-Clause |
+| jsonschema | 4.26.0 | MIT |
+| jsonschema-specifications | 2025.9.1 | MIT |
+| mcp | 1.30.0 | MIT |
+| psutil | 7.2.2 | BSD-3-Clause |
+| pycparser | 3.12 | BSD-3-Clause |
+| pydantic | 2.14.3 | MIT |
+| pydantic_core | 2.50.4 | MIT |
+| pydantic-settings | 2.16.2 | MIT |
+| PyJWT | 2.15.1 | MIT |
+| python-dotenv | 1.2.4 | BSD-3-Clause |
+| python-multipart | 0.0.33 | Apache-2.0 |
+| pywin32 | 312 | PSF |
+| referencing | 0.37.0 | MIT |
+| rpds-py | 2026.9.1 | MIT |
+| sse-starlette | 3.7.0 | BSD-3-Clause |
+| starlette | 1.10.0 | BSD-3-Clause |
+| typing_extensions | 4.16.0 | PSF-2.0 |
+| typing-inspection | 0.4.5 | MIT |
+| uvicorn | 0.54.0 | BSD-3-Clause |

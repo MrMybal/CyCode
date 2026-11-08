@@ -68,6 +68,9 @@ jobs:
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
         run: xvfb-run -a python app/scripts/verify_shortcuts.py --ci --hidden --executable runtime/build/CyCode --output runtime/reports/keyboard-ci
+      - name: Exercise actual macOS primary-modifier editing and search workflows
+        if: runner.os == 'macOS'
+        run: python app/scripts/verify_shortcuts.py --ci --hidden --executable runtime/build/CyCode --output runtime/reports/keyboard-ci
       - name: Exercise real Linux documentation and parameter shortcuts
         if: runner.os == 'Linux'
         env:
@@ -90,6 +93,23 @@ jobs:
         run: |
           $compiler = Get-ChildItem 'C:/Program Files*/Inno Setup*/ISCC.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
           if (-not $compiler) { choco install innosetup --no-progress -y; if ($LASTEXITCODE) { exit $LASTEXITCODE } }
+      - name: Resolve the pinned MCP source
+        if: runner.os == 'Windows'
+        id: core
+        run: python -c "import json,os; from pathlib import Path; p=json.loads(Path('app/mcp-runtime.lock.json').read_text()); Path(os.environ['GITHUB_OUTPUT']).open('a').write('revision='+p['sdk']['revision']+'\n')"
+      - uses: actions/checkout@v4
+        if: runner.os == 'Windows'
+        with:
+          repository: MrMybal/CyToolsCore
+          ref: ${{ steps.core.outputs.revision }}
+          path: runtime/deps/cytools-core
+          persist-credentials: false
+      - name: Install exact SDK wheel authoring tools on the runner
+        if: runner.os == 'Windows'
+        run: python -m pip --isolated install --index-url https://pypi.org/simple setuptools==84.0.0 wheel==0.45.1 --disable-pip-version-check
+      - name: Prepare the pinned redistributable MCP environment without executing it
+        if: runner.os == 'Windows'
+        run: python app/scripts/prepare_mcp_runtime.py --core-source runtime/deps/cytools-core
       - name: Compose the actual Windows distribution
         if: runner.os == 'Windows'
         run: python app/scripts/package_windows.py --build runtime/build-vs
@@ -112,5 +132,6 @@ jobs:
             runtime/reports/keyboard-ci/*
             runtime/reports/viewports-ci/*
             runtime/reports/information-ci/*
+            runtime/reports/mcp-ci/result.json
           if-no-files-found: ignore
           retention-days: 7

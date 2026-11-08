@@ -67,6 +67,9 @@ jobs:
       - run: python app/scripts/fetch_dependencies.py --core-only
       - name: Explicit native validation on the CI runner
         run: python app/scripts/build.py --core-only --run-tests --keep-going-tests
+      - name: Check the previously intermittent macOS replay path three more times
+        if: runner.os == 'macOS'
+        run: ctest --test-dir runtime/tests-core-build --output-on-failure --repeat until-fail:3 -R "^vcs_replay$"
       - name: Preserve native build and test evidence
         if: always()
         uses: actions/upload-artifact@v4

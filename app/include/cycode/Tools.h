@@ -4,6 +4,9 @@
 #include <vector>
 namespace cycode {
 std::filesystem::path installationRoot();
+// Prefer the application-owned redistributable interpreter; keep the private
+// development runtime as fallback. Never select an ambient system Python.
+std::filesystem::path mcpInterpreterPath(const std::filesystem::path &installation);
 // Search absolute PATH entries, then explicit full-path hints, retaining aliases.
 // Relative, missing and non-executable (POSIX) candidates are ignored. This does
 // not apply managed-tool/environment overrides used by toolPath below.

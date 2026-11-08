@@ -27,7 +27,7 @@
       "kind": "user-workflow",
       "target": "build#configure",
       "legacyId": "reference-app-docs-build",
-      "sourceSha256": "4129e4590cb1323c8f8b71feceda56957a84d885b1acd15b17cfc9c27451bdf2"
+      "sourceSha256": "84789f2f319e973d89f7f13d73da310b607a0ca030fb98ce0a14142f784ae250"
     },
     {
       "source": "Docs/BuildCancellation.md",
@@ -293,7 +293,7 @@
       "kind": "user-workflow",
       "target": "mcp#connection",
       "legacyId": "reference-app-docs-mcp",
-      "sourceSha256": "9df480c593157dac1cc7c007f4378ca963135f8a8727725293bfd3bde4bf1cec"
+      "sourceSha256": "d1972797468b66cb5f60b19f3322074a938b21a8cd6418204484c16f6dc151bb"
     },
     {
       "source": "Docs/MSBuild.md",
@@ -594,7 +594,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "84171657cda9c7e91162d96ef0c5ab058efb198d9e78e8cbe8d9f6fdf4baffff"
+      "sourceSha256": "7fdece4cea08930191fd8cad11005ba4881cf947e06822c0cac3e93f23f98021"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -622,7 +622,7 @@
       "kind": "developer-reference",
       "target": "overview#getting-started",
       "legacyId": "reference-app-docs-finalization",
-      "sourceSha256": "7d73773d212c878bcb7830e2b8d2bfadaadd960072e79b57f091c08fae77c1ba"
+      "sourceSha256": "e4de01e8556acc1da457f16ea3b7cf6f169d7ceba4def5a6b649c55b0f00c3ae"
     },
     {
       "source": "Docs/Releases/v0.2.3.md",

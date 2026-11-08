@@ -439,12 +439,13 @@ After a Windows Release build, create the allow-listed development ZIP with:
 python app/scripts/package_windows.py --build runtime/build-vs
 ```
 
-The package has a source/dependency manifest and SHA256SUMS.txt. It excludes the
-private development runtime, user settings and downloaded dependency source trees;
-only the verified ripgrep binary and its notices are copied to tools/. The IDE
-detects that directory before its development runtime/tools location. The Microsoft
-Visual C++ 2022 x64 runtime and an OpenGL 3.3 driver remain prerequisites. The MCP
-SDK, language servers and debugger adapters need separate local installation.
+The package has a source/dependency manifest and SHA256SUMS.txt. Prepare the
+redistributable MCP first with prepare_mcp_runtime.py; see Docs/Build.md. New
+Windows packages include the app-local MSVC runtime, verified ripgrep and pinned
+Python/CyToolsCore/MCP environment. An OpenGL 3.3 driver is still required.
+Language servers, compilers and debugger adapters remain separate prerequisites.
+Development venvs, credentials, user settings and dependency source trees are
+excluded. Public releases through 0.2.3 predate the bundled MCP environment.
 
 Downloaded archives are pinned by revision and SHA-256 in dependencies.lock.json.
 The fetch script never modifies CyUI or CyToolsCore. Build output is under runtime/;
@@ -453,13 +454,13 @@ For a core/CLI/plugin build without CyUI: python app/scripts/build.py --core-onl
 Ordinary builds do not compile or launch native tests. See [local testing](Docs/Testing.md)
 for source-only checks, isolated test builds and the current antivirus interruption.
 
-GitHub Actions needs a repository secret named `CYCODE_READER_READ_TOKEN` with
-read access to the private CyCodeReader source repository. The default workflow
-token cannot read another private repository. This secret is currently absent;
-the local validation recorded for 0.2.0 does not establish that the CI matrix passes.
-Never commit the token or include it in a release archive.
+GitHub Actions resolves the exact shared-editor and SDK source commits. Public
+source dependencies need no additional credential; a private Reader checkout can
+use CYCODE_READER_READ_TOKEN with read access. Never commit that token or include
+it in a package. Finalization.md records actual completed platform matrices;
+configuration alone does not establish a pass.
 
-For the private MCP runtime, obtain the actual CyToolsCore 0.10.1 wheel:
+For the source/development runtime (or older packages), obtain the actual CyToolsCore 0.10.1 wheel:
 
 ```sh
 python app/scripts/setup_runtime.py --core-wheel /absolute/path/to/cytools_core-0.10.1-py3-none-any.whl

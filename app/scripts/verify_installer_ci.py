@@ -87,6 +87,10 @@ def main():
     pending.unlink()
     install('french')
     assert verify() == baseline and user.read_bytes() == retained
+    subprocess.run([str(destination/'tools/python/python.exe'),'-B','-X','utf8',
+        str(destination/'app/scripts/verify_mcp_runtime_ci.py'),'--installation',str(destination),
+        '--fixture-root',str(parent),'--reports',str(ROOT/'runtime/reports/mcp-ci')],check=True,timeout=180)
+    assert verify() == baseline and user.read_bytes() == retained
     uninstallers = list(destination.glob('unins*.exe'))
     assert len(uninstallers) == 1
     result = subprocess.run([str(uninstallers[0]), '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART',
@@ -96,7 +100,7 @@ def main():
     assert user.read_bytes() == retained
     (reports/'result.json').write_text(json.dumps({'version': version, 'initialInstall': True,
         'ownedPayloadVerified': True, 'busyInstallationRefused': True, 'pendingRecoveryRefused': True,
-        'frenchRepair': True, 'uninstall': True, 'userDataPreserved': True}, indent=2) + '\n', 'utf-8')
+        'frenchRepair': True, 'installedMcpRuntime': True, 'uninstall': True, 'userDataPreserved': True}, indent=2) + '\n', 'utf-8')
     print('Windows runner install, payload verification, guarded repair and uninstall passed. Application/update execution is separate.')
 
 if __name__ == '__main__':

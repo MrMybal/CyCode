@@ -1,5 +1,44 @@
 # Integrated MCP
 
+## Bundled Windows runtime and shared service
+
+Windows distributions built from this revision contain CPython 3.13.17,
+CyToolsCore 0.10.1 and the official MCP Python SDK 1.30.0 under tools/python.
+The fixed _pth file isolates imports to the bundled standard library, installed
+packages and this application's app directory. Startup and copied MCP commands
+use -B -X utf8: no managed bytecode cache, ambient Python or first-use download.
+Native editing remains independent of the companion. Source/development and
+Linux/macOS builds retain the existing private-runtime fallback.
+
+The desktop starts one real SDK service for its own native bridge. Read/edit
+MCP connections use distinct identities on that shared scheduler. A standalone
+MCP process has a separate Runtime; it does not automatically share jobs. Native
+documents/revisions and resource/process owners remain common to GUI/CLI/SDK.
+
+The runtime lock pins all 32 wheels, published SDK commit and 53 package hashes,
+the official Python archive and the exact installed payload. Wheel .data records
+are installed at their proper locations; licenses remain beside distributions.
+SDK upstream manuals and unused dependency GUI/service launchers are excluded.
+See Build.md for generation and THIRD_PARTY_NOTICES.md for attribution.
+
+The new Windows runner check uses the actual installed interpreter/CLI and two
+official MCP clients against one shared Core. It must verify all 233 operation
+names, Unicode live editing, read-only denial, private-job isolation, stale
+revision refusal, bundled plugin loading, unchanged disk bytes and normal
+native/Core shutdown. Preparation/hash checks do not establish these runtime
+results; see Finalization.md for their status. Local native runs remain suspended.
+
+Public binaries through 0.2.3 do not yet contain this environment. Source builds
+can still use setup_runtime.py with a real SDK wheel. Automatic Linux/macOS
+runtime packaging is not implemented by the Windows authoring script.
+
+## Development milestone record
+
+The notes below retain earlier contracts and their historical operation counts.
+The current generated API reference/manifest has 233 operations; the capability
+ledger and individual feature guides supersede old pending-status statements.
+
+
 workspace_include / workspace.include follows bounded literal logical C/C++
 directives with inline comments and immediate backslash-newline continuations.
 Requested caret and actual physical inner-header UTF-16 range are separate.

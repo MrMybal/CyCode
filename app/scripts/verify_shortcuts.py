@@ -33,6 +33,7 @@ def main():
         environment['PATH'] = str(Path(os.environ['SystemRoot']) / 'System32')
 
     def chord(frame, *keys):
+        keys=tuple('Primary' if key=='Ctrl' and sys.platform=='darwin' else key for key in keys)
         return [{'frame': frame, 'keys': keys, 'down': True}, {'frame': frame+2, 'keys': keys, 'down': False}]
 
     def typed(frame, text):

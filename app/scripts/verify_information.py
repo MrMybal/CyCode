@@ -11,6 +11,7 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 
 def chord(frame,*keys):
+    keys=tuple('Primary' if key=='Ctrl' and sys.platform=='darwin' else key for key in keys)
     return [{'frame':frame,'keys':keys,'down':True},{'frame':frame+2,'keys':keys,'down':False}]
 
 def main():

@@ -1,0 +1,336 @@
+{
+  "format": 1,
+  "platform": "windows-x64",
+  "python": {
+    "version": "3.13.17",
+    "abi": "cp313",
+    "url": "https://www.python.org/ftp/python/3.13.17/python-3.13.17-embeddable-amd64.zip",
+    "sha256": "0ba1ee4bfcbdc3a559d27e2e9ce76d04a7839947a23f46375872c755c0d463b8"
+  },
+  "sdk": {
+    "version": "0.10.1",
+    "repository": "https://github.com/MrMybal/CyToolsCore.git",
+    "revision": "05352e1d2f58f423fa2ad57b8eec48d2609f2626",
+    "normalizedPackageFilesSha256": {
+      "cytools_core/__init__.py": "d349e9ff88b499d823d9d04f27e4d3d925e696bf8ba8d9a99060c522a7e552d0",
+      "cytools_core/diagnostics.py": "7e07f592072fe2d817fb1d1edb566f1b34c794a104d488684c8db98a23454aee",
+      "cytools_core/downloads.py": "dffdd4eb289d01e8406771eef795412f6825f539089a2454adc3f463d103b925",
+      "cytools_core/errors.py": "0d86653531e93deb61257121117541e927dc27e59b2a9205422fa17b7a0f2e5e",
+      "cytools_core/inputs.py": "85fb3625a93526f1a06c1a4f2606d57df78d15467e1ac7983241b23b28829bb5",
+      "cytools_core/resources.py": "4477d7bd0d0d3279b049636c0036b08d914361a0e0b0b78831c2319f85c847a3",
+      "cytools_core/runtime.py": "3eea0f442e4a1f73d259b2ce33307234976fd8f4e8689078ac340f8d6fed6a9c",
+      "cytools_core/scaffold.py": "e049f0f6340474393d731b78e500cd69575b389db4dae27012adc2be6203b352",
+      "cytools_core/schema.py": "6ae1389dfc4d63027caa1ab84481446f6882ba909e62031a4bed5a84b1bfc6bc",
+      "cytools_core/shared_installation.py": "11d9bf956975686c0db0d4a7540655f23784d6523418353d20fa1f148fed24d1",
+      "cytools_core/storage.py": "7481469370af76b384936f8ae6edc9214c9bd0e74599dbe411f7590a7054bace",
+      "cytools_core/task_files.py": "90938b3318c21cd68ff4ea08c064fb057ff3824ef2976854b5c2d29e2739b961",
+      "cytools_core/workers.py": "98a857a5423ec0380a43f2f12d428a32a6531227c03e9bbd678605ed431c1764",
+      "cytools_core/schemas/event.schema.json": "23fecff52cb0a687fdaccf133dff4457ac7e14bc83538a23ecbe6182c81f84aa",
+      "cytools_core/schemas/generation-config.schema.json": "365464d9df03bb8bc0c872c2dba402803372010e5bcb4648481620e58b6b32ca",
+      "cytools_core/schemas/installation-storage.schema.json": "70fd7d8b7b45f3fd9cc12dab3874412412908fb9ca38e37a3e821666891fcb67",
+      "cytools_core/schemas/job.schema.json": "497915ea5fc8479d4b0646fd7f88591298fa6a29b930571a88d15660ee395444",
+      "cytools_core/schemas/model-library.schema.json": "d3a4a6a95cef44c2fb44e4bd07f5f0fa62d3a93bab0c54ccb0bf0edad34989df",
+      "cytools_core/schemas/parameter.schema.json": "660ccc86b5654372e51186b4bd686da65f96a14d099f07ee25525463ac3703fb",
+      "cytools_core/schemas/request.schema.json": "dc21ff08ee704907a86bcb58d815401df3c15297c9fde62baeb773978a5e8303",
+      "cytools_core/schemas/resources.schema.json": "89b90f0f9d41071e07fd5626eb4c96716578e05fc96ec27fb4559d52d29f1add",
+      "cytools_core/schemas/response.schema.json": "fc60eca554c3c3cac8eb17de620fa34c5a51f741a27c60f91efc4553b2211acb",
+      "cytools_core/schemas/tool.schema.json": "eb8b26081866b15555cf84e7007133c5ddf81ff35a04584e72bf7213e7f9086a",
+      "cytools_core/schemas/worker.schema.json": "3781bc2b7955c8c9c90f7f5984946750e35e2337708338174e006e0c4a94b475",
+      "cytools_core/templates/AGENTS.md.txt": "dec16b4533e9ac95b085ce4ac5ec645027d59a09fd8e1c526c1c99b804ee4c16",
+      "cytools_core/templates/LICENSE-CyToolsCore.txt": "87f55d45ebf235409f60234ef4fad2d211738bc2a1e2375e2103372eb33f6405",
+      "cytools_core/templates/README.md.txt": "bd22c4b72591fea4c9e54e90d8fdeb116648efd6a3eae5003c05e34f9853e62d",
+      "cytools_core/templates/advanced_ui.py.txt": "6d11fb0cee638d358c675b30f2ed29d956bb00f5496b79a7c8c15ed8ed255006",
+      "cytools_core/templates/build_launcher.ps1.txt": "0cff7b65fd7388df372c930ca310c1df3571cd2e61ad14dee4ab8cbf25d26be2",
+      "cytools_core/templates/desktop.py.txt": "a702bababd8ead34d66ac84c61962085c1f56327b9cc52eba0cb23cf1c9e43d6",
+      "cytools_core/templates/desktop_launch.cmd.txt": "4b034ed3888020943cff8d9b5b1b9ebcf57181632437965346586c0debda1cb9",
+      "cytools_core/templates/desktop_launch.sh.txt": "301165ba0c64b2cee177a6513e834630bbdf06318f8f3d42403c4133887ac91c",
+      "cytools_core/templates/desktop_readme.md.txt": "94401a60997630bda55fa0c3c93540e303ddee200ee3650f70c4539a7b52d770",
+      "cytools_core/templates/generation_config.py.txt": "efab6ce6cd629cfc65966b24066106b78309415a8021ecce0da82e2c9d92d3aa",
+      "cytools_core/templates/installation_ui.py.txt": "8d0ab3b9f11b38ba5f211858face90ef57acad223ee9dff04c986b4dcb1f51b9",
+      "cytools_core/templates/launcher.cpp.txt": "67a23377a27b1b44eb99c3d6610c77759b5e8bdfd3d80b68dcae4f1031cc9d84",
+      "cytools_core/templates/mesh_viewer.py.txt": "f327a3bf55d7ff8d413a4dbf8f98cad5ddcfa677129a94b502b5fd2185b374ab",
+      "cytools_core/templates/mesh_viewer_ui.py.txt": "2e83daa489ae545215095750c7024fe7703e1a60646c3f2a7a2813506045f4b3",
+      "cytools_core/templates/model_options.py.txt": "3f0d62e7427cfee2a23599d3a8e3f215cebcaf2919e8d8507ccfa5540d0f296e",
+      "cytools_core/templates/model_options_ui.py.txt": "0ca26fcc50d3f3a57ecd72e31ffe3520dcf3206a24267982908f1f5b738fab0a",
+      "cytools_core/templates/standalone_log.py.txt": "4ba2577aa1b5734f269f2f697059b3d13d1d7dd6187d79d60e873eb7f5f50255",
+      "cytools_core/templates/test_tool.py.txt": "c25fc20c0949dedfeafc70e633fc6363ecae0017fd8af5aa220f3fe866099363",
+      "cytools_core/templates/tool.py.txt": "71ac7ba9a60c6d12b5d8c4c3c383c8fc0b131faa8a7df4e375156e807ff30426",
+      "cytools_core/templates/ui_common.py.txt": "c6efa39a1cb1cfed4ce6a841c21476ff962413d1fe8de1502cbcb7e1102d3334",
+      "cytools_core/templates/ui_translations.json.txt": "d290ba0f8789884a9f93685b22b29c401d73c584430848a2342b12bf0fa9c0eb",
+      "cytools_core/transports/__init__.py": "2d3b3babdcd877f35aec3a3838a63b799e905f66d5255ed8440974b39b393122",
+      "cytools_core/transports/api.py": "b83dc02eba031120380f47af285f90776876656fe1714bfd32d20831069daab2",
+      "cytools_core/transports/cli.py": "dbcb2e7b1372e2ed1c6c86d0853cccf454c15910899ae65f4d66310b29a4f2f1",
+      "cytools_core/transports/http.py": "d07feec8e23316eee28046472023469bea6b2513dc1bc2cdc75d651a504e5568",
+      "cytools_core/transports/mcp.py": "2a971918d148eb20a07f8fa9a7e1668c37743a074f036dfbe006fa30df0b850c",
+      "cytool_test/CyTool.json": "cfa82a29a3af807d3ccf64dcf030e8afd16364f8c341360c98004a4e7475124f",
+      "cytool_test/__init__.py": "cf7fdc02fd0c02f402d276e36028a3269e74d0c66b1053dcacc0e95271698713",
+      "cytool_test/__main__.py": "8035da62517cc3ec40bfa7efa59d9cbfda46bfa97261f9095d6a2c303bb3c9a1"
+    }
+  },
+  "wheels": [
+    {
+      "project": "annotated-types",
+      "version": "0.8.0",
+      "file": "annotated_types-0.8.0-py3-none-any.whl",
+      "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0",
+      "size": 13427,
+      "url": "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl"
+    },
+    {
+      "project": "anyio",
+      "version": "4.16.0",
+      "file": "anyio-4.16.0-py3-none-any.whl",
+      "sha256": "c66ae634e0b8228396b801741beb3294326d4b6102f7bba4041c0dfb58c29026",
+      "size": 134521,
+      "url": "https://files.pythonhosted.org/packages/a9/16/7757fb84c819accc7d7e9af5291b261e4abb8627ee040f99e7d35ef2457a/anyio-4.16.0-py3-none-any.whl"
+    },
+    {
+      "project": "attrs",
+      "version": "26.1.0",
+      "file": "attrs-26.1.0-py3-none-any.whl",
+      "sha256": "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309",
+      "size": 67548,
+      "url": "https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl"
+    },
+    {
+      "project": "certifi",
+      "version": "2026.10.23",
+      "file": "certifi-2026.10.23-py3-none-any.whl",
+      "sha256": "e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1",
+      "size": 135082,
+      "url": "https://files.pythonhosted.org/packages/32/d1/a3652fe2c19134d0d15922177821d863cbd7e842d53a21bbe7e8e3a1b5ac/certifi-2026.10.23-py3-none-any.whl"
+    },
+    {
+      "project": "cffi",
+      "version": "2.1.1",
+      "file": "cffi-2.1.1-cp313-cp313-win_amd64.whl",
+      "sha256": "1aa5645c30469b09530c4ebca77ebf8f17618293c58f8549cb1a543a50236e7d",
+      "size": 185688,
+      "url": "https://files.pythonhosted.org/packages/60/a6/8b149b2c3f2e11aaa1618ef64500b45f50f22c57a977a4dff1aff1f91042/cffi-2.1.1-cp313-cp313-win_amd64.whl"
+    },
+    {
+      "project": "click",
+      "version": "8.5.1",
+      "file": "click-8.5.1-py3-none-any.whl",
+      "sha256": "8bb5376d2006950386f8c6427613334a2acadc5f559cb80e638d00b4df957e37",
+      "size": 126163,
+      "url": "https://files.pythonhosted.org/packages/31/7d/164b7ffc8624fe9efb4221bf9af485d5c1e41b9ae118045d2b6dc5457d8b/click-8.5.1-py3-none-any.whl"
+    },
+    {
+      "project": "cryptography",
+      "version": "50.0.2",
+      "file": "cryptography-50.0.2-cp311-abi3-win_amd64.whl",
+      "sha256": "7afa5a6602a9f29af1f3a2965f831bae7c9d5d597b7cbb716d41ab3b7d89879c",
+      "size": 3824692,
+      "url": "https://files.pythonhosted.org/packages/9a/4f/adfc442765721292fff86d314ce385d3249d22db42295c0dd057727b60f3/cryptography-50.0.2-cp311-abi3-win_amd64.whl"
+    },
+    {
+      "project": "cytools-core",
+      "version": "0.10.1",
+      "file": "cytools_core-0.10.1-py3-none-any.whl",
+      "sha256": "5f2f6f0eccdcce960ff7ff9deee36280a4ee1c671cc2ba29b103fa15bb479702",
+      "size": 226452,
+      "source": {
+        "repository": "https://github.com/MrMybal/CyToolsCore.git",
+        "revision": "05352e1d2f58f423fa2ad57b8eec48d2609f2626"
+      }
+    },
+    {
+      "project": "h11",
+      "version": "0.16.0",
+      "file": "h11-0.16.0-py3-none-any.whl",
+      "sha256": "63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86",
+      "size": 37515,
+      "url": "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl"
+    },
+    {
+      "project": "httpcore",
+      "version": "1.0.9",
+      "file": "httpcore-1.0.9-py3-none-any.whl",
+      "sha256": "2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55",
+      "size": 78784,
+      "url": "https://files.pythonhosted.org/packages/7e/f5/f66802a942d491edb555dd61e3a9961140fd64c90bce1eafd741609d334d/httpcore-1.0.9-py3-none-any.whl"
+    },
+    {
+      "project": "httpx",
+      "version": "0.28.1",
+      "file": "httpx-0.28.1-py3-none-any.whl",
+      "sha256": "d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad",
+      "size": 73517,
+      "url": "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl"
+    },
+    {
+      "project": "httpx-sse",
+      "version": "0.4.3",
+      "file": "httpx_sse-0.4.3-py3-none-any.whl",
+      "sha256": "0ac1c9fe3c0afad2e0ebb25a934a59f4c7823b60792691f779fad2c5568830fc",
+      "size": 8960,
+      "url": "https://files.pythonhosted.org/packages/d2/fd/6668e5aec43ab844de6fc74927e155a3b37bf40d7c3790e49fc0406b6578/httpx_sse-0.4.3-py3-none-any.whl"
+    },
+    {
+      "project": "idna",
+      "version": "3.20",
+      "file": "idna-3.20-py3-none-any.whl",
+      "sha256": "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c",
+      "size": 69583,
+      "url": "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl"
+    },
+    {
+      "project": "jsonschema",
+      "version": "4.26.0",
+      "file": "jsonschema-4.26.0-py3-none-any.whl",
+      "sha256": "d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce",
+      "size": 90630,
+      "url": "https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl"
+    },
+    {
+      "project": "jsonschema-specifications",
+      "version": "2025.9.1",
+      "file": "jsonschema_specifications-2025.9.1-py3-none-any.whl",
+      "sha256": "98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe",
+      "size": 18437,
+      "url": "https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl"
+    },
+    {
+      "project": "mcp",
+      "version": "1.30.0",
+      "file": "mcp-1.30.0-py3-none-any.whl",
+      "sha256": "666edb5009503e1047c9d60346a756f94b261f05cc2625f23d41c728ffc484d0",
+      "size": 234581,
+      "url": "https://files.pythonhosted.org/packages/f5/f4/e58bc33317c92a0203664daaf00bf6f41166cc0149e5d6870a03f7cd004a/mcp-1.30.0-py3-none-any.whl"
+    },
+    {
+      "project": "psutil",
+      "version": "7.2.2",
+      "file": "psutil-7.2.2-cp37-abi3-win_amd64.whl",
+      "sha256": "eb7e81434c8d223ec4a219b5fc1c47d0417b12be7ea866e24fb5ad6e84b3d988",
+      "size": 137737,
+      "url": "https://files.pythonhosted.org/packages/b4/90/e2159492b5426be0c1fef7acba807a03511f97c5f86b3caeda6ad92351a7/psutil-7.2.2-cp37-abi3-win_amd64.whl"
+    },
+    {
+      "project": "pycparser",
+      "version": "3.12",
+      "file": "pycparser-3.12-py3-none-any.whl",
+      "sha256": "a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e",
+      "size": 62600,
+      "url": "https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl"
+    },
+    {
+      "project": "pydantic",
+      "version": "2.14.3",
+      "file": "pydantic-2.14.3-py3-none-any.whl",
+      "sha256": "3f7b347782ab7e4cf4c798496ae3a82787d9f21ec12676a9c564355eeef8daa8",
+      "size": 494071,
+      "url": "https://files.pythonhosted.org/packages/72/b8/b864503789ef5c58597d2a7b4adbee62c26440ab1e682581fc6838df8947/pydantic-2.14.3-py3-none-any.whl"
+    },
+    {
+      "project": "pydantic_core",
+      "version": "2.50.4",
+      "file": "pydantic_core-2.50.4-cp313-cp313-win_amd64.whl",
+      "sha256": "4c29b8f2d6417069bb1f257e6b9113f5d64dc2f554cc200ea90b4fe2c5cdb733",
+      "size": 2262887,
+      "url": "https://files.pythonhosted.org/packages/e7/e0/95b651213e79ffe0cbee855590bf5cfdf8e3a0d90a7fc73a080e63f7cc38/pydantic_core-2.50.4-cp313-cp313-win_amd64.whl"
+    },
+    {
+      "project": "pydantic-settings",
+      "version": "2.16.2",
+      "file": "pydantic_settings-2.16.2-py3-none-any.whl",
+      "sha256": "8d523e5c129b097686bde019bd6109bff53f4c8c3f63f1ddf9933ffa42e5ab4f",
+      "size": 81994,
+      "url": "https://files.pythonhosted.org/packages/39/88/4131c51ff87b7cd7f82a1194d0c0a2b7ca68c72d9da04c3b7e69ab91a79f/pydantic_settings-2.16.2-py3-none-any.whl"
+    },
+    {
+      "project": "PyJWT",
+      "version": "2.15.1",
+      "file": "pyjwt-2.15.1-py3-none-any.whl",
+      "sha256": "42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193",
+      "size": 33860,
+      "url": "https://files.pythonhosted.org/packages/50/ca/44de4e75f8aadc457f0634be3b542815078ded46dca30efb960edeecad6e/pyjwt-2.15.1-py3-none-any.whl"
+    },
+    {
+      "project": "python-dotenv",
+      "version": "1.2.4",
+      "file": "python_dotenv-1.2.4-py3-none-any.whl",
+      "sha256": "42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc",
+      "size": 23266,
+      "url": "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl"
+    },
+    {
+      "project": "python-multipart",
+      "version": "0.0.33",
+      "file": "python_multipart-0.0.33-py3-none-any.whl",
+      "sha256": "8f16c07b36add9da6b2ee87d3efcaf0a45a6de9c3d0a5dd94e9ccf7675a7bc45",
+      "size": 32253,
+      "url": "https://files.pythonhosted.org/packages/dd/1b/6b1b4164ec734cac911460ab599bfbe46afedd42c5c9627fe4235942c314/python_multipart-0.0.33-py3-none-any.whl"
+    },
+    {
+      "project": "pywin32",
+      "version": "312",
+      "file": "pywin32-312-cp313-cp313-win_amd64.whl",
+      "sha256": "c53e878d15a1c44788082bfe712a905433473aa38f86375b7cf8b45e3acbaaf9",
+      "size": 6914298,
+      "url": "https://files.pythonhosted.org/packages/ba/db/36a78e3403099d31d9746d13fdcde5accc43c1155f375a34d15983a479a7/pywin32-312-cp313-cp313-win_amd64.whl"
+    },
+    {
+      "project": "referencing",
+      "version": "0.37.0",
+      "file": "referencing-0.37.0-py3-none-any.whl",
+      "sha256": "381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231",
+      "size": 26766,
+      "url": "https://files.pythonhosted.org/packages/2c/58/ca301544e1fa93ed4f80d724bf5b194f6e4b945841c5bfd555878eea9fcb/referencing-0.37.0-py3-none-any.whl"
+    },
+    {
+      "project": "rpds-py",
+      "version": "2026.9.1",
+      "file": "rpds_py-2026.9.1-cp313-cp313-win_amd64.whl",
+      "sha256": "3e93b2cd69a9830be33e03945cd7cda940a0a8bfcfbff41d6144f0cb0d3d8bd9",
+      "size": 222409,
+      "url": "https://files.pythonhosted.org/packages/31/9c/ba5a9569d719bfdd6ce863df4133ac6a1658cf1b07cc3534c31db729fbbc/rpds_py-2026.9.1-cp313-cp313-win_amd64.whl"
+    },
+    {
+      "project": "sse-starlette",
+      "version": "3.7.0",
+      "file": "sse_starlette-3.7.0-py3-none-any.whl",
+      "sha256": "f1d3136caa12d129284fca3d2ded79bc9af943320b6472712955fea52a6d3eea",
+      "size": 18432,
+      "url": "https://files.pythonhosted.org/packages/6a/11/25cabac0a24fa76f58637d8671b549c90d818d69d26beecf0c59a3b186e0/sse_starlette-3.7.0-py3-none-any.whl"
+    },
+    {
+      "project": "starlette",
+      "version": "1.10.0",
+      "file": "starlette-1.10.0-py3-none-any.whl",
+      "sha256": "478c0ab3b4ced6e82719849c118fa406f0278a3499c1a898cd15cd31bdc38ce4",
+      "size": 80571,
+      "url": "https://files.pythonhosted.org/packages/88/2e/947cfe02def9371c07cd5bf5b6b61c829e9aecb9904db02a66cfafbc1eec/starlette-1.10.0-py3-none-any.whl"
+    },
+    {
+      "project": "typing_extensions",
+      "version": "4.16.0",
+      "file": "typing_extensions-4.16.0-py3-none-any.whl",
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+      "size": 45571,
+      "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl"
+    },
+    {
+      "project": "typing-inspection",
+      "version": "0.4.5",
+      "file": "typing_inspection-0.4.5-py3-none-any.whl",
+      "sha256": "bc210535442b39e1bf2805e0c7a17dfd6a4ace760c84c7f7d16245d23a6b1c39",
+      "size": 14874,
+      "url": "https://files.pythonhosted.org/packages/de/0c/ea2544850a7c135e15033a5c7a8e7211136184b7ae63e2239d557c2b3019/typing_inspection-0.4.5-py3-none-any.whl"
+    },
+    {
+      "project": "uvicorn",
+      "version": "0.54.0",
+      "file": "uvicorn-0.54.0-py3-none-any.whl",
+      "sha256": "505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf",
+      "size": 87427,
+      "url": "https://files.pythonhosted.org/packages/38/0c/b54a4fdd7f90a3af8b02ebc9ce6712c2c208b7926a2f7bad95c33ebbe943/uvicorn-0.54.0-py3-none-any.whl"
+    }
+  ],
+  "authoring": {
+    "setuptools": "84.0.0",
+    "wheel": "0.45.1"
+  },
+  "payloadSha256": "e54a8d22d533f879faf5c597d0cdb31a1d1ea7f628d08b72cce825fda90ca3e6"
+}

@@ -1,5 +1,6 @@
 #include "cycode/Application.h"
 #include "cycode/UiFonts.h"
+#include "cycode/Tools.h"
 #include "ApplicationHelp.h"
 #include "cycode/SymbolCatalogue.h"
 #include "cycode/DiagnosticAnnotations.h"
@@ -447,13 +448,9 @@ void Application::setWorkspace(const std::filesystem::path &path) {
         instance_ + '-' + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
     bridge_ = std::make_unique<Bridge>(*engine_, root_ / ("data/bridge/native-" + instance + ".json"));
     coreDescriptor_ = root_ / ("data/bridge/core-" + instance + ".json");
-#ifdef _WIN32
-    auto python = root_ / "runtime/python/Scripts/python.exe";
-#else
-    auto python = root_ / "runtime/python/bin/python";
-#endif
+    const auto python=mcpInterpreterPath(root_);
     if (!smoke_ && std::filesystem::exists(python)) {
-        std::vector<std::string> command{pathUtf8(python),
+        std::vector<std::string> command{pathUtf8(python), "-B", "-X", "utf8",
                                          pathUtf8(root_ / "app/tool.py"),
                                          "--desktop-service",
                                          "--native-descriptor",
@@ -2312,16 +2309,12 @@ void Application::extensionsPanel() {
     ImGui::End();
 }
 Json Application::mcpConfiguration() const {
-#ifdef _WIN32
-    auto python = root_ / "runtime/python/Scripts/python.exe";
-#else
-    auto python = root_ / "runtime/python/bin/python";
-#endif
+    const auto python=mcpInterpreterPath(root_);
     return {{"mcpServers",
              {{"cycode",
                {{"command", pathUtf8(python)},
                 {"args",
-                 Json::array({pathUtf8(root_ / "app/tool.py"), "--bridge-config", pathUtf8(coreDescriptor_),
+                 Json::array({"-B", "-X", "utf8", pathUtf8(root_ / "app/tool.py"), "--bridge-config", pathUtf8(coreDescriptor_),
                               "--access", mcpWrite_ ? "edit" : "read", "mcp"})}}}}}};
 }
 void Application::mcpPanel() {
