@@ -1,8 +1,10 @@
 #include "cycode/Application.h"
+#include "cycode/RelatedFiles.h"
 #include "ApplicationHelp.h"
 #include "cycode/FileIcons.h"
 #include "cycode/DebugExecution.h"
 #include "cycode/StepInTargets.h"
+#include "cycode/SnippetCatalogue.h"
 #include <algorithm>
 #include <cctype>
 #include <cyui/Core.h>
@@ -40,6 +42,23 @@ void Application::shortcuts() {
     const auto focused = window ? window->ID : 0;
     if (keymapFocus_ != focused) { keymap_.cancel(); keymapFocus_ = focused; lastShiftTap_ = -1; }
     if (ImGui::IsPopupOpen(ImGuiID(0), ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel)) {
+        // The related-file modal permits only a configured single-stroke Context help action.
+        // Other global commands and chords continue to belong to the modal's search field.
+        if(counterpartOpen_)for(int i=ImGuiKey_NamedKey_BEGIN;i<ImGuiKey_NamedKey_END;++i) {
+            const auto key=static_cast<ImGuiKey>(i);
+            if(!ImGui::IsKeyPressed(key,ImGuiInputFlags_None,ImGuiKeyOwner_Any))continue;
+            auto name=keyName(key);if(name.empty())continue;
+            std::string stroke;
+            if(io.KeyCtrl)stroke+="ctrl+";if(io.KeyShift)stroke+="shift+";
+            if(io.KeyAlt)stroke+="alt+";if(io.KeySuper)stroke+="super+";
+            stroke+=name;
+            for(const auto &binding:keymap_.bindings())if(binding.command=="help.context" &&
+                binding.strokes.size()==1 && binding.strokes[0]==stroke) {
+                ImGui::SetKeyOwner(key,ImHashStr("##cycode-related-help"),ImGuiInputFlags_LockThisFrame);
+                io.InputQueueCharacters.resize(0);executeCommand("help.context");
+                keymap_.cancel();lastShiftTap_=-1;return;
+            }
+        }
         keymap_.cancel(); lastShiftTap_ = -1; return;
     }
     // Core view filters own Ctrl/Cmd+F in their panel. Dear ImGui maps the
@@ -112,6 +131,36 @@ void Application::shortcuts() {
     }
 }
 bool Application::commandEnabled(const std::string &id) const {
+    if(id=="navigate.counterpart" || id=="navigate.include" || id=="navigate.relatedFiles") {
+        if(smoke_ || testSession_ || counterpartFuture_.valid() || counterpartOpen_)return false;
+        for(const auto &tab:tabs_)if(tab->path==active_) {
+            const auto file=utf8Path(tab->path);
+            return !tab->image && !isUntitledDocument(tab->path) && tab->path.find("://")==tab->path.npos &&
+                cppFileKind(pathUtf8(file.extension()))!=CppFileKind::none &&
+                (id=="navigate.include" || !relatedGeneratedStem(pathUtf8(file.stem())));
+        }
+        return false;
+    }
+    if(id=="edit.userSnippets")return !smoke_ && !testSession_ && !userSnippetsOpen_ && !userSnippetsFuture_.valid();
+    if(id=="edit.captureSnippet") {
+        if(!commandEnabled("edit.userSnippets"))return false;
+        for(const auto &tab:tabs_)if(tab->path==active_) {
+            const auto selected=tab->editor.GetMainCursorSelection();
+            return !tab->image && !tab->readOnly && !isUntitledDocument(tab->path) && tab->path.find("://")==tab->path.npos &&
+                tab->editor.GetNumberOfCursors()==1 && selected.start!=selected.end;
+        }
+        return false;
+    }
+    if (id=="edit.snippetCatalogue")return !smoke_ && !snippetFuture_.valid() && !snippetOpen_;
+    if (id=="edit.snippet" || id=="edit.surroundSnippet") {
+        if(smoke_ || snippetFuture_.valid() || snippetOpen_)return false;
+        for(const auto &tab:tabs_)if(tab->path==active_)return !tab->readOnly && !tab->image &&
+            !isUntitledDocument(tab->path) && tab->path.find("://")==tab->path.npos &&
+            !tab->completion.valid() && !tab->completionAccept.valid() &&
+            tab->editor.GetNumberOfCursors()==1 &&
+            (id!="edit.surroundSnippet" || tab->editor.MainCursorHasSelection());
+        return false;
+    }
     if (id == "build.cancel") return engine_ &&
         ((taskFuture_.valid() && BuildOperations::supports(taskMethod_)) || unrealAnalysisFuture_.valid() ||
          engine_->dispatch("build.status").value("running", false));
@@ -262,16 +311,21 @@ void Application::executeCommand(const std::string &id) {
         if (executeExtensionCommand(id)) return;
         if (id.starts_with("help.")) {
             std::string page = id.substr(5);
+            std::string anchor;
             if (page == "documentation") page = "overview";
             else if (page == "context") {
+                if(counterpartOpen_){relatedHelp();return;}
                 page = tab ? "editing" : "overview";
                 for (auto *window = ImGui::GetCurrentContext()->NavWindow; window; window = window->ParentWindow) {
                     const std::string_view name(window->Name);
                     const auto marker = name.find("###");
-                    if (marker != std::string_view::npos) { page = app_help::topic(name.substr(marker + 3)); break; }
+                    if (marker != std::string_view::npos) {
+                        const auto topic = app_help::context(name.substr(marker + 3));
+                        page = topic.page; anchor = topic.anchor; break;
+                    }
                 }
             }
-            app_help::open(root_, "app/Documentation", locale_, page, page == "tour" ? "interface" : "", smoke_ || testSession_, page == "tour" ? "interface-image" : "");
+            app_help::open(root_, "app/Documentation", locale_, page, page == "tour" ? "interface" : anchor, smoke_ || testSession_, page == "tour" ? "interface-image" : "");
             return;
         }
         if(id.starts_with("problem.")) {navigateProblem(id=="problem.previous"||id=="problem.previousInFile",id.ends_with("InFile"));return;}
@@ -298,6 +352,20 @@ void Application::executeCommand(const std::string &id) {
             else { showPanel("Terminal", "terminal"); focusTerminal_ = true; if (engine_->terminals().list().at("sessions").empty()) newTerminal(); }
         }
         else if (id == "terminal.new") newTerminal();
+        else if (id == "edit.snippet" || id == "edit.surroundSnippet") beginSnippets();
+        else if(id=="edit.userSnippets")beginUserSnippets();
+        else if(id=="edit.captureSnippet")beginUserSnippets(true);
+        else if(id=="navigate.counterpart")beginCounterparts();
+        else if(id=="navigate.include")beginCounterparts(true);
+        else if(id=="navigate.relatedFiles")beginCounterparts(false,true);
+        else if (id == "edit.snippetCatalogue") {
+            const std::string path(snippetCataloguePath);
+            if (!std::filesystem::exists(engine_->resolve(path))) {
+                const auto created=engine_->dispatch("documents.create",{{"path",path}});
+                engine_->dispatch("documents.replace",{{"path",path},{"expectedRevision",created.at("revision")},{"text","{\n}\n"}});
+            }
+            open(path);
+        }
         else if (id == "file.new") newFile_ = true;
         else if (id == "file.newUntitled") newUntitled();
         else if (id == "file.newProject") beginProjectTemplate();

@@ -1,5 +1,131 @@
 # Local verification and native tests
 
+Header/source and include navigation have 106 compiler-evaluated helper contracts
+on the actual native constexpr owners. The 27 additions cover inline comments,
+logical LF/CRLF components, spliced keywords, physical header offsets, conservative
+refusals, forced choice, file-page revision/generation pairs and help anchors.
+MSVC /Zs and Clang syntax-only checks cover eight affected translation units.
+The fixture also contains a real compiler include directive split across lines
+with inline comments. Native bodies specify continued Unicode includes with a
+caret on the first line and a header range on the third, in addition to the prior
+index/suffix/case/scope/dirty-buffer/source-guard contracts. These bodies are
+syntax checked only, not linked or executed.
+
+`python -B app/tests/test_navigation_contracts.py` has six JSON-data-only checks
+of guarded source/caret inputs, explicit cache observations, continued physical
+ranges and required positive file-page generations. Together with the five
+snippet checks below, eleven tests run without an SDK/application/native runtime.
+JSON validation does not establish filesystem, callback, cache contention or
+permission behavior. Actual clipboard, refresh/close race and configurable modal
+help-keyboard acceptance remain pending. DOM tests exercise the local manual's
+matching EN/FR stable anchors; they do not launch a browser or prove native help
+handoff, rendering or keyboard behavior.
+
+`python -B app/tests/test_snippet_contracts.py` runs five JSON-data-only tests:
+generated input/output parity, disabled/unreadable zero-generation states,
+save revision/fixed-location validation and permission/scheduler declarations.
+It imports schema constants, without tool.py, the SDK runtime or native processes.
+This does not establish native permission, hashing or file-lock behavior.
+
+Selection capture adds fourteen compiler-evaluated contracts on the actual shared
+literal-body helper (143 combined snippet assertions): dollar/backslash/brace
+escaping, Unicode/newline retention, empty/NUL refusal and plain/escaped 8 KiB
+boundaries including the final caret. Native fixtures additionally specify
+noncreating drafts, unchanged existing definitions/source files, unique names,
+explicit save, invalid/full catalogue refusal, unsaved Verse capture and stale or
+split-surrogate selection rejection. They are syntax-checked, not linked or run.
+The fifth Python test checks the read-only draft schemas and metadata as data.
+
+Personal snippet helpers add twelve compiler-evaluated revision/byte-limit
+assertions to the existing 117 (129 total). Native fixture bodies specify disabled
+hosts, noncreating reads, cross-instance revisions, retained-lock refusal,
+malformed JSON repair, invalid UTF-8/oversize preservation, two-workspace queries,
+stale-session refusal and existing plan/apply/Undo behavior. The extension fixture
+adds denial of settings.write for a workspace-only plugin. These bodies remain
+unlinked/unexecuted. No native target is added. Native hash/file/locking/race,
+GUI keyboard/dirty-dialog/Undo and Linux/macOS acceptance remain unverified while
+the antivirus suspension is in effect.
+
+Plugin snippets add eight compiler-evaluated boundary assertions on the actual
+registry count/byte policy, bringing the combined snippet helper total to 117.
+Native fixture bodies specify descriptor/owner validation, excluded scopes,
+workspace-first merging, duplicate provenance and global truncation, summary-only
+inventory, same-thread host queries, disable invalidation and Unreal field rendering.
+The existing completion/extension/Unreal sources are syntax checked only; no new
+native target is added and these fixtures are not linked or executed. Actual plugin
+loading, callbacks, lifecycle races, edit/Undo and graphical/platform acceptance
+remain unverified during the antivirus suspension.
+
+Selection wrapping adds 21 compiler-evaluated assertions on the actual production
+CompletionSelection policy: forward/reverse caret endpoints, empty/multiline and
+Unicode byte ranges, invalid anchors/order/bounds, and the 8192-byte limit. The
+combined variable/format/catalogue/selection helpers now have 109 assertions under
+ordinary compiler budgets. The compiler-only pass covers fifteen translation units.
+Native opt-in source bodies also specify literal escaping, field metadata, unused
+defaults, integer/surrogate guards, multiline layout, reverse selections, no-LSP
+Verse preparation/preview/apply/undo and stale catalogue/session refusal. These
+bodies and the Ctrl+Alt+J keymap fixture are not linked or run. Native thread races,
+real keyboard/GUI/Undo, regex matching and Linux/macOS remain unverified during the
+antivirus suspension. The SDK schema remains 228 operations with optional selection;
+source/data and DOM checks cannot prove runtime or graphical acceptance.
+
+The project-snippet catalogue adds 21 compiler-evaluated assertions on the actual
+prefix and scope policy: exact/partial/mismatched/case-sensitive prefixes, retained
+suffixes, punctuation, Unicode bytes, empty/invalid positions, scope tokens and
+limits. MSVC /Zs and Clang syntax-only checks include the native catalogue, Engine,
+completion, plugin/command owners, UI and existing opt-in completion/keymap fixtures.
+Native source bodies specify parser/schema/size/depth limits, scope filtering,
+unopened-document refusal, no-LSP Verse issuance, prefix/suffix preservation,
+transformed fields, preview/apply/undo and stale catalogue/disk rejection. They
+are not linked or run. No new executable or native test target is introduced.
+Real worker races, parser/file I/O, SDK/plugin transport, keymap, Escape, focus,
+palette and widget/Undo/platform acceptance remain unexecuted. See
+[Project snippets](SnippetCatalogue.md).
+
+The final compiler-only pass also reevaluates the previous 67 variable/format
+assertions: 88 compile-time contracts at that milestone, before the 21 selection
+contracts above, with no raised constexpr budget.
+All 228 SDK input/output schemas are checked as data with the standard JSON Schema
+validator; the new route, read-only permissions, required revision and negative
+position refusal are verified without creating a runtime, MCP or native process.
+The offline manual DOM fixture checks the new EN/FR catalogue/API routes and
+local search, alongside the existing six themes and keyboard/media controls.
+
+Variable-transform checks add 39 compiler-evaluated assertions on the actual
+production scanner and capture-format parser. They cover captures/conditionals,
+nested/unused branches, case dispatch, escapes, Unicode literals, invalid formats,
+flags and scanner/capture limits. Together with the existing 28 variable assertions,
+67 compile-time contracts pass MSVC /Zs and Clang syntax-only checks with normal
+Windows production flags. The case callback assertion verifies dispatch only;
+it does not execute utf8proc or PCRE2.
+CompletionTransforms.cpp and the new completion_transform_tests.cpp are checked
+alongside the existing completion/engine/UI units. Native source fixtures specify
+real matching, Unicode casing, empty global matches, limits, deferred popup text,
+transformed initial fields and filename/import/apply/undo through issued proposals.
+These bodies are not linked or executed. The fixture joins the existing opt-in
+completion target; no extra native test executable is introduced. Actual regex
+timing/cancellation, PCRE2/utf8proc behavior, GUI input and Linux/macOS remain to
+validate after the antivirus issue is resolved. See [Completion variables](CompletionVariables.md).
+
+Completion-variable substitution adds 28 compiler-evaluated assertions on the
+actual preprocessing helper: selected/unused defaults, numbered-field passthrough,
+choices, literal escaping, Unicode, malformed/unsupported forms, 8 KiB raw/escaped
+budgets and depth/node boundaries. MSVC /Zs and Clang syntax-only checks use normal
+Windows production flags; no raised constexpr budget is required. Existing native
+completion/service fixtures specify real context values, imports/byte ranges,
+literal filenames, large lines and the ordinary apply/undo guards, but their bodies
+are unexecuted. No extra native target or duplicate snippet renderer is added.
+See [Completion variables](CompletionVariables.md).
+
+Toolchain reporting adds six pure Python checks for Clang/MSVC/CMake context,
+bounded output, unknown failures and bounded large-log reads. Together with the
+five in-memory packaging checks they execute without a native fixture. The native
+core suite specifies executable-alias preservation, missing targets and POSIX
+permission filtering, PATH/hint order, directory aliases and invocation identity.
+The existing build suite checks actual detected C++ paths. Their MSVC and Clang
+syntax-only checks use Windows headers/ABI; fixture bodies were not run. No POSIX
+runtime execution is claimed. See [Toolchain reliability](ToolchainReliability.md).
+
 Detailed update history adds twenty actual attention/phase/count/outcome assertions,
 bringing updater policy checks to 115 compiler-evaluated assertions. Opt-in bodies
 specify discovery beyond twelve metadata rows, no created locks, sorting/unknown

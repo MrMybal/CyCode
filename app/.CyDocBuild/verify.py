@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import re
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -81,6 +82,32 @@ def verify(site):
     for identity in ids:
         assert parsed['en', identity].headings == parsed['fr', identity].headings, 'Translated anchors differ: ' + identity
         assert pages['en', identity]['html'] != pages['fr', identity]['html'], 'Untranslated page: ' + identity
+    # Check source-guide coverage and the actual native help addresses. These
+    # inputs are maintenance data only; no source/coverage file is exported.
+    work = Path(__file__).resolve().parent
+    app = work.parent
+    coverage = json.loads((work / 'coverage.json').read_text('utf-8'))
+    assert coverage['format'] == 1
+    entries = coverage['sources']
+    indexed = {entry['source'] for entry in entries}
+    assert len(indexed) == len(entries), 'Duplicate documentation source'
+    assert indexed == {p.relative_to(app).as_posix() for p in (app / 'Docs').rglob('*.md')}, 'Review documentation source coverage'
+    for entry in entries:
+        assert entry['kind'] in {'developer-reference', 'user-workflow'}
+        assert re.fullmatch('[0-9a-f]{64}', entry['sourceSha256'])
+        assert aliases[entry['legacyId']] == entry['target'], 'Source guide lost its legacy route'
+        identity, _, anchor = entry['target'].partition('#')
+        for locale in ('en', 'fr'):
+            assert (locale, identity) in parsed and anchor in parsed[locale, identity].ids
+    routes = re.findall(r'\{"([a-zA-Z]+)", "([a-z0-9-]+)", "([a-z0-9-]+)"\}', (app / 'src/HelpTopics.h').read_text('utf-8'))
+    assert routes and len({route[0] for route in routes}) == len(routes), 'Invalid native help catalogue'
+    panels = set()
+    for source in (app / 'src').glob('*.cpp'):
+        panels.update(re.findall(r'beginPanel\([^,\n]+,\s*"([a-zA-Z]+)"\)', source.read_text('utf-8')))
+    assert panels <= {route[0] for route in routes}, 'A built-in panel has no contextual help'
+    for _, identity, anchor in routes:
+        for locale in ('en', 'fr'):
+            assert (locale, identity) in parsed and anchor in parsed[locale, identity].ids, 'Broken native context help'
     report = json.loads((data / 'translation-report.json').read_text('utf-8'))
     assert not report.get('missing') and not report.get('outdated'), 'Incomplete translations'
     descriptor = Path(__file__).resolve().parents[1] / 'CyTool.json'
@@ -88,7 +115,7 @@ def verify(site):
     assert {identity for identity in ids if identity.startswith('operation-')} == {'operation-' + op.replace('_','-') + '-' + op.replace('_','-') for op in operations}
     assert sum(bool(p.get('parent')) for p in pages.values()) > len(pages) * .9, 'Missing hierarchy'
     for notice in ('CyDoc.txt','Marked.txt','PrismJS.txt','esbuild.txt'): assert (data / 'licenses' / notice).stat().st_size > 100
-    print(f'{manifest["name"]}: {len(pages)} localised pages; {checks} routes; EN/FR complete; image/gallery; public API only.')
+    print(f'{manifest["name"]}: {len(pages)} localised pages; {checks} routes; {len(entries)} source guides; {len(routes)} native help topics; EN/FR complete; image/gallery; public API only.')
 
 
 if __name__ == '__main__':

@@ -1,5 +1,13 @@
 # Solutions and Unreal Engine
 
+The bundled Unreal 1.6.0 provider contributes C++ insertion definitions through
+ABI2's optional snippets feature: ue_log/uelog, ue_property, ue_function and
+ue_editor. Use Insert snippet or Surround with snippet in a saved C++ document.
+The active plugin's ID is visible in each candidate. These definitions also appear
+in other C++ workspaces while enabled; they do not query reflection, add imports or
+compile Unreal. Review class/context validity. Disabling the plugin revokes pending
+queries; see [Plugin snippets](SnippetCatalogue.md#plugin-catalogues).
+
 The reviewed cook/package workflow now has typed maps/container controls,
 per-attempt staging/archive/logs and shared cancellable native/UI/SDK/ABI2
 execution. Actual Unreal acceptance remains pending during the Kaspersky

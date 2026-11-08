@@ -1,5 +1,36 @@
 # Native extension SDK: ABI 1 and ABI 2
 
+ABI2 workspace.counterparts exposes the same bounded read-only C/C++ header/source
+metadata query as the desktop/SDK. No callback, process, file write or ABI-layout
+change is added. Source path/revision/identity are required; native guards repeat
+after probing. See [C++ companions](CppCounterparts.md).
+
+The host copies the validated C service name into an owning string before whitelist
+and permission comparisons. Read-only callback exceptions and debugger write
+checks compare name contents, independent of caller string addresses or compiler
+literal pooling. No service, permission or ABI layout is added by this correction;
+actual cross-ABI permission acceptance remains unexecuted during the antivirus suspension.
+
+ABI2 exports snippets.complete and the existing language.completionResolve/Prepare
+JSON host services. Saved project snippets issue bounded local proposals through
+the same native cache as server completion; local preparation never resolves an
+LSP item. An optional ordered UTF-16 selection captures TM_SELECTED_TEXT with
+endpoint, 8 KiB and exact-range checks. Incompatible bodies are disabled and native
+preparation requires actual selection use. Multiline wrapping keeps literal layout;
+ordinary server ranges keep their same-line guard. Query/preparation remains read-only and changes.apply still requires
+workspace.write. C ABI layout/version remain unchanged. Feature bit
+CYCODE_HOST_FEATURE_SNIPPETS_V2 enables declarative snippets contributions with
+id/title/order/definitions and a null callback. Active namespaced catalogues merge
+after project definitions, retain source provenance and use registry-revision guards
+through native preparation and desktop acceptance. The registry is bounded to
+32 catalogues / 1 MiB, including inactive registrations; queries invoke no callback.
+plugins.list exposes summary-only snippetCatalogues. The host's optional personal
+catalogue merges before plugins. ABI2 exports snippets.userRead and snippets.userSave;
+save requires settings.write, separate from workspace.write, and remains denied
+inside read-only callbacks. No caller path or ABI layout change is introduced.
+File-path imports remain unavailable. See [Personal snippets](UserSnippets.md).
+See [Project snippets](SnippetCatalogue.md).
+
 ABI2 exposes language.documentHighlights through the same permission-free native
 read as the GUI and MCP. Contributed servers must advertise documentHighlightProvider;
 status includes documentHighlights. Output retains source identity/revision, backend
@@ -140,6 +171,11 @@ architecture. Signed local packages now have a separate installation/update/
 removal/rollback workflow in Extensions; see [Plugin packages](PluginPackages.md).
 Marketplace/network distribution, untrusted-code isolation and hot replacement
 remain separate work. Bundled extensions retain the app's own update mechanism.
+
+ABI2 snippets.userDraft copies one current workspace selection into a personal
+JSON draft through the common native host. It is a read-only metadata export with
+no additional permission, callback or ABI field. Persisting that reviewed draft
+still requires snippets.userSave / settings.write. See [Capture](SnippetCapture.md).
 
 ## Manifest, activation and lifetime
 

@@ -5,6 +5,7 @@
 #include "cycode/Solution.h"
 #include "cycode/BuildLimits.h"
 #include "cycode/Completion.h"
+#include "cycode/TextEdits.h"
 #include "cycode/EditorCompletion.h"
 #include "cycode/EditorTheme.h"
 #include "cycode/EditorLanguage.h"
@@ -130,7 +131,7 @@ Application::~Application() {
     for (const auto &tab : tabs_) for (auto *future : {&tab->completion,&tab->completionAccept,&tab->highlighting}) if (future->valid()) future->wait();
     for (auto &future : retiredCompletions_) if (future.valid()) future.wait();
     for (auto *future : {&filesFuture_, &searchFuture_, &gitFuture_, &taskFuture_, &navigationFuture_,
-                         &buildFuture_, &presetFuture_, &detectionFuture_, &structure_.future, &occurrences_.future, &symbolFuture_, &symbolResolveFuture_, &informationFuture_, &hierarchyFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
+                         &buildFuture_, &presetFuture_, &detectionFuture_, &structure_.future, &occurrences_.future, &symbolFuture_, &symbolResolveFuture_, &informationFuture_, &hierarchyFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_, &snippetFuture_, &userSnippetsFuture_, &counterpartFuture_})
         if (future->valid())
             future->wait();
     bridge_.reset();
@@ -211,6 +212,9 @@ void Application::saveSettings() {
     }
 }
 bool Application::busy() const {
+    if(counterpartFuture_.valid())return true;
+    if(snippetFuture_.valid())return true;
+    if(userSnippetsFuture_.valid())return true;
     if (engine_ && engine_->dispatch("build.status").value("running", false)) return true;
     if (engine_ && engine_->dispatch("project.status").value("running", false)) return true;
     if(testsFuture_.valid())return true;
@@ -297,7 +301,8 @@ Json Application::testState() const {
 }
 void Application::setWorkspace(const std::filesystem::path &path) {
     // Validate the requested solution before tearing down the current session.
-    auto nextEngine = std::make_shared<Engine>(path, smoke_ || testSession_ ? std::filesystem::path{} : std::filesystem::absolute(root_ / "data/settings/language-servers"));
+    auto nextEngine = std::make_shared<Engine>(path, smoke_ || testSession_ ? std::filesystem::path{} : std::filesystem::absolute(root_ / "data/settings/language-servers"),
+        smoke_ || testSession_ ? std::filesystem::path{} : std::filesystem::absolute(root_ / "data/settings/snippets"));
     auto nextSolution = nextEngine->dispatch("workspace.describe").at("solution");
     auto nextUnreal = nextEngine->dispatch("unreal.inspect");
     const bool inspectMsbuild = !nextUnreal.value("available",false) && (!std::filesystem::is_directory(path) || (!std::filesystem::exists(nextEngine->workspace()/"CMakeLists.txt") && !std::filesystem::exists(nextEngine->workspace()/"app/CMakeLists.txt")));
@@ -316,7 +321,7 @@ void Application::setWorkspace(const std::filesystem::path &path) {
                 throw std::runtime_error(tr("Save or close modified documents before switching workspace."));
         for (const auto &tab : tabs_) if (tab->completionAccept.valid()) throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
         for (auto *future : {&testsFuture_,&filesFuture_, &searchFuture_, &gitFuture_, &taskFuture_, &navigationFuture_,
-                             &buildFuture_, &presetFuture_, &detectionFuture_, &structure_.future, &occurrences_.future, &symbolFuture_, &symbolResolveFuture_, &informationFuture_, &hierarchyFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_})
+                             &buildFuture_, &presetFuture_, &detectionFuture_, &structure_.future, &occurrences_.future, &symbolFuture_, &symbolResolveFuture_, &informationFuture_, &hierarchyFuture_, &codeActionsFuture_, &refactorFuture_, &terminalFuture_, &debugFuture_, &vcsFuture_, &counterpartFuture_})
             if (future->valid())
                 throw std::runtime_error(tr("Wait for current tasks before switching workspace."));
         engine_->configureLanguage(clangd_, false, false);
@@ -492,10 +497,12 @@ void Application::refreshFiles(bool force) {
     auto engine = engine_;
     filesFuture_ = std::async(std::launch::async, [engine,force] {
         auto result=engine->dispatch("workspace.files",{{"refresh",force}});
-        const auto generation=result.at("indexRevision");size_t attempts=0;
+        const auto revision=result.at("indexRevision").get<uint64_t>(),generation=result.at("generation").get<uint64_t>();size_t attempts=0;
         while(!result.at("nextOffset").is_null()&&++attempts<32) {
             const auto page=engine->dispatch("workspace.files",{{"offset",result.at("nextOffset")}});
-            if(page.at("indexRevision")!=generation) { result["indexRevision"]=0;result["truncated"]=true;result["nextOffset"]=nullptr;break; }
+            if(!fileIndexPageMatches(revision,generation,page.at("indexRevision").get<uint64_t>(),page.at("generation").get<uint64_t>())) {
+                result["indexRevision"]=0;result["generation"]=0;result["truncated"]=true;result["nextOffset"]=nullptr;break;
+            }
             for(const auto &file:page.at("files"))result["files"].push_back(file);
             result["nextOffset"]=page.at("nextOffset");result["truncated"]=page.at("truncated");
         }
@@ -719,6 +726,9 @@ void Application::configureEditor(const std::shared_ptr<Tab> &tab) {
             error(tr("Completion context changed. Request suggestions again."));return true;
         }
         tab->acceptedRevision=tab->revision;tab->acceptedGeneration=tab->completionGeneration;tab->acceptedPosition=tab->editor.GetMainCursorPosition();
+        tab->acceptedSelection=tab->editor.GetMainCursorSelection();
+        tab->acceptedSnippetPluginRevision.reset();
+        tab->acceptedUserSnippetGeneration.reset();
         auto engine=engine_;const Json parameters={{"sessionId",tab->completionSession},{"item",tab->completionItems[selected]},{"expectedRevision",tab->revision}};
         tab->queuedCompletion=nullptr;
         tab->completionAccept=std::async(std::launch::async,[engine,parameters] { return engine->dispatch("language.completionPrepare",parameters); });
@@ -1017,6 +1027,13 @@ void Application::update() {
                 const auto prepared=tab->completionAccept.get();
                 if (tab->revision!=tab->acceptedRevision || tab->completionGeneration!=tab->acceptedGeneration || tab->editor.GetMainCursorPosition()!=tab->acceptedPosition || tab->editor.GetNumberOfCursors()!=1)
                     throw std::runtime_error(tr("Completion context changed. Request suggestions again."));
+                const auto selection=tab->editor.GetMainCursorSelection();
+                if(tab->acceptedSnippetPluginRevision && engine_->plugins().revision()!=*tab->acceptedSnippetPluginRevision)
+                    throw std::runtime_error(tr("Snippet context changed. Request snippets again."));
+                if(tab->acceptedUserSnippetGeneration && engine_->userSnippetGeneration()!=*tab->acceptedUserSnippetGeneration)
+                    throw std::runtime_error(tr("Snippet context changed. Request snippets again."));
+                if (tab->acceptedSelection && (selection.start!=tab->acceptedSelection->start || selection.end!=tab->acceptedSelection->end))
+                    throw std::runtime_error(tr("Completion context changed. Request suggestions again."));
                 const auto &plan=prepared.at("plan");
                 if (!plan.at("files").empty()) {
                     const auto preview=engine_->dispatch("changes.preview",{{"id",plan.at("id")},{"path",tab->path}});
@@ -1033,6 +1050,9 @@ void Application::update() {
                 }
                 tab->snippet.begin(prepared.at("snippet"));
             } catch (const std::exception &e) { error(e.what()); }
+            tab->acceptedSelection.reset();
+            tab->acceptedSnippetPluginRevision.reset();
+            tab->acceptedUserSnippetGeneration.reset();
             tab->completionSession.clear();tab->completionItems.clear();tab->editor.SetAutoCompleteSuggestions({});
         }
         if (ready(tab->completion)) {
@@ -1059,6 +1079,8 @@ void Application::update() {
                     });
                     std::vector<std::string> suggestions;
                     std::vector<size_t> indices;std::set<std::string> unique;
+                    std::optional<std::string> completionText;
+                    std::optional<CompletionSnippetContext> snippetContext;
                     for (const auto &item : items) {
                         if (!item.is_object() || !completionCommandAllowed(item,engine_->languageBackendFor(tab->path)))
                             continue;
@@ -1073,7 +1095,20 @@ void Application::update() {
                             text = item["textEdit"].value("newText", text);
                         }
                         if (item.value("insertTextFormat",1)==2) {
-                            const auto plain=plainSnippet(text); if (!plain) continue; text=*plain;
+                            if (!snippetContext) {
+                                completionText = tab->editor.GetText();
+                                const auto prefix = tab->editor.GetSectionText(
+                                    {tab->completionPosition.line, 0}, tab->completionPosition);
+                                const Json point = {{"line", tab->completionPosition.line},
+                                    {"character", LanguageClient::utf16Length(prefix)}};
+                                snippetContext = CompletionSnippetContext{
+                                    engine_->workspace() / utf8Path(tab->path), engine_->workspace(),
+                                    *completionText, utf16Offset(*completionText, point)};
+                            }
+                            bool deferredTransforms = false;
+                            const auto plain=plainSnippet(text, *snippetContext, &deferredTransforms);
+                            if (!plain) continue;
+                            text=deferredTransforms ? item.value("label", std::string{}) : *plain;
                         }
                         if (text.find('\n')!=std::string::npos) text=item.value("label",std::string{});
                         const auto details=item.value("labelDetails",Json::object());
@@ -1266,7 +1301,7 @@ void Application::update() {
                 error(dialog_->error);
         }
     }
-    if (!pendingWorkspace_.empty() && !busy()) {
+    if (!pendingWorkspace_.empty() && !busy() && !userSnippetsOpen_) {
         auto path = std::move(pendingWorkspace_); pendingWorkspace_.clear();
         const bool generated=path==templateOpenEntry_;
         try { setWorkspace(utf8Path(path));if(generated&&!templateOpenFile_.empty())open(templateOpenFile_); }
@@ -1387,7 +1422,7 @@ bool Application::beginPanel(const char *text, const char *id) {
     }
     if (ImGui::Begin(label(text, id).c_str(), &found->second)) {
         if (cyui::iconButton(cyui::icon::help, tr("Context help"))) {
-            try { app_help::open(root_, "app/Documentation", locale_, app_help::topic(id), "", smoke_ || testSession_); }
+            try { app_help::open(root_, "app/Documentation", locale_, app_help::topic(id), app_help::topicAnchor(id), smoke_ || testSession_); }
             catch (const std::exception &exception) { error(exception.what()); }
         }
         return true;
@@ -1785,6 +1820,10 @@ void Application::editorPanel() {
         if (ImGui::BeginPopupContextWindow("##document-actions", ImGuiPopupFlags_MouseButtonRight |
                                                                      ImGuiPopupFlags_NoOpenOverItems)) {
             extensionMenu("editor");
+            if (ImGui::MenuItem(tr("Open included file"),nullptr,false,
+                                tab->path==active_ && commandEnabled("navigate.include")))executeCommand("navigate.include");
+            if (ImGui::MenuItem(tr("Find related C/C++ files..."),nullptr,false,
+                                tab->path==active_ && commandEnabled("navigate.relatedFiles")))executeCommand("navigate.relatedFiles");
             if (ImGui::MenuItem(tr("Move to new window"))) {
                 ImGui::SetWindowDock(ImGui::FindWindowByName(title.c_str()), 0, ImGuiCond_Always);
             }
@@ -2365,6 +2404,8 @@ void Application::optionsPanel() {
     ImGui::End();
 }
 void Application::palette() {
+    if (counterpartsPalette()) { quickOpenVisible_=true;return; }
+    if (snippetsPalette()) { quickOpenVisible_=true;return; }
     const auto catalogue=commandCatalogue();
     if (paletteOpen_ && paletteMode_ == "actions") {
         actionPaletteOpen_ = true; paletteOpen_ = false;
@@ -2630,6 +2671,7 @@ void Application::frame() {
     projectPanel();
     resourcePanel();
     projectTemplatePanel();
+    userSnippetsPanel();
     searchPanel();
     editorPanel();
     outputPanel();
@@ -2744,6 +2786,14 @@ void Application::frame() {
             }
             ImGui::EndPopup();
         }
+    }
+    if(quitRequested_ && (userSnippetsOpen_ || userSnippetsFuture_.valid())) {
+        if(userSnippetsFuture_.valid()) {
+            quitRequested_=false;updateInstallRequested_=false;
+            cyui::notify(tr("Wait for user snippet storage before closing."),cyui::Tone::info);
+        }
+        else if(userSnippetsDirty_) {quitRequested_=false;userSnippetsDiscard_="quit";}
+        else userSnippetsOpen_=false;
     }
     if (quitRequested_ && !saveAsDocument_ && saveAsQueue_.empty()) {
         bool dirty = std::any_of(tabs_.begin(), tabs_.end(), [](const auto &tab) { return tab->dirty; });

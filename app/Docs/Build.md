@@ -1,5 +1,52 @@
 # C/C++ toolchains and CMake
 
+RelatedFiles.cpp joins cycode_core; its fixture joins the existing opt-in core test
+target. NavigationUI reuses existing Core/Commands. No executable target, external
+dependency or CyUI module is added; ordinary builds keep BUILD_TESTING=OFF.
+
+Selection capture reuses the existing CompletionEngine, UserSnippets, catalogue
+escaping and personal JSON UI sources; no build dependency, source target or
+CyUI module is added. See [Capture](SnippetCapture.md).
+
+UserSnippets.cpp joins the native core and UserSnippetsUI.cpp joins the UI. They
+reuse existing Monocypher, NativeFileLease, shared text-file code and CyUI CodeEditor;
+no external dependency, module or executable target is added. The new fixture
+joins the existing opt-in completion target, excluded by BUILD_TESTING=OFF. Regenerate
+manifest/locales with the commands below. Personal data is not redistributed.
+See [Personal snippets](UserSnippets.md).
+
+Plugin snippets extend existing core/UI/provider sources and add
+plugins/unreal/CodeSnippets.h. No dependency, CyUI module, executable or test target
+is added. Reconfigure to copy the Unreal 1.6.0 manifest, then build the ordinary
+production targets with BUILD_TESTING=OFF. Existing ABI2 size/feature checks allow
+the provider to omit its optional catalogue on an older host. Shared Reader/CyUI
+pins and numeric snippet ownership are unchanged.
+
+Selection wrapping extends existing sources with CompletionSelection.h and one
+fixture source in the existing opt-in completion target. It adds no library,
+module, executable or test target. BUILD_TESTING=OFF keeps native fixtures excluded.
+Regenerate schemas/locales with the same commands below.
+
+SnippetCatalogue.cpp joins cycode_core and SnippetsUI.cpp joins cycode_ui. Existing
+CyUI Commands/Core and native JSON/completion/ChangePlan services suffice. The new
+regression source joins the opt-in completion target, excluded by BUILD_TESTING=OFF;
+no new executable target, third-party library, module or notice is added. Regenerate
+app/CyTool.json with `python app/contracts.py` and app/locales/ui.json with
+`python app/scripts/write_locales.py`. See [Project snippets](SnippetCatalogue.md).
+
+Completion variable transforms add source-pinned PCRE2 10.49 and utf8proc 2.12.0
+to app/dependencies.lock.json. `python app/scripts/fetch_dependencies.py --core-only`
+fetches and verifies their exact archives as part of the usual native dependency
+set. CMake builds only pcre2-8-static and utf8proc for the core's private links;
+PCRE2 tools, JIT, 16/32-bit libraries, chartable regeneration and both upstream
+test suites are disabled. Their excluded, unlinked targets are not built.
+BUILD_TESTING=OFF remains required for production. The new regression source joins
+the existing completion target only; no native test executable is produced by a
+normal build. There is no extra runtime DLL, CyUI module or GUI dependency.
+The standalone updater retains its files/lease/updates-only boundary. The Windows
+packager includes licenses/PCRE2.txt and licenses/utf8proc.txt through its existing
+license-directory copy. See [Completion variables](CompletionVariables.md).
+
 UpdateHistory.cpp joins cycode_updates and UpdateHistoryUI.cpp joins cycode_ui;
 UpdateHistory/UpdateHistoryPolicy are their native model/policy. The fixture source
 joins the existing opt-in core target only, with BUILD_TESTING=OFF in production.

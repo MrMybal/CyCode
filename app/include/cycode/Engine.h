@@ -1,9 +1,11 @@
 #pragma once
+#include "cycode/CompletionSelection.h"
 #include "cycode/BuildSystem.h"
 #include "cycode/BuildOperations.h"
 #include "cycode/Events.h"
 #include "cycode/LanguageService.h"
 #include "cycode/LanguagePreferences.h"
+#include "cycode/UserSnippets.h"
 #include "cycode/Plugins.h"
 #include "cycode/Process.h"
 #include "cycode/Terminal.h"
@@ -14,6 +16,7 @@
 #include "cycode/ProjectTemplates.h"
 #include "cycode/WorkspaceMonitor.h"
 #include "cycode/Recovery.h"
+#include "cycode/RelatedFiles.h"
 #include "cycode/DocumentReference.h"
 #include "cycode/GitRepositories.h"
 #include "cycode/Resources.h"
@@ -29,9 +32,13 @@ namespace cycode {
 using Json = nlohmann::json;
 class Engine {
   public:
-    explicit Engine(std::filesystem::path workspace, std::filesystem::path languagePreferencesDirectory = {});
+    explicit Engine(std::filesystem::path workspace, std::filesystem::path languagePreferencesDirectory = {},
+                    std::filesystem::path userSnippetsDirectory = {});
+    uint64_t userSnippetGeneration() const {return userSnippets_.generation();}
     ~Engine();
     Json dispatch(const std::string &method, const Json &params = Json::object());
+    Json userSnippetDraft(const Json &);
+    Json relatedFiles(const Json &,bool included=false);
     Json searchText(const Json &, const std::atomic<bool> *cancellation = nullptr);
     void configureLanguage(const std::string &executable, bool enabled = true, bool prewarm = true);
     Json prepareUnrealAnalysis(const Json &, const std::atomic<bool> *cancellation = nullptr);
@@ -90,6 +97,8 @@ class Engine {
     uint64_t polledWorkspaceRevision_=0,filesIndexRevision_=0;
     std::chrono::steady_clock::time_point lastWorkspacePoll_{};
     Json filesCache_;
+    RelatedFileIndex relatedFileIndex_;
+    uint64_t filesCacheGeneration_=0;
     Json git(const std::string &, const Json &);
     GitRepositorySelection gitSelection(const Json &) const;
     Json gitWorktrees(const std::string &, const Json &);
@@ -123,9 +132,12 @@ class Engine {
     std::mutex languagePluginsMutex_;
     std::atomic<uint64_t> languagePluginsRevision_=0;
     Json completionOperation(const std::string &, const Json &);
+    Json snippetCompletions(const Json &);
     Json codeActionOperation(const std::string &, const Json &);
     Json codeActionDescriptionLocked(const Json &,size_t,bool,const std::string &backend);
-    Json issueCompletion(const std::string &, uint64_t revision, uint64_t generation, uint64_t epoch, const Json &position, const Json &result);
+    Json issueCompletion(const std::string &, uint64_t revision, uint64_t generation, uint64_t epoch, const Json &position, const Json &result,
+                         bool local = false, std::string catalogue = {}, std::optional<CompletionSelection> selection = {}, uint64_t pluginRevision = 0,
+                         std::string userRevision = {});
     Json highlight(const Json &);
     Json symbolQuery(const std::string &, const Json &);
     Json resolveSymbol(const Json &);
@@ -192,6 +204,11 @@ class Engine {
         std::set<size_t> resolved;
         size_t bytes;
         std::chrono::steady_clock::time_point created=std::chrono::steady_clock::now();
+        bool local = false;
+        std::string catalogue;
+        std::optional<CompletionSelection> selection;
+        uint64_t snippetPluginRevision=0;
+        std::string userSnippetRevision;
     };
     std::map<std::string,CompletionSession> completions_;
     size_t nextCompletion_=1;
@@ -220,6 +237,7 @@ class Engine {
     UnrealProject unreal_;
     LanguageService language_;
     LanguagePreferences languagePreferences_;
+    UserSnippets userSnippets_;
     std::mutex languageConfigurationMutex_;
     std::map<std::string, Json> languageChoices_;
     Terminals terminals_;

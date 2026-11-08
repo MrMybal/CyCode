@@ -100,7 +100,7 @@
   "language_highlight": "Obtenir la coloration syntaxique ou sémantique disponible pour un document.",
   "language_complete": "Demander des propositions de complétion à une position du document.",
   "language_completion_resolve": "Résoudre les détails d’une proposition de complétion.",
-  "language_completion_prepare": "Préparer l’application d’une proposition de complétion sélectionnée.",
+  "language_completion_prepare": "Préparer une transaction de complétion serveur avec imports, ou un extrait local émis, avec contrôle des révisions, du catalogue et du disque. Les quatorze variables incluent TM_SELECTED_TEXT pour une sélection locale explicite, éventuellement multiligne, avec plage exacte et disposition littérale. Les champs liés et transformations bornées réutilisent le moteur natif ; appliquer et enregistrer restent séparés.",
   "language_code_actions": "Demander les actions de code disponibles pour une plage du document.",
   "language_code_action_prepare": "Préparer les changements d’une action de code sélectionnée.",
   "language_hover": "Obtenir les informations de survol à une position du document.",
@@ -212,7 +212,7 @@
   "changes_apply": "Appliquer un ensemble de changements préparé après validation des révisions.",
   "changes_undo": "Annuler un ensemble de changements appliqué et encore annulable.",
   "workspace_describe": "Décrire l’espace de travail natif et les services disponibles.",
-  "workspace_files": "Lister les fichiers indexés de l’espace de travail.",
+  "workspace_files": "Lister les fichiers indexés par pages bornées. Chaque page contient indexRevision et une generation positive obligatoire : comparer les deux avant de combiner des pages, rejeter les paires mélangées puis recommencer. Une reconstruction manuelle avance la génération même sans changement de révision du système de fichiers. Ces compteurs sont locaux au processus, pas un identifiant de cliché figé.",
   "workspace_poll": "Actualiser les informations natives de l’espace de travail.",
   "search_text": "Rechercher du texte dans les fichiers de l’espace de travail.",
   "recovery_status": "Consulter l’état du service de récupération des documents.",
@@ -225,5 +225,11 @@
   "plugins_list": "Lister les extensions natives et leurs contributions.",
   "plugins_invoke": "Invoquer une commande déclarée par une extension native.",
   "plugins_configure": "Configurer l’activation des extensions natives.",
-  "plugins_project": "Lire ou modifier les préférences d’extensions du projet."
+  "plugins_project": "Lire ou modifier les préférences d’extensions du projet.",
+  "snippets_complete": "Fusionner les catalogues du projet, personnel configuré par l’hôte, puis des plugins ABI2 actifs. Les doublons conservent leur provenance. Revérifie le contenu enregistré et le registre avant émission/préparation ; le stockage personnel invalide est signalé. Les contrôles de sélection, champs liés, limites de 512 propositions et transactions natives restent communs.",
+  "snippets_user_read": "Lire le catalogue personnel fixe configuré par l’hôte, partagé entre les projets de cette installation. La lecture ne crée aucun fichier et retourne disponibilité, validité, révision opaque, génération locale, texte et erreur. Un hôte sans configuration ne lit aucun stockage personnel.",
+  "snippets_user_save": "Valider puis enregistrer explicitement le catalogue personnel avec settings.write, distinct de workspace.write. Vérifie la révision sous verrou non bloquant conservé, remplace atomiquement et confirme le contenu. Aucun chemin fourni par l’appelant ; une erreur préserve le brouillon et exige une relecture, sans écrasement forcé.",
+  "snippets_user_draft": "Capturer une sélection UTF-16 non vide d’un document déjà ouvert dans un brouillon d’extrait personnel littéral. Vérifie révision, plage, échappement et limites du catalogue ; conserve les valeurs existantes, génère nom/préfixe/portée et met en forme le JSON. Retourne le catalogue initial et le brouillon sans créer ni enregistrer de fichier, verrou ou plan. Enregistrez séparément avec catalogue.revision et settings.write après examen.",
+  "workspace_counterparts": "Rechercher les fichiers en-tête/source C/C++ associés à un document déjà ouvert, avec révision et identité attendues. Complète les voisins et agencements conventionnels par les mêmes noms de base de l’index de fichiers déjà à jour, sans LSP, processus, actualisation ni parcours récursif. Conserve les libellés locaux et signale les autres comme workspace-index. Au plus 128 chemins copiés et 128 vérifications au total. Retourne index (état, révision, génération), candidats et limites ; un cache absent, occupé ou périmé est écarté, un cache partiel reste signalé et tout changement pendant la requête empêche l’ouverture automatique. Revérifie aussi la source. Les noms ne prouvent pas une association sémantique et le cache respecte ses règles d’exclusion. Aucun fichier ouvert implicitement, modifié ou enregistré.",
+  "workspace_include": "Rechercher les fichiers du projet correspondant au #include littéral dans la directive logique du curseur, avec révision et identité source attendues. Utilise le texte ouvert non enregistré ; vérifie position UTF-16 et contexte lexical borné. Accepte commentaires blocs sur une ligne entre les jetons et continuations immédiates antislash-LF/CRLF ; le nom d’en-tête reste physique. Retourne curseur demandé et plage UTF-16 réelle de l’en-tête même sur une autre ligne, cible/type, candidats et état révisionné de l’index. Les guillemets essaient le chemin relatif puis, comme les chevrons, les suffixes du cache actuel. Aucun lancement ni rafraîchissement implicite ; limites préfixe 1 Mio, directive 8 Kio, cible 1024 octets et 128 vérifications. Macros, conditions, commentaires multilignes non échappés, ordre du compilateur et SDK externes ne sont pas résolus. Aucun fichier modifié, enregistré ou ouvert implicitement ; service ABI2 identique en lecture seule."
 }

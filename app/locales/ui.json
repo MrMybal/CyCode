@@ -6383,6 +6383,214 @@
     "en": "Editor documentation",
     "fr": "Documentation de l’éditeur"
   },
+  "Insert snippet...": {
+    "en": "Insert snippet...",
+    "fr": "Insérer un extrait..."
+  },
+  "Surround with snippet...": {
+    "en": "Surround with snippet...",
+    "fr": "Encadrer avec un extrait..."
+  },
+  "Edit project snippets...": {
+    "en": "Edit project snippets...",
+    "fr": "Modifier les extraits du projet..."
+  },
+  "Edit user snippets...": {
+    "en": "Edit user snippets...",
+    "fr": "Modifier les extraits personnels..."
+  },
+  "Switch header/source": {
+    "en": "Switch header/source",
+    "fr": "Basculer entre en-tête et source"
+  },
+  "Loading related C/C++ files...": {
+    "en": "Loading related C/C++ files...",
+    "fr": "Recherche des fichiers C/C++ associés..."
+  },
+  "No related C/C++ files found.": {
+    "en": "No related C/C++ files found.",
+    "fr": "Aucun fichier C/C++ associé trouvé."
+  },
+  "Related-file search was limited or some paths were unreadable.": {
+    "en": "Related-file search was limited or some paths were unreadable.",
+    "fr": "La recherche des fichiers associés est limitée ou certains chemins sont illisibles."
+  },
+  "Header/source context changed. Run the command again.": {
+    "en": "Header/source context changed. Run the command again.",
+    "fr": "Le contexte en-tête/source a changé. Relancez la commande."
+  },
+  "Sibling": {
+    "en": "Sibling",
+    "fr": "Voisin"
+  },
+  "Paired directory": {
+    "en": "Paired directory",
+    "fr": "Dossier lié"
+  },
+  "Paired root": {
+    "en": "Paired root",
+    "fr": "Racine liée"
+  },
+  "Workspace index": {
+    "en": "Workspace index",
+    "fr": "Index du projet"
+  },
+  "Open included file": {
+    "en": "Open included file",
+    "fr": "Ouvrir le fichier inclus"
+  },
+  "Loading included files...": {
+    "en": "Loading included files...",
+    "fr": "Recherche des fichiers inclus..."
+  },
+  "No matching included file found.": {
+    "en": "No matching included file found.",
+    "fr": "Aucun fichier inclus correspondant trouvé."
+  },
+  "Source-relative": {
+    "en": "Source-relative",
+    "fr": "Relatif à la source"
+  },
+  "For compiler or SDK headers, use Go to definition.": {
+    "en": "For compiler or SDK headers, use Go to definition.",
+    "fr": "Pour les en-têtes du compilateur ou du SDK, utilisez Aller à la définition."
+  },
+  "Include navigation context changed. Run the command again.": {
+    "en": "Include navigation context changed. Run the command again.",
+    "fr": "Le contexte de navigation de l’inclusion a changé. Relancez la commande."
+  },
+  "No supported literal #include in this directive (1 MiB prefix / 8 KiB directive limits)": {
+    "en": "No supported literal #include in this directive (1 MiB prefix / 8 KiB directive limits)",
+    "fr": "Aucune inclusion littérale prise en charge dans cette directive (limites : préfixe de 1 Mio et directive de 8 Kio)"
+  },
+  "Find related C/C++ files...": {
+    "en": "Find related C/C++ files...",
+    "fr": "Rechercher les fichiers C/C++ associés..."
+  },
+  "Related C/C++ files": {
+    "en": "Related C/C++ files",
+    "fr": "Fichiers C/C++ associés"
+  },
+  "Retry this lookup": {
+    "en": "Retry this lookup",
+    "fr": "Relancer cette recherche"
+  },
+  "Refresh lookup index and retry": {
+    "en": "Refresh lookup index and retry",
+    "fr": "Actualiser l’index de recherche et relancer"
+  },
+  "Copy all result paths": {
+    "en": "Copy all result paths",
+    "fr": "Copier tous les chemins des résultats"
+  },
+  "Copy lookup report (JSON)": {
+    "en": "Copy lookup report (JSON)",
+    "fr": "Copier le rapport de recherche (JSON)"
+  },
+  "Help for this navigation": {
+    "en": "Help for this navigation",
+    "fr": "Aide pour cette navigation"
+  },
+  "Refreshing lookup index...": {
+    "en": "Refreshing lookup index...",
+    "fr": "Actualisation de l’index de recherche..."
+  },
+  "File index refresh is already in progress. Retry when it is ready.": {
+    "en": "File index refresh is already in progress. Retry when it is ready.",
+    "fr": "L’actualisation de l’index des fichiers est déjà en cours. Réessayez lorsqu’il sera prêt."
+  },
+  "Workspace file index is unavailable. Refresh the project files, then retry.": {
+    "en": "Workspace file index is unavailable. Refresh the project files, then retry.",
+    "fr": "L’index des fichiers du projet est indisponible. Actualisez les fichiers puis réessayez."
+  },
+  "Workspace file index is being refreshed. Retry when it is ready.": {
+    "en": "Workspace file index is being refreshed. Retry when it is ready.",
+    "fr": "L’index des fichiers du projet est en cours d’actualisation. Réessayez lorsqu’il sera prêt."
+  },
+  "Workspace file index changed. Refresh the project files, then retry.": {
+    "en": "Workspace file index changed. Refresh the project files, then retry.",
+    "fr": "L’index des fichiers du projet a changé. Actualisez les fichiers puis réessayez."
+  },
+  "Workspace file index is incomplete. Other matching paths may be missing.": {
+    "en": "Workspace file index is incomplete. Other matching paths may be missing.",
+    "fr": "L’index des fichiers du projet est incomplet. D’autres chemins correspondants peuvent manquer."
+  },
+  "Create user snippet from selection...": {
+    "en": "Create user snippet from selection...",
+    "fr": "Créer un extrait personnel depuis la sélection..."
+  },
+  "Selection copied into a new draft. Edit its name, prefix and scope, then Save.": {
+    "en": "Selection copied into a new draft. Edit its name, prefix and scope, then Save.",
+    "fr": "Sélection copiée dans un nouveau brouillon. Modifiez son nom, son préfixe et sa portée, puis enregistrez."
+  },
+  "Shared by all projects in this portable installation.": {
+    "en": "Shared by all projects in this portable installation.",
+    "fr": "Partagés par tous les projets de cette installation portable."
+  },
+  "User snippet storage is not configured in this host.": {
+    "en": "User snippet storage is not configured in this host.",
+    "fr": "Le stockage des extraits personnels n’est pas configuré dans cet hôte."
+  },
+  "User snippets have unsaved changes.": {
+    "en": "User snippets have unsaved changes.",
+    "fr": "Les extraits personnels contiennent des modifications non enregistrées."
+  },
+  "Keep editing": {
+    "en": "Keep editing",
+    "fr": "Continuer l’édition"
+  },
+  "Save and close": {
+    "en": "Save and close",
+    "fr": "Enregistrer et fermer"
+  },
+  "Save and quit": {
+    "en": "Save and quit",
+    "fr": "Enregistrer et quitter"
+  },
+  "Wait for user snippet storage before closing.": {
+    "en": "Wait for user snippet storage before closing.",
+    "fr": "Attendez la fin de l’accès aux extraits personnels avant de fermer."
+  },
+  "Discard and reload": {
+    "en": "Discard and reload",
+    "fr": "Abandonner et recharger"
+  },
+  "Discard changes": {
+    "en": "Discard changes",
+    "fr": "Abandonner les modifications"
+  },
+  "Reload saved snippets": {
+    "en": "Reload saved snippets",
+    "fr": "Recharger les extraits enregistrés"
+  },
+  "This snippet does not use TM_SELECTED_TEXT.": {
+    "en": "This snippet does not use TM_SELECTED_TEXT.",
+    "fr": "Cet extrait n’utilise pas TM_SELECTED_TEXT."
+  },
+  "This snippet cannot wrap the current selection.": {
+    "en": "This snippet cannot wrap the current selection.",
+    "fr": "Cet extrait ne peut pas encadrer la sélection courante."
+  },
+  "Loading snippets...": {
+    "en": "Loading snippets...",
+    "fr": "Chargement des extraits..."
+  },
+  "No matching snippets. Save definitions in .cycode/snippets.code-snippets.": {
+    "en": "No matching snippets. Save definitions in .cycode/snippets.code-snippets.",
+    "fr": "Aucun extrait correspondant. Enregistrez les définitions dans .cycode/snippets.code-snippets."
+  },
+  "No matching snippets. Save project definitions or enable a snippet extension.": {
+    "en": "No matching snippets. Save project definitions or enable a snippet extension.",
+    "fr": "Aucun extrait correspondant. Enregistrez des définitions dans le projet ou activez une extension d’extraits."
+  },
+  "Snippet context changed. Request snippets again.": {
+    "en": "Snippet context changed. Request snippets again.",
+    "fr": "Le contexte a changé. Demandez à nouveau les extraits."
+  },
+  "Snippet catalogue limit reached; narrow the language scopes.": {
+    "en": "Snippet catalogue limit reached; narrow the language scopes.",
+    "fr": "La limite du catalogue est atteinte ; précisez les langages des extraits."
+  },
   "Automatic installation currently supports Windows x64 installed and portable packages. Use GitHub Releases for other platforms.": {
     "en": "Automatic installation currently supports Windows x64 installed and portable packages. Use GitHub Releases for other platforms.",
     "fr": "L’installation automatique prend en charge les éditions Windows x64 installées et portables. Utilisez GitHub Releases pour les autres plateformes."

@@ -9,6 +9,11 @@ import subprocess
 APP = Path(__file__).resolve().parents[1]
 
 
+def cache_directory(dependencies):
+    lock = json.loads((APP / 'cyui-source.lock.json').read_text(encoding='utf-8'))
+    return Path(dependencies) / ('cyui-' + lock['revision'][:12])
+
+
 def resolve(destination, source=None):
     lock = json.loads((APP / 'cyui-source.lock.json').read_text(encoding='utf-8'))
     revision = lock['revision']

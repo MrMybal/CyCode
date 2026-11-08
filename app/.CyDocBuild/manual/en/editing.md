@@ -4,7 +4,7 @@ title: Edit and save files
 description: Work with tabs, unsaved drafts and external file changes.
 section: Work in CyCode
 order: 40
-revision: 2
+revision: 3
 ---
 
 ## Documents and drafts {#documents}
@@ -20,3 +20,5 @@ CyCode’s native document service handles UTF-8, with or without a BOM, and pre
 ## Editor layout {#layout}
 
 Use tabs, folding, word wrap and text-size settings for comfortable reading. Multiple cursors and selections affect the live document. Text files are limited to 4 MiB. [Images](doc:images#preview) open in read-only previews, with different controls.
+
+[File operations and project trash](doc:workspace-files#preview) have separate previews and Undo.

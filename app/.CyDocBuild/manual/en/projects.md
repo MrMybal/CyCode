@@ -4,7 +4,7 @@ title: Build and run projects
 description: Select a project adapter, target and configuration.
 section: Work in CyCode
 order: 120
-revision: 2
+revision: 3
 ---
 
 ## Select the project {#projects}
@@ -22,3 +22,5 @@ Unreal uses its engine, UnrealBuildTool and target rules. It does not become an 
 For a CMake workspace, configure it in the CMake view, inspect the actual target list, build a selected executable and set its debug profile. Configuration executes the trusted project's build scripts. See [CMake and MSBuild](doc:build#configure).
 
 Build output and Problems link recognised compiler messages to source files. Cancellation asks the owned process tree to stop; it does not delete the project's outputs.
+
+[Create a project](doc:project-templates#create) or [configure multilanguage tasks](doc:project-tasks#tasks).

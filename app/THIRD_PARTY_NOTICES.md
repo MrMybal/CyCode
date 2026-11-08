@@ -7,6 +7,8 @@ corresponding runtime package, as detailed below.
 
 | Component | License | Source |
 |---|---|---|
+| PCRE2 10.49 | BSD-3-Clause WITH PCRE2-exception, [local notice](licenses/PCRE2.txt) | https://github.com/PCRE2Project/pcre2, commit 6f9d7c1373262c541324a16a358785b33ef116cf; app/dependencies.lock.json; static UTF-8 snippet matching, JIT/tools/tests disabled |
+| utf8proc 2.12.0 | MIT and included Unicode data terms, [local notice](licenses/utf8proc.txt) | https://github.com/JuliaStrings/utf8proc, commit 79cdd5ab40c79afa559f689ffc13b76812dee1ac; app/dependencies.lock.json; Unicode snippet casing |
 | Monocypher 4.0.3 | BSD-2-Clause or CC0-1.0, [local notice](licenses/Monocypher.txt) | https://monocypher.org ; release archive and SHA-256 pinned in app/dependencies.lock.json; Ed25519 and SHA-512 for plugin packages |
 | TinyXML2 | zlib, [local notice](licenses/TinyXML2.txt) | https://github.com/leethomason/tinyxml2, commit 9148bdf719e997d1f474be6bcc7943881046dba1; app/dependencies.lock.json |
 | CyUI | [MIT license](https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE) ([local copy](licenses/CyUI.txt)) | [Official repository](https://github.com/MrMybal/CyUI), pinned by app/cyui-source.lock.json |

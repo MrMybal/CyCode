@@ -35,33 +35,7 @@ static std::string environment(const char *name) {
 #endif
 }
 static fs::path executable(const std::string &name, const std::vector<fs::path> &hints = {}) {
-    std::vector<fs::path> candidates;
-    std::istringstream stream(environment("PATH"));
-    std::string directory;
-#ifdef _WIN32
-    constexpr char separator = ';';
-    auto filename = name.ends_with(".exe") ? name : name + ".exe";
-#else
-    constexpr char separator = ':';
-    auto filename = name;
-#endif
-    while (std::getline(stream, directory, separator)) {
-        auto path = utf8Path(directory);
-        if (path.is_absolute())
-            candidates.push_back(path / filename);
-    }
-    candidates.insert(candidates.end(), hints.begin(), hints.end());
-    for (const auto &candidate : candidates) {
-        std::error_code ec;
-        if (fs::is_regular_file(candidate, ec)) {
-#ifndef _WIN32
-            if (access(candidate.c_str(), X_OK))
-                continue;
-#endif
-            return fs::canonical(candidate);
-        }
-    }
-    return {};
+    return findExecutableOnPath(name, hints);
 }
 static std::string read(const fs::path &path, size_t limit = 32 * 1024 * 1024) {
     std::ifstream in(path, std::ios::binary);
@@ -710,13 +684,13 @@ Json BuildSystem::run(const std::string &method, const Json &params, const std::
             for (const auto &entry : current.at("toolchains"))
                 if (entry.value("language", "") == "CXX") {
                     auto path = entry.value("compiler", Json::object()).value("path", "");
-                    if (!path.empty() && !samePath(utf8Path(path), utf8Path(compiler.at("cxxCompiler"))))
+                    if (!path.empty() && !sameExecutableInvocation(utf8Path(path), utf8Path(compiler.at("cxxCompiler"))))
                         throw std::runtime_error("Compiler changed; choose a new build directory");
                     verified = !path.empty();
                 }
             if (!verified && stored.contains("CMAKE_CXX_COMPILER")) {
                 verified =
-                    samePath(utf8Path(stored.at("CMAKE_CXX_COMPILER")), utf8Path(compiler.at("cxxCompiler")));
+                    sameExecutableInvocation(utf8Path(stored.at("CMAKE_CXX_COMPILER")), utf8Path(compiler.at("cxxCompiler")));
                 if (!verified)
                     throw std::runtime_error("Compiler changed; choose a new build directory");
             }

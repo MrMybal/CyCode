@@ -34,13 +34,13 @@ static void validateText(const std::string &text) {
 static std::string normalize(std::string text) {
     return normalizeEditorText(text);
 }
-Engine::Engine(std::filesystem::path root, std::filesystem::path languagePreferencesDirectory)
+Engine::Engine(std::filesystem::path root, std::filesystem::path languagePreferencesDirectory,std::filesystem::path userSnippetsDirectory)
     : monitor_(workspaceRoot(root)),root_(workspaceRoot(root)), entry_(std::filesystem::canonical(root)),recovery_(root_), solution_(inspectSolution(root)),
       build_(root_, [this](const std::string &path) { return resolve(path); }),
       msbuild_(root_,entry_,[this](const std::string &path) { return resolve(path); }),
       unreal_(root_, std::filesystem::canonical(root), solution_,
               [this](const std::string &path) { return resolve(path); }),
-      language_(root_), languagePreferences_(root_, languagePreferencesDirectory), projects_(root_,entry_,[this](const std::string &path) { return resolve(path); },terminals_),
+      language_(root_), languagePreferences_(root_, languagePreferencesDirectory), userSnippets_(std::move(userSnippetsDirectory)), projects_(root_,entry_,[this](const std::string &path) { return resolve(path); },terminals_),
       tests_(root_,[this](const std::string &path){return resolve(path);}),
       debugger_(root_, [this](const std::string &path) { return resolve(path); }, terminals_,
                 [this] { return language_.request("cycode/javaDebugSession", {{"cycodeLanguage", "java"}}); },
@@ -314,8 +314,10 @@ Json Engine::files(const Json &params) {
         start = end + 1;
     }
     std::sort(paths.begin(), paths.end());
+    RelatedFileIndex relatedIndex;relatedIndex.rebuild(paths);
     filesIndexRevision_=generation;
     filesCache_={{"files",std::move(paths)},{"truncated",result.truncated||result.timedOut||start<result.output.size()},{"indexRevision",generation}};
+    relatedFileIndex_=std::move(relatedIndex);++filesCacheGeneration_;
     }
     const auto offset=params.value("offset",size_t(0)),limit=params.value("limit",size_t(20000));
     if(limit<1||limit>20000||offset>200000)throw std::runtime_error("Invalid file index page");
@@ -326,7 +328,8 @@ Json Engine::files(const Json &params) {
         page.push_back(path);
     }
     return {{"files",page},{"truncated",filesCache_.at("truncated").get<bool>()||end<all.size()},
-        {"nextOffset",end<all.size()?Json(end):Json(nullptr)},{"total",all.size()},{"indexRevision",filesCache_.at("indexRevision")}};
+        {"nextOffset",end<all.size()?Json(end):Json(nullptr)},{"total",all.size()},{"indexRevision",filesCache_.at("indexRevision")},
+        {"generation",filesCacheGeneration_}};
 }
 Json Engine::searchText(const Json &params, const std::atomic<bool> *cancellation) {
     auto query = params.at("query").get<std::string>();
@@ -652,6 +655,12 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
     }
     if (method == "language.status")
         return languageStatus();
+    if (method == "snippets.complete") return snippetCompletions(params);
+    if (method == "snippets.userRead") return userSnippets_.snapshot();
+    if (method == "workspace.counterparts") return relatedFiles(params);
+    if (method == "workspace.include") return relatedFiles(params,true);
+    if (method == "snippets.userDraft") return userSnippetDraft(params);
+    if (method == "snippets.userSave") return userSnippets_.save(params.at("text"),params.at("expectedRevision"));
     if (method == "language.completionResolve" || method == "language.completionPrepare") return completionOperation(method,params);
     if (method == "language.codeActions" || method == "language.codeActionPrepare") return codeActionOperation(method,params);
     if (locationRequest(method) || method == "language.documentHighlights" || method == "language.complete" || method == "language.hover" || method == "language.signature")

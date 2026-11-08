@@ -41,7 +41,8 @@ int main(int argc, char **argv) {
         }
         const auto installation=cycode::installationRoot();
         const auto installationLease=installation.empty() ? nullptr : cycode::updates::installationUse(installation);
-        cycode::Engine engine(cycode::utf8Path(arguments[1]), installation.empty() ? std::filesystem::path{} : installation / "data/settings/language-servers");
+        cycode::Engine engine(cycode::utf8Path(arguments[1]), installation.empty() ? std::filesystem::path{} : installation / "data/settings/language-servers",
+            installation.empty() ? std::filesystem::path{} : installation / "data/settings/snippets");
         if(!disablePlugins&&!installation.empty())engine.plugins().loadInstalled(installation);
         if (arguments[2] == "--serve") {
             if (argc < 4)

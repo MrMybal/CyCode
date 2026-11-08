@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
             << R"({"FileVersion":3,"Modules":[{"Name":"Demo","Type":"Runtime"}]})";
         std::ofstream(folder / "workspace/Source/DemoEditor.Target.cs") << "// target\n";
         std::ofstream(folder / "workspace/Source/Demo/Demo.Build.cs") << "// module\n";
+        std::ofstream(folder / "workspace/Source/Demo/Snippets.cpp");
         {
             Engine engine(folder / "workspace/Demo.uproject");
             engine.plugins().load(folder / "extensions");
@@ -36,6 +37,23 @@ int main(int argc, char **argv) {
             engine.dispatch("debug.configure",{{"adapterId","cycode.unreal.lldb"},{"adapterOptions",{{"sourceMap",Json::object()}}}});
             require(inventory.at("projects").size() == 1 && inventory.at("menus").size() == 5,
                     "Official Unreal extension did not contribute its views");
+            require(inventory.at("snippetCatalogues").size()==1 &&
+                inventory.at("snippetCatalogues")[0].at("definitionCount")==4,"Unreal code snippets missing");
+            {
+                const auto path="Source/Demo/Snippets.cpp";
+                const auto source=engine.dispatch("documents.read",{{"path",path}});
+                const auto query=engine.dispatch("snippets.complete",{{"path",path},{"expectedRevision",source.at("revision")},
+                    {"position",{{"line",0},{"character",0}}}});
+                const auto &items=query.at("result").at("items");size_t index=0;
+                while(index<items.size() && items[index].at("filterText")!="ue_log")++index;
+                require(index<items.size() && items[index].at("cycodeSnippetSource").at("plugin")=="cycode.unreal",
+                    "Unreal snippet provenance missing");
+                const auto prepared=engine.dispatch("language.completionPrepare",{{"sessionId",query.at("sessionId")},
+                    {"item",index},{"expectedRevision",source.at("revision")}});
+                require(prepared.at("snippet").at("fields").size()==3,"Unreal snippet fields missing");
+                require(engine.dispatch("changes.preview",{{"id",prepared.at("plan").at("id")},{"path",path}}).at("after")==
+                    "UE_LOG(LogTemp, Log, TEXT(\"message\"));","Unreal log snippet was not rendered by shared completion");
+            }
             const auto project = engine.dispatch(
                 "plugins.project", {{"provider", "cycode.unreal.project"}, {"action", "inspect"}});
             require(project.at("available").get<bool>() && project.at("modules").size() == 1,

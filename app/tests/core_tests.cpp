@@ -1,4 +1,6 @@
 #include "cycode/Engine.h"
+#include "cycode/Tools.h"
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -20,6 +22,74 @@ template <class F> static void rejects(F fn, const char *message) {
 static void write(const std::filesystem::path &path, const std::string &text) {
     std::ofstream out(path, std::ios::binary);
     out << text;
+}
+static void toolAliasChecks(const std::filesystem::path &root) {
+    check(sameExecutableInvocation(root / "compiler-cpp", root / "." / "compiler-cpp"),
+          "Compiler invocation comparison did not normalize parent directories");
+    check(!sameExecutableInvocation(root / "compiler-c", root / "compiler-cpp"),
+          "Compiler invocation comparison discarded the driver name");
+    check(!sameExecutableInvocation("compiler-cpp", root / "compiler-cpp"),
+          "Relative compiler invocation accepted");
+#ifdef _WIN32
+    check(sameExecutableInvocation(root / "Compiler-Cpp", root / "compiler-cpp"),
+          "Windows compiler invocation comparison was case-sensitive");
+#else
+    check(!sameExecutableInvocation(root / "Compiler-Cpp", root / "compiler-cpp"),
+          "POSIX compiler invocation comparison ignored case");
+#endif
+#ifndef _WIN32
+    namespace fs = std::filesystem;
+    struct Environment {
+        std::string name, value;
+        bool present;
+        explicit Environment(const char *key) : name(key), present(std::getenv(key) != nullptr) {
+            if (present) value = std::getenv(key);
+        }
+        ~Environment() {
+            if (present) setenv(name.c_str(), value.c_str(), 1);
+            else unsetenv(name.c_str());
+        }
+    } pathGuard("PATH"), overrideGuard("CYCODE_CYCODE_ALIAS_TEST_CPP");
+    const auto directory = root / "tool aliases été";
+    fs::create_directory(directory);
+    const auto driver = directory / "driver-data";
+    write(driver, "Data-only tool discovery fixture; never executed.\n");
+    fs::permissions(driver, fs::perms::owner_read | fs::perms::owner_exec);
+    const auto alias = directory / "cycode_alias_test_cpp";
+    fs::create_symlink(driver.filename(), alias);
+    const auto directoryAlias = root / "tool-directory-alias";
+    fs::create_directory_symlink(directory.filename(), directoryAlias);
+    check(sameExecutableInvocation(alias, directoryAlias / alias.filename()),
+          "Compiler invocation comparison rejected a directory alias");
+    check(!sameExecutableInvocation(alias, driver),
+          "C and C++ driver aliases were treated as one invocation");
+    check(setenv("PATH", pathUtf8(directory).c_str(), 1) == 0, "Cannot isolate tool path fixture");
+    unsetenv("CYCODE_CYCODE_ALIAS_TEST_CPP");
+    check(utf8Path(toolPath("cycode_alias_test_cpp")) == alias,
+          "Tool lookup resolved the executable alias and changed argv[0]");
+    check(findExecutableOnPath("cycode_alias_test_cpp") == alias,
+          "CMake tool discovery resolved a compiler alias");
+    check(findExecutableOnPath("cycode_alias_test_cpp", {driver}) == alias,
+          "Explicit discovery hints replaced the first PATH candidate");
+    check(findExecutableOnPath("cycode_absent_test_tool", {alias}) == alias,
+          "Absolute discovery hint lost its invocation path");
+    check(findExecutableOnPath("cycode_absent_test_tool", {alias.filename()}).empty(),
+          "Relative discovery hint accepted");
+    const auto blocked = directory / "cycode_unexecutable_test_tool";
+    write(blocked, "Non-executable data fixture.\n");
+    fs::permissions(blocked, fs::perms::owner_read);
+    check(toolPath("cycode_unexecutable_test_tool").empty(), "Tool lookup accepted a non-executable file");
+    check(findExecutableOnPath("cycode_unexecutable_test_tool", {blocked}).empty(),
+          "CMake tool discovery accepted a non-executable candidate");
+    fs::create_symlink("absent", directory / "cycode_broken_test_tool");
+    check(toolPath("cycode_broken_test_tool").empty(), "Tool lookup accepted a broken alias");
+    check(findExecutableOnPath("cycode_broken_test_tool").empty(), "CMake tool discovery accepted a broken alias");
+    check(setenv("PATH", ("\"" + pathUtf8(directory) + "\"").c_str(), 1) == 0,
+          "Cannot quote tool path fixture");
+    check(findExecutableOnPath("cycode_alias_test_cpp") == alias, "Quoted absolute PATH entry lost its alias");
+#else
+    (void)root;
+#endif
 }
 static void journalChecks(const std::filesystem::path &root) {
     Events journal;
@@ -93,6 +163,7 @@ static void journalChecks(const std::filesystem::path &root) {
         check(!event.at("data").contains("text"), "Document text leaked into event metadata");
 }
 void workspaceSessionContracts(const std::filesystem::path &);
+void relatedFileContracts(const std::filesystem::path &);
 void draftDocumentContracts(const std::filesystem::path &);
 void hierarchyContracts();
 void semanticTokenContracts();
@@ -108,6 +179,8 @@ int main(int argc, char **argv) {
         ("cycode-test-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     try {
         std::filesystem::create_directories(root);
+        toolAliasChecks(root);
+        relatedFileContracts(root);
         workspaceSessionContracts(root);
         draftDocumentContracts(root);
         hierarchyContracts();

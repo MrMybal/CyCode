@@ -4,7 +4,7 @@ title: Compiler et exécuter des projets
 description: Choisissez un adaptateur de projet, une cible et une configuration.
 section: Travailler dans CyCode
 order: 120
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Choisir le projet {#projects}
@@ -22,3 +22,5 @@ Unreal utilise son moteur, UnrealBuildTool et ses règles de cibles. L’ouvertu
 Pour un espace CMake, configurez-le dans la vue CMake, consultez les cibles réelles, compilez un exécutable sélectionné et préparez son profil de débogage. La configuration exécute les scripts du projet auquel vous faites confiance. Consultez [CMake et MSBuild](doc:build#configure).
 
 La sortie et Problèmes relient les messages reconnus du compilateur aux fichiers source. L’annulation demande l’arrêt des processus appartenant à la tâche ; elle ne supprime pas les résultats du projet.
+
+[Créez un projet](doc:project-templates#create) ou [configurez ses tâches multilangages](doc:project-tasks#tasks).

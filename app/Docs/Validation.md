@@ -1,9 +1,574 @@
-# Validation — 2026-11-05
+# Validation — 2026-11-07
+
+## Logical includes, result actions, index pages and contextual help — 2026-11-07
+
+Four connected navigation milestones extend the existing bounded native owner.
+Literal includes accept inline block comments between directive tokens and
+immediate backslash-LF/CRLF continuations, including a split keyword. The caret
+may be on any component; returned UTF-16 ranges use the actual physical header
+line. The header itself stays physical. Existing lexical/source guards and the
+1 MiB prefix / 8 KiB whole-directive / 1024-byte target limits remain. Macros,
+conditions, nonspliced multiline token comments and compiler/external SDK roots
+are still outside this conservative subset.
+
+Find related C/C++ files... always shows counterpart results. Shared result rows
+add Retry, explicit bounded index refresh/retry, all-path/report copying and local
+contextual help. The visible Help action and configured single-stroke help.context
+binding (default Shift+F1) route to matching EN/FR navigation sections; modal
+chords remain blocked. Source identity/revision/tab/Engine guards remain, plus
+caret guards for includes. Ordinary queries do not scan; explicit refresh reuses
+workspace.files and its existing bounds. Closing suppresses late opening but does
+not terminate an explicitly requested refresh. Clipboard/browser/modal behavior
+has not been executed.
+
+workspace.files / workspace_files now returns required positive generation with
+indexRevision. Desktop pagination compares both before appending a page. A manual
+rebuild therefore cannot combine generations sharing an unchanged watcher counter.
+These are process-local observations, not frozen snapshot handles. No operation,
+ABI field, CyUI module, dependency or executable target is added.
+
+Final MSVC /Zs and Clang syntax-only checks pass eight affected translation units
+without diagnostics. They evaluate 106 actual helper assertions, including 27 new
+comment/continuation/physical-range/forced-choice/page-generation/help contracts.
+The native fixture also contains a real compiler include with inline comments
+and escaped newlines. Its Engine/filesystem bodies, continued Unicode range case,
+keymap fixtures and refresh/close races remain unlinked/unexecuted.
+Eleven Python JSON-data tests pass; all 233 operations / 466 public schemas match
+the generated descriptor. Source checks pass 56 Python / 23 JSON files.
+Windows x64 Release GUI/CLI and production dependencies build with BUILD_TESTING=OFF,
+without reported build warnings.
+
+The manual and both distribution copies verify 590 localized pages / 6172 routes
+with matching EN/FR revisions/anchors. Node DOM checks exercise the actual pinned
+CyDoc reader's new result-help routes, logical include examples, required file-page
+generation schema, search, six themes and existing media/Escape/accessibility
+controls. All three 19-file exports are identical. These checks perform no fetches
+or browser/native execution. Filesystem/cache races, SDK/plugin callbacks,
+clipboard, GUI keyboard/DPI/Undo and Linux/macOS acceptance remain unverified
+during the antivirus suspension. No application, updater, language server or
+native fixture is launched.
+
+## Literal C/C++ include navigation — 2026-11-07
+
+Navigate / Find Action / the active editor context menu now expose Open included
+file, without a new default binding. The shared native query snapshots a bounded
+live source prefix, releases the document mutex before UTF-16/lexical processing,
+then rechecks document lifetime/revision after metadata probes. Its conservative
+reader follows ordinary literal physical #include directives, excludes comment /
+string / common raw-string bodies, handles preceding escaped-newline context and
+numeric separators, and enforces 1 MiB prefix / 8 KiB line / 1024-byte target
+bounds. Unsupported spellings fail; macros and conditions are not evaluated.
+
+Quoted targets probe the source-relative path before cached suffix-component
+matches. The existing index now uses one per-stem map with bounded header/source/
+other offset buckets, also covering extensionless/.inc and existing generated
+headers. It inspects at most 128 matching bucket entries and shares the existing
+128-total-path metadata budget. No index activation or additional scan occurs.
+Parent segments remain confined to the quoted relative probe. Canonical regular
+workspace targets, case rules, local/index deduplication and cache-generation /
+watcher guards reuse the header/source owner. Incomplete/changed observations
+never auto-open; the common palette additionally guards caret and source context.
+An empty include result points to Go to definition for compiler/SDK headers.
+
+SDK workspace_include / native workspace.include and ABI2 expose the same
+permission-free metadata: requested position, target/kind/inner UTF-16 range,
+candidates/provenance and explicit cache/bound observations. No source save/edit,
+compiler include-directory resolution, external SDK lookup, project-rule
+execution, ABI field, dependency, CyUI module or native target is added.
+
+MSVC /Zs and Clang syntax-only checks pass nine affected translation units, with
+targeted final rechecks of the native guard and UI. Seventy-nine actual helper
+assertions include 36 new literal/context/bound contracts. Native fixture bodies
+specify suffix/kind isolation, relative/index deduplication, extensionless and
+generated targets, parent/external exclusions, live dirty text, UTF-16 ranges /
+surrogate refusal and source guards; these bodies remain unlinked/unexecuted.
+Ten Python JSON-data checks pass; all 233 operations / 466 public schemas match
+their generated descriptor. Source checks pass 56 Python / 23 JSON files.
+Windows x64 Release GUI/CLI and production dependencies build with BUILD_TESTING=OFF,
+without reported build warnings.
+
+The manual and both build copies verify 590 localized pages / 6168 routes with
+complete EN/FR revisions/anchors. Node DOM checks pass the new include/API routes,
+literal/candidate schemas, local search, six themes and existing media/Escape /
+accessible controls without fetches, browser or native execution. Actual lexical /
+filesystem/index-race, SDK/plugin callbacks, GUI keyboard/DPI/Undo and Linux/macOS
+acceptance remain unverified during the antivirus suspension. No application,
+updater, language server or native fixture is launched.
+
+## Cached C/C++ header/source matches — 2026-11-07
+
+The existing workspace file refresh now builds a per-stem header/source offset
+lookup alongside its sorted path cache. Counterpart navigation copies at most
+128 matches under a nonblocking cache lock, then combines them with local probes
+within the same 128-path metadata bound. It finds flat-source/namespaced-header
+and other same-stem layouts, including indexed mixed-case extensions, without
+starting a scan, waiting for one or walking all indexed paths per query. Local
+relations retain priority and canonical duplicates are removed. The index keeps
+its existing discovery limits and ignore scope; names are not semantic proof.
+
+Missing/busy/stale caches contribute no paths; partial current caches can
+contribute retained paths. The final native guard rechecks watcher revision and
+cache generation after metadata probing and document-lock reacquisition, so a
+manual refresh with unchanged watcher revision is also detected. Any unavailable,
+partial or changed coverage prevents automatic one-result opening. GUI labels
+and status guidance are localized; SDK/ABI2 return the same explicit index
+observation without activating it. No dependency, module or executable target
+is added. Existing source lifetime/revision and ordinary-opening guards remain.
+
+Final MSVC /Zs and Clang syntax-only checks pass the four affected translation
+units without diagnostics. Forty-three actual helper assertions cover extension,
+generated-stem, bound, index-state/freshness and automatic-opening policies.
+Native fixtures additionally specify offset rebuilds, namespaced and reverse
+matches, local/index deduplication, Unicode/case rules, malformed cache paths,
+bucket/combined-probe limits and conditional indexed-symlink exclusion. These
+bodies remain unlinked/unexecuted. Eight Python JSON-data tests pass, and all
+232 operations / 464 public schemas match their generated descriptor. Source
+checks pass 56 Python / 23 JSON files. Windows x64 Release GUI/CLI and production
+dependencies build with BUILD_TESTING=OFF, without reported build warnings.
+
+The regenerated manual and both distribution copies verify 588 localized pages /
+6132 routes with complete EN/FR revisions and anchors. Node DOM checks pass the
+updated navigation/API content, cache-state schemas, local search, six themes and
+existing media/Escape/accessibility controls, without resource fetches or browser
+execution. Filesystem behavior, real cache contention/monitor races, native/SDK/
+plugin/GUI keyboard/DPI and Linux/macOS acceptance remain unverified during the
+antivirus suspension. No application, language server, updater or native fixture
+is launched.
+
+## Local C/C++ header/source navigation — 2026-11-07
+
+RelatedFiles adds a process-free, nonrecursive metadata query for already-open
+saved workspace C/C++ sources. Siblings and the nearest conventional Unreal or
+include/src layout produce same-stem candidates, retaining nested paths and a
+paired-root fallback. Source lifetime/revision are checked before/after probing;
+regular canonical targets remain inside the workspace, with generated stems and
+file symlinks excluded. At most 128 unique paths and sixteen ancestors are
+considered; unreadable/truncated observations remain explicit. This is local
+filename/layout navigation, not semantic or full-index pairing.
+
+Navigate / Find Action and Rider Alt+O / Visual Studio Ctrl+K, Ctrl+O use the same
+native owner as SDK/ABI2 workspace_counterparts. A complete unique result opens
+normally; ambiguous/partial results use cached CyUI Commands rows and explicit
+choice. Tab/Engine/lifetime/revision guards prevent stale replies from opening
+files, cancellation suppresses delayed opening, and shutdown/workspace switching
+retain/join pending work. Unsaved source buffers are preserved. The core and UI
+reuse existing targets/modules/dependencies; no new executable or ABI field is added.
+
+MSVC /Zs and Clang syntax-only checks pass 28 translation units without final
+diagnostics. Twenty-four actual extension/generated-stem/probe-bound assertions
+join the previous 143 snippet assertions (167 for these helpers). Native fixtures
+specify sibling/nested/root matches, Unreal/include layouts, duplicate paths,
+Unicode, missing/unsupported/generated files, source opening/revision guards and
+conditional symlink/external exclusion. These bodies remain unlinked/unexecuted.
+Five existing snippet JSON-data tests and two new navigation JSON-data tests pass;
+all 232 operations / 464 public schemas match their definitions. Source checks pass
+56 Python / 23 JSON files. Windows x64 Release GUI/CLI and bundled production
+dependencies build with BUILD_TESTING=OFF and no reported build warnings.
+The regenerated manual and both build copies verify
+588 localized pages / 6132 routes with complete EN/FR revisions/anchors. Node DOM
+checks pass the new navigation/API routes, local search, six themes and existing
+media/Escape/accessibility controls, without browser/native execution or fetches.
+
+Actual filesystem/race/cancellation, native/SDK/plugin/GUI keyboard/DPI navigation
+and Linux/macOS acceptance remain unverified during the antivirus suspension. No
+application, updater, language server, SDK/MCP runtime or native fixture is launched.
+
+## Selected source to personal snippet draft — 2026-11-07
+
+Edit > Create user snippet from selection opens the existing personal JSON editor
+with a dirty generated draft. The native Engine validates an already-open saved
+workspace path, expected revision and one nonempty ordered UTF-16 range. It copies
+live text, including unsaved changes, releases its mutex for bounded drafting and
+rechecks source revision/generation before return. UserSnippets reads its configured
+catalogue without creating storage, retains existing definition values, chooses an
+unused name and sets a default prefix/language scope. The shared literal escaping
+owner preserves dollar signs, backslashes, braces, newlines and Unicode; the body
+includes a final caret within its 8 KiB limit. The complete pretty-printed JSON
+must fit the existing 256-definition / 256 KiB catalogue limits. Invalid/full or
+unconfigured catalogues refuse capture. Source and saved preferences are retained.
+
+GUI, SDK/MCP and ABI2 share snippets.userDraft / snippets_user_draft as a read-only
+export; persistence still requires explicit snippets_user_save and settings.write
+with the returned catalogue revision. The draft is an immutable captured copy;
+later source changes do not rewrite it. Existing draft Undo/Redo, dirty decisions,
+workspace-switch/quit gates and joined I/O ownership remain in place. No native
+target, dependency, module, ABI field or alternative editor model is added.
+
+MSVC /Zs and Clang syntax-only checks pass 24 translation units with no final
+diagnostics. Fourteen assertions on the actual literal-body helper join the
+previous 129, giving 143 compiler-evaluated contracts, including 8190 plain-byte
+and 4095 escaped-dollar boundaries plus the final caret. Native fixture bodies
+specify noncreation, literal round-trip, unique names, explicit save, retained
+source/definitions, full/invalid catalogue refusal, unsaved Verse capture and
+stale/empty/split-surrogate rejection. These bodies are not linked or run.
+
+Five Python JSON-data-only regression tests pass; all 231 operations / 462 public
+schemas match their definitions, including nested draft provenance, required
+selection, no caller storage directory and separate save permission metadata.
+Source checks pass 55 Python / 23 JSON files. Windows x64 Release GUI/CLI and
+bundled production dependencies build with BUILD_TESTING=OFF and no reported
+build warnings. The manual and both build copies
+verify 586 localized pages / 6100 routes with complete EN/FR revisions/anchors.
+Node component checks pass new capture sections/API routes, local search, six
+themes, media/Escape and existing accessibility controls without resource fetches.
+
+No produced executable/library, native fixture, browser/application window, SDK/MCP
+runtime or language server is launched. Actual native capture/parser/filesystem,
+GUI selection/keyboard/dirty dialogs/Undo/DPI and Linux/macOS acceptance remain
+unverified during the antivirus suspension.
+
+## Personal insertion snippets — 2026-11-06
+
+The trusted desktop/installed CLI configure a fixed portable catalogue under
+data/settings/snippets; a default Engine and smoke/test desktop session leave it
+disabled. Reads do not create storage. Explicit saves validate UTF-8 and the common
+catalogue grammar, compare an opaque BLAKE2b-256 revision under NativeFileLease,
+use the existing guarded atomic writer and confirm the saved content. A failed
+explicit save may leave its directory/retained lock. Readable malformed JSON can
+be repaired; unreadable, invalid UTF-8/NUL, oversized or redirected data is preserved.
+No arbitrary caller path, forced overwrite, automatic retry or process is added.
+
+The shared CyUI JSON editor provides draft Undo/Redo/find, explicit Save/Ctrl+S,
+Reload and dirty Save/Discard/Keep editing decisions. Errors retain the draft;
+workspace switching waits and pending I/O blocks closing. Personal definitions
+merge between project and active plugin catalogues with separate provenance.
+Native sessions recheck saved revisions; desktop palettes/acceptance observe a
+cheap local generation, without per-frame reads or a cross-instance watcher.
+Concrete issued plans retain ordinary apply guards. SDK/ABI2 read/save reuse the
+same owner; settings.write controls saving separately from workspace.write.
+No new dependency, CyUI module, ABI layout or executable target is introduced.
+
+MSVC /Zs and Clang syntax-only checks pass 24 translation units without final
+diagnostics. Twelve actual revision/byte-bound assertions bring the combined
+snippet total to 129. Native fixtures specify disabled/noncreating storage,
+cross-instance conflicts, lease refusal, malformed JSON repair, preservation of
+invalid bytes, two-workspace queries, stale sessions, plugin permission denial and
+existing plan/apply/Undo behavior. These fixture bodies remain unlinked/unexecuted.
+
+Four Python JSON-data-only regression tests pass, including disabled/unreadable
+generation zero, exact save token lengths, fixed-location input and declared
+permission/scheduler metadata. All 230 operations / 460 schemas match their
+source definitions. Source checks pass 55 Python / 23 JSON files. Windows x64
+Release GUI/CLI and bundled production dependencies build with BUILD_TESTING=OFF
+and no reported build warnings. The manual and both build copies verify at 584
+localized pages / 6066 routes, with matching EN/FR anchors and revisions. Node
+component checks pass the new personal guide/API routes, local search, six themes,
+media/Escape and existing accessibility controls without resource fetches.
+
+No produced executable/library, native fixture, application window, browser,
+SDK/MCP runtime, updater or language server is launched. Actual hashing/file I/O,
+locks/races, GUI keyboard/dirty dialogs/Undo/DPI and Linux/macOS acceptance remain
+unverified during the antivirus suspension. The local generation is observation
+metadata, not cross-process synchronization; OS-account-wide storage and cloud
+synchronization remain separate work.
+
+## Declarative plugin snippets and Unreal templates — 2026-11-06
+
+ABI2 adds optional feature bit CYCODE_HOST_FEATURE_SNIPPETS_V2 (16), without a
+layout/version change. During initialization, plugins can register namespaced
+snippets descriptors with inline definitions and no callback. The existing project
+parser validates their scopes, bodies and limits. Unknown keys, file paths, owner
+overrides, conditions and callbacks are refused. Registry count/serialized-byte
+limits include inactive registrations and host owner metadata: 32 catalogues /
+1 MiB, with existing per-catalogue bounds. Active snapshots sort by order then ID;
+workspace candidates come first, duplicates retain provenance, and the combined
+list is bounded to 512 plus the ordinary completion payload budget.
+
+Queries copy the plugin snapshot after releasing the Engine mutex; callbacks can
+still enter Engine without reversing lock order. Atomic registry revisions are
+checked before issuance and before/after preparation, alongside existing source,
+workspace, catalogue and disk guards. Desktop palettes and pending acceptance
+also check that revision. Configuration changes or a disabled dependency invalidate
+pending local sessions conservatively. Already returned concrete SDK plans keep
+their ordinary apply guards and contain prepared text without plugin callbacks.
+The UI now borrows issued item bodies instead of copying the result per frame.
+Plugin inventory directly constructs summaries without body copies; snippet queries
+alone copy the bounded active definitions.
+
+The bundled Unreal provider is 1.6.0 and feature-gates four definitions with five
+prefix proposals: ue_log/uelog, ue_property, ue_function and ue_editor. They use the
+same fields/choices/selection/Undo path, scope cpp and explicit owner labels. They
+also appear in non-Unreal C++ workspaces while enabled; no reflection query,
+generated header, imports, semantic validation or engine compilation is implied.
+No external dependency, CyUI module or native executable/test target is added.
+
+MSVC /Zs and Clang syntax-only checks pass twenty production/UI/provider/fixture
+translation units with no diagnostics. Eight actual registry boundary assertions
+join the previous 109, giving 117 compiler-evaluated snippet contracts under normal
+compiler budgets. Native source fixtures additionally specify descriptor/owner
+validation, excluded scopes, duplicate provenance, workspace-first merging/global
+truncation, summary-only inventory, same-thread host queries, disable invalidation
+and Unreal issued-field rendering. These bodies are not linked or run; real parser,
+plugin loading/callback/activation, lock races, rendering/keyboard/Undo and platform
+acceptance remain unverified during the antivirus suspension.
+
+All 228 operations / 456 public input-output schemas pass structural/data checks,
+including existing selection examples and result provenance/registry metadata.
+Source checks pass for 54 Python / 23 JSON files. The Windows x64 Release GUI/CLI,
+updater and bundled providers build with BUILD_TESTING=OFF and no reported build
+warnings. The local manual regenerates to 580 localized pages / 6022 routes with
+complete EN/FR revisions; the ABI2 example now uses its declared plugin namespace.
+Node component checks pass all four new guide/anchor families, API routes, local
+search, six themes and existing media/Escape/accessibility controls. No browser or
+application window, native fixture, CLI, updater, SDK/MCP or language server is
+launched. File-URL policy, native GUI/DPI and Linux/macOS remain unverified.
+
+## Selected-code snippets and plugin service comparisons — 2026-11-06
+
+The saved project catalogue now accepts an explicit single selection through the
+shared native/SDK/ABI2 query. TM_SELECTED_TEXT is the fourteenth context variable;
+outside an issued local selection it is empty. Ordered UTF-16 endpoints become
+native byte offsets with caret-endpoint, UTF-8 boundary and 8 KiB guards. A body
+must actually resolve the selection and replace exactly the issued range. Unused
+defaults, escaped text and literal choices do not qualify. Server completions
+retain the same-line primary edit rule. Wrapping keeps literal layout rather than
+automatically reindenting selected code. Catalogue parsing/preflight uses copied
+source text outside the Engine lock and revalidates source/generation/catalogue
+before issuance; preparation retains its source/workspace/disk guards.
+
+Edit > Surround with snippet... / Rider Ctrl+Alt+J requires a selection; Insert
+snippet also accepts one. Other profiles expose Surround without a new default
+binding. The CyUI Commands palette displays localized reasons in disabled labels,
+retaining descriptions in search ranking. It snapshots and rechecks both selection
+endpoints, caret, revision and completion generation before accepting a result.
+Numbered fields and the completion Undo transaction keep their existing owners.
+No library, module, operation or ABI-layout change is introduced.
+
+MSVC /Zs and Clang syntax-only checks pass fifteen translation units with ordinary
+Windows production flags and no final diagnostics. The actual production helpers
+evaluate 109 assertions: 28 substitution, 39 transform-format, 21 catalogue and 21
+selection contracts. The latter cover forward/reverse caret endpoints, empty and
+multiline ranges, Unicode boundaries, invalid context and the 8192-byte limit.
+Native opt-in bodies additionally specify literal selected code, fields, unused
+defaults, invalid coordinates/surrogates, no-LSP Verse preparation/preview/apply/
+undo, stale sessions/catalogues and the keymap. These bodies are not linked or run.
+The final syntax check also prompted correction of nine pointer-to-literal name
+comparisons in the existing plugin permission path: validated C names now use one
+owning string and compare contents. No permission or service is broadened. Actual
+cross-ABI permission/callback behavior remains unexecuted.
+
+All 228 operations / 456 input-output schemas pass standard JSON Schema structural
+checks as data. Examples cover the optional/empty selection, required revision,
+negative/fractional/type/shape refusal, native exports and EN/FR labels. Semantic
+ordering, caret relation, source bounds and integer representation are native
+checks, not established by JSON Schema examples. Source checks pass for 54 Python
+and 23 JSON files without loading application code.
+
+The Windows x64 Release GUI/CLI build succeeds, including the existing updater
+and bundled provider dependencies, with BUILD_TESTING=OFF and no reported build
+warnings. The offline manual regenerates as 580 localized pages / 6002 routes,
+with matching EN/FR revisions, selection anchors, API parameters and shortcut
+links. Node DOM checks pass the new selection/API routes and local search,
+alongside six themes, media/Escape and accessible controls. These component checks
+do not open a browser or establish real native rendering, DPI or file-URL policy.
+No application, CLI, helper, native fixture, SDK/MCP, language server or generated
+program is launched. Real GUI/keyboard/Undo, worker races, parser/regex/file I/O
+and Linux/macOS acceptance remain unverified during the antivirus suspension.
+
+## Saved project snippet catalogue and unlocked preparation — 2026-11-06
+
+SnippetCatalogue reads bounded saved workspace definitions and emits local items
+without opening a document or contacting a language server. CompletionEngine
+requires an already-open saved workspace source, stores the exact catalogue
+baseline in the existing bounded session cache and rechecks it during preparation.
+Local proposals skip LSP resolution. Regex/rendering work now uses copied inputs
+without retaining the Engine mutex; source/workspace/session/epoch/disk guards are
+repeated before the ordinary native ChangePlan is stored. The shared editor still
+owns fields, mirrors, indentation and the completion Undo transaction. See
+[Project snippets](SnippetCatalogue.md).
+
+Edit / Find Action uses CyUI Commands for insertion. Rider adds Ctrl+J; Visual
+Studio adds Ctrl+K, Ctrl+X; VS Code has no new default binding. Edit project
+snippets... opens the fixed configuration, creating it only on that explicit
+action and initializing an unsaved JSON object. Existing files/buffers are kept.
+Palette requests retain a weak tab reference, source/caret/revision/generation
+snapshot and joined future; closed/stale sources and cancelled lists cannot apply
+a late result. Application and catalogue data remain owned by CyCode, with no
+additional CyUI module, library, Reader/CyUI edit or native executable/test target.
+
+MSVC and Clang syntax-only checks pass twelve translation units covering catalogue,
+Engine/completion, plugin/keymap, GUI and opt-in fixture sources. Twenty-one new
+assertions evaluate the actual scope/prefix policy; the prior 67 variable/format
+assertions are reevaluated, giving 88 compiler-evaluated contracts. Native source
+fixtures specify parser/budget/malformed data, excluded scopes, no-LSP Verse
+queries, unopened sources, prefix/suffix retention, fields and preview/apply/undo,
+plus stale catalogue/disk rejection. Native bodies and keymap fixtures are not
+linked or executed; these checks do not establish actual parser/filesystem/thread/
+GUI/keyboard/Undo or Linux/macOS behavior.
+
+All 228 SDK operation schemas pass JSON Schema structural checks as data. The new
+snippets_complete input requires a revision and rejects negative positions; query
+permissions and the native route match the manifest. ABI2 exports the same query
+and existing completion resolve/prepare JSON services, without a layout/version
+change. Applying still requires workspace.write. The public prepare description
+now reflects the implemented document/workspace variables and bounded variable
+transforms. Source checks pass for 54 Python / 23 JSON files.
+
+The first production attempt stopped because the new operation lacked its reviewed
+French API translation. That translation and the generated API navigation group
+are added. The local manual regenerates with 580 localized pages / 5996 routes and
+complete EN/FR revisions. Node DOM checks exercise the new catalogue/API routes,
+search and stable anchors alongside the existing six themes, media/Escape and
+accessible controls, without opening a browser/native window.
+
+The corrected Windows x64 Release build succeeds for CyCode and cycode_cli,
+including the existing updater and bundled provider dependencies, with
+BUILD_TESTING=OFF and no reported compiler/linker warnings. No native fixture,
+application, CLI, updater, language server, SDK/MCP or generated program is run.
+The production files can be copied locally while retaining the previous files;
+this is not an application-update, runtime or graphical acceptance test.
+
+## Completion variable regex and case transforms — 2026-11-06
+
+The native completion adapter now handles variable-only regex transforms with
+capture/conditional formats and seven simple Unicode case methods. PCRE2 10.49
+and utf8proc 2.12.0 are pinned by commit and archive hash, linked statically and
+privately to cycode_core. Pattern/input/output, capture, match/callout, depth/heap
+limits and a cooperative deadline bound preparation. The suggestion list defers
+matching and displays server labels; the actual worker result retains the existing
+document/session/epoch/disk guards and atomic plan. Interactive numbered-field
+transforms remain unsupported. See [Completion variables](CompletionVariables.md).
+
+MSVC and Clang syntax-only checks pass seven translation units: Completion.cpp,
+CompletionEngine.cpp, CompletionTransforms.cpp, Application.cpp and the completion,
+completion-engine and new completion-transform fixture sources. Thirty-nine new
+static assertions evaluate the production scanner/formatter, including capture
+branches, escapes, Unicode literals, case dispatch and rejected grammar/options.
+Together with the previous 28 variable assertions, 67 contracts are evaluated
+without linking or executing a test program and without raised constexpr limits.
+Native bodies specify actual regex/case behavior, zero-length global replacement,
+budgets and transformed initial fields; the existing issued-proposal fixture now
+specifies transformed filenames alongside imports, ranges and apply/undo. These
+bodies are not executed. Syntax checks do not establish PCRE2/utf8proc runtime
+correctness, hard timing, UI responsiveness or actual Undo acceptance.
+
+The normal core-only fetch validates the cached dependency locks. Archive SHA-256
+and complete upstream license files match. CMake data confirms test/tools/JIT and
+unused widths disabled; the production updater has no core/PCRE2/utf8proc/UI
+reference. Python/data checks pass for 54 Python / 23 JSON files. The generated
+manual has 576 localized pages / 5976 routes, complete EN/FR revisions and shared
+snippet-transform anchors. Node DOM checks pass routing, local search, translations,
+six themes, media/Escape and accessible controls without opening a native app or
+browser. SDK 227 / ABI2 and shared Reader/CyUI sources remain unchanged by this step.
+Real matching/casing, language-server/widget/GUI and Linux/macOS acceptance remain
+unexecuted under the current native-test suspension.
+
+Windows x64 Release production compilation succeeds for CyCode and cycode_cli,
+including the new static libraries and the existing standalone updater, with
+BUILD_TESTING=OFF and no reported compiler/linker warnings. Upstream tools/test
+targets and unused PCRE2 widths are not built. No application, CLI, updater,
+language server, SDK/MCP, fixture or generated program is launched. The local
+development executables can be refreshed without starting a process; production
+compilation does not constitute a native runtime acceptance test.
+
+## Completion context variables — 2026-11-06
+
+CyCode's completion adapter substitutes thirteen document/workspace/position
+variables and explicit defaults before the unchanged shared numeric Snippet
+parser. Preview and native preparation use the same owner, with context supplied
+by the guarded document rather than server item data. Escaped literal values,
+8 KiB input/escaped-output bounds, sixteen nesting levels and 2048 nodes preserve
+the existing numeric fields, choices, indentation and change-plan ownership.
+Further variable families, unknown bare names and regex/placeholder transforms
+remain unsupported. See [Completion variables](CompletionVariables.md).
+
+MSVC and Clang syntax-only checks pass Completion.cpp, CompletionEngine.cpp,
+Application.cpp, completion_tests.cpp and completion_engine_tests.cpp with normal
+Windows production flags. Twenty-eight assertions evaluate the production
+preprocessor, including branch selection, literal dollar/braces/backslashes,
+UTF-8, limits and malformed syntax. No constexpr-limit override is needed.
+Existing native fixture bodies specify context values, original-line numbering,
+additional import offsets, literal filenames, large-line behavior and the existing
+prepare/apply/undo/stale-session path; these bodies are not linked or executed.
+
+Source checks pass for 54 Python / 23 JSON files. The SDK operation catalogue and
+plugin ABI remain 227 / ABI2; no module, dependency, shared Reader/CyUI source or
+second mutable editor model is added. Real language-server/widget/GUI/Undo and
+Linux/macOS runtime acceptance remain suspended or unverified separately.
+
+Windows x64 Release production compilation succeeds for CyCode, CLI and their
+existing updater/provider dependencies with BUILD_TESTING=OFF. The local manual
+regenerates with 576 localized pages / 5974 routes and complete EN/FR translations.
+Node component checks pass routing, local search, six themes, media/Escape and
+accessible controls; they do not open a browser or native window. No application,
+CLI, helper, language server, SDK/MCP or native fixture is executed locally.
+
+## Shared CMake discovery and compiler invocation identity — 2026-11-06
+
+CMake's separate PATH resolver now delegates to cycode_process. Both discovery
+clients preserve executable aliases; CMake retains its PATH-first/hints-second
+order. Explicit compiler-cache checks compare the invocation filename and resolved
+parent directories instead of accepting different driver names for the same binary.
+Source/build directory containment and custom/automatic/preset configuration remain
+unchanged. Old saved canonical toolchain IDs require refresh/reselection; differing
+cached drivers require a fresh build directory.
+
+MSVC and Clang syntax-only checks pass Tools.cpp, BuildSystem.cpp, UnrealProject.cpp,
+core_tests.cpp and build_tests.cpp with installed Windows headers/ABI. Opt-in bodies
+specify PATH/hint order, quoted entries, relative/missing/non-executable candidates,
+directory aliases, filename/case identity and actual detected C++ paths. They are
+not linked or run; POSIX-only bodies are not checked by this Windows compilation.
+
+Windows x64 Release production compilation succeeds for the GUI, CLI, updater and
+six bundled providers, with BUILD_TESTING=OFF. A sandbox FileTracker access failure
+occurred before compilation; the normal host production build then completed.
+No application, SDK/MCP, debugger, installer, native fixture or generated program
+was launched. The revised remote CI is still unexecuted; the older macOS compiler
+failure still needs full diagnostics before a platform fix can be claimed.
+
+The local CyDoc manual regenerates with 576 localized pages / 5972 routes, matching
+EN/FR compiler-recovery sections and stable shared anchors. See
+[Toolchain reliability](ToolchainReliability.md).
+
+## Toolchain reliability and shared editor refresh — 2026-11-06
+
+The shared editor is pinned to Reader `31ee97949620d62ede0c603e71094483c5c21531`,
+which contains the published 0.1.3 editor and the matching CyUI Verse catalogue.
+Tool discovery preserves symbolic-link invocation paths and filters non-executable
+POSIX candidates. The build wrapper now prints compiler reasons with adjacent
+notes, bounds the failure read/preview and retains the full log. Windows CI pins
+Visual Studio 2022's runner and preserves failed-build logs for diagnosis.
+
+Windows x64 Release production compilation succeeds for CyCode, its updater and
+CLI with BUILD_TESTING=OFF. MSVC /Zs checks Tools.cpp and the existing core test
+source without emitting a test executable. Six pure Python build-reporting tests,
+five in-memory packaging tests and syntax/data checks for 54 Python / 23 JSON
+sources pass. The compiler-alias fixture is POSIX-only and was not executed;
+Windows syntax checking does not validate its POSIX body. See
+[Toolchain reliability](ToolchainReliability.md).
+
+Read-only PE/resource inspection confirms AMD64 / 0.2.2 for GUI/CLI/updater.
+Root production files match that milestone's fresh build, with
+previous binaries retained. No process was started or closed to refresh them.
+
+The revised CyCode workflow has not been pushed or executed. Previous Linux
+linker output motivated alias preservation; macOS compiler-failure diagnosis
+remains pending a complete log. Native applications, project builds, SDK/MCP,
+debuggers, installers and GUI acceptance were not launched locally. No Linux/macOS
+runtime or clean-machine support is established by this milestone.
+
+## Shared Verse syntax — 2026-11-06
+
+CyUI `c5b0f8ad818a6927a4e04600e3867d7d350a8841` adds the native Verse mode
+without a new external lexer/parser. Its 32 assertions evaluate the actual
+production scanner at compile time, including nested/indented comments,
+interpolation, escapes, CRLF, UTF-8, ranges, specifiers and function modifiers.
+The existing catalogue/plugin/editor fixtures pass MSVC /Zs only; their runtime
+inheritance, refresh and Undo/Redo bodies were not executed. Original syntax
+numeric IDs are preserved, Verse is appended as 101, and both application pins
+match. No native fixture, SDK/MCP server or application was run.
+
+Windows x64 Release CyUI Code, CyCode and CyCodeReader builds succeeded with tests
+disabled. Both local EN/FR manuals regenerated and passed their link/translation/
+resource checks. Source checks passed (CyCode 53 Python / 23 JSON, Reader 24 / 14).
+GUI interaction, native runtime, Linux/macOS and real UEFN/compiler/LSP integration
+remain unverified. Verse compilation or an official UEFN backend is not provided.
 
 Earlier milestones were exercised locally on Windows x64. New work below
 distinguishes compilation/schema checks from runtime acceptance.
-Linux/macOS builds and clean-machine installation have not been executed. A core CI
-matrix is configured but has not run on GitHub. The project license is GPL-3.0-only;
+Linux/macOS local builds and clean-machine installation have not been executed.
+Earlier core CI attempts exposed platform failures; the revised matrix still needs
+a successful run. The project license is GPL-3.0-only;
 the full text and project copyright notice are in the root LICENSE and COPYRIGHT.
 
 ## Executed checks

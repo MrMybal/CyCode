@@ -1,9 +1,9 @@
 #pragma once
 #include "cycode/Paths.h"
+#include "HelpTopics.h"
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <filesystem>
-#include <map>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -53,20 +53,6 @@ inline bool identifier(std::string_view value) {
            std::all_of(value.begin(), value.end(), [](unsigned char c) {
                return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-';
            });
-}
-inline const char *topic(std::string_view id) {
-    static const std::map<std::string_view, const char *> topics = {
-        {"search", "search"}, {"problems", "navigation"}, {"references", "navigation"},
-        {"information", "languages"}, {"structure", "navigation"}, {"hierarchy", "navigation"},
-        {"codeActions", "refactoring"}, {"refactoring", "refactoring"}, {"recovery", "recovery"},
-        {"resources", "editing"}, {"project", "quickstart"}, {"build", "build"},
-        {"cmake", "build"}, {"cmakePresets", "build"}, {"msbuild", "build"},
-        {"projectTasks", "projects"}, {"unreal", "unreal"}, {"tests", "testing"},
-        {"debugger", "debugging"}, {"terminal", "terminal"}, {"vcs", "version-control"},
-        {"extensions", "plugins"}, {"mcp", "mcp"}, {"updates", "updates"},
-        {"options", "settings"}};
-    const auto found = topics.find(id);
-    return found == topics.end() ? "overview" : found->second;
 }
 inline void open(const std::filesystem::path &installation, std::string_view installedDirectory,
                  std::string_view locale, std::string_view page, std::string_view anchor,

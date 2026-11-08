@@ -121,6 +121,21 @@ int main(int argc, char **argv) {
             first.dispatch("documents.close",{{"path","event.cpp"},{"discard",true}});
             const auto info = first.dispatch("plugins.list");
             require(info.at("host") == hostInfo, "Plugin host metadata is unavailable");
+            require(info.at("snippetCatalogues").size()==1 &&
+                info.at("snippetCatalogues")[0].at("definitionCount")==1 &&
+                !info.at("snippetCatalogues")[0].contains("definitions"),"Snippet inventory must expose summaries");
+            {
+                const auto source=first.dispatch("documents.read",{{"path","main.cpp"}});
+                const auto query=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method","snippets.complete"},
+                    {"parameters",{{"path","main.cpp"},{"expectedRevision",source.at("revision")},
+                        {"position",{{"line",0},{"character",0}}}}}});
+                require(query.at("ok")==true && query.at("result").at("result").at("items").size()==1,
+                    "Plugin host request did not share its own declarative snippets");
+                const auto denied=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method","snippets.userSave"},
+                    {"parameters",{{"text","{}"},{"expectedRevision","absent"}}}});
+                require(denied.at("ok")==false && denied.at("error").get<std::string>().find("settings.write")!=std::string::npos,
+                    "Workspace-only plugin changed personal settings");
+            }
             bool incompatible = false;
             for (const auto &entry : info.at("plugins"))
                 if (entry.value("id", std::string{}) == "fixture.future")
@@ -270,10 +285,19 @@ int main(int argc, char **argv) {
                                                      {"enabled", false},
                                                      {"expectedRevision", plugins.at("revision")}});
             });
+            const auto snippetSource=first.dispatch("documents.read",{{"path","main.cpp"}});
+            const Json snippetRequest={{"path","main.cpp"},{"expectedRevision",snippetSource.at("revision")},
+                {"position",{{"line",0},{"character",0}}}};
+            const auto snippetIssued=first.dispatch("snippets.complete",snippetRequest);
             first.dispatch("plugins.configure", {{"id", "fixture.addon"}, {"enabled", false}});
             first.dispatch("plugins.configure", {{"id", "fixture.native"}, {"enabled", false}});
             require(first.dispatch("plugins.list").at("menus").empty(),
                     "Disabled plugin menu remained registered");
+            require(first.dispatch("plugins.list").at("snippetCatalogues").empty() &&
+                first.dispatch("snippets.complete",snippetRequest).at("result").at("items").empty(),
+                "Disabled plugin snippets remained available");
+            rejected([&]{first.dispatch("language.completionPrepare",{{"sessionId",snippetIssued.at("sessionId")},
+                {"item",0},{"expectedRevision",snippetSource.at("revision")}});});
             rejected([&] { first.plugins().invoke("fixture.native.inspect", Json::object()); });
             require(!first.dispatch("vcs.context").at("available").get<bool>(),
                     "Unavailable selected provider silently fell back to Git");

@@ -73,3 +73,44 @@ documentation selection/archive was validated separately before committing.
 The authorised follow-up publishes both manuals and CyCode 0.2.2 after source,
 export, payload and Gitleaks verification. Reader's own release version is not
 changed by this documentation migration.
+
+## Coverage and contextual-help completion — 2026-11-07
+
+Ten additional task guides in each language cover physical files/trash/monitoring,
+project creation, multilanguage tasks, structure/references/hierarchies, diagnostics,
+execution controls, data/instruction breakpoints, update storage/history, custom
+VCS providers and the offline reader. Existing sections, figures, code examples
+and operation contracts remain. Personal snippets are no longer incorrectly
+listed as unavailable. Verification histories were removed from human prose;
+implementation limitations remain explicit. All 88 technical source guides remain
+in Docs/ with stable per-guide destinations and source fingerprints in coverage.json.
+
+HelpTopics.h is the one native panel/Context-help catalogue. Its 26 topics now
+include section anchors, Occurrences and precise resource/task destinations.
+Document windows retain editing help; contributed panels use extension help.
+verify.py checks actual panel IDs and both languages against the compiled reader.
+The public neutral API importer remains the appropriate source-data integration:
+233 real operation contracts, separately reviewed French summaries and complete
+JSON schemas, without raw implementation/source browsing or an invented C++ index.
+
+The official Git checkout at e038c474577e1f305df3eba421f2b9c03b0f1d8d was inspected
+with all four AI guides. Its reader/compiler/native helper match the existing
+6ddf9a582defb2f11fbb3f992afef6f98dcadc93 pin, which is retained. Image/gallery only;
+new flow diagrams are accessible static SVG. Existing logo, assets, licences,
+legacy index redirect and both build/distribution copies remain. No other app or
+upstream source is edited, no server is introduced, no publication is performed.
+
+Completed checks: 610 localized pages, 6,314 internal routes, 88 source-guide
+mappings, 26 native help destinations; full EN/FR revisions and anchors; permanent
+DOM fixture for old and new chapters, API/local search, six themes, media/gallery,
+Escape, accessible controls, reading positions and legacy routes, without requests.
+Three identical 19-file exports and a documentation ZIP round-trip match hashes.
+Source checks pass 56 Python / 24 JSON files. MSVC /Zs and Clang syntax-only pass
+all three affected UI units. The Windows x64 Release GUI build succeeds with
+BUILD_TESTING=OFF, without reported warnings. No project executable/test is run.
+
+The current browser-tool attempt to open file:// was rejected by its URL policy,
+which permits only HTTP(S). No server, alternate surface or indirect browser
+execution is used. Real local rendering, native F1/menu/browser handoff, touch/DPI,
+file-origin storage and Linux/macOS acceptance still need target checks. The
+export itself remains local file:// with no CDN or runtime network dependency.

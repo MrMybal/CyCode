@@ -14,6 +14,7 @@ extern "C" {
 #define CYCODE_HOST_FEATURE_EVENTS_V2 UINT64_C(2)
 #define CYCODE_HOST_FEATURE_EVENT_SUBSCRIPTIONS_V2 UINT64_C(4)
 #define CYCODE_HOST_FEATURE_DEBUG_ADAPTERS_V2 UINT64_C(8)
+#define CYCODE_HOST_FEATURE_SNIPPETS_V2 UINT64_C(16)
 /* EVENTS exposes the read-only events.read journal. EVENT_SUBSCRIPTIONS permits
  * contribute("events", {id, types:["document.*"], maxBatch:32}, callback).
  * Host-owned serial callbacks receive subscribed/gap/events envelopes; the first
@@ -40,6 +41,9 @@ typedef int (*CyCodePluginInit)(const CyCodeHostV1 *);
  * (id/title/type/arguments/requests, optional launch/attach/environment/pidField),
  * no callback. Requires process.execute; the host owns stdio-DAP and all children.
  * template descriptors contain bounded text files/options and have no callback.
+ * SNIPPETS_V2 permits contribute("snippets", {id,title,definitions,order}, NULL).
+ * definitions uses the saved project snippet grammar; no file path or callback.
+ * The host owns scopes, issuance, selection, revisions and edit transactions.
  * request runs during a callback on that same thread and returns host-owned
  * {ok,result,error} JSON, valid until the next request. Check ok before result. */
 typedef const char *(*CyCodeCommandV2)(void *plugin_instance, const char *input_json);

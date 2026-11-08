@@ -1,5 +1,56 @@
 # Integrated MCP
 
+workspace_include / workspace.include follows bounded literal logical C/C++
+directives with inline comments and immediate backslash-newline continuations.
+Requested caret and actual physical inner-header UTF-16 range are separate.
+workspace_files now requires a positive cache generation in every page; clients
+must compare it together with indexRevision before combining pages, including
+after manual rebuilds. The native API remains 233 operations with unchanged ABI2
+dispatch. See [Includes](CppIncludes.md) and [Workspace](Workspace.md).
+
+workspace_counterparts / workspace.counterparts adds guarded local C/C++
+header/source discovery (233 public operations). It returns bounded metadata only;
+no process, recursive scan, source edit/save or UI opening occurs through SDK/ABI2.
+See [C++ companions](CppCounterparts.md).
+
+snippets_user_draft / snippets.userDraft provides read-only selected-code capture.
+It returns the original
+personal snapshot plus a literal JSON draft, never a source edit or implicit save.
+Persist separately with snippets_user_save and settings.write; see
+[Selection capture](SnippetCapture.md).
+
+snippets_user_read / snippets.userRead and snippets_user_save / snippets.userSave
+provide personal persistence. The trusted embedding configures one
+fixed personal store; no path argument, project-selected storage or temporary task
+artifact is used. Save is noncancellable with settings.write and the user-settings
+group, not workspace.write. Revisions are opaque lowercase-hex content guards or
+absent; native preflight, lease and atomic write preserve competing writers and
+report unconfirmed postflight. Read-only plugin callbacks cannot save. See
+[Personal snippets](UserSnippets.md).
+
+snippets_complete merges project, personal and active ABI2 plugin catalogues
+without separate provider operations. Items retain cycodeSnippetSource;
+result.cycodePluginRevision binds the captured registry. Native issuance and
+preparation recheck registry changes in addition to document/catalogue/disk state.
+No client-supplied plugin path or callback is used. Already returned concrete plans
+retain their usual guarded apply semantics; query/preparation stays read-only.
+
+snippets_complete / snippets.complete adds saved workspace insertion catalogues
+without a language-server request (228 operations). An already-open saved workspace
+document, expectedRevision and UTF-16 position yield an issued completion session.
+Optional selection supplies ordered UTF-16 start/end coordinates with the caret
+at either endpoint and at most 8 KiB of source text. The issued byte range owns
+TM_SELECTED_TEXT; unavailable bodies carry cycodeSnippetAvailable/cycodeSnippetReason metadata.
+Preparation requires actual variable use and exact replacement bounds, allowing
+multiline local wrapping with literal layout. Coordinates reject fractional,
+negative, out-of-document and surrogate-splitting values. SDK count stays 228.
+language_completion_prepare accepts the index/session, rechecks catalogue/source/
+workspace/disk guards and returns the existing plan/byte-field metadata. Applying
+still requires workspace.write; querying/preparing is read-only. Regex/rendering
+work releases the main Engine mutex and revalidates before storing a plan. No
+Python editor model, process or catalogue-file write is introduced. See
+[Project snippets](SnippetCatalogue.md).
+
 language_document_highlights / language.documentHighlights adds the shared
 permission-free in-document read (227 operations). Current document identity,
 revision and backend epoch are checked before and after the provider reply. Output

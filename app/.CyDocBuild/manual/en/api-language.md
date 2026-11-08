@@ -29,7 +29,7 @@ These contracts describe the native service exposed by the official SDK/MCP inte
 - [`language_highlight`](doc:operation-language-highlight-language-highlight) — Read semantic color classifications from the shared language server and current live document.
 - [`language_complete`](doc:operation-language-complete-language-complete) — Request completion items from live buffers.
 - [`language_completion_resolve`](doc:operation-language-completion-resolve-language-completion-resolve) — Resolve an item issued by language_complete using the actual server.
-- [`language_completion_prepare`](doc:operation-language-completion-prepare-language-completion-prepare) — Prepare one atomic live-buffer transaction for an issued completion plus its additional imports.
+- [`language_completion_prepare`](doc:operation-language-completion-prepare-language-completion-prepare) — Prepare one atomic live-buffer transaction for an issued server completion plus additional imports, or a snippets_complete local proposal.
 - [`language_code_actions`](doc:operation-language-code-actions-language-code-actions) — List actual language-server fixes/refactorings for a live UTF-16 range and expectedRevision.
 - [`language_code_action_prepare`](doc:operation-language-code-action-prepare-language-code-action-prepare) — Resolve if needed and prepare an issued code action as a shared native change plan.
 - [`language_hover`](doc:operation-language-hover-language-hover) — Read bounded symbol documentation from the actual language server at a zero-based UTF-16 position.

@@ -8,7 +8,7 @@ import urllib.request
 import subprocess
 import sys
 from editor_dependency import ensure_editor
-from cyui_dependency import resolve as resolve_cyui
+from cyui_dependency import resolve as resolve_cyui, cache_directory
 
 ROOT = Path(__file__).resolve().parents[2]
 DEPS = ROOT / 'runtime' / 'deps'
@@ -34,7 +34,7 @@ def main():
     lock = {**json.loads((editor/'dependencies.lock.json').read_text('utf-8')),
             **json.loads(lock_path.read_text('utf-8'))}
     for key, item in lock.items():
-        if options.core_only and key not in ('json', 'vterm', 'tinyxml2', 'monocypher'):
+        if options.core_only and key not in ('json', 'vterm', 'tinyxml2', 'monocypher', 'pcre2', 'utf8proc'):
             continue
         target = DEPS / key
         if (target / '.cycode-dependency').exists():
@@ -59,7 +59,7 @@ def main():
         (target / '.cycode-dependency').write_text(digest, encoding='utf-8')
         print(f'{key}: {item["revision"]} sha256={digest}', flush=True)
     if not options.core_only:
-        print(f'CyUI: {resolve_cyui(DEPS/"cyui-ff023e6", options.cyui)}', flush=True)
+        print(f'CyUI: {resolve_cyui(cache_directory(DEPS), options.cyui)}', flush=True)
 
 
 if __name__ == '__main__':

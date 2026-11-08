@@ -15,11 +15,13 @@ GROUPS = {
     'debug': ('Debugging', 'Débogage'), 'terminal': ('Terminals', 'Terminaux'), 'sources': ('Source access', 'Accès aux sources'),
     'changes': ('Change transactions', 'Transactions de modification'), 'workspace': ('Workspace', 'Espace de travail'),
     'search': ('Text search', 'Recherche de texte'), 'recovery': ('Document recovery', 'Récupération des documents'),
-    'toolchains': ('Toolchains', 'Chaînes d’outils'), 'plugins': ('Native extensions', 'Extensions natives')
+    'toolchains': ('Toolchains', 'Chaînes d’outils'), 'plugins': ('Native extensions', 'Extensions natives'),
+    'snippets': ('Insertion snippets', 'Extraits personnalisés')
 }
 FIELD = {
     'path': ('Document or resource path in the permitted workspace.', 'Chemin du document ou de la ressource dans l’espace de travail autorisé.'),
     'expectedRevision': ('Current revision returned by a preceding read; a stale revision rejects the change.', 'Révision courante retournée par une lecture préalable ; une révision périmée fait rejeter la modification.'),
+    'selection': ('Selected UTF-16 start/end range. For project snippets, it must be ordered, include the caret at an endpoint and contain at most 8 KiB of source; TM_SELECTED_TEXT owns the captured text.', 'Plage sélectionnée start/end en UTF-16. Pour les extraits du projet, elle doit être ordonnée, avoir le curseur à une extrémité et contenir au plus 8 Kio de source ; TM_SELECTED_TEXT reçoit le texte capturé.'),
     'revision': ('Revision issued by the native service; preserve its exact value.', 'Révision émise par le service natif ; conservez sa valeur exacte.'),
     'previewId': ('Identifier issued by the matching preview operation.', 'Identifiant émis par l’opération de prévisualisation correspondante.'),
     'id': ('Service-issued identifier for the selected object.', 'Identifiant émis par le service pour l’objet sélectionné.'),

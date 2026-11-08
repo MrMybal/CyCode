@@ -68486,9 +68486,385 @@
       "supportsProgress": false
     },
     {
+      "id": "workspace_counterparts",
+      "name": "Workspace Counterparts",
+      "description": "Find C/C++ header/source companion files for an already-open saved workspace document. Requires current expectedRevision and expectedDocumentId; rechecks source lifetime/revision after metadata probes. No LSP, compiler, ripgrep, project-rule execution, recursive scan, source parsing, file edit/save or implicit document opening. Supports h/hh/hpp/hxx/inl versus c/cc/cpp/cxx/m/mm, and excludes .generated/.gen stems. Checks siblings, then the nearest Public/Private/Classes or include/includes versus src/source layout, retaining nested paths and paired-root fallbacks. Local probes try lower/upper extension variants. Also consults the already-current workspace file cache through a per-stem header/source offset index built during ordinary workspace_files refresh, without scanning or starting that refresh. Cached paths support other layouts and mixed-case extensions. Cached paths respect the file index ignore rules; explicit local probes do not. Missing, busy or stale caches are not used; current partial caches may contribute candidates. Rechecks watcher revision and cache generation after probing; changes mark the report partial. index reports missing/busy/stale/ready/partial/changed, revision and generation; zero means unavailable. ready covers the existing cached scope, not ignored files or semantic completeness. Same-stem names across modules are ambiguous; no semantic pairing. At most 16 ancestors, 128 copied cache matches and 128 unique total metadata probes; truncated/unreadable observations are explicit. Existing regular canonical targets remain inside the workspace; symlink files and outside targets are excluded. Duplicates use case-insensitive Windows path comparison or case-sensitive POSIX comparison. The GUI auto-opens only one unambiguous result with a complete unchanged cache and no limits/unreadable paths; otherwise shows the common palette with index status. No cache activation, edits or opening by SDK/ABI2 callers. Results are momentary and ordinary guarded opening may still fail.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDocumentId": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision",
+          "expectedDocumentId"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "documentId": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "candidates": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                },
+                "relation": {
+                  "type": "string",
+                  "enum": [
+                    "sibling",
+                    "paired-directory",
+                    "paired-root",
+                    "workspace-index"
+                  ]
+                }
+              },
+              "required": [
+                "path",
+                "relation"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "index": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "missing",
+                  "busy",
+                  "stale",
+                  "ready",
+                  "partial",
+                  "changed"
+                ]
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "generation": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "state",
+              "revision",
+              "generation"
+            ],
+            "additionalProperties": false
+          },
+          "checked": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 128
+          },
+          "unreadable": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 128
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "revision",
+          "documentId",
+          "candidates",
+          "index",
+          "checked",
+          "unreadable",
+          "truncated"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "workspace_include",
+      "name": "Workspace Include",
+      "description": "Find workspace files matching the literal C/C++ #include on the caret logical directive of an already-open saved workspace document, including unsaved buffer changes. Requires expectedRevision, expectedDocumentId and a valid UTF-16 position; rechecks source lifetime/revision. Returns the literal target, quote/angle kind, exact inner-header UTF-16 range on the actual physical header line (which may differ from the caret line) and the requested position. A bounded native lexical context scan excludes comment/string/raw-string bodies and continued non-directive lines; it does not evaluate conditions or expand macros. Ordinary literal #include directives support inline block comments between tokens and immediate backslash-LF/CRLF continuations, including a spliced include keyword. The caret may lie on any continued component; the header-name itself must remain on one physical line with forward-slash relative paths. Nonspliced multiline comments between tokens and continued header-name literals are refused. Prefix limit 1 MiB, total logical directive span 8 KiB, target 1024 UTF-8 bytes; malformed/unsupported contexts fail explicitly. Supports preceding ordinary comments/strings, common raw delimiters and escaped-newline context; unrecognized raw delimiters are refused. For quoted headers, probes the source-relative path first. Both forms also use suffix-component matches from the already-current workspace file cache, with Windows case-insensitive or POSIX case-sensitive comparison. Parent segments are followed only by the quoted source-relative probe; no cache suffix guessing for such paths. The shared per-stem index stores bounded header/source/other offset buckets, supporting extensionless and .inc headers without another scan. At most 128 cached bucket entries and 128 total unique metadata probes. Missing/busy/stale caches contribute no paths; partial current caches can contribute retained paths. Rechecks watcher revision/cache generation after probing and document-lock reacquisition. index/truncated/unreadable explicitly describe incomplete or changed coverage. Existing canonical regular targets remain inside the workspace; symlink files and external targets are excluded. Duplicate local/index paths retain source-relative provenance. ready covers the cached ignore scope, not compiler include-search order or semantic completeness. Multiple candidates remain ambiguous; the GUI auto-opens only one complete unchanged result and otherwise uses the shared palette with caret/tab/source guards. No compiler include-directory interpretation, external SDK lookup, include_next/import, project rules, LSP, process, recursive enumeration, cache refresh, edit/save or implicit opening by SDK/ABI2 callers. Results are momentary observations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDocumentId": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "character": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "line",
+              "character"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision",
+          "expectedDocumentId",
+          "position"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "documentId": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "character": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "line",
+              "character"
+            ],
+            "additionalProperties": false
+          },
+          "include": {
+            "type": "object",
+            "properties": {
+              "target": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              },
+              "angled": {
+                "type": "boolean"
+              },
+              "range": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "character": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "line",
+                      "character"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "character": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "line",
+                      "character"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "start",
+                  "end"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "target",
+              "angled",
+              "range"
+            ],
+            "additionalProperties": false
+          },
+          "candidates": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                },
+                "relation": {
+                  "type": "string",
+                  "enum": [
+                    "source-relative",
+                    "workspace-index"
+                  ]
+                }
+              },
+              "required": [
+                "path",
+                "relation"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "index": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "missing",
+                  "busy",
+                  "stale",
+                  "ready",
+                  "partial",
+                  "changed"
+                ]
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "generation": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "state",
+              "revision",
+              "generation"
+            ],
+            "additionalProperties": false
+          },
+          "checked": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 128
+          },
+          "unreadable": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 128
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "revision",
+          "documentId",
+          "position",
+          "include",
+          "candidates",
+          "index",
+          "checked",
+          "unreadable",
+          "truncated"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
       "id": "workspace_files",
       "name": "Workspace Files",
-      "description": "Read a cached workspace path-index page, respecting ignore rules. Use nextOffset until null; refresh rebuilds the index.",
+      "description": "Read a cached workspace path-index page, respecting ignore rules. Use nextOffset until null; refresh rebuilds the index. Each page reports both the watcher indexRevision and the actual cache rebuild generation. Validate both across pages: a manual rebuild may keep the same watcher revision while changing generation. A mismatch requires discarding or marking the assembly partial and retrying; offset pagination does not retain an issued frozen snapshot. Discovery remains bounded to 200000 paths / 32 MiB / 30 seconds, with an 8 MiB page payload budget.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -68533,6 +68909,10 @@
           "indexRevision": {
             "type": "integer",
             "minimum": 1
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1
           }
         },
         "required": [
@@ -68540,7 +68920,8 @@
           "truncated",
           "nextOffset",
           "total",
-          "indexRevision"
+          "indexRevision",
+          "generation"
         ],
         "additionalProperties": false
       },
@@ -76280,6 +76661,428 @@
       "supportsProgress": false
     },
     {
+      "id": "snippets_complete",
+      "name": "Snippets Complete",
+      "description": "Read saved project, host-configured personal and active ABI2 plugin snippet catalogues for an already-open saved document. Merge order is project, personal, then plugins by order/id; duplicates retain cycodeSnippetSource provenance and owner labels. The optional personal store is fixed by the trusted embedding, shared across this installation and absent in a default Engine; no input path is accepted. Invalid personal storage is reported for repair, never silently omitted. result.cycodeUserRevision binds exact saved bytes; cycodeUserGeneration is local refresh metadata. User/registry changes are rechecked during issuance and native preparation, alongside the saved project catalogue, source/workspace/disk guards. Already prepared concrete plans retain ordinary apply guards. Required expectedRevision/UTF-16 position; optional ordered selection has the caret at an endpoint, at most 8 KiB of source and actual literal TM_SELECTED_TEXT use. Each catalogue accepts at most 256 KiB / 256 definitions / 8 KiB bodies, 16 prefixes per definition; plugin registry is 32 catalogues / 1 MiB including inactive registrations. At most 512 combined proposals plus the ordinary completion payload bound; truncation is reported. Selection replacement equals the issued range, without automatic reindentation. No LSP query, document opening, provider callback, executable command, installation, file edit or save. Personal editing uses snippets_user_read/save; file templates, external imports and automatic server merging remain unsupported.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "character": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "line",
+              "character"
+            ],
+            "additionalProperties": false
+          },
+          "selection": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "object",
+                "properties": {
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "character": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "line",
+                  "character"
+                ],
+                "additionalProperties": false
+              },
+              "end": {
+                "type": "object",
+                "properties": {
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "character": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "line",
+                  "character"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision",
+          "position"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "result": {
+            "type": "object"
+          },
+          "language": {
+            "type": "string"
+          },
+          "catalogue": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "revision",
+          "sessionId",
+          "truncated",
+          "result",
+          "language",
+          "catalogue"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "snippets_user_read",
+      "name": "Snippets User Read",
+      "description": "Read the fixed host-configured personal snippet catalogue shared by all workspaces of this installation. Never accepts a caller file path and never creates storage. available=false means the embedding did not opt into this store. Missing files yield editable empty JSON and revision absent; valid UTF-8 malformed JSON remains editable with an error, while unreadable/binary/oversized/redirected storage cannot be overwritten through this service. revision is an opaque content guard (64 lower-case hex characters or absent); generation is local observation metadata, not a cross-process version. Existing GUI/MCP/native plugin entry points share this owner.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 262144
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "available",
+          "editable",
+          "valid",
+          "revision",
+          "generation",
+          "text",
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "snippets_user_draft",
+      "name": "Snippets User Draft",
+      "description": "Capture one nonempty ordered UTF-16 selection from an already-open saved workspace document at expectedRevision into a personal snippet JSON draft. Reads the live source, including unsaved changes, without changing or saving it. Refuses untitled/external/SDK references, malformed ranges, split surrogates, selections over 8 KiB and escaped bodies over 8 KiB including the final caret. The shared literal escaping preserves dollar signs, backslashes, braces and Unicode; it creates no numbered editable field. Uses the host-configured personal store only; it must be readable valid JSON and have room under 256 definitions / 256 KiB. Adds a unique Selection snippet name, prefix snippet and the source language scope; existing definition values are retained and the complete draft is pretty-printed. Returns the original catalogue snapshot plus an editable draft, name and source provenance. Rechecks source revision/generation before return. Does not create directories, locks, files, plans or processes and never saves. Review the draft and use snippets_user_save with catalogue.revision and settings.write to persist; concurrent storage changes reject that save. The draft is an immutable captured copy, not a live source link.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "selection": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "object",
+                "properties": {
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "character": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "line",
+                  "character"
+                ],
+                "additionalProperties": false
+              },
+              "end": {
+                "type": "object",
+                "properties": {
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "character": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "line",
+                  "character"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision",
+          "selection"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "catalogue": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "editable": {
+                "type": "boolean"
+              },
+              "valid": {
+                "type": "boolean"
+              },
+              "revision": {
+                "type": "string"
+              },
+              "generation": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 262144
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "editable",
+              "valid",
+              "revision",
+              "generation",
+              "text",
+              "error"
+            ],
+            "additionalProperties": false
+          },
+          "draft": {
+            "type": "string",
+            "maxLength": 262144
+          },
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "catalogue",
+          "draft",
+          "name",
+          "path",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "snippets_user_save",
+      "name": "Snippets User Save",
+      "description": "Validate and explicitly save one personal JSON catalogue to the fixed application-owned file, shared across workspaces. Requires settings.write, separate from workspace.write. Checks the expected opaque revision under a nonblocking retained OS lock and uses guarded atomic replacement. At most 256 KiB UTF-8, 256 definitions and the existing body/scope grammar. Does not overwrite unreadable or redirected storage; readable malformed JSON can be repaired. Other-instance changes reject without replacing the draft; a post-write confirmation failure is explicit and needs a fresh read. No workspace source file, process or task artifact is created. Pending local snippet sessions recheck the saved revision; concrete prepared plans retain ordinary apply guards.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 262144
+          },
+          "expectedRevision": {
+            "type": "string",
+            "anyOf": [
+              {
+                "const": "absent"
+              },
+              {
+                "minLength": 64,
+                "maxLength": 64,
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            ]
+          }
+        },
+        "required": [
+          "text",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 262144
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "available",
+          "editable",
+          "valid",
+          "revision",
+          "generation",
+          "text",
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "settings.write"
+      ],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "user-settings"
+      ]
+    },
+    {
       "id": "language_completion_resolve",
       "name": "Language Completion Resolve",
       "description": "Resolve an item issued by language_complete using the actual server. Read-only; requires a current session, item index and expectedRevision. Rejects unsupported resolve and protected insertion-field changes. Documentation is passive data; server commands are never executed.",
@@ -76344,7 +77147,7 @@
     {
       "id": "language_completion_prepare",
       "name": "Language Completion Prepare",
-      "description": "Prepare one atomic live-buffer transaction for an issued completion plus its additional imports. Resolves lazy fields when supported (resolve defaults true). replace defaults true; false selects the insert range. Checks UTF-16 ranges, revisions, disk baseline and overlapping edits. Handles multiline indentation and bounded numbered snippets, mirrors, nested defaults and choices. snippet contains UTF-8 byte ranges in the resulting document for interactive fields; null for ordinary text. cursor is the resulting zero-based UTF-16 final caret. Variables/transforms and arbitrary commands are unsupported. Does not apply or save; use changes_preview/changes_apply.",
+      "description": "Prepare one atomic live-buffer transaction for an issued server completion plus additional imports, or a snippets_complete local proposal. Resolves lazy server fields when supported (resolve defaults true); local snippets never contact a server and require the saved catalogue to remain unchanged. replace defaults true; false selects an insert range. Checks UTF-16 ranges, revisions, disk baseline and overlapping edits. Handles multiline indentation, bounded numbered snippets, mirrors, nested defaults, choices, fourteen context variables including TM_SELECTED_TEXT and bounded variable regex/case transforms. Explicit local selections can span lines, must equal the issued replacement range and must be consumed by the snippet; their layout is not automatically reindented. Interactive field transforms and arbitrary commands are unsupported. snippet contains UTF-8 byte ranges in the resulting document for interactive fields; null for ordinary text. cursor is the resulting zero-based UTF-16 final caret. Does not apply or save; use changes_preview/changes_apply.",
       "inputSchema": {
         "type": "object",
         "properties": {

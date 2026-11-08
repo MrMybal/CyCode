@@ -5,7 +5,7 @@ description: Consultez les versions, téléchargez une mise à jour et choisisse
 section: Bien démarrer
 order: 290
 parent: overview
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 ## Vérifier, télécharger et installer {#updates}
@@ -20,6 +20,8 @@ Ouvrez les mises à jour de l’application depuis le menu Affichage. La vérifi
 Un téléchargement interrompu peut proposer une reprise ou un téléchargement neuf. Conservez les sauvegardes de récupération tant que l’installation n’est pas réglée. Le retrait de stockage déplace les données conservées et ne libère pas immédiatement leur espace. L’historique détaillé est indicatif ; il ne prouve pas que les fichiers installés correspondent toujours à un ancien résultat.
 
 La vérification anonyme ne peut pas lire une version GitHub privée. Sans paquet compatible accessible, utilisez manuellement la page de version et l’archive fournie. Une erreur de connexion n’est pas présentée comme une application à jour.
+
+Consultez [reprise de téléchargement, stockage et historique](doc:update-storage#downloads) avant de réorganiser les fichiers conservés.
 
 
 ## Installation Windows {#windows-installation}

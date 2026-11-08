@@ -5,7 +5,7 @@ description: Ouvrez les solutions, régénérez les données du projet et prépa
 section: Travailler dans CyCode
 order: 140
 parent: projects
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Choisir le moteur {#engine}
@@ -15,6 +15,22 @@ Ouvrez le `.uproject` ou son `.sln`. Vérifiez la racine du moteur, sa version, 
 ## Données générées du projet {#generated}
 
 Utilisez la génération des fichiers de projet lorsque des entrées de solution sont absentes ou périmées. Générez la base de compilation destinée à clangd lorsque nécessaire. Choisissez une cible de jeu ou d’éditeur existante avant de compiler avec UnrealBuildTool. La génération et la compilation exécutent les outils du moteur installé auquel vous faites confiance.
+
+## Extraits d’insertion C++ {#code-snippets}
+
+Le fournisseur Unreal intégré 1.6.0, lorsqu’il est actif, ajoute quatre définitions
+à la palette commune : ue_log/uelog, ue_property, ue_function et ue_editor. UE_LOG
+propose catégorie/message modifiables et choix de verbosité ; les déclarations
+exposent les métadonnées Blueprint. ue_editor encadre le texte sélectionné avec
+WITH_EDITOR, en gardant sa disposition littérale. Utilisez Rider Ctrl+J pour insérer
+ou Ctrl+Alt+J pour encadrer une sélection.
+
+Les entrées utilisent la portée cpp et affichent le propriétaire cycode.unreal.
+Elles sont disponibles dans tout espace C++ quand le plugin est actif. Elles
+n’ajoutent pas d’includes, ne fournissent pas d’implémentation, n’interrogent pas la
+réflexion et ne vérifient pas la compilation Unreal. Choisissez une classe/un contexte
+adapté et examinez le code. Désactiver le fournisseur révoque les propositions en
+attente. Voir les [extraits de plugins](doc:refactoring#plugin-snippets).
 
 ## Lancer et créer un paquet {#launch}
 

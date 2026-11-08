@@ -5,7 +5,7 @@ description: Configurez les outils et compilez une cible réellement sélectionn
 section: Travailler dans CyCode
 order: 130
 parent: projects
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Configurer et compiler {#configure}
@@ -13,6 +13,10 @@ sourceRevision: 2
 Pour CMake, choisissez les dossiers source et de compilation, la configuration, le générateur et le compilateur. Lancez la configuration, puis consultez les cibles rapportées par la File API de CMake. Utilisez un préréglage de configuration ou de compilation existant si nécessaire. Les préréglages de tests, de paquet et de workflow possèdent leurs propres actions d’aperçu et d’exécution.
 
 Pour un `.sln` classique, examinez la solution dans MSBuild, sélectionnez la configuration et la plateforme, puis choisissez compiler, reconstruire, nettoyer ou restaurer. MSBuild et les SDK correspondants doivent être installés. Une solution Unreal conserve le parcours [UnrealBuildTool](doc:unreal#generated).
+
+## Conserver le compilateur sélectionné {#toolchains}
+
+La détection CMake conserve les noms de pilotes comme `clang++` et `g++`, y compris les liens symboliques. Les pilotes C et C++ peuvent partager un exécutable tout en choisissant des bibliothèques de liaison différentes. Si un ancien outil mémorisé est indisponible, actualisez la détection et sélectionnez à nouveau le compilateur installé. Si CyCode signale un changement de compilateur ou de générateur, choisissez un nouveau dossier de compilation et configurez-le ; les fichiers déjà construits restent présents. Le mode automatique et les préréglages du projet conservent leurs propres choix de compilateur.
 
 ## Lire la sortie {#output}
 

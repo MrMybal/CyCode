@@ -5,7 +5,7 @@ description: Préparez le lancement, les points d’arrêt et l’inspection de 
 section: Travailler dans CyCode
 order: 190
 parent: projects
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Démarrer une session {#launch}
@@ -19,3 +19,5 @@ Placez un point d’arrêt dans la marge, puis lancez le débogage ou un attache
 Pendant une pause, sélectionnez un thread et une frame pour examiner les portées, variables et expressions surveillées. La mémoire, le désassemblage, les détails d’exception, les points d’arrêt de fonction, de donnée ou d’instruction et l’exécution inverse dépendent des capacités annoncées par l’adaptateur.
 
 Exécuter jusqu’au curseur reprend temporairement vers un emplacement source. Définir la prochaine instruction déplace le pointeur d’exécution et peut sauter du code ; c’est une action explicite différente. Modifier une variable ou la mémoire agit sur le programme débogué et ne s’annule pas avec l’Undo du document. L’arrêt ou le détachement suit la propriété de la session sélectionnée.
+
+Lisez [les contrôles d’exécution](doc:debug-execution#stepping) et [les points d’arrêt de données/instructions](doc:debug-breakpoints#data) pour les parcours dépendant des capacités.

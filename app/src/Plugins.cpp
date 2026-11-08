@@ -6,6 +6,7 @@
 #include "cycode/TextFile.h"
 #include "cycode/TemplateDefinitions.h"
 #include "cycode/Languages.h"
+#include "cycode/SnippetCatalogue.h"
 #include "cycode/FileTransactions.h"
 #include "PluginPackageData.h"
 #include <algorithm>
@@ -130,7 +131,7 @@ void Plugins::add(const std::string &kind, Json info, CyCodeCommand callback, Cy
     if (!identifier(id) || (!legacy && !id.starts_with(registering_ + ".")))
         throw std::runtime_error("Contribution ID must use the plugin namespace");
     if (kind != "command" && kind != "menu" && kind != "panel" && kind != "vcs" && kind != "project" &&
-        kind != "syntax" && kind!="template" && kind!="languageServer" && kind!="events" && kind!="debugAdapter")
+        kind != "syntax" && kind!="template" && kind!="languageServer" && kind!="events" && kind!="debugAdapter" && kind!="snippets")
         throw std::runtime_error("Unsupported contribution kind");
     if (contributions_.size() >= 2048)
         throw std::runtime_error("Contribution limit reached");
@@ -139,7 +140,7 @@ void Plugins::add(const std::string &kind, Json info, CyCodeCommand callback, Cy
             throw std::runtime_error("Duplicate contribution ID: " + id);
     if (kind == "command" && findCommand(id))
         throw std::runtime_error("Cannot replace a built-in command");
-    if (kind != "menu" && kind != "syntax" && kind!="template" && kind!="languageServer" && kind!="debugAdapter" && !callback && !callbackV2)
+    if (kind != "menu" && kind != "syntax" && kind!="template" && kind!="languageServer" && kind!="debugAdapter" && kind!="snippets" && !callback && !callbackV2)
         throw std::runtime_error("Contribution needs a callback");
     if (kind == "vcs" && id == "git")
         throw std::runtime_error("Git is a reserved built-in provider");
@@ -183,6 +184,16 @@ void Plugins::add(const std::string &kind, Json info, CyCodeCommand callback, Cy
         validateProjectTemplate(info);size_t count=1,bytes=info.dump().size();
         for(const auto &c:contributions_)if(c.kind=="template"){++count;bytes+=c.info.dump().size();}
         if(count>32||bytes>1024*1024)throw std::runtime_error("Project template registry exceeds 32 templates / 1 MiB");
+    }
+    if(kind=="snippets") {
+        if(callback||callbackV2||info.contains("plugin"))
+            throw std::runtime_error("Snippet catalogues are declarative; the host supplies their owner");
+        validateSnippetContribution(info);
+        size_t count=1,bytes=info.dump().size()+registering_.size()+12;
+        for(const auto &c:contributions_)if(c.kind=="snippets"){
+            ++count;bytes+=c.info.dump().size()+c.owner.size()+12;
+        }
+        if(!snippetRegistryFits(count,bytes)) throw std::runtime_error("Plugin snippets exceed 32 catalogues / 1 MiB");
     }
     for (const auto *key : {"title", "category", "context"})
         if (info.contains(key) && !info.at(key).is_string())
@@ -322,6 +333,7 @@ const char *Plugins::request(void *ctx, const char *method, const char *paramete
             return "{\"ok\":false,\"error\":\"Host requests require the callback thread\"}";
         if (!method || self.invoking_.empty() || !self.host_)
             throw std::runtime_error("Host requests require a plugin callback");
+        const std::string service(method);
         const std::map<std::string, std::string> allowed = {{"workspace.describe", ""},
                                                             {"vcs.submodules", ""},
                                                             {"vcs.worktrees", ""},
@@ -391,6 +403,12 @@ const char *Plugins::request(void *ctx, const char *method, const char *paramete
                                                             {"language.preferencesForget", "process.execute"},
                                                             {"language.configure", "process.execute"},
                                                             {"language.complete", ""},
+                                                            {"snippets.complete", ""},
+                                                            {"snippets.userRead", ""},
+                                                            {"snippets.userDraft", ""},
+                                                            {"snippets.userSave", "settings.write"},
+                                                            {"language.completionResolve", ""},
+                                                            {"language.completionPrepare", ""},
                                                             {"language.hover", ""},
                                                             {"language.signature", ""},
                                                             {"language.definition", ""},
@@ -417,6 +435,8 @@ const char *Plugins::request(void *ctx, const char *method, const char *paramete
                                                             {"templates.preview", ""},
                                                             {"templates.create", "workspace.write"},
                                                             {"workspace.files", ""},
+                                                            {"workspace.counterparts", ""},
+                                                              {"workspace.include", ""},
                                                             {"events.read", ""},
                                                             {"debug.adapters", ""},
                                                             {"debug.profile", "process.execute"},
@@ -481,22 +501,22 @@ const char *Plugins::request(void *ctx, const char *method, const char *paramete
                                                             {"unreal.build", "process.execute"},
                                                             {"unreal.database", "process.execute"},
                                                             {"unreal.prepare", "process.execute"}};
-        auto it = allowed.find(method);
+        auto it = allowed.find(service);
         if (it == allowed.end())
             throw std::runtime_error("Host service is not exported to plugins");
         if (!it->second.empty()) {
-            if (!self.hostMutationAllowed_ && method!="debug.profile" && method!="debug.status" && method!="unreal.launchProfile" && method!="build.output" && method!="project.output")
+            if (!self.hostMutationAllowed_ && service!="debug.profile" && service!="debug.status" && service!="unreal.launchProfile" && service!="build.output" && service!="project.output")
                 throw std::runtime_error("Read-only provider callbacks cannot mutate host state");
             const auto permissions =
                 self.records_.at(self.invoking_).info.value("permissions", Json::array());
             if (std::find(permissions.begin(), permissions.end(), it->second) == permissions.end())
                 throw std::runtime_error("Plugin permission is missing: " + it->second);
-            if((method=="debug.configure"||method=="debug.breakpoints"||method=="debug.functionBreakpoints"||method=="debug.exceptionBreakpoints")&&std::find(permissions.begin(),permissions.end(),"workspace.write")==permissions.end())throw std::runtime_error("Plugin permission is missing: workspace.write");
-            if(std::string(method)=="unreal.automationRun"&&std::find(permissions.begin(),permissions.end(),"workspace.write")==permissions.end())throw std::runtime_error("Plugin permission is missing: workspace.write");
-            if(std::string(method).starts_with("vcs.submodule.")||((std::string(method).starts_with("vcs.worktree.")||std::string(method).starts_with("vcs.checkout.")||std::string(method).starts_with("vcs.merge.")||std::string(method).starts_with("vcs.replay.")||std::string(method)=="vcs.conflict.apply")&&it->second=="process.execute")) for(const auto *permission:{"workspace.write","vcs.write"})
+            if((service=="debug.configure"||service=="debug.breakpoints"||service=="debug.functionBreakpoints"||service=="debug.exceptionBreakpoints")&&std::find(permissions.begin(),permissions.end(),"workspace.write")==permissions.end())throw std::runtime_error("Plugin permission is missing: workspace.write");
+            if(service=="unreal.automationRun"&&std::find(permissions.begin(),permissions.end(),"workspace.write")==permissions.end())throw std::runtime_error("Plugin permission is missing: workspace.write");
+            if(service.starts_with("vcs.submodule.")||((service.starts_with("vcs.worktree.")||service.starts_with("vcs.checkout.")||service.starts_with("vcs.merge.")||service.starts_with("vcs.replay.")||service=="vcs.conflict.apply")&&it->second=="process.execute")) for(const auto *permission:{"workspace.write","vcs.write"})
                 if(std::find(permissions.begin(),permissions.end(),permission)==permissions.end())throw std::runtime_error(std::string("Plugin permission is missing: ")+permission);
         }
-        self.response_ = Json({{"ok", true}, {"result", self.host_(method, parse(parameters))}}).dump();
+        self.response_ = Json({{"ok", true}, {"result", self.host_(service, parse(parameters))}}).dump();
     } catch (const std::exception &e) {
         self.response_ = Json({{"ok", false}, {"error", e.what()}}).dump();
     }
@@ -514,7 +534,7 @@ void Plugins::loadInstalled(const std::filesystem::path &installation) {
 void Plugins::loadDirectories(const std::vector<std::filesystem::path> &directories, const std::vector<ManagedPluginCandidate> &managed) {
     std::lock_guard lock(mutex_);
     hostV1_ = {1, sizeof(CyCodeHostV1), this, addCommand, addVcs};
-    hostV2_ = {2, sizeof(CyCodeHostV2), this, contribute, request, CYCODE_HOST_FEATURE_ACTIVATION_V2 | CYCODE_HOST_FEATURE_EVENTS_V2 | CYCODE_HOST_FEATURE_EVENT_SUBSCRIPTIONS_V2 | CYCODE_HOST_FEATURE_DEBUG_ADAPTERS_V2};
+    hostV2_ = {2, sizeof(CyCodeHostV2), this, contribute, request, CYCODE_HOST_FEATURE_ACTIVATION_V2 | CYCODE_HOST_FEATURE_EVENTS_V2 | CYCODE_HOST_FEATURE_EVENT_SUBSCRIPTIONS_V2 | CYCODE_HOST_FEATURE_DEBUG_ADAPTERS_V2 | CYCODE_HOST_FEATURE_SNIPPETS_V2};
     std::map<std::string, Json> pending;
     std::vector<std::filesystem::path> manifests;
     for (const auto &directory : directories) {
@@ -859,6 +879,11 @@ Plugins::Json Plugins::describe() const {
     Json known = Json::array();
     Json debugAdapters=Json::array();
     for(const auto &entry:inventory("debugAdapter"))debugAdapters.push_back(debugAdapterSummary(entry));
+    Json snippetCatalogues=Json::array();
+    for(const auto &c:contributions_)if(c.kind=="snippets" && active(c.owner))
+        snippetCatalogues.push_back({{"id",c.info.at("id")},{"plugin",c.owner},
+            {"title",c.info.value("title",c.info.at("id").get<std::string>())},
+            {"order",c.info.value("order",0)},{"definitionCount",c.info.at("definitions").size()}});
     auto subscriptions=inventory("events");
     for(auto &subscription:subscriptions){const auto id=subscription.at("id").get<std::string>();
         if(eventStates_.contains(id)){const auto &state=eventStates_.at(id);subscription["started"]=state.started;subscription["cursor"]=state.cursor;subscription["error"]=state.error;}
@@ -878,6 +903,7 @@ Plugins::Json Plugins::describe() const {
             {"knownCommands", known},
             {"eventSubscriptions",subscriptions},
             {"debugAdapters",debugAdapters},
+            {"snippetCatalogues",std::move(snippetCatalogues)},
             {"commands", inventory("command")},
             {"menus", inventory("menu")},
             {"panels", inventory("panel")},
@@ -900,6 +926,17 @@ Plugins::Json Plugins::templateSnapshot() const {
     for(const auto &c:contributions_)if(c.kind=="template"&&active(c.owner)){auto info=c.info;info["plugin"]=c.owner;entries.push_back(std::move(info));}
     std::stable_sort(entries.begin(),entries.end(),[](const auto &a,const auto &b){return a.value("order",0)<b.value("order",0);});
     return {{"revision",revision_.load()},{"templates",entries}};
+}
+Plugins::Json Plugins::snippetSnapshot() const {
+    std::lock_guard lock(mutex_);Json entries=Json::array();
+    for(const auto &c:contributions_)if(c.kind=="snippets"&&active(c.owner)){
+        auto info=c.info;info["plugin"]=c.owner;entries.push_back(std::move(info));
+    }
+    std::sort(entries.begin(),entries.end(),[](const auto &a,const auto &b){
+        const auto x=a.value("order",0),y=b.value("order",0);
+        return x!=y ? x<y : a.at("id").template get<std::string>()<b.at("id").template get<std::string>();
+    });
+    return {{"revision",revision_.load()},{"catalogues",std::move(entries)}};
 }
 Plugins::Json Plugins::createFromTemplate(const std::string &owner,uint64_t revision,const std::function<Json()> &commit) {
     std::lock_guard lock(mutex_);

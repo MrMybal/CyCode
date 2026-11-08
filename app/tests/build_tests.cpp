@@ -1,6 +1,7 @@
 #include "cycode/Engine.h"
 #include "cycode/CMakePresets.h"
 #include "cycode/BuildLimits.h"
+#include "cycode/Tools.h"
 #include <fstream>
 #include <iostream>
 using namespace cycode;
@@ -196,6 +197,14 @@ target_link_libraries(demo PRIVATE helper)
         write(root / ".clangd", "# User-owned configuration must survive build setup\n");
         Engine engine(root);
         auto detected = engine.dispatch("toolchains.detect");
+        for (const auto &toolchain : detected.at("toolchains")) {
+            const auto family = toolchain.at("family").get<std::string>();
+            if (family != "Clang" && family != "GCC") continue;
+            const auto driver = family == "Clang" ? "clang++" : "g++";
+            check(utf8Path(toolchain.at("cxxCompiler")) == findExecutableOnPath(driver,
+                      {utf8Path(toolchain.at("cxxCompiler"))}),
+                  "CMake discovery did not preserve the actual C++ driver alias");
+        }
         check(detected["cmake"] != "", "CMake detection");
         check(!detected["toolchains"].empty(), "C/C++ toolchain detection");
         rejects([&] { engine.dispatch("build.inspect", {{"buildDirectory", "../outside"}}); },

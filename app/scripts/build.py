@@ -10,6 +10,40 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def build_failure_excerpt(text, max_lines=80, max_chars=12000):
+    """Keep compiler/CMake reasons and adjacent notes in a bounded preview."""
+    if max_lines < 2 or max_chars < 64:
+        raise ValueError('Build excerpt limits are too small')
+    lines = text.splitlines()
+    markers = ('error:', 'fatal error', 'error c', 'error lnk', 'error msb',
+               'failed:', 'cmake error', 'ninja: build stopped')
+    hits = [i for i, line in enumerate(lines) if any(marker in line.lower() for marker in markers)]
+    selected = sorted({j for i in hits for j in range(max(0, i-1), min(len(lines), i+6))}) if hits else list(range(max(0, len(lines)-25), len(lines)))
+    output, previous = [], -1
+    for index in selected:
+        if previous >= 0 and index != previous+1:
+            output.append('...')
+        output.append(lines[index])
+        previous = index
+    notice = '[... more in the full build log ...]'
+    if len(output) > max_lines:
+        output = output[:max_lines-1] + [notice]
+    result = '\n'.join(output)
+    if len(result) > max_chars:
+        result = result[:max_chars-len(notice)-1] + '\n' + notice
+    return result
+
+
+def build_log_tail(path, maximum=512*1024):
+    """Read a bounded tail even when an external compiler produces a large log."""
+    with Path(path).open('rb') as stream:
+        size = stream.seek(0, 2)
+        stream.seek(max(0, size-maximum))
+        data = stream.read(maximum)
+    result = data.decode('utf-8', errors='replace')
+    return ('[... earlier build output omitted ...]\n' if size > maximum else '') + result
+
+
 def build_commands(args, cmake, ninja, editor):
     # Separate caches avoid carrying BUILD_TESTING=ON into ordinary app builds.
     name = 'tests-core-build' if args.core_only else 'tests-build'
@@ -121,9 +155,8 @@ def main():
             result = subprocess.run(command, env=environment, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT)
             stream.flush()
             if result.returncode:
-                lines = log.read_text('utf-8', errors='replace').splitlines()
-                errors = [line for line in lines if any(marker in line for marker in ('error C', 'error LNK', 'FAILED:', 'fatal error', 'CMake Error'))]
-                print('\n'.join(errors[:30] or lines[-25:]))
+                print(build_failure_excerpt(build_log_tail(log)))
+                print(f'Full build log: {log}')
                 return result.returncode
     if args.run_tests:
         # Keep owned fixtures under an identifiable workspace path, not OS temp.

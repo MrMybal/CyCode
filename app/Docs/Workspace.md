@@ -38,12 +38,16 @@ excludes or .git/info/exclude require an explicit refresh. The cache is in memor
 there is no claim of a persistent path or symbol index.
 
 Clients request pages with offset (default 0), limit (1..20,000) and refresh
-(default false). Each response contains files, truncated, nextOffset, total and
-indexRevision. Continue at nextOffset until null; keep the same indexRevision or
-restart when the tree changes. Pages have an additional conservative 8 MiB JSON
-budget. truncated may mean another page exists or the overall snapshot exceeded
-its bounds. The desktop assembles pages asynchronously, retains a bounded tree and
-retries after a concurrent invalidation. Manual Refresh always rebuilds.
+(default false). Each response contains files, truncated, nextOffset, total,
+indexRevision and required positive generation. Continue at nextOffset until null;
+keep the same (indexRevision, generation) pair or discard the assembled pages and
+restart. A manual rebuild advances the process-local generation even if the
+watcher's indexRevision is unchanged. These counters describe observations, not
+a frozen/persistent snapshot handle. Pages have an additional conservative 8 MiB
+JSON budget. truncated may mean another page exists or the overall snapshot
+exceeded its bounds. The desktop compares both counters while assembling pages
+asynchronously, retains a bounded tree and retries after a concurrent change.
+Manual Refresh always rebuilds.
 
 workspace.poll / workspace_poll returns watcher counters, the extension-registry
 revision, reloaded paths, conflicts, checkpoint health and watcher status. It only reloads clean

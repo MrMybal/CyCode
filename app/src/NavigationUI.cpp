@@ -1,5 +1,7 @@
 #include "cycode/Application.h"
 #include "cycode/NavigationLocations.h"
+#include "cycode/RelatedFiles.h"
+#include "ApplicationHelp.h"
 #include <algorithm>
 
 namespace cycode {
@@ -7,7 +9,118 @@ namespace {
 std::string navigationCommand(const std::string &method) {
     return "navigate." + method.substr(9);
 }
+std::string relatedHelpHint(const Keymap &keymap) {
+    for(const auto &binding:keymap.bindings())if(binding.command=="help.context" && binding.strokes.size()==1)return binding.shortcut;
+    return {};
+}
 } // namespace
+void Application::relatedHelp() {
+    app_help::open(root_,"app/Documentation",locale_,"navigation",relatedHelpAnchor(counterpartInclude_,counterpartChoose_),smoke_ || testSession_);
+}
+void Application::beginCounterparts(bool included,bool choose,bool refresh) {
+    if(!commandEnabled(included?"navigate.include":choose?"navigate.relatedFiles":"navigate.counterpart"))return;
+    if(refresh && filesFuture_.valid()) {
+        cyui::notify(tr("File index refresh is already in progress. Retry when it is ready."),cyui::Tone::neutral);return;
+    }
+    for(const auto &tab:tabs_)if(tab->path==active_) {
+        counterpartTab_=tab;counterpartEngine_=engine_;
+        counterpartRevision_=tab->revision;counterpartIdentity_=tab->identity;
+        counterpartInclude_=included;counterpartPosition_=tab->editor.GetMainCursorPosition();
+        counterpartChoose_=choose;
+        counterpartReport_=Json::object();counterpartEntries_.clear();counterpartPaletteState_={};counterpartOpen_=true;
+        counterpartEntries_.push_back({uiId("counterpart/status"),refresh?"Refreshing lookup index...":
+            included?"Loading included files...":"Loading related C/C++ files...","","",false});
+        counterpartEntries_.push_back({uiId("counterpart/help"),"Help for this navigation",relatedHelpHint(keymap_),"Actions",true});
+        Json parameters={{"path",tab->path},{"expectedRevision",tab->revision},{"expectedDocumentId",tab->identity}};
+        if(included)parameters["position"]={{"line",counterpartPosition_.line},{"character",LanguageClient::utf16Length(
+            tab->editor.GetSectionText({counterpartPosition_.line,0},counterpartPosition_))}};
+        auto owner=engine_;
+        counterpartFuture_=std::async(std::launch::async,[owner,parameters,included,refresh] {
+            if(refresh)(void)owner->dispatch("workspace.files",{{"refresh",true},{"limit",1}});
+            return owner->dispatch(included?"workspace.include":"workspace.counterparts",parameters);
+        });
+        return;
+    }
+}
+bool Application::counterpartsPalette() {
+    auto tab=counterpartTab_.lock();
+    const auto current=[&] {return tab && counterpartEngine_.lock()==engine_ && tab->path==active_ &&
+        tab->revision==counterpartRevision_ && tab->identity==counterpartIdentity_ &&
+        (!counterpartInclude_ || tab->editor.GetMainCursorPosition()==counterpartPosition_);};
+    std::string target;
+    if(counterpartFuture_.valid() && counterpartFuture_.wait_for(std::chrono::seconds(0))==std::future_status::ready) {
+        counterpartEntries_.clear();
+        try {
+            counterpartReport_=counterpartFuture_.get();
+            const auto &files=counterpartReport_.at("candidates");
+            const bool partial=counterpartReport_.at("truncated").get<bool>() || counterpartReport_.at("unreadable").get<size_t>()!=0;
+            if(counterpartOpen_ && current() && relatedAutoOpen(files.size(),counterpartReport_.at("unreadable").get<size_t>(),
+                                                               counterpartReport_.at("truncated").get<bool>(),counterpartChoose_)) {
+                target=files[0].at("path");counterpartOpen_=false;
+            } else {
+                for(size_t i=0;i<files.size();++i) {
+                    const auto relation=files[i].at("relation").get<std::string>();
+                    const auto kind=relation=="sibling"?"Sibling":relation=="paired-root"?"Paired root":
+                        relation=="workspace-index"?"Workspace index":relation=="source-relative"?"Source-relative":"Paired directory";
+                    counterpartEntries_.push_back({uiId("counterpart/"+std::to_string(i)),files[i].at("path"),tr(kind),kind,true});
+                }
+                if(files.empty())counterpartEntries_.push_back({uiId("counterpart/status"),counterpartInclude_?
+                    "No matching included file found.":"No related C/C++ files found.","","",false});
+                if(counterpartInclude_ && files.empty())counterpartEntries_.push_back({uiId("counterpart/scope"),
+                    "For compiler or SDK headers, use Go to definition.","","",false});
+                if(partial)counterpartEntries_.push_back({uiId("counterpart/limit"),"Related-file search was limited or some paths were unreadable.","","",false});
+                const auto indexState=counterpartReport_.at("index").at("state").get<std::string>();
+                const char *indexNotice=nullptr;
+                if(indexState=="missing")indexNotice="Workspace file index is unavailable. Refresh the project files, then retry.";
+                else if(indexState=="busy")indexNotice="Workspace file index is being refreshed. Retry when it is ready.";
+                else if(indexState=="stale" || indexState=="changed")indexNotice="Workspace file index changed. Refresh the project files, then retry.";
+                else if(indexState=="partial")indexNotice="Workspace file index is incomplete. Other matching paths may be missing.";
+                if(indexNotice)counterpartEntries_.push_back({uiId("counterpart/index"),indexNotice,"","",false});
+            }
+        } catch(const std::exception &exception) {
+            counterpartEntries_.push_back({uiId("counterpart/error"),exception.what(),"","",false});
+        }
+        if(counterpartOpen_) {
+            const bool report=counterpartReport_.contains("candidates");
+            counterpartEntries_.push_back({uiId("counterpart/retry"),"Retry this lookup","","Actions",true});
+            counterpartEntries_.push_back({uiId("counterpart/refresh"),"Refresh lookup index and retry","","Actions",report && !filesFuture_.valid()});
+            counterpartEntries_.push_back({uiId("counterpart/copy"),"Copy all result paths","","Actions",
+                report && !counterpartReport_.at("candidates").empty()});
+            counterpartEntries_.push_back({uiId("counterpart/report"),"Copy lookup report (JSON)","","Actions",report});
+            counterpartEntries_.push_back({uiId("counterpart/help"),"Help for this navigation",relatedHelpHint(keymap_),"Actions",true});
+        }
+    }
+    if(counterpartOpen_ && !current()) {
+        counterpartOpen_=false;cyui::notify(tr(counterpartInclude_?"Include navigation context changed. Run the command again.":
+                                             "Header/source context changed. Run the command again."),cyui::Tone::warning);
+    }
+    const auto chosen=cyui::commandPalette(counterpartInclude_?"Open included file":counterpartChoose_?"Related C/C++ files":"Switch header/source",
+        counterpartOpen_,counterpartPaletteState_,counterpartEntries_,cyui::dp(850,420));
+    if(chosen==uiId("counterpart/help")) {
+        try{relatedHelp();}catch(const std::exception &exception){error(exception.what());}
+    }
+    if(chosen && current() && (chosen==uiId("counterpart/retry") || chosen==uiId("counterpart/refresh"))) {
+        beginCounterparts(counterpartInclude_,counterpartChoose_,chosen==uiId("counterpart/refresh"));
+        return counterpartOpen_;
+    }
+    if(chosen && current() && counterpartReport_.contains("candidates")) {
+        const auto &files=counterpartReport_.at("candidates");
+        if(chosen==uiId("counterpart/copy")) {
+            std::string paths;for(const auto &file:files){if(!paths.empty())paths+='\n';paths+=file.at("path").get_ref<const std::string &>();}
+            if(!SDL_SetClipboardText(paths.c_str()))error(SDL_GetError());
+        }
+        if(chosen==uiId("counterpart/report")) {
+            const auto report=counterpartReport_.dump(2);
+            if(!SDL_SetClipboardText(report.c_str()))error(SDL_GetError());
+        }
+        for(size_t i=0;i<files.size();++i)if(chosen==uiId("counterpart/"+std::to_string(i)))target=files[i].at("path");
+    }
+    if(!target.empty() && current()) {
+        try {open(target);}
+        catch(const std::exception &exception){error(exception.what());}
+    }
+    return counterpartOpen_;
+}
 bool Application::navigationCurrent(const Json &report) const {
     if (!report.contains("path") || !report.contains("documentId") || !report.contains("backend") ||
         !report.contains("epoch") || !report.contains("revision"))

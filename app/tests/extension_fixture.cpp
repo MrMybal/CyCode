@@ -175,6 +175,10 @@ extern "C" CYCODE_PLUGIN_EXPORT int cycode_plugin_init_v2(const CyCodeHostV2 *ho
         };
         if (add("template", fixtureProjectTemplate(), nullptr))
             return 1;
+        if ((host->features & CYCODE_HOST_FEATURE_SNIPPETS_V2) && add("snippets",
+            {{"id","fixture.native.snippets"},{"title","Fixture snippets"},
+             {"definitions",{{"Wrap",{{"prefix","wrap_fixture"},{"scope","cpp"},
+                 {"body","[${1:$TM_SELECTED_TEXT}]$0"}}}}}},nullptr)) return 1;
         if (add("command",
                 {{"id", "fixture.native.inspect"},
                  {"title", "Inspect extension workspace"},

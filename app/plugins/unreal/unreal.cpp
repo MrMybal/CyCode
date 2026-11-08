@@ -1,4 +1,5 @@
 #include "ProjectTemplate.h"
+#include "CodeSnippets.h"
 #include "cycode/PluginAPI.h"
 #include <algorithm>
 #include <array>
@@ -144,6 +145,8 @@ extern "C" CYCODE_PLUGIN_EXPORT int cycode_plugin_init_v2(const CyCodeHostV2 *ho
                 throw std::runtime_error("Unreal contribution rejected");
         };
         add("template", unrealProjectTemplate(), nullptr);
+        if(host->features & CYCODE_HOST_FEATURE_SNIPPETS_V2)
+            add("snippets",unrealCodeSnippets(),nullptr);
         if(host->features & CYCODE_HOST_FEATURE_DEBUG_ADAPTERS_V2)
             add("debugAdapter",{{"id","cycode.unreal.lldb"},{"title","Unreal Engine / CodeLLDB"},
                 {"type","lldb"},{"arguments",{"codelldb"}},{"requests",{"launch","attach"}},{"pidField","pid"},

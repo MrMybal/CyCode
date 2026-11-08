@@ -1,0 +1,621 @@
+{
+  "format": 1,
+  "sources": [
+    {
+      "source": "Docs/AdvancedDebugging.md",
+      "kind": "user-workflow",
+      "target": "debug-inspection#inspect",
+      "legacyId": "reference-app-docs-advanceddebugging",
+      "sourceSha256": "d3a983653f59bc07795507077b659225bf9be4e3ea6cf4f98f02f83f917c9601"
+    },
+    {
+      "source": "Docs/Architecture.md",
+      "kind": "developer-reference",
+      "target": "overview#getting-started",
+      "legacyId": "reference-app-docs-architecture",
+      "sourceSha256": "1cabf645e35ae161e0ae4f476aa4c8045fb13741e01f10d1ea1b080fffc5b924"
+    },
+    {
+      "source": "Docs/Branding.md",
+      "kind": "developer-reference",
+      "target": "overview#getting-started",
+      "legacyId": "reference-app-docs-branding",
+      "sourceSha256": "1ab39e08babe9f98e52b3dce73795a3266e6570a14d5a20118d24f2560806d7c"
+    },
+    {
+      "source": "Docs/Build.md",
+      "kind": "user-workflow",
+      "target": "build#configure",
+      "legacyId": "reference-app-docs-build",
+      "sourceSha256": "ee7a692dda794d0db8befc4d1eeff6d18317037cf9d418c3f448fd37f5b4764a"
+    },
+    {
+      "source": "Docs/BuildCancellation.md",
+      "kind": "user-workflow",
+      "target": "project-tasks#cancel",
+      "legacyId": "reference-app-docs-buildcancellation",
+      "sourceSha256": "d58555c7354844f1d7e866b35aa10fd8a02f6cd134a06d0a99bef6a014b95199"
+    },
+    {
+      "source": "Docs/CMakePresetActions.md",
+      "kind": "user-workflow",
+      "target": "build#configure",
+      "legacyId": "reference-app-docs-cmakepresetactions",
+      "sourceSha256": "1e837152281282c5b54925eb59a873175fd03a6e85b82d152dd437caa96a8df9"
+    },
+    {
+      "source": "Docs/CSharp.md",
+      "kind": "user-workflow",
+      "target": "dotnet#solution",
+      "legacyId": "reference-app-docs-csharp",
+      "sourceSha256": "a31ce8401ed30c88df74f56d4a93f24945851442b9915a235d4c0fa3082b527b"
+    },
+    {
+      "source": "Docs/CapabilityCoverage.md",
+      "kind": "developer-reference",
+      "target": "limits#limits",
+      "legacyId": "reference-app-docs-capabilitycoverage",
+      "sourceSha256": "7db63d25e6a5209ddd5f8c19eac98b2bf92698800a8334afb3edb001498ef185"
+    },
+    {
+      "source": "Docs/CargoBuilds.md",
+      "kind": "user-workflow",
+      "target": "project-tasks#tasks",
+      "legacyId": "reference-app-docs-cargobuilds",
+      "sourceSha256": "b0d01ed9471ad84a2d9c4f0b5dd81ff5171b56c8f31f08189121f2a24f44e0ed"
+    },
+    {
+      "source": "Docs/ChangeAnnotations.md",
+      "kind": "user-workflow",
+      "target": "refactoring#rename",
+      "legacyId": "reference-app-docs-changeannotations",
+      "sourceSha256": "6812e08e9df005ba6bee7c56d06185e128bdd4eb72cef1b1fd85921fb7bf0df9"
+    },
+    {
+      "source": "Docs/Commands.md",
+      "kind": "user-workflow",
+      "target": "shortcuts#shortcuts",
+      "legacyId": "reference-app-docs-commands",
+      "sourceSha256": "eef9ec65f18704b5badbeffb3e7946199efbb204c697e28dfc427e291d9b3029"
+    },
+    {
+      "source": "Docs/CompilerLocations.md",
+      "kind": "user-workflow",
+      "target": "diagnostics#output",
+      "legacyId": "reference-app-docs-compilerlocations",
+      "sourceSha256": "a18800b93f4693f70fabb576add3aa5d3832391548cb40a18f9299ef8ace7ebd"
+    },
+    {
+      "source": "Docs/CompletionVariables.md",
+      "kind": "user-workflow",
+      "target": "refactoring#snippet-transforms",
+      "legacyId": "reference-app-docs-completionvariables",
+      "sourceSha256": "7a3252f0996084e75aa4eb5e15f4d67c96dbb13ac9bfef10170cb14b57a6e6f0"
+    },
+    {
+      "source": "Docs/CppCounterparts.md",
+      "kind": "user-workflow",
+      "target": "navigation#header-source",
+      "legacyId": "reference-app-docs-cppcounterparts",
+      "sourceSha256": "48656ef7da3c1480c062c651f7682a4d5597c9c5823be30c47407af484050149"
+    },
+    {
+      "source": "Docs/CppIncludes.md",
+      "kind": "user-workflow",
+      "target": "navigation#open-include",
+      "legacyId": "reference-app-docs-cppincludes",
+      "sourceSha256": "a6117d5c5fbdd5c0d643632eeeb4f3697bcfc99f8f36228b8d29b13ec72a2ef3"
+    },
+    {
+      "source": "Docs/CustomVersionControl.md",
+      "kind": "user-workflow",
+      "target": "custom-vcs#provider",
+      "legacyId": "reference-app-docs-customversioncontrol",
+      "sourceSha256": "12bd583ad85314362c10abd782a67d42e9d71bbd060fca58148db39a576cc2fb"
+    },
+    {
+      "source": "Docs/CyUI-Migration.md",
+      "kind": "developer-reference",
+      "target": "overview#getting-started",
+      "legacyId": "reference-app-docs-cyui-migration",
+      "sourceSha256": "43a28049e607350eb6957861bc1941d76b446793c38d919810b9764fe01b01aa"
+    },
+    {
+      "source": "Docs/DataBreakpoints.md",
+      "kind": "user-workflow",
+      "target": "debug-breakpoints#data",
+      "legacyId": "reference-app-docs-databreakpoints",
+      "sourceSha256": "e8ce4b7efee4cf19af33540cea5f906343a3991a1b6e7790e31559b7d9c02272"
+    },
+    {
+      "source": "Docs/DebugExecution.md",
+      "kind": "user-workflow",
+      "target": "debug-execution#stepping",
+      "legacyId": "reference-app-docs-debugexecution",
+      "sourceSha256": "76bda7fa5263a7296da0e154319ae3b6b01f2a2b2068a6af68ca45e90052d569"
+    },
+    {
+      "source": "Docs/DebugValueEditing.md",
+      "kind": "user-workflow",
+      "target": "debug-inspection#changes",
+      "legacyId": "reference-app-docs-debugvalueediting",
+      "sourceSha256": "1d1a226a9c03edfcf10846a9ed26f3fa14c060ee7f6567ffdc10b75fa26962cb"
+    },
+    {
+      "source": "Docs/DevelopmentWorkflows.md",
+      "kind": "developer-reference",
+      "target": "limits#limits",
+      "legacyId": "reference-app-docs-developmentworkflows",
+      "sourceSha256": "dfa090243614182aba4b77a8de4ad6aae2b502e6b59111094d4d48ff5eac0c65"
+    },
+    {
+      "source": "Docs/DiagnosticNavigation.md",
+      "kind": "user-workflow",
+      "target": "diagnostics#problems",
+      "legacyId": "reference-app-docs-diagnosticnavigation",
+      "sourceSha256": "3e9a7cda97440213056b7c8772ad22140e95c59cb2f93c3be1d2a7f8ae65ce51"
+    },
+    {
+      "source": "Docs/Diversion.md",
+      "kind": "user-workflow",
+      "target": "providers#external",
+      "legacyId": "reference-app-docs-diversion",
+      "sourceSha256": "cd2628d83cedb3e06aa2ba54aab6ec85b6379bda8b89956277f4f258ecff78ff"
+    },
+    {
+      "source": "Docs/EditorDiagnostics.md",
+      "kind": "user-workflow",
+      "target": "diagnostics#problems",
+      "legacyId": "reference-app-docs-editordiagnostics",
+      "sourceSha256": "821d4ed728aba798cff3b485d86ec9322ae96be03cd8addddceab72435a6c03e"
+    },
+    {
+      "source": "Docs/Events.md",
+      "kind": "user-workflow",
+      "target": "api-events#operations",
+      "legacyId": "reference-app-docs-events",
+      "sourceSha256": "6111a4903872d7a26da12ef26d6bfce893e386d887e9aa65de6272bd640f4871"
+    },
+    {
+      "source": "Docs/Execution.md",
+      "kind": "user-workflow",
+      "target": "debugging#launch",
+      "legacyId": "reference-app-docs-execution",
+      "sourceSha256": "3371f31a2a9c8c3f7eac3413470cc79bfcb23bc659e8a9f6a595accd531e02cf"
+    },
+    {
+      "source": "Docs/GitConflicts.md",
+      "kind": "user-workflow",
+      "target": "git-conflicts#resolve",
+      "legacyId": "reference-app-docs-gitconflicts",
+      "sourceSha256": "c95d356a9ac4038dafed708067c446c45c8d6e88d92854c1808c3b62e7ad9c1b"
+    },
+    {
+      "source": "Docs/GitMergeWorkflow.md",
+      "kind": "user-workflow",
+      "target": "git#branches",
+      "legacyId": "reference-app-docs-gitmergeworkflow",
+      "sourceSha256": "4a63b095b3ea61c3dfddb28cbc231d59da30b33ef7c854d465b5dcb278e3fb2f"
+    },
+    {
+      "source": "Docs/GitReplay.md",
+      "kind": "user-workflow",
+      "target": "git-conflicts#replay",
+      "legacyId": "reference-app-docs-gitreplay",
+      "sourceSha256": "b502d7e704fbd0f65bffef8a99ec96b3910d03750001aee2b7484b81b8b72838"
+    },
+    {
+      "source": "Docs/GitSubmodules.md",
+      "kind": "user-workflow",
+      "target": "git-workspaces#submodules",
+      "legacyId": "reference-app-docs-gitsubmodules",
+      "sourceSha256": "8719ac52739812d8d7653d2007bce9273ccadfb472c9f31cbe591fe0f9173f9f"
+    },
+    {
+      "source": "Docs/GitWorkingFiles.md",
+      "kind": "user-workflow",
+      "target": "git#changes",
+      "legacyId": "reference-app-docs-gitworkingfiles",
+      "sourceSha256": "7b49485210cac85d3f3f1f5c70c9faad3e0fbc8acf895f90b74a3be7314c1c7c"
+    },
+    {
+      "source": "Docs/GitWorktrees.md",
+      "kind": "user-workflow",
+      "target": "git-workspaces#worktrees",
+      "legacyId": "reference-app-docs-gitworktrees",
+      "sourceSha256": "2005ebd55fb8a6d809f1611a835bf824ba59254165110c140b003cdadea25abf"
+    },
+    {
+      "source": "Docs/GotoTargets.md",
+      "kind": "user-workflow",
+      "target": "debug-execution#destinations",
+      "legacyId": "reference-app-docs-gototargets",
+      "sourceSha256": "16296c92013aa10e16e1f47402ef380267771a886fd07ba2be57f5acf83601e5"
+    },
+    {
+      "source": "Docs/Hierarchies.md",
+      "kind": "user-workflow",
+      "target": "symbols#hierarchy",
+      "legacyId": "reference-app-docs-hierarchies",
+      "sourceSha256": "43a1e1847044767d16a7d86314716a9a379e05a388f785b72cbdce74d1ace7ef"
+    },
+    {
+      "source": "Docs/Images.md",
+      "kind": "user-workflow",
+      "target": "images#preview",
+      "legacyId": "reference-app-docs-images",
+      "sourceSha256": "52c7c5390e25f5c80f2fd1ab52debee8323f81b24b07560ac19a35db5db75705"
+    },
+    {
+      "source": "Docs/InstructionBreakpoints.md",
+      "kind": "user-workflow",
+      "target": "debug-breakpoints#instructions",
+      "legacyId": "reference-app-docs-instructionbreakpoints",
+      "sourceSha256": "dfdc2d1e0bde06589fa8b85a0995027c2788e408159ab7d87593cb069d0d8350"
+    },
+    {
+      "source": "Docs/JavaDebugging.md",
+      "kind": "user-workflow",
+      "target": "debugging#launch",
+      "legacyId": "reference-app-docs-javadebugging",
+      "sourceSha256": "efeb6a2f56b3fbdcebf3195aed87a893e6ecb3c145c155c97bcd78cfa83decbb"
+    },
+    {
+      "source": "Docs/JvmBuilds.md",
+      "kind": "user-workflow",
+      "target": "project-tasks#tasks",
+      "legacyId": "reference-app-docs-jvmbuilds",
+      "sourceSha256": "e7524dc3aaac76c15e937bb47b7995e782275d6b9602bd398771f60e680d1c13"
+    },
+    {
+      "source": "Docs/LanguagePreferences.md",
+      "kind": "user-workflow",
+      "target": "languages#services",
+      "legacyId": "reference-app-docs-languagepreferences",
+      "sourceSha256": "89797b98f5584ac34b22a8c878412bdfa61bd28ffe4a86dcec09a4395137d6c5"
+    },
+    {
+      "source": "Docs/Languages.md",
+      "kind": "user-workflow",
+      "target": "languages#syntax",
+      "legacyId": "reference-app-docs-languages",
+      "sourceSha256": "fa906eefd0b9a42c74203100cf246cf753c70dba43ece63b8daba6fe3a6cf04a"
+    },
+    {
+      "source": "Docs/LiveBuildOutput.md",
+      "kind": "user-workflow",
+      "target": "diagnostics#output",
+      "legacyId": "reference-app-docs-livebuildoutput",
+      "sourceSha256": "0917c23238a65774a5ab53556097f2b713633666714729b77ccf79bc6e471e07"
+    },
+    {
+      "source": "Docs/MCP.md",
+      "kind": "user-workflow",
+      "target": "mcp#connection",
+      "legacyId": "reference-app-docs-mcp",
+      "sourceSha256": "2f09238ade95bb87a1761cf75e654dcf5fff767dc50a3eb90243b95f50228388"
+    },
+    {
+      "source": "Docs/MSBuild.md",
+      "kind": "user-workflow",
+      "target": "build#configure",
+      "legacyId": "reference-app-docs-msbuild",
+      "sourceSha256": "e4f566d5a565e070849ca219f665b7162021c5929bb26ecd355d6d2b0612f0d9"
+    },
+    {
+      "source": "Docs/Mercurial.md",
+      "kind": "user-workflow",
+      "target": "providers#external",
+      "legacyId": "reference-app-docs-mercurial",
+      "sourceSha256": "ad8ae49951d222e228bf530fc09eb6824249fe4020fdd5b6fb8c77f2f13bab73"
+    },
+    {
+      "source": "Docs/Occurrences.md",
+      "kind": "user-workflow",
+      "target": "symbols#references",
+      "legacyId": "reference-app-docs-occurrences",
+      "sourceSha256": "a19754b55dc66497e84018adf25424f3d93cfa078c986d81c6ff6bd456987928"
+    },
+    {
+      "source": "Docs/Perforce.md",
+      "kind": "user-workflow",
+      "target": "perforce#setup",
+      "legacyId": "reference-app-docs-perforce",
+      "sourceSha256": "0eeea3637b187c4babb07a2952ee8dd519aa261cc29ba2e94c55ef344be86ee4"
+    },
+    {
+      "source": "Docs/PluginDebuggers.md",
+      "kind": "user-workflow",
+      "target": "plugin-api#contributions",
+      "legacyId": "reference-app-docs-plugindebuggers",
+      "sourceSha256": "c26382f47321c6b91b83c727cd37d54a259a0d36c129e7ba076359e9d29dbd30"
+    },
+    {
+      "source": "Docs/PluginPackages.md",
+      "kind": "user-workflow",
+      "target": "plugin-packages#install",
+      "legacyId": "reference-app-docs-pluginpackages",
+      "sourceSha256": "390877937d48da464b8ed1ec90fa3a1ad6a27dd87f1f654234b7adfb8bd8ff4a"
+    },
+    {
+      "source": "Docs/Plugins.md",
+      "kind": "user-workflow",
+      "target": "plugin-api#contributions",
+      "legacyId": "reference-app-docs-plugins",
+      "sourceSha256": "ccd294b84598ee3133406f8a76df2600458e9ae2b732864251d58ccfc49bae38"
+    },
+    {
+      "source": "Docs/ProjectFormats.md",
+      "kind": "user-workflow",
+      "target": "projects#projects",
+      "legacyId": "reference-app-docs-projectformats",
+      "sourceSha256": "e28e40b3b4e427467c6ea4e9481f3c8ec24624f3b250aee9120354c371045e61"
+    },
+    {
+      "source": "Docs/ProjectTaskOutput.md",
+      "kind": "user-workflow",
+      "target": "project-tasks#output",
+      "legacyId": "reference-app-docs-projecttaskoutput",
+      "sourceSha256": "f73a09a6bea72afcc5cda2142fb6d6c50cc3615c911e1720b95d6d4ddba7e825"
+    },
+    {
+      "source": "Docs/ProjectTasks.md",
+      "kind": "user-workflow",
+      "target": "project-tasks#tasks",
+      "legacyId": "reference-app-docs-projecttasks",
+      "sourceSha256": "414d0fe7b8b1b497fa02b83b6ed4bfc10870b38fb4f962e9b5d17d5b006e2e9d"
+    },
+    {
+      "source": "Docs/ProjectTemplates.md",
+      "kind": "user-workflow",
+      "target": "project-templates#create",
+      "legacyId": "reference-app-docs-projecttemplates",
+      "sourceSha256": "84bcc30884c0b099bf843c6981e7e400866cf7f841bbe30c9b2040f0d6aa8e52"
+    },
+    {
+      "source": "Docs/Recovery.md",
+      "kind": "user-workflow",
+      "target": "recovery#recover",
+      "legacyId": "reference-app-docs-recovery",
+      "sourceSha256": "1b49332c87ca52e86c84652186366c78dc6049046b8930d2721327c580603384"
+    },
+    {
+      "source": "Docs/Releases/v0.2.1.md",
+      "kind": "user-workflow",
+      "target": "updates#updates",
+      "legacyId": "reference-app-docs-releases-v0.2.1",
+      "sourceSha256": "d342e05b1780a095156ad4da9bb9965e8ed5aa1a1f93b2670ffe998df5ff060b"
+    },
+    {
+      "source": "Docs/Releases/v0.2.2.md",
+      "kind": "user-workflow",
+      "target": "updates#updates",
+      "legacyId": "reference-app-docs-releases-v0.2.2",
+      "sourceSha256": "946e83f7cb560e3e7c1a3afaf503b27a4ffc433c81909c2342f83db7dfaffa2d"
+    },
+    {
+      "source": "Docs/Resources.md",
+      "kind": "user-workflow",
+      "target": "workspace-files#files",
+      "legacyId": "reference-app-docs-resources",
+      "sourceSha256": "b72d7c735f2bb9020a7a54fe2878f4d229e332276c16ba865ab81bc5f8c4f030"
+    },
+    {
+      "source": "Docs/Roadmap.md",
+      "kind": "developer-reference",
+      "target": "limits#limits",
+      "legacyId": "reference-app-docs-roadmap",
+      "sourceSha256": "85a9c465747c0864345830067e6d6369b2d3069c05068c3619dc71e7e3ca8cbe"
+    },
+    {
+      "source": "Docs/RunToCursor.md",
+      "kind": "user-workflow",
+      "target": "debug-execution#destinations",
+      "legacyId": "reference-app-docs-runtocursor",
+      "sourceSha256": "966fb1b879788080ac1c4055293cde4da8b0b8f12cd3777bd47223b5b18f4b26"
+    },
+    {
+      "source": "Docs/RustAnalysis.md",
+      "kind": "user-workflow",
+      "target": "languages#services",
+      "legacyId": "reference-app-docs-rustanalysis",
+      "sourceSha256": "62705ac4543bf395eadc8c4cd55a5d287c9def70662a1a0f3f65f24cba0d6175"
+    },
+    {
+      "source": "Docs/RustToolchains.md",
+      "kind": "user-workflow",
+      "target": "rust#cargo",
+      "legacyId": "reference-app-docs-rusttoolchains",
+      "sourceSha256": "a97451f804b4271d752cd005c33194ffff98236aeebb8df33b794d4d66757fc1"
+    },
+    {
+      "source": "Docs/Semantic.md",
+      "kind": "user-workflow",
+      "target": "refactoring#rename",
+      "legacyId": "reference-app-docs-semantic",
+      "sourceSha256": "76b202d2afc6bf8fd162e718ef713080304412162cbc9cfd78bee250bb346c61"
+    },
+    {
+      "source": "Docs/SemanticTokenUpdates.md",
+      "kind": "user-workflow",
+      "target": "languages#services",
+      "legacyId": "reference-app-docs-semantictokenupdates",
+      "sourceSha256": "b9a34fc1bedd69796c15ec638d871925d0e36d53b1c1db899ae232e4956caf34"
+    },
+    {
+      "source": "Docs/ShaderBuilds.md",
+      "kind": "user-workflow",
+      "target": "shaders#compile",
+      "legacyId": "reference-app-docs-shaderbuilds",
+      "sourceSha256": "eadc90bd38512275ed752fe9428c5afa5916e88dfba90eb49e569640e9fe976d"
+    },
+    {
+      "source": "Docs/SnippetCapture.md",
+      "kind": "user-workflow",
+      "target": "refactoring#capture-snippet",
+      "legacyId": "reference-app-docs-snippetcapture",
+      "sourceSha256": "95ad639b553d80bd673afb70e2f20c662c99bdafe3885a0925cd1e80ca5b02b4"
+    },
+    {
+      "source": "Docs/SnippetCatalogue.md",
+      "kind": "user-workflow",
+      "target": "refactoring#snippet-catalogue",
+      "legacyId": "reference-app-docs-snippetcatalogue",
+      "sourceSha256": "be2d6735fa061380cb279be12098585db85e65f06e44de2c2b8a9984e98e189b"
+    },
+    {
+      "source": "Docs/SourceNavigation.md",
+      "kind": "user-workflow",
+      "target": "symbols#references",
+      "legacyId": "reference-app-docs-sourcenavigation",
+      "sourceSha256": "94beb6cc8e031fdf21f015b338ae8d9eaf03e77514d840ca07f9849b0da0ed88"
+    },
+    {
+      "source": "Docs/StepInTargets.md",
+      "kind": "user-workflow",
+      "target": "debug-execution#step-targets",
+      "legacyId": "reference-app-docs-stepintargets",
+      "sourceSha256": "2a3ba9b9dbb6fce755d14bbf509640d8711eea66f06db11ded8b8f473728a7b3"
+    },
+    {
+      "source": "Docs/Subversion.md",
+      "kind": "user-workflow",
+      "target": "providers#external",
+      "legacyId": "reference-app-docs-subversion",
+      "sourceSha256": "f0d841a450813cbca016fa55e7c73e07a6ac6cfb4967b3dacbfc4c78f169a91c"
+    },
+    {
+      "source": "Docs/SymbolNavigation.md",
+      "kind": "user-workflow",
+      "target": "symbols#structure",
+      "legacyId": "reference-app-docs-symbolnavigation",
+      "sourceSha256": "efa3feddf96ebc0a57ade9f1bcd4d3c356b80814b7262dd3852bee241b8bdc7d"
+    },
+    {
+      "source": "Docs/Testing.md",
+      "kind": "developer-reference",
+      "target": "limits#limits",
+      "legacyId": "reference-app-docs-testing",
+      "sourceSha256": "55be0aef74536a86bef04337ce4f72dd9391121ef199228094c1ebb4fc63cb42"
+    },
+    {
+      "source": "Docs/ToolchainReliability.md",
+      "kind": "user-workflow",
+      "target": "build#toolchains",
+      "legacyId": "reference-app-docs-toolchainreliability",
+      "sourceSha256": "b2927921f31417b586360cbcfd21d12a94bc1afb91d9e4a9a3bbae8f0fc36934"
+    },
+    {
+      "source": "Docs/Unreal.md",
+      "kind": "user-workflow",
+      "target": "unreal#engine",
+      "legacyId": "reference-app-docs-unreal",
+      "sourceSha256": "a2d428c7fc6f3aa8f0c9861369365d6211acd613db19f9e3168de6d3b56cc71a"
+    },
+    {
+      "source": "Docs/UnrealArtifacts.md",
+      "kind": "user-workflow",
+      "target": "unreal#launch",
+      "legacyId": "reference-app-docs-unrealartifacts",
+      "sourceSha256": "14f13e390cc0329180d0f4c9c7058072d053ac3d01782392b0483b5b060c6eb9"
+    },
+    {
+      "source": "Docs/UnrealAutomation.md",
+      "kind": "user-workflow",
+      "target": "unreal#launch",
+      "legacyId": "reference-app-docs-unrealautomation",
+      "sourceSha256": "5142350a6da780926f2d2ab823e88a5a7bbb037a3cd8894e744a1acc218ffff0"
+    },
+    {
+      "source": "Docs/UnrealLaunch.md",
+      "kind": "user-workflow",
+      "target": "unreal#launch",
+      "legacyId": "reference-app-docs-unreallaunch",
+      "sourceSha256": "15621bb792d9a55d47ee8ff1af66f292a73f38e4640237493e98c7bda3b56df0"
+    },
+    {
+      "source": "Docs/UntitledDocuments.md",
+      "kind": "user-workflow",
+      "target": "editing#documents",
+      "legacyId": "reference-app-docs-untitleddocuments",
+      "sourceSha256": "d813224d000591a2e80fe82aad3f639114d3119d6fabcf18a086631fecbf2987"
+    },
+    {
+      "source": "Docs/UpdateDownloads.md",
+      "kind": "user-workflow",
+      "target": "update-storage#downloads",
+      "legacyId": "reference-app-docs-updatedownloads",
+      "sourceSha256": "37b56419b94a93986e93d7af962544f91fa5c96011d27f19cb6a3ab32576f11e"
+    },
+    {
+      "source": "Docs/UpdateHistory.md",
+      "kind": "user-workflow",
+      "target": "update-storage#history",
+      "legacyId": "reference-app-docs-updatehistory",
+      "sourceSha256": "3d878622367d054a246a95b5c6463c7f04bfb8b84a5b4dbea0c6206fab00d7db"
+    },
+    {
+      "source": "Docs/UpdateInstallation.md",
+      "kind": "user-workflow",
+      "target": "updates#updates",
+      "legacyId": "reference-app-docs-updateinstallation",
+      "sourceSha256": "6c8fed5fcb0127a80e24b9c518c0f84dce1a153782b3df350ac9010ce873d73b"
+    },
+    {
+      "source": "Docs/UpdateRecovery.md",
+      "kind": "user-workflow",
+      "target": "update-recovery#recover",
+      "legacyId": "reference-app-docs-updaterecovery",
+      "sourceSha256": "8f33227e71f5f515db408834000fc8704e3aeb029f06e78e79778e39669361ad"
+    },
+    {
+      "source": "Docs/UpdateStorage.md",
+      "kind": "user-workflow",
+      "target": "update-storage#storage",
+      "legacyId": "reference-app-docs-updatestorage",
+      "sourceSha256": "5edefcd8e094dc631314b31e28f3d398257e8ed65dd793406fbb664ba927348c"
+    },
+    {
+      "source": "Docs/Updates.md",
+      "kind": "user-workflow",
+      "target": "updates#updates",
+      "legacyId": "reference-app-docs-updates",
+      "sourceSha256": "6d321a9ca6b059c0e7274547a7c100200ddfa30aa442783588b784667dd5e776"
+    },
+    {
+      "source": "Docs/UserSnippets.md",
+      "kind": "user-workflow",
+      "target": "refactoring#user-snippets",
+      "legacyId": "reference-app-docs-usersnippets",
+      "sourceSha256": "9de26d2b957da68141f415d90aba08afeb2cec9a58f952b9a92ffe5aba65b362"
+    },
+    {
+      "source": "Docs/Validation.md",
+      "kind": "developer-reference",
+      "target": "limits#limits",
+      "legacyId": "reference-app-docs-validation",
+      "sourceSha256": "d72f59680c44cdc57a94f45822055aa1b9f49e04ed8e7f1eaa15631f705e433f"
+    },
+    {
+      "source": "Docs/VersionControl.md",
+      "kind": "user-workflow",
+      "target": "version-control#providers",
+      "legacyId": "reference-app-docs-versioncontrol",
+      "sourceSha256": "3b6d9106f745df44d622b2768db25101de2750a2580799cf9426a4fb7abd9421"
+    },
+    {
+      "source": "Docs/Workspace.md",
+      "kind": "user-workflow",
+      "target": "workspace-files#monitoring",
+      "legacyId": "reference-app-docs-workspace",
+      "sourceSha256": "d3a7242c21c7c6a2a0263a3864fff684ab9937c99ef29e4303edfe7d2ffe60f1"
+    },
+    {
+      "source": "Docs/WorkspaceSessions.md",
+      "kind": "user-workflow",
+      "target": "settings#windows",
+      "legacyId": "reference-app-docs-workspacesessions",
+      "sourceSha256": "cb564d1bb3ca7c47056f6da8a2f59dd161853333b151a10f7fe32d181ebc388c"
+    }
+  ]
+}

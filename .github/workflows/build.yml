@@ -7,7 +7,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        # Match the supported Visual Studio 2022 generator, as Reader does.
+        os: [windows-2022, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -18,6 +19,8 @@ jobs:
         run: python app/scripts/verify_sources.py
       - name: Verify update archive authoring without native processes
         run: python app/tests/test_release_package.py
+      - name: Verify compiler failure diagnostics without native processes
+        run: python app/tests/test_build_diagnostics.py
       - name: Resolve shared editor pin
         id: editor
         run: python -c "import json,os; from pathlib import Path; revision=json.loads(Path('app/editor-source.lock.json').read_text())['revision']; Path(os.environ['GITHUB_OUTPUT']).open('a').write('revision='+revision+'\n')"
@@ -40,6 +43,14 @@ jobs:
       - run: python app/scripts/fetch_dependencies.py --core-only
       - name: Explicit native validation on the CI runner
         run: python app/scripts/build.py --core-only --run-tests
+      - name: Preserve failed native build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-build-log-${{ matrix.os }}
+          path: runtime/tests-core-build*/build.log
+          if-no-files-found: ignore
+          retention-days: 7
       # Private Reader access needs a read-only CYCODE_READER_READ_TOKEN secret.
       # Full GUI/MCP jobs also require the owner's CyUI and Core wheel.
       # This workflow has not been run on GitHub during local development.

@@ -1,5 +1,17 @@
 # Source navigation and result locations
 
+Open included file adds caret-guarded literal C/C++ #include navigation through
+the same bounded index/metadata/palette owner. Source-relative and indexed suffix
+matches retain provenance and explicit incomplete coverage; no compiler or scan
+starts. SDK/ABI2 share workspace.include; see [Included files](CppIncludes.md).
+
+Header/source switching supports local C/C++ conventions and same-stem matches
+from the already-current workspace index, independently of semantic locations.
+Its bounded metadata report and common CyUI palette preserve document lifetime /
+revision and cache generation, with missing/busy/stale/partial/changed coverage
+visible. It never starts or waits for a file scan or activates LSP. See
+[C++ companions](CppCounterparts.md).
+
 Definition, declaration, type definition, implementation and references share one
 native read-only pipeline. They use the configured language server for the source,
 including contributed backends; there is no independent parser or guessed fallback.

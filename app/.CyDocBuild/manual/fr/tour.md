@@ -5,7 +5,7 @@ description: Repérez l’arbre du projet, l’éditeur et les fenêtres d’out
 section: Bien démarrer
 order: 20
 parent: overview
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Plan de l’interface {#interface}
@@ -25,3 +25,5 @@ Le schéma suivant situe les zones principales. Il s’agit d’un plan explicat
 Ctrl+F1 ouvre ce manuel ; Maj+F1 ouvre l’aide de l’outil courant. F1 ouvre également l’aide avec les profils Rider et Visual Studio. Le profil VS Code conserve F1 pour sa palette d’actions.
 
 La recherche en haut du manuel retrouve les pages, exemples et opérations d’API. Ctrl+K ouvre sa boîte de recherche. Développez les rubriques latérales pour accéder aux sous-pages. Le changement de langue conserve la page et la section explicite. Les positions de lecture sont conservées lorsque le stockage du navigateur est disponible.
+
+Voir [les contrôles du lecteur](doc:reader#navigate) pour recherche locale, langues et notes personnelles.

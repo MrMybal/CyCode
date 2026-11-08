@@ -1,5 +1,98 @@
 # Architecture
 
+IncludeDirective reads bounded logical C/C++ directives while retaining physical
+header offsets, inline-comment context and immediate escaped-newline components.
+NavigationUI reuses the joined related-file future for an always-choose inspector,
+cached action rows and explicit index-refresh/retry; ordinary queries stay scan-free.
+Path/report copying and contextual CyDoc help retain source guards. workspace.files
+pagination now exposes and compares both watcher revision and rebuild generation,
+so a manual refresh cannot silently mix pages with the same watcher revision.
+See [Includes](CppIncludes.md), [Related results](CppCounterparts.md#inspect-related-results)
+and [Workspace](Workspace.md).
+
+RelatedFiles combines bounded local metadata probes with same-stem offsets into
+Engine’s current workspace path cache. The secondary lookup is rebuilt with that
+cache, never starts a scan and uses nonblocking snapshots plus watcher-revision /
+cache-generation revalidation. Missing/busy/stale/partial/changed coverage remains
+explicit. Engine releases its mutex around metadata probes and rechecks source
+lifetime/revision. NavigationUI owns a joined async query, cheap tab/Engine guards
+and cached CyUI Commands rows; incomplete observations never auto-open.
+GUI/SDK/ABI2 share workspace.counterparts (233 public operations), without another
+process, LSP, recursive enumeration or source-content read. See
+[C++ companions](CppCounterparts.md).
+
+Selection capture copies a guarded live document range under Engine ownership,
+then releases its mutex for personal JSON drafting. It rechecks source revision/
+generation before returning. UserSnippets reuses PreparedSnippet.literal escaping,
+adds one final caret/unique name and validates the complete bounded draft. No source
+or catalogue write occurs; the GUI reuses the personal CodeEditor with a distinct
+saved baseline and dirty generated text. SDK/ABI2 share snippets.userDraft; see
+[Selection capture](SnippetCapture.md).
+
+UserSnippets owns an optional fixed installation catalogue and its consistency
+guard; only the trusted embedding supplies its directory. The GUI and installed
+CLI opt in; default Engine and desktop test/smoke sessions do not. Fresh bounded
+reads and exact BLAKE2b-256 revisions guard issuance/preparation. A cached local
+generation lets UI palettes/acceptance observe known changes without per-frame
+file reads. NativeFileLease and the shared atomic writer protect explicit saves.
+The dedicated JSON modal reuses CyUI CodeEditor for draft Undo/Redo, with joined
+I/O futures, confirmed discard/reload/quit and no independent source editor model.
+GUI/SDK/ABI2 share read/save; settings.write controls personal persistence. The
+SDK now has 233 operations; existing source edits still use workspace.write.
+See [Personal snippets](UserSnippets.md).
+
+ABI2 snippet catalogues use immutable declarative definitions, validated through
+SnippetCatalogue's existing parser at registration and query. Plugins supplies a
+bounded active snapshot under its own recursive lock; CompletionEngine acquires it
+only after releasing Engine's mutex, avoiding reverse callback lock order. Atomic
+plugin revision guards bind issuance/preparation and desktop acceptance. Workspace
+items precede stable order/ID-sorted plugin items; provenance stays native and no
+callback executes while querying/rendering. CompletionSession stores the registry
+revision; concrete ChangePlans retain existing apply guards. SnippetsUI borrows the
+issued item array instead of deep-copying bodies per frame. Plugin inventory builds
+summary metadata directly; only snippet queries copy the bounded catalogue bodies.
+
+Local snippet sessions optionally own an ordered byte selection, derived from
+validated UTF-16 coordinates. CompletionSelection is a GUI-free constexpr policy
+for endpoint, UTF-8 boundary and 8 KiB checks. Catalogue parsing and wrap preflight
+use an immutable source snapshot outside the Engine lock; source/generation and
+saved catalogue are revalidated before issuance. Only explicit local requests can
+relax the same-line primary replacement rule. Both palette and acceptance guard
+the selection anchor as well as caret/revision; native preparation requires actual
+TM_SELECTED_TEXT use and exact issued replacement bounds. Wrapping skips automatic
+reindentation to preserve literal selected layout. Existing plan/field/Undo owners
+remain responsible for the transaction; no dependency or ABI change is needed.
+
+SnippetCatalogue supplies bounded saved project definitions without a second
+snippet renderer or language server. CompletionEngine issues local proposals in
+the existing session cache, including their catalogue baseline. Local preparation
+requires an already-open workspace document, bypasses LSP resolution and reuses the
+ordinary completion edit/ChangePlan. Rendering/regex work now releases the Engine
+mutex and repeats context/disk checks before storing the result. SnippetsUI uses
+CyUI Commands and the existing completion-accept/EditorSnippet transaction owner.
+GUI, SDK/MCP and ABI2 share snippets.complete; the SDK has 232 operations, with
+unchanged ABI2 layout and existing CyUI modules/dependencies. See
+[Project snippets](SnippetCatalogue.md).
+
+CompletionVariables performs bounded application-context substitution before the
+unchanged shared numeric Snippet parser. Completion.cpp owns context lookup;
+CompletionEngine supplies the guarded native document/workspace and Application
+uses the same helper for lazy suggestion previews. CompletionTransforms adds
+bounded variable regex matching and simple Unicode case conversion through private
+static PCRE2/utf8proc dependencies of cycode_core. Numeric field sessions remain
+in the shared Reader library; transforms are computed once in native preparation.
+The GUI only validates the format and displays the server label for transformed
+items, without executing regex while drawing suggestions. No new document model,
+CyUI module or SDK/ABI operation is added. See [Completion variables](CompletionVariables.md).
+
+Shared tool discovery preserves compiler/interpreter aliases and checks POSIX
+execute permissions without adding another tool-resolution owner. The build
+wrapper provides bounded compiler context and retains complete failure logs.
+The CMake-local search now delegates to the same native owner; compiler-cache
+identity retains the driver name separately from resolved parent directories.
+The editor dependency now pins the published Reader 0.1.3 source; CyUI remains a
+single validated modular dependency. See [Toolchain reliability](ToolchainReliability.md).
+
 UpdateHistory adds explicit bounded metadata-only installation/recovery history
 within cycode_updates. Shared staging/outcome parsers, work/pending/receipt identity
 agreement and numeric guards produce advisory rows without payload hashes or

@@ -1,6 +1,49 @@
 # CyCode
 
+Navigate > Open included file follows supported literal C/C++ directives in the
+live buffer, including inline comments and immediate backslash-newline
+continuations. Find related C/C++ files... always shows the counterpart list.
+Its shared actions provide Retry, explicit index refresh/retry, path/report
+copying and contextual local help (default Shift+F1). Ordinary queries remain
+scan-free; paged file results guard both revision and generation.
+See [Included files](Docs/CppIncludes.md) and [Related results](Docs/CppCounterparts.md#inspect-related-results).
+
+Navigate > Switch header/source adds bounded local C/C++ companion discovery,
+including Unreal Public/Private and same-stem paths from the current workspace
+index, with Rider Alt+O and Visual Studio Ctrl+K, Ctrl+O.
+One complete result opens directly; multiple/partial matches use the shared palette
+with the cache status. Navigation does not start or wait for an index refresh.
+The same read-only metadata service is available through SDK/MCP and ABI2.
+
+Personal insertion snippets are shared by projects in this portable installation.
+Use Edit > Edit user snippets... for the JSON draft, Undo/Redo and explicit guarded
+Save/Reload. The insertion palette merges project, personal and enabled-plugin
+definitions. See [Personal snippets](Docs/UserSnippets.md).
+
+Edit > Create user snippet from selection... copies selected source literally into
+an unsaved personal JSON draft. Review its name/prefix/scope and Save explicitly;
+the original source is retained. The same read-only capture is exposed through SDK/MCP.
+
+The development build also accepts declarative snippet catalogues from enabled
+ABI2 plugins, with source labels and activation/revision guards. The bundled Unreal
+provider supplies UE_LOG, Blueprint declarations and WITH_EDITOR selection wrapping.
+See [Project snippets](Docs/SnippetCatalogue.md) for scope and limits.
+
 [Documentation](https://mrmybal.github.io/CyCodeReader/cycode/Documentation.html#/en/overview) · [Documentation en français](https://mrmybal.github.io/CyCodeReader/cycode/Documentation.html#/fr/overview)
+
+Completion snippets support document/workspace variables and bounded native regex
+and Unicode case transforms, with the original linked-field/Undo ownership.
+The standard dependency fetch includes pinned static PCRE2/utf8proc sources;
+see [Build](Docs/Build.md) and [Completion variables](Docs/CompletionVariables.md)
+for syntax, budgets and remaining runtime validation.
+
+[Project insertion snippets](Docs/SnippetCatalogue.md) add saved JSON definitions,
+scopes and multiple prefixes through Edit / Find Action, including without an LSP.
+Rider uses Ctrl+J and Visual Studio uses Ctrl+K, Ctrl+X. Local proposals reuse the
+same guarded native completion/Undo path, also available through SDK/MCP and ABI2.
+Surround with snippet (Rider Ctrl+Alt+J) captures one selection for TM_SELECTED_TEXT,
+including multiple lines. It preserves literal layout and refuses bodies that
+would discard the selection. Native/GUI acceptance remains pending.
 
 CyCode includes stable GitHub release checks, explicit Windows portable updates,
 resume/fresh downloads, SHA-256 verification and categorized EN/FR feedback.
@@ -26,7 +69,7 @@ See [Application updates](Docs/Updates.md), [Download controls](Docs/UpdateDownl
 Three connected occurrence milestones add actual document-highlight requests,
 read/write/text outlines independent of diagnostics, and a dockable inspector with
 kind filters, cyclic navigation and atomic multi-selection. GUI, SDK/MCP and ABI2
-share the same guarded native owner (227 SDK operations). Existing search and
+share the same guarded native owner (232 SDK operations). Existing search and
 lexical occurrence shortcuts remain; Rider adds Ctrl+Shift+F7 for explicit
 highlighting. Windows production/source/schema checks are recorded separately
 from pending server/GUI/platform acceptance. See [Document occurrences](Docs/Occurrences.md).

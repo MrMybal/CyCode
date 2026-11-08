@@ -1,6 +1,76 @@
 # Roadmap
 
+Local C/C++ include navigation now handles inline directive comments and immediate
+backslash-LF/CRLF continuation components, retaining the physical header range.
+The shared result inspector adds explicit retry/index-refresh, path/report copying
+and contextual local help; file-page assembly guards both revision and generation.
+These are implemented source/build milestones. Real filesystem/cache races,
+clipboard/modal keyboard/DPI and SDK/plugin acceptance remain unexecuted during
+the native-run suspension. Compiler search roots, macro/condition evaluation,
+nonspliced multiline directive comments and semantic include resolution remain.
+See [Includes](CppIncludes.md) and [Related results](CppCounterparts.md#inspect-related-results).
+
+C/C++ header/source switching now combines siblings and nearest conventional
+Unreal Public/Private/Classes or include/src layouts with same-stem paths from
+the current workspace index. It discovers namespaced/other-layout matches through
+bounded offset lookup, reports missing/busy/stale/partial/changed coverage and
+guards cache generation without starting a scan. GUI and read-only SDK/ABI2 share
+source lifetime/revision guards and explicit disambiguation. Different-stem naming,
+semantic/clangd pairing, module interfaces and native/GUI/POSIX acceptance remain.
+See [C++ companions](CppCounterparts.md).
+
+Selected source can now become a literal personal snippet draft through Edit /
+Find Action and snippets_user_draft. Unique naming, source revision/generation,
+escaping/body/catalogue bounds and explicit guarded Save reuse the native owner.
+Native/GUI/Undo/POSIX acceptance remains pending; see [Capture](SnippetCapture.md).
+
+Personal snippets now have a fixed installation-owned catalogue, a shared JSON
+draft editor and explicit revision/lease/atomic save. Merge order is project,
+personal, then plugins; sessions recheck saved content and the UI observes local
+refresh generations. SDK 233 / ABI2 read/save share the same owner, with settings.write
+separate from source edits. Real store/hash/lock/thread/GUI/Undo and Linux/macOS
+acceptance remains unexecuted during the antivirus suspension. See
+[Personal snippets](UserSnippets.md).
+
 ## Current milestone
+
+Project insertion snippets now use a saved, bounded .cycode/snippets.code-snippets
+catalogue with scopes, multiple prefixes and multiline bodies. Edit / Find Action
+and Rider/Visual Studio bindings open the shared CyUI Commands palette. Local
+proposals work without LSP, use the common cache/plan/field/Undo owners and guard
+saved catalogue/source/workspace/disk state. SDK 233 / ABI2 share the same service, including personal storage read/save.
+Rendering/regex preparation releases the Engine mutex and revalidates before plan
+storage. Enabled ABI2 plugins now contribute inline catalogues with provenance,
+stable ordering, bounded merging and registry revision/activation guards. Unreal
+1.6.0 contributes four C++ definitions through that same feature. Native/server/
+keyboard/GUI/Undo and POSIX acceptance, structured catalogue management,
+OS-account-wide storage/synchronization, file-path imports, automatic server merging, file templates and smart reindentation
+remain. Explicit single-selection wrapping now uses TM_SELECTED_TEXT with the
+issued range, selection-anchor guards, literal layout and Rider Ctrl+Alt+J. See [Project snippets](SnippetCatalogue.md).
+
+Completion now substitutes fourteen document/workspace/position variables and
+explicit defaults in both GUI previews and the existing guarded native plan.
+Literal escaping and bounded preprocessing preserve shared numbered fields,
+choices, metadata and Undo ownership. Native/server/widget/platform acceptance,
+further variable families, interactive placeholder transforms and OS-account-wide catalogue storage
+remain. See [Completion variables](CompletionVariables.md).
+
+Variable regex transforms now compute captures, conditional formats and seven
+simple Unicode case methods through bounded native PCRE2/utf8proc preparation.
+The popup keeps regex work off the GUI thread and shows the server label instead.
+Actual matching/case/worker/Undo acceptance is still unexecuted under the antivirus
+suspension. This is a documented regex/format subset, not full VS Code compatibility.
+
+Tool discovery now preserves compiler/interpreter aliases, with POSIX executable
+filtering, including CMake's previously separate resolver. Explicit compiler-cache
+checks distinguish driver names even when they resolve to one binary.
+Build failures retain compiler notes in a bounded preview, Windows CI
+matches the Visual Studio 2022 generator, and failed CI builds preserve logs.
+The shared editor source is updated to Reader 0.1.3 and CyUI supplies 102 syntax
+modes including Verse. Windows production compilation and data-only reporting
+checks pass. Actual POSIX alias execution, the revised remote matrix, GUI input
+and UEFN/compiler/LSP integration remain to validate. See
+[Toolchain reliability](ToolchainReliability.md) and [Languages](Languages.md).
 
 Detailed update history now combines explicit metadata-only inspection, cached CyUI
 text/category filters with twelve-row pages, and selected recovery details/copying.
@@ -435,7 +505,7 @@ are executed. See [MSBuild](MSBuild.md) for the supported scope.
 
 - C# broader managed debugging (frameworks, exceptions, async and web workflows),
   broader Roslyn code actions beyond the shared edit-only transport,
-  snippet variables/transforms and a user catalogue,
+  further snippet variable families, interactive field transforms and OS-account-wide catalogue storage,
   metadata/generated source views,
   Razor, rich documentation rendering/mouse hover and broader SDK/framework coverage beyond the implemented
   Roslyn language services and MSBuild builds. See [C#](CSharp.md).
@@ -476,5 +546,5 @@ are executed. See [MSBuild](MSBuild.md) for the supported scope.
   scripts, alongside binary distributions. Dependency licenses remain applicable.
 - Run actual Windows/Linux/macOS build and runtime matrices, including Unicode/IME,
   filesystem differences, DPI and portable icon/font coverage.
-- Windows portable release-based updates and ordinary-failure rollback are implemented; actual acceptance remains pending. Installers, unattended/legacy recovery, automatic Linux/macOS updates, clean-machine validation, signing and contribution docs remain.
+- Windows portable release-based updates and ordinary-failure rollback are implemented; Windows per-user Setup and edition-aware application updates are implemented and packaging CI passes; actual installer/update acceptance remains pending. Unattended/legacy recovery, automatic Linux/macOS updates, clean-machine validation, signing and contribution docs remain.
 - Reproducible end-user packages with complete third-party notices.
