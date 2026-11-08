@@ -5,7 +5,7 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 2
+revision: 3
 ---
 
 ## Ownership {#ownership}
@@ -72,10 +72,10 @@ are separate from clangd's semantic index.
 
 ## Validation and measurements {#validation}
 
-Core revision 28c455b passed 63 native tests on Windows, Linux and macOS; the
+Core revision d0b1791 passed 63 native tests on Windows, Linux and macOS; the
 Windows-only MSBuild case is skipped on POSIX. macOS replay also passed three
 repeats, while earlier intermittent failures remain a diagnostic item. Reader
-revision 9cbd8d3 passed seven native integration tests on all three platforms,
+revision c4a013b passed seven native integration tests on all three platforms,
 including encodings, plugins, live revisions, disk conflicts, IPC and shutdown.
 Changes after those revisions require their own acceptance run.
 
@@ -88,6 +88,13 @@ CLI/backend RSS was 1,234,755,584 bytes. Five samples are a baseline, not a univ
 claim; RSS can count shared pages twice and is not peak/private memory. The
 answers do not prove complete reference coverage. No CLion/IntelliJ comparison
 was performed. Raw reports and exact CI links are retained in the architecture guide.
+
+A second post-consolidation real-project run at d0b1791 also passed with 121
+translation units and 227 owned files: 9.31 ms definition, 8.74 ms references,
+269.26 ms completion and 18.52 ms rename preview (warm medians). First current
+diagnostics took 2.26 s; unsaved edit/diagnostic/definition median was 550.76 ms.
+The corpus changed, so these observations are not an optimization comparison.
+The architecture guide retains both raw reports and exact workflow revisions.
 
 `app/scripts/benchmark_semantic.py --ci` executes only on an explicit runner.
 `--prepare-only` creates source data without native execution. Local native runs

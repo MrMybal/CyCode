@@ -5,7 +5,7 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Propriété des services {#ownership}
@@ -77,10 +77,10 @@ de chemins et la recherche littérale sont distincts de l’index de clangd.
 
 ## Vérification et mesures {#validation}
 
-La révision Core 28c455b a passé 63 tests natifs sur Windows, Linux et macOS ; le
+La révision Core d0b1791 a passé 63 tests natifs sur Windows, Linux et macOS ; le
 cas MSBuild réservé à Windows est ignoré sur POSIX. Le scénario de replay macOS
 a aussi passé trois répétitions, mais ses échecs intermittents antérieurs restent
-à diagnostiquer. Reader 9cbd8d3 a passé sept tests d’intégration sur les trois
+à diagnostiquer. Reader c4a013b a passé sept tests d’intégration sur les trois
 plateformes : encodages, plugins, révisions actives, conflits disque, IPC et arrêt.
 Les changements ultérieurs nécessitent leur propre validation.
 
@@ -95,6 +95,15 @@ promesse universelle. La RSS peut compter deux fois des pages partagées et ne
 mesure ni le pic ni la mémoire privée. Les réponses ne prouvent pas la couverture
 complète des références. Aucune comparaison CLion/IntelliJ n’a été réalisée.
 Le guide d’architecture conserve les rapports bruts et les liens CI exacts.
+
+Une seconde exécution après consolidation, à la révision d0b1791, a aussi réussi
+sur le projet réel : 121 unités de compilation, 227 fichiers, médianes à chaud
+de 9,31 ms pour la définition, 8,74 ms pour les références, 269,26 ms pour la
+complétion et 18,52 ms pour l’aperçu de renommage. Les premiers diagnostics
+actuels ont pris 2,26 s ; la médiane modification non enregistrée / diagnostics /
+définition était de 550,76 ms. Le corpus ayant changé, ces observations ne
+constituent pas une comparaison d’optimisation. Le guide d’architecture conserve
+les rapports bruts et les révisions exactes des workflows.
 
 `app/scripts/benchmark_semantic.py --ci` s’exécute uniquement sur un runner
 explicitement autorisé. `--prepare-only` crée des données sans exécution native.

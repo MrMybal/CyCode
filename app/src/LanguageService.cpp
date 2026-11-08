@@ -454,7 +454,15 @@ void LanguageService::replaceExtensions(const Json &definitions) {
 void LanguageService::run() {
     SemanticTokens semanticTokens;
     size_t semanticRefresh = 0;
-    LanguageClient client;
+    bool incomingReady = false;
+    // Declare captured state before client: its destructor joins the transport
+    // before that state disappears. The service mutex closes the predicate/wait
+    // race; simply notifying a condition variable would lose some replies.
+    LanguageClient client([this, &incomingReady] {
+        std::lock_guard lock(mutex_);
+        incomingReady = true;
+        wake_.notify_one();
+    });
     std::map<std::string, Document> documents;
     std::map<std::string, std::pair<std::uint64_t, int>> sent;
     std::map<std::string, uint64_t> sentIdentities;
@@ -479,13 +487,14 @@ void LanguageService::run() {
         std::map<std::string, std::optional<Document>> updates;
         {
             std::unique_lock lock(mutex_);
-            auto changed = [this] {
-                return stopping_ || reconfigure_ || !updates_.empty() || !queries_.empty();
+            auto changed = [this, &incomingReady] {
+                return incomingReady || stopping_ || reconfigure_ || !updates_.empty() || !queries_.empty();
             };
             if (client.running() || !pending.empty())
                 wake_.wait_for(lock, std::chrono::milliseconds(8), changed);
             else
                 wake_.wait(lock, changed);
+            incomingReady = false;
             stop = stopping_;
             reset = reconfigure_;
             reconfigure_ = false;

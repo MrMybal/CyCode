@@ -15,7 +15,10 @@ Read Docs/CoreExtraction.md before changing the build or shared APIs.
 - Routine local validation: python app/scripts/verify_sources.py (syntax/data only, no native executables). Build: python app/scripts/build.py from the project root; ordinary builds must keep BUILD_TESTING=OFF and must not run tests.
 - Native CTest requires the explicit --run-tests build option and a separate test build. MCP, debugger, generated-project and GUI acceptance suites also launch native processes; do not run them implicitly or relaunch the visible app. See Docs/Testing.md.
 - If antivirus removes a test binary, stop native runs; do not automatically rebuild/retry, restore quarantined files or change antivirus settings. While the current Kaspersky removals remain unexplained, use source checks and app-only builds and record unexecuted native checks honestly.
-- Windows is locally validated. Linux/macOS remain unverified until those builds actually run. Schemas and CI configuration do not establish support.
+- Core d0b1791 passed the real native suite on Windows/Linux/macOS runners.
+  Reader c4a013b passed its seven native integration cases on those systems.
+  Production Windows compilation is local evidence; native desktop execution
+  remains suspended locally. See Docs/CoreExtraction.md for precise CI provenance.
 - Keep remaining language backends, DAP, web/shader previews and complete VCS functionality explicit in Docs/Roadmap.md. A descriptor does not implement a feature.
 
 The generated generic Python desktop/model forms have been replaced by the native IDE.

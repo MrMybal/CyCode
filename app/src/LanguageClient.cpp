@@ -25,7 +25,11 @@ struct LanguageClient::Child {
     pid_t process = -1;
 #endif
 };
-LanguageClient::LanguageClient() = default;
+LanguageClient::LanguageClient(std::function<void()> wake) : wakeHandler_(std::move(wake)) {}
+void LanguageClient::signalWake() noexcept {
+    // Signals never own protocol dispatch; a host callback cannot unwind a thread.
+    try { if (wakeHandler_) wakeHandler_(); } catch (...) {}
+}
 LanguageClient::~LanguageClient() {
     stop();
 }
@@ -553,6 +557,7 @@ void LanguageClient::writeLoop() {
 void LanguageClient::readLoop() {
     std::string buffer;
     while (running_) {
+        bool received = false;
         char bytes[8192];
         std::string stderrText;
         if (socket_) {
@@ -624,12 +629,17 @@ void LanguageClient::readLoop() {
                 else if (incoming_.size() < 1024) {
                     if (raw_) incomingBytes_ += length;
                     incoming_.push_back(std::move(message));
+                    received = true;
                 }
             }
             buffer.erase(0, end + 4 + length);
         }
+        // Publish only after releasing the incoming queue mutex. The owner may
+        // guard its condition predicate without inverting the transport locks.
+        if (received) signalWake();
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
+    signalWake(); // EOF, malformed frame or transport failure also wakes pending requests.
     outgoingReady_.notify_all();
 }
 } // namespace cycode

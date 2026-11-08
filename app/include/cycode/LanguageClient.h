@@ -15,7 +15,10 @@ using Json = nlohmann::json;
 // Single-owner LSP transport. Callbacks run on the thread calling poll().
 class LanguageClient {
   public:
-    LanguageClient();
+    // Optional coalescible wake signal, invoked on the transport reader thread.
+    // It may only signal the owner: no client calls or semantic callbacks here.
+    // Captured state must outlive this client (stop/destruction joins the reader).
+    explicit LanguageClient(std::function<void()> wake = {});
     ~LanguageClient();
     bool start(const std::filesystem::path &root, const std::string &executable,
                const std::filesystem::path &compilationDatabase = {}, Json configuration = Json::object());
@@ -73,6 +76,8 @@ class LanguageClient {
     std::unique_ptr<Child> child_;
     std::unique_ptr<LoopbackStream> socket_;
     bool enqueue(Json);
+    void signalWake() noexcept;
+    const std::function<void()> wakeHandler_;
     void readLoop();
     void writeLoop();
     std::thread reader_, writer_;

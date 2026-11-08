@@ -143,15 +143,15 @@ and Undo; unsupported command-based transformations remain unavailable.
 
 ## Verified evidence and limits
 
-Core 28c455be3bdbb0da1a46fb5222941151013ac5c8 passed 63 native tests on each runner:
-[Windows/Linux/macOS native run](https://github.com/MrMybal/CyCode/actions/runs/42480778728).
+Core d0b1791118c2d75eb85654dba8f8802560cebacd passed 63 native tests on each runner:
+[Windows/Linux/macOS native run](https://github.com/MrMybal/CyCode/actions/runs/42485288416).
 The Windows-only MSBuild test is skipped on POSIX. The macOS replay scenario also
 passed three repeats. Earlier intermittent replay failures remain a diagnostic
-item; a passing repeat is not a root-cause fix. New buffer/component changes after
-that revision require their own acceptance run.
+item; a passing repeat is not a root-cause fix. This run includes the canonical Engine BufferState, shared I/O, component selection
+and bounded native response changes. Changes after that revision require their own run.
 
-Reader 9cbd8d3b7664476f148642b435f0ab1e41be231a passed seven tests on all three systems:
-[native Reader integration](https://github.com/MrMybal/CyCodeReader/actions/runs/42481303220).
+Reader c4a013bb04ee77c43ac1be0bac51a6ec6c522976 passed seven tests on all three systems:
+[native Reader integration](https://github.com/MrMybal/CyCodeReader/actions/runs/42485861029).
 These include real text/native plugins, encodings, unsaved documents, revisions,
 disk conflicts, Git plugin environment handling, IPC compatibility and EOF shutdown.
 Windows production builds cover the CLI, minimal libraries and Reader GUI without
@@ -166,6 +166,18 @@ completion and 18.55 ms rename preview; first version-bound diagnostics took 2.9
 Instantaneous CLI/descendant RSS summed to 1,234,755,584 bytes. Shared pages may be
 counted more than once; this is neither peak nor private memory. These are recorded
 responses, not complete-index coverage, universal performance or an IDE comparison.
+
+The post-consolidation [d0b179 run](https://github.com/MrMybal/CyCode/actions/runs/42485288360)
+also passed, using 121 translation units / 227 owned files / 1,769,912 bytes. Raw
+reports are in Benchmarks/semantic-baseline-d0b179. Real-project warm medians were
+9.31 ms definition, 8.74 ms references, 269.26 ms completion and 18.52 ms rename
+preview; first version-bound diagnostics took 2.26 s. Unsaved edits followed by
+fresh diagnostics and definition had a 550.76 ms median. The report records actual
+result shapes (including two observed references), persistent context/backend
+epoch, untouched disk sources and instantaneous summed RSS 1,182,777,344 bytes.
+This is a second observation, not a controlled optimization claim: the owned
+source corpus changed when unused copies were retired. Neither run establishes
+complete semantic coverage or large Unreal/MSBuild acceptance.
 
 Regenerate only on an explicit GitHub runner with benchmark_semantic.py --ci.
 --prepare-only produces source data locally without native execution. Reports carry
