@@ -23,3 +23,8 @@ target_link_libraries(cycode_snippets PUBLIC cycode_files)
 set_target_properties(cycode_snippets PROPERTIES POSITION_INDEPENDENT_CODE ON)
 add_library(CyCode::Files ALIAS cycode_files)
 add_library(CyCode::Snippets ALIAS cycode_snippets)
+
+add_library(cycode_protocol STATIC src/ServiceProtocol.cpp)
+target_link_libraries(cycode_protocol PUBLIC CyCode::Files)
+set_target_properties(cycode_protocol PROPERTIES POSITION_INDEPENDENT_CODE ON)
+add_library(CyCode::Protocol ALIAS cycode_protocol)

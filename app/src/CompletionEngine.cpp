@@ -1,3 +1,4 @@
+#include "cycode/Error.h"
 #include "cycode/Engine.h"
 #include "cycode/Completion.h"
 #include "cycode/TextFile.h"
@@ -33,7 +34,7 @@ Json Engine::snippetCompletions(const Json &params) {
     const auto opened=documents_.find(path);
     if (opened==documents_.end()) throw std::runtime_error("Open the workspace document before requesting insertion snippets");
     auto *doc=&opened->second;
-    if (params.at("expectedRevision")!=doc->revision) throw std::runtime_error("RevisionConflict: snippet source changed");
+    if (params.at("expectedRevision")!=doc->revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: snippet source changed");
     const auto position=params.at("position");const auto at=utf16Offset(doc->text,position);
     std::optional<CompletionSelection> selection;
     if (params.contains("selection")) selection=CompletionSelection{
@@ -77,13 +78,13 @@ Json Engine::snippetCompletions(const Json &params) {
     lock.lock();
     const auto current=documents_.find(path);
     if (current==documents_.end() || current->second.revision!=revision || nextRevision_!=generation)
-        throw std::runtime_error("RevisionConflict: snippet source changed during catalogue preparation");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: snippet source changed during catalogue preparation");
     if(plugins_.revision()!=pluginRevision)
-        throw std::runtime_error("RevisionConflict: plugin snippets changed; request snippets again");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: plugin snippets changed; request snippets again");
     if(userSnippets_.snapshot().at("revision")!=userRevision)
-        throw std::runtime_error("RevisionConflict: user snippets changed; request snippets again");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: user snippets changed; request snippets again");
     if (readSnippetCatalogue(resolve(std::string(snippetCataloguePath)))!=source)
-        throw std::runtime_error("RevisionConflict: snippet catalogue changed; request snippets again");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: snippet catalogue changed; request snippets again");
     auto reply=issueCompletion(path,revision,generation,0,position,result,true,std::move(source),selection,pluginRevision,userRevision);
     reply["result"]["cycodePluginRevision"]=pluginRevision;
     reply["result"]["cycodeUserRevision"]=userRevision;
@@ -99,7 +100,7 @@ Json Engine::userSnippetDraft(const Json &params) {
     const auto path=pathUtf8(resolve(requested).lexically_relative(root_));
     const auto found=documents_.find(path);
     if(found==documents_.end() || params.at("expectedRevision")!=found->second.revision)
-        throw std::runtime_error("RevisionConflict: open the current source before capturing a snippet");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: open the current source before capturing a snippet");
     const auto &doc=found->second;
     const CompletionSelection range{utf16Offset(doc.text,params.at("selection").at("start")),
         utf16Offset(doc.text,params.at("selection").at("end"))};
@@ -110,7 +111,7 @@ Json Engine::userSnippetDraft(const Json &params) {
     auto draft=userSnippets_.draft(source,snippetLanguage(path));
     lock.lock();const auto current=documents_.find(path);
     if(current==documents_.end() || current->second.revision!=revision || nextRevision_!=generation)
-        throw std::runtime_error("RevisionConflict: source changed while preparing the snippet draft");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: source changed while preparing the snippet draft");
     draft["path"]=path;draft["revision"]=revision;return draft;
 }
 Json Engine::completionOperation(const std::string &method,const Json &params) {
@@ -128,18 +129,18 @@ Json Engine::completionOperation(const std::string &method,const Json &params) {
         } else doc=semanticDocumentLocked(session.path).first;
         if (doc->revision!=session.revision || params.at("expectedRevision")!=session.revision || nextRevision_!=session.generation ||
             (!session.local && language_.epoch(session.path)!=session.epoch))
-            throw std::runtime_error("RevisionConflict: completion context changed; request completion again");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: completion context changed; request completion again");
         if (session.local && readSnippetCatalogue(resolve(std::string(snippetCataloguePath)))!=session.catalogue)
-            throw std::runtime_error("RevisionConflict: snippet catalogue changed; request snippets again");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: snippet catalogue changed; request snippets again");
         if(session.local && plugins_.revision()!=session.snippetPluginRevision)
-            throw std::runtime_error("RevisionConflict: plugin snippets changed; request snippets again");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: plugin snippets changed; request snippets again");
         if(session.local && userSnippets_.snapshot().at("revision")!=session.userSnippetRevision)
-            throw std::runtime_error("RevisionConflict: user snippets changed; request snippets again");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: user snippets changed; request snippets again");
         if (index>=session.items.size()) throw std::runtime_error("Invalid completion item index");
         return session;
     };
     auto &initial=checked();const auto path=initial.path;
-    if (method=="language.completionPrepare" && path.starts_with("sdk://")) throw std::runtime_error("SDK sources are read-only");
+    if (method=="language.completionPrepare" && path.starts_with("sdk://")) throw NativeError(ErrorCode::ReadOnly,"SDK sources are read-only");
     bool resolved=initial.resolved.contains(index);
     const auto backend=initial.local ? std::string{} : language_.backend(path);
     Json server=Json::object();
@@ -169,7 +170,7 @@ Json Engine::completionOperation(const std::string &method,const Json &params) {
         throw std::runtime_error(item.value("cycodeSnippetReason",std::string("Unavailable insertion snippet")));
     if (!completionCommandAllowed(item,backend)) throw std::runtime_error("Completion requires an unsupported server command");
     const auto &source=documents_.at(path);
-    if (readTextFileBytes(resolve(path))!=source.disk) throw std::runtime_error("DiskConflict: completion source changed outside CyCode");
+    if (readTextFileBytes(resolve(path))!=source.disk) throw NativeError(ErrorCode::DiskConflict,"DiskConflict: completion source changed outside CyCode");
     // Rendering/regex work uses an immutable snapshot without retaining the
     // Engine lock. Revalidate the issued context and disk before storing a plan.
     const auto before=source.text;const auto insertion=item;const auto point=session.position;const auto selection=session.selection;
@@ -178,7 +179,7 @@ Json Engine::completionOperation(const std::string &method,const Json &params) {
                              {root_ / utf8Path(path), root_,{},0,selection});
     lock.lock();checked();
     const auto &doc=documents_.at(path);
-    if (readTextFileBytes(resolve(path))!=doc.disk) throw std::runtime_error("DiskConflict: completion source changed during preparation");
+    if (readTextFileBytes(resolve(path))!=doc.disk) throw NativeError(ErrorCode::DiskConflict,"DiskConflict: completion source changed during preparation");
     ChangePlan plan;plan.title="Complete "+insertion.at("label").get<std::string>();
     if (edit.after!=doc.text) plan.files.push_back({path,doc.text,std::move(edit.after),doc.disk,std::move(edit.edits),doc.revision});
     return {{"path",path},{"revision",doc.revision},{"plan",storeChange(std::move(plan))},{"cursor",edit.cursor},{"snippet",edit.snippet}};

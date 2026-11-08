@@ -19,8 +19,14 @@ void coreServiceChecks(const std::filesystem::path &root) {
     };
     check(a.status().at("engine").at("context")!=b.status().at("engine").at("context"),"Project contexts are not isolated");
     check(a.status().at("analysis").at("projectIndexCompleteness")=="unknown","Service inferred full semantic coverage");
+    const auto disabled=first.languageStatus().at("servers").at("cpp");
+    check(!disabled.at("available").get<bool>() && disabled.at("state")=="disabled","Disabled backend was reported as available");
+    check(disabled.at("analysis").at("projectIndexCompleteness")=="unknown","Configured backend claimed semantic index completion");
     auto document=call(a,"documents.read",{{"path","main.cpp"}});
     call(a,"documents.replace",{{"path","main.cpp"},{"expectedRevision",document.at("revision")},{"text","int unsaved;\n"}});
+    const auto stale=a.respond({{"id","stale"},{"method","documents.replace"},{"params",{{"path","main.cpp"},{"expectedRevision",document.at("revision")},{"text","overwrite"}}}});
+    check(stale.at("error").at("code")=="RevisionConflict" && stale.at("id")=="stale","Typed document conflict lost its owner code or request identity");
+    check(a.respond({{"method","unsupported.operation"}}).at("error").at("code")=="UnsupportedOperation","Unsupported operation lost its structured code");
     check(call(b,"documents.read",{{"path","main.cpp"}}).at("text")=="int other;\n","Project state leaked across Engines");
     check(a.respond(Json::array()).at("error").at("code")=="InvalidRequest","Invalid envelope was accepted");
     check(a.respond({{"protocol","cycode-core/999"},{"method","documents.read"}}).at("error").at("code")=="UnsupportedProtocol","Unsupported protocol was accepted");

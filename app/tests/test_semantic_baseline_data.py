@@ -62,6 +62,25 @@ class BaselineDataTests(unittest.TestCase):
         self.assertFalse(api.has_member_completion([{'label':'value2','filterText':'value2'}],'value'))
         self.assertFalse(api.has_member_completion([{'label':'value','filterText':'different'}],'value'))
 
+    def test_real_project_uses_actual_export_and_preserves_sources(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)/'core';(root/'common').mkdir(parents=True)
+            (root/'common/api-version.txt').write_text('1')
+            (root/'app/src').mkdir(parents=True);(root/'app/include/cycode').mkdir(parents=True)
+            source=root/'app/src/cli.cpp';source.write_text('engine.dispatch("inspect");',encoding='utf-8')
+            (root/'app/include/cycode/Engine.h').write_text('class Engine {};')
+            database=root/'actual-commands.json'
+            database.write_text(json.dumps([{'directory':str(root),'file':'app/src/cli.cpp','arguments':['clang++','-DREAL_FLAG=1','-c','app/src/cli.cpp']}]))
+            before=source.read_bytes()
+            with patch.object(api.subprocess,'Popen',side_effect=AssertionError('native process')):
+                description,probe=api.real_core_project(root,database)
+            self.assertEqual(description['kind'],'real-native-core-cmake')
+            self.assertEqual(description['translationUnits'],1)
+            self.assertEqual(description['sourceFiles'],2)
+            self.assertEqual(probe['member'],'dispatch')
+            self.assertEqual(source.read_bytes(),before)
+            self.assertFalse((root/'compile_commands.json').exists())
+
     def test_statistics_preserve_raw_samples(self):
         report=api.summarize([10,1,8,2,5])
         self.assertEqual(report['samplesMilliseconds'],[10,1,8,2,5])

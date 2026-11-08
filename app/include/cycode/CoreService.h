@@ -1,5 +1,6 @@
 #pragma once
 #include "cycode/Engine.h"
+#include "cycode/ServiceProtocol.h"
 #include <atomic>
 #include <chrono>
 
@@ -8,7 +9,7 @@ namespace cycode {
 // The owner must keep Engine alive until all calls have joined.
 class CoreService {
   public:
-    static constexpr const char *protocol = "cycode-core/1";
+    static constexpr const char *protocol = coreProtocol;
     static constexpr size_t maximumRequestBytes = 8 * 1024 * 1024;
     explicit CoreService(Engine &);
     Json status() const;

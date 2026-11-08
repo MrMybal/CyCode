@@ -1,3 +1,4 @@
+#include "cycode/Error.h"
 #include "cycode/Engine.h"
 #include "cycode/Paths.h"
 #include "cycode/TextFile.h"
@@ -54,7 +55,7 @@ Json Engine::saveDocumentAs(const Json &params) {
 #endif
     auto &doc = openLocked(key);
     if (params.at("expectedRevision") != doc.revision)
-        throw std::runtime_error("RevisionConflict: document changed before Save as");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed before Save as");
     const auto bytes = encodeEditorText(doc.text, doc.bom, doc.crlf, doc.crOnly);
     Document saved = doc;
     saved.revision = nextRevision_++;

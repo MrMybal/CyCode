@@ -1,3 +1,4 @@
+#include "cycode/Error.h"
 #include "cycode/ProcessText.h"
 #include "cycode/LanguageService.h"
 #include <climits>
@@ -328,8 +329,9 @@ std::future<Json> LanguageService::request(std::string method, Json params, std:
     auto future = query->promise.get_future();
     {
         std::lock_guard lock(mutex_);
-        if (stopping_ || !enabled_ || outstanding_ >= 32)
-            throw std::runtime_error("Language service unavailable or queue full");
+        if(stopping_)throw NativeError(ErrorCode::ServiceStopping,"Language service is stopping");
+        if(!enabled_)throw NativeError(ErrorCode::BackendUnavailable,"Language service is disabled");
+        if(outstanding_>=32)throw NativeError(ErrorCode::CapacityExceeded,"Language request queue is full");
         ++outstanding_;
         queries_.push_back(query);
     }
@@ -348,7 +350,14 @@ Json LanguageService::status() const {
         result["languages"] = definition_.at("languages");
     }
     result["enabled"] = enabled_;
-    result["available"] = backend_ == "cpp" || managed_ || !argv_.empty();
+    // A configured launch is not proof that a backend exists or initialized.
+    result["configured"] = (backend_=="cpp" || managed_) ? !executable_.empty() : !argv_.empty();
+    result["available"] = enabled_ && !reconfigure_ && result.value("running",false);
+    if(!enabled_)result["state"]="disabled";
+    else if(reconfigure_)result["state"]="reconfiguring";
+    else if(!result.contains("state"))result["state"]="idle";
+    result["analysis"]["backend"]=backend_;
+    result["analysis"]["projectIndexCompleteness"]="unknown";
     result["arguments"] = argv_;
     result["settings"] = settings_;
     result["configuration"] = configuration_;
@@ -360,6 +369,7 @@ Json LanguageService::status() const {
             result["servers"][key]["epoch"] = routingEpoch_ * 0x100000000ULL + server.at("epoch").get<uint64_t>();
             result["ready"] = result.value("ready", false) || server.value("ready", false);
             result["running"] = result.value("running", false) || server.value("running", false);
+            result["available"] = result.value("available",false) || server.value("available",false);
             for (const auto &[uri, entries] : server.at("diagnostics").items())
                 result["diagnostics"][uri] = entries;
             result["diagnosticRevisions"].update(server.at("diagnosticRevisions"));
@@ -458,11 +468,11 @@ void LanguageService::run() {
     auto environment = defaults.environment;
     std::filesystem::path compilationDatabase, project;
     size_t diagnosticsGeneration = 0;
-    auto fail = [](const std::shared_ptr<Query> &q, const std::string &message) {
+    auto fail = [](const std::shared_ptr<Query> &q, const std::string &message,ErrorCode code=ErrorCode::OperationFailed) {
         if (q->done)
             return;
         q->done = true;
-        q->promise.set_exception(std::make_exception_ptr(std::runtime_error(message)));
+        q->promise.set_exception(std::make_exception_ptr(NativeError(code,message)));
     };
     for (;;) {
         bool reset = false, stop = false;
@@ -505,7 +515,7 @@ void LanguageService::run() {
             failure.clear();
             for (auto &q : pending)
                 if (stop || q->id)
-                    fail(q, "Language service restarted or stopped");
+                    fail(q,"Language service restarted or stopped",stop?ErrorCode::ServiceStopping:ErrorCode::RevisionConflict);
         }
         if (stop)
             break;
@@ -639,7 +649,7 @@ void LanguageService::run() {
                     q->cancelSent = true;
                 } else {
                     if (q->id) client.cancel(q->id);
-                    fail(q, "Language request cancelled");
+                    fail(q,"Language request cancelled",ErrorCode::Cancelled);
                     continue;
                 }
             }
@@ -648,7 +658,7 @@ void LanguageService::run() {
                     client.cancel(q->id);
                 fail(q, now >= q->deadline ? "Language request timed out"
                         : failure.empty()  ? "Language server stopped; restart it in Problems"
-                                           : failure);
+                                           : failure,now>=q->deadline?ErrorCode::DeadlineExceeded:ErrorCode::BackendUnavailable);
             } else if (synchronized && !q->id) {
                 if ((q->method == "cycode/javaDebugSession" || q->method == "cycode/javaBuildWorkspace") &&
                     (backend_ != "java" || !javaDebugAvailable(client.capabilities()))) {
@@ -684,7 +694,7 @@ void LanguageService::run() {
                                           ? "callHierarchyProvider" : "typeHierarchyProvider";
                     const auto value = client.capabilities().value(name, Json());
                     if (value != true && !value.is_object()) {
-                        fail(q, languageServerName(backend_) + " does not support " + q->method);
+                        fail(q,languageServerName(backend_) + " does not support " + q->method,ErrorCode::UnsupportedOperation);
                         continue;
                     }
                 }
@@ -695,7 +705,7 @@ void LanguageService::run() {
                     capabilities.contains(q->method)) {
                     const auto value = client.capabilities().value(capabilities.at(q->method), Json());
                     if (value != true && !value.is_object()) {
-                        fail(q, languageServerName(backend_) + " does not support " + q->method);
+                        fail(q,languageServerName(backend_) + " does not support " + q->method,ErrorCode::UnsupportedOperation);
                         continue;
                     }
                 }
@@ -704,19 +714,19 @@ void LanguageService::run() {
                 if (q->method == "completionItem/resolve" &&
                     (!completionProvider.is_object() ||
                      !completionProvider.value("resolveProvider", false))) {
-                    fail(q, languageServerName(backend_) + " does not support completionItem/resolve");
+                    fail(q,languageServerName(backend_) + " does not support completionItem/resolve",ErrorCode::UnsupportedOperation);
                     continue;
                 }
                 const auto symbolProvider = client.capabilities().value("workspaceSymbolProvider", Json());
                 if (q->method == "workspaceSymbol/resolve" &&
                     (!symbolProvider.is_object() || !symbolProvider.value("resolveProvider", false))) {
-                    fail(q, languageServerName(backend_) + " does not support workspaceSymbol/resolve");
+                    fail(q,languageServerName(backend_) + " does not support workspaceSymbol/resolve",ErrorCode::UnsupportedOperation);
                     continue;
                 }
                 const auto actionProvider = client.capabilities().value("codeActionProvider", Json());
                 if (q->method == "codeAction/resolve" &&
                     (!actionProvider.is_object() || !actionProvider.value("resolveProvider", false))) {
-                    fail(q, languageServerName(backend_) + " does not support codeAction/resolve");
+                    fail(q,languageServerName(backend_) + " does not support codeAction/resolve",ErrorCode::UnsupportedOperation);
                     continue;
                 }
                 if (q->method == "textDocument/codeAction") {
@@ -882,6 +892,10 @@ void LanguageService::run() {
             outstanding_ -= completed;
             status_["ready"] = client.ready();
             status_["running"] = client.running();
+            status_["launchAttempted"]=attempted;
+            status_["initialized"]=client.initialized();
+            status_["state"]=!enabled?"disabled":!failure.empty()?"failed":client.ready()?"ready":client.initialized()?"loading-project":client.running()?"initializing":attempted?"unavailable":"idle";
+            status_["compilationDatabase"]=pathUtf8(compilationDatabase);
             const auto provider = client.capabilities().value("semanticTokensProvider", Json::object());
             status_["semanticTokens"] = provider.is_object() && provider.contains("full") &&
                                         (provider.at("full").is_object() || provider.at("full") == true);
@@ -941,6 +955,16 @@ void LanguageService::run() {
                         eligible[path]={{"revision",version.first},{"id",document->second.identity},{"uri",publication->second}};
                 }
             }
+            Json synchronizedRevisions=Json::object();
+            for(const auto &[path,version]:sent) {
+                const auto document=documents.find(path);
+                if(document!=documents.end() && document->second.revision==version.first && document->second.identity==sentIdentities.at(path))
+                    synchronizedRevisions[path]={{"revision",version.first},{"id",document->second.identity},{"lspVersion",version.second}};
+            }
+            status_["synchronizedRevisions"]=std::move(synchronizedRevisions);
+            status_["analysis"]={{"backend",backend_},{"projectIndexCompleteness","unknown"},{"openDocuments",documents.size()},
+                {"synchronizedDocuments",status_["synchronizedRevisions"].size()},{"versionBoundDiagnosticDocuments",eligible.size()},
+                {"synchronizationMeaning","notifications-sent-not-proof-of-analysis"}};
             status_["diagnosticRevisions"]=std::move(eligible);
         }
     }

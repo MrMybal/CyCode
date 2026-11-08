@@ -129,7 +129,7 @@ void gitReplayContracts(const std::filesystem::path &root) {
                 const auto continued = engine.dispatch("vcs.replay.apply", params);
                 require(continued.at("exitCode") == 0 && !continued.contains("inspectionError") &&
                             read("file.cpp") == "resolved\n",
-                        "Resolved continuation commits exactly reviewed stage tree");
+                        ("Resolved continuation commits exactly reviewed stage tree: "+continued.dump()).c_str());
             } else {
                 doc = engine.dispatch("documents.read", {{"path", "file.cpp"}});
                 doc = engine.dispatch(

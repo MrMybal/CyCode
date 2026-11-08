@@ -1,3 +1,4 @@
+#include "cycode/Error.h"
 #include "cycode/Engine.h"
 #include "cycode/SymbolCatalogue.h"
 #include "cycode/TextEdits.h"
@@ -127,7 +128,7 @@ Json Engine::symbolQuery(const std::string &method, const Json &params) {
             auto [doc, full] = semanticDocumentLocked(key);
             revision = doc->revision; identity = doc->identity; source = full;
             if (revision != params.at("expectedRevision") || (params.contains("expectedDocumentId") && params.at("expectedDocumentId") != identity))
-                throw std::runtime_error("RevisionConflict: document changed; read it again");
+                throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed; read it again");
             if (!externalSources_.contains(key)) key = pathUtf8(full.lexically_relative(root_));
             uri = LanguageClient::uri(full);
             backend = language_.backend(pathUtf8(full));
@@ -141,21 +142,21 @@ Json Engine::symbolQuery(const std::string &method, const Json &params) {
         }
         epoch = language_.backendEpoch(backend);
         if (params.contains("expectedEpoch") && params.at("expectedEpoch") != epoch)
-            throw std::runtime_error("RevisionConflict: language configuration changed");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: language configuration changed");
         generation = nextRevision_; context=hierarchyGeneration_; diskGeneration=monitor_.snapshot().revision;
         future = language_.request(document ? "textDocument/documentSymbol" : "workspace/symbol", request);
     }
     const auto response = future.get();
     std::lock_guard lock(mutex_);
-    if (epoch != language_.backendEpoch(backend)) throw std::runtime_error("RevisionConflict: language configuration changed during symbol query");
+    if (epoch != language_.backendEpoch(backend)) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: language configuration changed during symbol query");
     const Document *current = nullptr;
     if (document) {
         if (const auto found = externalSources_.find(key); found != externalSources_.end()) {
             if (found->second.loaded) current = &found->second.document;
         } else if (const auto found = documents_.find(key); found != documents_.end()) current = &found->second;
         if (!current || current->identity != identity || current->revision != revision)
-            throw std::runtime_error("RevisionConflict: symbol document was edited, closed or replaced");
-    } else if (generation != nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision) throw std::runtime_error("RevisionConflict: workspace changed during symbol query");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: symbol document was edited, closed or replaced");
+    } else if (generation != nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during symbol query");
     std::optional<SymbolTextBounds> bounds;
     if (document) bounds.emplace(current->text);
     const auto limit = static_cast<size_t>(std::clamp(params.value("limit", 200), 1, 1000));
@@ -227,7 +228,7 @@ Json Engine::resolveSymbol(const Json &params) {
         backend=session.backend; epoch=session.epoch; generation=session.generation; context=session.context; diskGeneration=session.diskGeneration; includeExternal=session.includeExternal;
         if (generation!=nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision || epoch!=language_.backendEpoch(backend) ||
             (params.contains("expectedEpoch") && params.at("expectedEpoch")!=epoch))
-            throw std::runtime_error("RevisionConflict: workspace or language configuration changed; search again");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace or language configuration changed; search again");
         if (session.resolved.contains(slot)) return session.resolved.at(slot);
         original=session.items.at(static_cast<size_t>(index));
         auto request=original; request["cycodeLanguage"]=backend;
@@ -238,7 +239,7 @@ Json Engine::resolveSymbol(const Json &params) {
     pruneSymbolSessionsLocked();
     const auto found=symbolSessions_.find(id);
     if (found==symbolSessions_.end() || generation!=nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision || epoch!=language_.backendEpoch(backend))
-        throw std::runtime_error("RevisionConflict: symbol session expired or workspace/language changed during resolution");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: symbol session expired or workspace/language changed during resolution");
     if (!response.is_object() || response.value("name",Json())!=original.at("name") ||
         response.value("kind",Json())!=original.at("kind") || !response.contains("location") ||
         response.at("location").value("uri",Json())!=original.at("location").at("uri"))
@@ -270,7 +271,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
     {
         std::lock_guard lock(mutex_);
         auto &doc = openLocked(key); before = doc.text; revision = doc.revision; generation = nextRevision_;
-        if (params.at("expectedRevision") != revision) throw std::runtime_error("RevisionConflict: document changed; read it again");
+        if (params.at("expectedRevision") != revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed; read it again");
         request = {{"textDocument", {{"uri", LanguageClient::uri(resolve(key))}}}};
         if (rename) {
             (void)utf16Offset(before, params.at("position"));
@@ -297,7 +298,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
         std::future<Json> future;
         {
             std::lock_guard lock(mutex_);
-            if (generation != nextRevision_ || !documents_.contains(key) || documents_.at(key).revision != revision) throw std::runtime_error("RevisionConflict: document changed during refactoring");
+            if (generation != nextRevision_ || !documents_.contains(key) || documents_.at(key).revision != revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed during refactoring");
             future = language_.request(operation, data);
         }
         return future.get();
@@ -337,7 +338,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
             bool synchronize=false;
             {
                 std::lock_guard lock(mutex_);
-                if (generation!=nextRevision_) throw std::runtime_error("RevisionConflict: workspace changed during refactoring");
+                if (generation!=nextRevision_) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during refactoring");
                 std::set<std::string> paths;
                 if (edits.is_object() && edits.contains("changes")) for (const auto &[uri,list] : edits.at("changes").items()) paths.insert(pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(uri))).lexically_relative(root_)));
                 if (edits.is_object() && edits.contains("documentChanges")) for (const auto &change : edits.at("documentChanges")) {
@@ -357,7 +358,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
         title = params.contains("range") ? "Format selection" : "Format document";
     }
     std::lock_guard lock(mutex_);
-    if (generation != nextRevision_ || !documents_.contains(key) || documents_.at(key).revision != revision) throw std::runtime_error("RevisionConflict: workspace changed during refactoring");
+    if (generation != nextRevision_ || !documents_.contains(key) || documents_.at(key).revision != revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during refactoring");
     return workspaceChangeLocked(title,edits,LanguageService::supportsCpp(key) || LanguageService::supportsManaged(key) ? oldName : "",rename && !LanguageService::supportsCpp(key) && !LanguageService::supportsManaged(key));
 }
 Json Engine::workspaceEditFilesLocked(const Json &supplied) {
@@ -376,7 +377,7 @@ Json Engine::workspaceEditFilesLocked(const Json &supplied) {
         if (doc.contains("cycodeRevision")) {
             const auto path=pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(doc.at("uri")))).lexically_relative(root_));
             const auto found=documents_.find(path);
-            if (found==documents_.end() || found->second.revision!=doc.at("cycodeRevision")) throw std::runtime_error("RevisionConflict: workspace edit document changed");
+            if (found==documents_.end() || found->second.revision!=doc.at("cycodeRevision")) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace edit document changed");
         }
         const auto uri = doc.at("uri").get<std::string>();
         if (files.contains(uri)) throw std::runtime_error("Duplicate document in workspace edit");
@@ -402,7 +403,7 @@ Json Engine::workspaceChangeLocked(const std::string &title,const Json &edits,co
         if (onlyOpened && !documents_.contains(path))
             throw std::runtime_error("Workspace symbol index changed; prepare the rename again");
         auto &doc = openLocked(path);
-        if (rawSource(resolve(path)) != doc.disk) throw std::runtime_error("DiskConflict: source changed outside CyCode: " + path);
+        if (rawSource(resolve(path)) != doc.disk) throw NativeError(ErrorCode::DiskConflict,"DiskConflict: source changed outside CyCode: " + path);
         // JDT LS can coalesce replacements into a larger edit. All ranges,
         // document revisions and disk bytes remain checked by the preview.
         auto edited = applyTextEdits(doc.text, i.value(), oldName);
@@ -463,8 +464,8 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
     // Validate EVERY affected buffer and disk baseline before mutating ANY buffer.
     for (const auto &file : plan.files) {
         auto doc = documents_.find(file.path);
-        if (doc == documents_.end() || doc->second.revision != (undo ? file.appliedRevision : file.revision) || doc->second.text != (undo ? file.after : file.before)) throw std::runtime_error("RevisionConflict: refactoring source changed: " + file.path);
-        if (rawSource(resolve(file.path)) != doc->second.disk) throw std::runtime_error("DiskConflict: refactoring source changed outside CyCode: " + file.path);
+        if (doc == documents_.end() || doc->second.revision != (undo ? file.appliedRevision : file.revision) || doc->second.text != (undo ? file.after : file.before)) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: refactoring source changed: " + file.path);
+        if (rawSource(resolve(file.path)) != doc->second.disk) throw NativeError(ErrorCode::DiskConflict,"DiskConflict: refactoring source changed outside CyCode: " + file.path);
     }
     for (auto &file : plan.files) {
         auto &doc = documents_.at(file.path);

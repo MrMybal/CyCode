@@ -1,3 +1,4 @@
+#include "cycode/Error.h"
 #include <string_view>
 #include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
@@ -66,7 +67,7 @@ Engine::Engine(std::filesystem::path root, std::filesystem::path languagePrefere
                     const auto found = documents_.find(key);
                     if (found == documents_.end() || found->second.identity != parameters.at("expectedDocumentId") ||
                         found->second.revision != parameters.at("expectedRevision"))
-                        throw std::runtime_error("RevisionConflict: read the destination document again");
+                        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: read the destination document again");
                     const auto &doc = found->second;
                     if (doc.dirty || !doc.diskConflict.empty() || readFile(full) != doc.disk)
                         throw std::runtime_error("UnsavedDocuments: save or resolve the destination source before running to cursor");
@@ -241,9 +242,9 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
         epoch = inspection ? language_.backendEpoch(backend) : language_.epoch(path);
         if ((params.contains("expectedDocumentId") && params.at("expectedDocumentId") != identity) ||
             (inspection && params.contains("expectedEpoch") && params.at("expectedEpoch") != epoch))
-            throw std::runtime_error("RevisionConflict: document identity or language configuration changed");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document identity or language configuration changed");
         if (!params.at("expectedRevision").is_number_integer() || params.at("expectedRevision") != revision)
-            throw std::runtime_error("RevisionConflict: document changed; read it again");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed; read it again");
         if (inspection && (!position.at("line").is_number_integer() || !position.at("character").is_number_integer()))
             throw std::runtime_error("Navigation positions must contain integer UTF-16 coordinates");
         (void)utf16Offset(doc.text,position);
@@ -268,7 +269,7 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
     if (!current || current->revision != revision || current->identity != identity ||
         (!inspection && generation != nextRevision_) ||
         (inspection ? language_.backendEpoch(backend) : language_.epoch(path)) != epoch)
-        throw std::runtime_error("RevisionConflict: document changed during language request");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed during language request");
     if (method == "language.complete")
         return issueCompletion(path,revision,generation,epoch,position,result);
     if (method=="language.hover" || method=="language.signature") {
@@ -770,9 +771,9 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         const auto key = pathUtf8(resolve(params.at("path")).lexically_relative(root_));
         const auto found=documents_.find(key);
         if (found==documents_.end())
-            throw std::runtime_error("RevisionConflict: document closed before reload");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document closed before reload");
         auto &doc=found->second;
-        if (params.at("expectedRevision") != doc.revision) throw std::runtime_error("RevisionConflict: document changed before reload");
+        if (params.at("expectedRevision") != doc.revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed before reload");
         if (doc.dirty && !params.value("discard",false)) throw std::runtime_error("Save or reconcile modified text before reloading from disk");
         auto previous = documents_.extract(key);
         Json result;
@@ -786,7 +787,7 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         auto key = documentKey(path);
         if (!params.contains("expectedRevision") ||
             params.at("expectedRevision").get<std::uint64_t>() != doc.revision)
-            throw std::runtime_error("RevisionConflict: document changed; read it again");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed; read it again");
         if (method == "documents.replace") {
             auto text = params.at("text").get<std::string>();
             validateText(text);
@@ -804,7 +805,7 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         if (isUntitledDocument(key)) throw std::runtime_error("Use Save as to give this document a workspace file");
         auto full = resolve(path);
         if ((doc.diskExisted&&readFile(full)!=doc.disk)||(!doc.diskExisted&&std::filesystem::exists(full)))
-            throw std::runtime_error("DiskConflict: file changed outside CyCode");
+            throw NativeError(ErrorCode::DiskConflict,"DiskConflict: file changed outside CyCode");
         if (!doc.dirty&&doc.diskExisted) { auto result=documentJson(key,doc);guard.unlock();retireRecovery(key);return result; }
         const auto bytes = encodeEditorText(doc.text, doc.bom, doc.crlf, doc.crOnly);
         if(!doc.diskExisted)std::filesystem::create_directories(full.parent_path());
@@ -821,7 +822,7 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         auto &owner = isUntitledDocument(key) ? untitled_ : documents_;
         auto found = owner.find(key);
         if (params.contains("expectedRevision") && (found == owner.end() || params.at("expectedRevision") != found->second.revision))
-            throw std::runtime_error("RevisionConflict: document changed before closing");
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed before closing");
         if (found != owner.end() && found->second.dirty && !params.value("discard", false))
             throw std::runtime_error("Unsaved changes");
         if(found!=owner.end())documentEvent("document.closed",key,found->second);
@@ -830,6 +831,6 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         guard.unlock();retireRecovery(key);
         return {{"closed", true}};
     }
-    throw std::runtime_error("Unknown operation: " + method);
+    throw NativeError(ErrorCode::UnsupportedOperation,"Unknown operation: " + method);
 }
 } // namespace cycode

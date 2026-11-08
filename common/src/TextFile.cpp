@@ -1,3 +1,4 @@
+#include "cycode/Error.h"
 #include "cycode/TextFile.h"
 #include <algorithm>
 #include <chrono>
@@ -54,7 +55,7 @@ void writeTextFileAtomic(const std::filesystem::path &path, const std::string &b
                          const std::optional<std::string> &baseline) {
     auto check=[&] {
         if (baseline) {
-            if (readTextFileBytes(path)!=*baseline) throw std::runtime_error("DiskConflict: file changed outside the editor");
+            if (readTextFileBytes(path)!=*baseline) throw NativeError(ErrorCode::DiskConflict,"DiskConflict: file changed outside the editor");
         } else if (std::filesystem::exists(path)) throw std::runtime_error("File already exists");
     };
     check();
@@ -62,7 +63,7 @@ void writeTextFileAtomic(const std::filesystem::path &path, const std::string &b
         const auto permissions=std::filesystem::status(path).permissions();
         using P=std::filesystem::perms;
         if ((permissions & (P::owner_write|P::group_write|P::others_write))==P::none)
-            throw std::runtime_error("File is read-only");
+            throw NativeError(ErrorCode::ReadOnly,"File is read-only");
     }
     auto temporary=path;
     temporary+=".cycode-save-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+"-"+std::to_string(std::random_device{}());

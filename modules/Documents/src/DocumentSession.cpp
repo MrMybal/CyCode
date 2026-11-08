@@ -1,3 +1,4 @@
+#include "cycode/Error.h"
 #include "cycode/text/DocumentSession.h"
 #include "cycode/text/Search.h"
 #include "cycode/Paths.h"
@@ -38,8 +39,8 @@ Json DocumentSession::dispatch(const std::string &method,const Json &params) {
     }
     const auto id=params.at("id").get<size_t>();const auto found=documents_.find(id);if (found==documents_.end()) throw std::runtime_error("Document is no longer open");auto &live=*found->second;
     if (method=="documents.read") return describe(live,true);
-    if (params.at("expectedRevision")!=live.revision) throw std::runtime_error("RevisionConflict: read the document again");
-    if (live.readOnly) throw std::runtime_error("Document is read-only");
+    if (params.at("expectedRevision")!=live.revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: read the document again");
+    if (live.readOnly) throw NativeError(ErrorCode::ReadOnly,"Document is read-only");
     if (method=="documents.replace") live.document.replace(params.at("text"));
     else if (method=="documents.save") live.document.save();
     else if (method=="documents.format") live.document.format(params.value("encoding",""),params.value("lineEnding",""));
@@ -48,7 +49,7 @@ Json DocumentSession::dispatch(const std::string &method,const Json &params) {
     else if (method=="plugins.invoke") {
         auto result=plugins_.invoke(params.at("plugin"),params.at("command"),{{"text",live.document.text()},{"path",pathUtf8(live.document.path())},{"revision",live.revision},{"encoding",live.document.encodingId()}});
         if (result.contains("text")) live.document.replace(result.at("text"));refresh();return {{"document",describe(live,true)},{"result",result}};
-    } else throw std::runtime_error("Unknown Reader operation: "+method);
+    } else throw NativeError(ErrorCode::UnsupportedOperation,"Unknown text-session operation: "+method);
     refresh();return describe(live,true);
 }
 }

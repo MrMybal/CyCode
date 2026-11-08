@@ -167,11 +167,11 @@ def cpp_status(host):
     return status.get('servers',{}).get('cpp',status)
 
 
-def wait_diagnostics(host, revision, timeout=45):
+def wait_diagnostics(host, revision, timeout=45, path="main.cpp"):
     deadline = time.monotonic()+timeout
     while time.monotonic()<deadline:
         status = cpp_status(host)
-        publication = status.get('diagnosticRevisions',{}).get('main.cpp',{})
+        publication = status.get('diagnosticRevisions',{}).get(path,{})
         if publication.get('revision')==revision:
             uri = publication['uri']
             if any(item.get('severity')==1 for item in status['diagnostics'].get(uri,[])):
@@ -182,7 +182,9 @@ def wait_diagnostics(host, revision, timeout=45):
     raise RuntimeError('No version-bound diagnostics for the current native document')
 
 
-def run_host(cli, clangd, workspace, report_directory, iteration, samples):
+def run_host(cli, clangd, workspace, report_directory, iteration, samples, probe=None):
+    probe=probe or {"path":"main.cpp","header":"widget.hpp","expression":"w.value","member":"value"}
+    source_path,header_path=probe["path"],probe["header"]
     host = Host(cli,workspace,report_directory/f'native-{iteration}.log')
     try:
         host.call('service.status')
@@ -193,18 +195,18 @@ def run_host(cli, clangd, workspace, report_directory, iteration, samples):
             raise RuntimeError('A request failure replaced the native context')
         analysis_begin = time.perf_counter()
         host.call('language.configure',{'language':'cpp','executable':str(clangd),'enabled':True})
-        doc = host.call('documents.read',{'path':'main.cpp'})
-        header = host.call('documents.read',{'path':'widget.hpp'})
-        status = wait_diagnostics(host,doc['revision'])
+        doc = host.call('documents.read',{'path':source_path})
+        header = host.call('documents.read',{'path':header_path})
+        status = wait_diagnostics(host,doc['revision'],path=source_path)
         analysis_ms = (time.perf_counter()-analysis_begin)*1000
         epoch = status['epoch']
         timings = {}
-        location = position(doc['text'],'w.value',2)
-        base = {'path':'main.cpp','expectedRevision':doc['revision'],'position':location}
+        location = position(doc['text'],probe['expression'],len(probe['expression'])-len(probe['member']))
+        base = {'path':source_path,'expectedRevision':doc['revision'],'position':location}
         operations = [('definition','language.definition',base),
                       ('references','language.references',{**base,'includeDeclaration':True}),
-                      ('completion','language.complete',{**base,'position':position(doc['text'],'w.value',2)}),
-                      ('renamePreview','language.rename',{**base,'newName':'amount'})]
+                      ('completion','language.complete',{**base,'position':position(doc['text'],probe['expression'],len(probe['expression'])-len(probe['member']))}),
+                      ('renamePreview','language.rename',{**base,'newName':probe['member']+'PreviewOnly'})]
         for name, method, params in operations:
             observed=[]
             for _ in range(samples):
@@ -214,7 +216,7 @@ def run_host(cli, clangd, workspace, report_directory, iteration, samples):
                 if name=='completion':
                     payload=result.get('result',{})
                     items=payload.get('items',[]) if isinstance(payload,dict) else payload
-                    if not has_member_completion(items,'value'):
+                    if not has_member_completion(items,probe['member']):
                         (report_directory/f'completion-failure-{iteration}.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
                         raise RuntimeError('Completion lost the actual member; bounded native result preserved for diagnosis')
                 if name=='renamePreview':
@@ -223,14 +225,14 @@ def run_host(cli, clangd, workspace, report_directory, iteration, samples):
             timings[name]=summarize(observed)
         if cpp_status(host)['epoch']!=epoch: raise RuntimeError('Warm requests restarted the language backend')
         # Unsaved declarations and references must be visible together, disk bytes unchanged.
-        disk_before={name:hashlib.sha256((workspace/name).read_bytes()).hexdigest() for name in ['main.cpp','widget.hpp']}
+        disk_before={name:hashlib.sha256((workspace/name).read_bytes()).hexdigest() for name in [source_path,header_path]}
         overlay=[]
         for step in range(min(samples,5)):
             text=doc['text']+f'// rapid unsaved edit {step}\n'
             before=time.perf_counter()
-            doc=host.call('documents.replace',{'path':'main.cpp','expectedRevision':doc['revision'],'text':text})
-            wait_diagnostics(host,doc['revision'])
-            query=host.call('language.definition',{'path':'main.cpp','expectedRevision':doc['revision'],'position':location})
+            doc=host.call('documents.replace',{'path':source_path,'expectedRevision':doc['revision'],'text':text})
+            wait_diagnostics(host,doc['revision'],path=source_path)
+            query=host.call('language.definition',{'path':source_path,'expectedRevision':doc['revision'],'position':location})
             if not query.get('locations'): raise RuntimeError('Dirty document lost semantic navigation')
             overlay.append((time.perf_counter()-before)*1000)
         if any(hashlib.sha256((workspace/name).read_bytes()).hexdigest()!=digest for name,digest in disk_before.items()):
@@ -245,6 +247,33 @@ def run_host(cli, clangd, workspace, report_directory, iteration, samples):
         host.close()
 
 
+def real_core_project(workspace, database):
+    """Inspect the actual configured native project; never synthesize flags."""
+    workspace=workspace.resolve();database=database.resolve()
+    if not (workspace/'common/api-version.txt').is_file():raise ValueError('Expected a native CyCode source checkout')
+    commands=json.loads(database.read_text(encoding='utf-8'))
+    if not isinstance(commands,list) or not commands:raise ValueError('Empty real compilation database')
+    sources=set()
+    for item in commands:
+        path=Path(item['file'])
+        if not path.is_absolute():path=Path(item['directory'])/path
+        path=path.resolve()
+        if path.is_relative_to(workspace) and 'runtime' not in path.relative_to(workspace).parts:sources.add(path)
+    translation_units=len(sources)
+    for directory in ['app/include','common/include','modules']:
+        sources.update(p for p in (workspace/directory).rglob('*') if p.is_file() and p.suffix in ('.h','.hpp'))
+    if not sources:raise ValueError('Compilation database contains no owned native sources')
+    digest=hashlib.sha256();size=0
+    for path in sorted(sources):
+        data=path.read_bytes();size+=len(data);digest.update(path.relative_to(workspace).as_posix().encode());digest.update(b'\0');digest.update(data);digest.update(b'\0')
+    probe={'path':'app/src/cli.cpp','header':'app/include/cycode/Engine.h','expression':'engine.dispatch','member':'dispatch'}
+    text=(workspace/probe['path']).read_text(encoding='utf-8')
+    position(text,probe['expression'])
+    return {'kind':'real-native-core-cmake','sourceFiles':len(sources),'translationUnits':translation_units,
+            'sourceBytes':size,'sourceSha256':digest.hexdigest(),'compileDatabaseSha256':hashlib.sha256(database.read_bytes()).hexdigest(),
+            'compileArgumentsOrigin':'Actual CMake Ninja export used to compile the production CLI and native libraries'},probe
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--ci',action='store_true')
@@ -255,20 +284,26 @@ def main(argv=None):
     parser.add_argument('--units',type=int,default=32)
     parser.add_argument('--samples',type=int,default=7)
     parser.add_argument('--iterations',type=int,default=2)
+    parser.add_argument('--core-project',type=Path,help='Measure an actual configured native CyCode checkout instead of generated sources')
+    parser.add_argument('--compilation-database',type=Path,help='Actual CMake export; required with --core-project')
     args=parser.parse_args(argv)
     if not 1<=args.units<=2000 or not 1<=args.samples<=30 or not 1<=args.iterations<=10:
         parser.error('Expected units=1..2000, samples=1..30, iterations=1..10')
     if not args.prepare_only and (not args.ci or os.environ.get('GITHUB_ACTIONS')!='true' or os.environ.get('CI')!='true' or not os.environ.get('RUNNER_OS')):
         parser.error('Native measurements require explicit --ci on a GitHub runner; local native execution remains suspended')
     if not args.prepare_only and (not args.cli or not args.clangd): parser.error('--cli and --clangd are required')
+    if bool(args.core_project)!=bool(args.compilation_database):parser.error('--core-project and --compilation-database must be supplied together')
     output=args.output.resolve()
     # Never overwrite a user's or a failed benchmark's existing data.
     output.mkdir(parents=True,exist_ok=False)
-    description=corpus(output/'corpus',args.units)
+    workspace=args.core_project.resolve() if args.core_project else output/'corpus'
+    probe=None
+    if args.core_project:description,probe=real_core_project(workspace,args.compilation_database)
+    else:description=corpus(workspace,args.units)
     report={'format':'cycode-semantic-baseline/1','corpus':description,
-            'scope':'Synthetic C++ workload, production CLI JSON/stdio overhead included; process-cold is not OS-cache cold; no GUI, no file-search proxy',
+            'scope':('Actual native CyCode CMake project' if args.core_project else 'Synthetic C++ workload')+', production CLI JSON/stdio overhead included; process-cold is not OS-cache cold; no GUI, no file-search proxy',
             'platform':sys.platform if args.prepare_only else platform.platform(),'python':sys.version.split()[0],
-            'limits':['No large real-world CMake/MSBuild/Unreal corpus yet','No whole-project index completion signal',
+            'limits':['No Unreal/MSBuild performance acceptance or comparative IDE benchmark; real Core CMake is a separate workload','No whole-project index completion signal',
                       'No concurrent/cancellation/load-invalidation benchmark yet','No peak/private memory measurement'],
             'runs':[]}
     if args.prepare_only:
@@ -278,10 +313,30 @@ def main(argv=None):
         report['binarySha256']=hashlib.sha256(cli.read_bytes()).hexdigest()
         report['clangdVersion']=subprocess.check_output([str(clangd),'--version'],text=True,timeout=10)
         report['coreVersion']=subprocess.check_output([str(cli),'--version'],text=True,timeout=10).strip()
-        for iteration in range(args.iterations):
-            report['runs'].append(run_host(cli,clangd,output/'corpus',output,iteration,args.samples))
+        report['execution']='running'
+        (output/'baseline.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+        published_database=None
+        try:
+            if args.core_project:
+                # clangd discovers the actual CMake database at the workspace
+                # root. Preserve existing files and retire only our exact copy.
+                destination=workspace/'compile_commands.json'
+                if destination.exists():raise FileExistsError('Refusing to replace an existing project compilation database')
+                database_bytes=args.compilation_database.read_bytes()
+                with destination.open('xb') as stream:stream.write(database_bytes)
+                published_database=database_bytes
+            for iteration in range(args.iterations):
+                report['runs'].append(run_host(cli,clangd,workspace,output,iteration,args.samples,probe))
+                (output/'baseline.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+            report['execution']='completed'
+        except BaseException as error:
+            report['execution']='failed';report['failure']=str(error)[:4096]
             (output/'baseline.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
-        report['execution']='completed'
+            raise
+        finally:
+            if published_database is not None:
+                destination=workspace/'compile_commands.json'
+                if destination.is_file() and destination.read_bytes()==published_database:destination.unlink()
     (output/'baseline.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print('Semantic baseline: '+str(output/'baseline.json'))
     return 0

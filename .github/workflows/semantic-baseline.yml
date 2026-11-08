@@ -25,10 +25,14 @@ jobs:
       - run: cmake --build runtime/baseline-build --target cycode_cli --parallel 4
       - name: Explicit semantic runner measurement
         run: python app/scripts/benchmark_semantic.py --ci --cli runtime/baseline-build/app/cycode_cli --clangd "$(command -v clangd)" --output runtime/semantic-baseline
+      - name: Measure the actual configured native Core project
+        run: python app/scripts/benchmark_semantic.py --ci --cli runtime/baseline-build/app/cycode_cli --clangd "$(command -v clangd)" --core-project . --compilation-database runtime/baseline-build/compile_commands.json --samples 5 --iterations 1 --output runtime/semantic-baseline-core
       - name: Preserve raw results and owned corpus
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: semantic-baseline-linux
-          path: runtime/semantic-baseline/
+          path: |
+            runtime/semantic-baseline/
+            runtime/semantic-baseline-core/
           retention-days: 14

@@ -2,7 +2,7 @@ name: Native core
 on: [push, pull_request]
 concurrency:
   group: native-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   core:
     strategy:
