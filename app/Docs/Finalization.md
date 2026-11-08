@@ -251,3 +251,16 @@ after repair and before uninstall. It is still pending. It checks shared Core,
 private identities/jobs, Unicode live edits, stale guards, plugins and shutdown.
 No new interpreter, application, native fixture or SDK Runtime was run locally.
 The SDK wheel backend was rebuilt with isolated pure authoring tools only.
+
+## Windows actual graphical acceptance prepared — 2026-11-08
+
+The next production workflow includes Windows rendering and editing/information/
+viewport acceptance using an isolated runner-only software renderer fixture.
+The exact upstream Mesa archive and all three selected x64 DLLs are hashed;
+local inspection streamed members to memory only. No driver was written/loaded
+locally or added to the product payload. The CI preparer guards before all
+filesystem/network/process actions. Test reports expose actual GL metadata and
+require llvmpipe on Windows. Font checks retain Windows system fonts and require
+real glyph availability; keyboard source bytes are explicit LF on every host.
+The new Windows path remains pending runner execution. It does not imply physical
+keyboard/IME/DPI/multi-monitor or real-GPU performance verification.

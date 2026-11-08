@@ -82,5 +82,5 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       # Private Reader access needs a read-only CYCODE_READER_READ_TOKEN secret.
-      # Full GUI/MCP jobs also require the owner's CyUI and Core wheel.
+      # Production jobs author the Core wheel from its exact published source.
       # Local native runs remain suspended; this is explicit runner-only validation.

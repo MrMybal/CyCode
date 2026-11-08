@@ -268,7 +268,14 @@ int main(int argc, char **argv) {
                         auto path = cycode::utf8Path(testReport);
                         std::filesystem::create_directories(path.parent_path());
                         std::ofstream out(path);
-                        out << app.testState().dump(2);
+                        auto state=app.testState();
+                        const auto graphics=[](GLenum field) {
+                            const auto *value=glGetString(field);
+                            return value?std::string(reinterpret_cast<const char *>(value)):std::string{};
+                        };
+                        state["graphics"]={{"vendor",graphics(GL_VENDOR)},
+                            {"renderer",graphics(GL_RENDERER)},{"version",graphics(GL_VERSION)}};
+                        out << state.dump(2);
                         if (!out)
                             throw std::runtime_error("Cannot write desktop test report");
                     }

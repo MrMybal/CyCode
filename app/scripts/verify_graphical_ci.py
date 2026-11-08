@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import struct
+import sys
 import subprocess
 import tempfile
 
@@ -43,8 +44,15 @@ def main():
             assert state['hiddenWindow'] and state['active'] == 'main.cpp' and not state['error'], state
             assert state['theme'] == theme and not state['dirty'], state
             fonts=state['ui']['fonts']
-            assert 'Roboto-Regular.ttf' in fonts['ui'] and 'JetBrainsMono-Regular.ttf' in fonts['mono'], fonts
-            assert fonts['portableIconsMerged'] and fonts['icons'], fonts
+            if sys.platform=='win32':
+                assert any(name in fonts['ui'].lower() for name in ('segoeui.ttf','roboto-regular.ttf')),fonts
+                assert any(name in fonts['mono'].lower() for name in ('consola.ttf','jetbrainsmono-regular.ttf')),fonts
+                assert 'llvmpipe' in state['graphics']['renderer'].lower(),state['graphics']
+                assert fonts['systemIcons'] or fonts['portableIconsMerged'],fonts
+            else:
+                assert 'Roboto-Regular.ttf' in fonts['ui'] and 'JetBrainsMono-Regular.ttf' in fonts['mono'],fonts
+                assert fonts['portableIconsMerged'],fonts
+            assert fonts['icons'],fonts
             assert hashlib.sha256(source.read_bytes()).hexdigest()==source_digest, 'Smoke session changed exact source bytes'
             pixels = capture.read_bytes()
             assert pixels[:2] == b'BM' and len(pixels) > 1024

@@ -1,5 +1,30 @@
 # Local verification and native tests
 
+## Windows graphical runner preparation
+
+The production workflow now prepares a separate owned runner fixture with a
+byte-identical production CyCode.exe and three SHA-256-pinned Mesa 26.2.4 DLLs.
+The archive and individual x64 images are pinned in
+`.github/ci/mesa-windows.lock.json`, sourced from
+[mesa-dist-win](https://github.com/pal1000/mesa-dist-win/releases/tag/26.2.4).
+`python app/scripts/prepare_windows_graphics_ci.py --executable runtime/build-vs/Release/CyCode.exe`
+refuses local execution before inspecting paths, downloading or creating files.
+It streams only the three exact archive members; bundled batch/installer scripts
+are never extracted or run. It changes no source/production folder or system
+driver and preserves failed fixtures/cache evidence. No renderer binary is
+checked in, uploaded as evidence or included by the product's explicit package
+allow-list. Software rendering is selected only for the runner child processes.
+
+The pending Windows checks use that fixture for eight EN/FR renders, twelve
+editing/search/keymap cases, six real clangd hover/signature cases and detached
+native windows/two simultaneous instances. Test reports record the actual GL
+vendor, renderer and version; Windows captures must report llvmpipe. The font
+assertions accept the actual Windows Segoe/Consolas or pinned portable fallback,
+and require the actual mapped/system icon glyphs. Keyboard fixture source bytes
+are explicitly LF on all platforms, avoiding text-mode CRLF fixture differences.
+These runner checks do not establish physical multi-monitor, DPI, IME, GPU-driver
+or performance acceptance. No local driver/application execution was performed.
+
 ## Current remote evidence and historical entries
 
 Finalization.md records the latest actual platform results. The milestone notes

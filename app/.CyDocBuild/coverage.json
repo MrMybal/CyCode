@@ -496,7 +496,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-testing",
-      "sourceSha256": "17d09651cc56243b99551c84d005c76facb3ed5a1253cad376f903d445fe0726"
+      "sourceSha256": "8b4207b425bbee7d78333b5ef54b9c152499b08d25f7dd21ec0b58dc73a5d747"
     },
     {
       "source": "Docs/ToolchainReliability.md",
@@ -622,7 +622,7 @@
       "kind": "developer-reference",
       "target": "overview#getting-started",
       "legacyId": "reference-app-docs-finalization",
-      "sourceSha256": "e4de01e8556acc1da457f16ea3b7cf6f169d7ceba4def5a6b649c55b0f00c3ae"
+      "sourceSha256": "72d86473422ede59c25bc599da044cbb6fea330932b79394390ae0a47c722cfb"
     },
     {
       "source": "Docs/Releases/v0.2.3.md",

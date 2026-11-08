@@ -26,8 +26,8 @@ def main():
     workspace.mkdir(parents=True, exist_ok=True)
     reports.mkdir(parents=True, exist_ok=True)
     original = 'int First = 1;\nint Second = 2;\n'
-    (workspace / 'First.cpp').write_text(original, encoding='utf-8')
-    (workspace / 'Second.cpp').write_text('int GlobalNeedle = 42;\n', encoding='utf-8')
+    (workspace / 'First.cpp').write_bytes(original.encode('utf-8'))
+    (workspace / 'Second.cpp').write_bytes(b'int GlobalNeedle = 42;\n')
     environment = {key.upper(): value for key, value in os.environ.items()}
     if sys.platform == 'win32':
         environment['PATH'] = str(Path(os.environ['SystemRoot']) / 'System32')

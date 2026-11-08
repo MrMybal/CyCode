@@ -55,6 +55,34 @@ jobs:
         run: python app/scripts/build.py --distribution --no-install
       - name: Verify full offline help
         run: python app/scripts/verify_documentation.py app/Documentation
+      - name: Prepare pinned software rendering only in an owned Windows runner fixture
+        if: runner.os == 'Windows'
+        id: windows_graphics
+        run: python app/scripts/prepare_windows_graphics_ci.py --executable runtime/build-vs/Release/CyCode.exe
+      - name: Exercise actual hidden Windows rendering in English and French
+        if: runner.os == 'Windows'
+        env:
+          GALLIUM_DRIVER: llvmpipe
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: python app/scripts/verify_graphical_ci.py --executable "${{ steps.windows_graphics.outputs.executable }}"
+      - name: Exercise actual Windows editing and search keyboard workflows
+        if: runner.os == 'Windows'
+        env:
+          GALLIUM_DRIVER: llvmpipe
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: python app/scripts/verify_shortcuts.py --ci --hidden --executable "${{ steps.windows_graphics.outputs.executable }}" --output runtime/reports/keyboard-ci
+      - name: Exercise actual Windows documentation and parameter shortcuts
+        if: runner.os == 'Windows'
+        env:
+          GALLIUM_DRIVER: llvmpipe
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: python app/scripts/verify_information.py --ci --executable "${{ steps.windows_graphics.outputs.executable }}" --output runtime/reports/information-ci
+      - name: Exercise real Windows detached windows and simultaneous native instances
+        if: runner.os == 'Windows'
+        env:
+          GALLIUM_DRIVER: llvmpipe
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: python app/scripts/verify_viewports_ci.py --executable "${{ steps.windows_graphics.outputs.executable }}"
       - name: Exercise hidden Linux rendering in English and French
         if: runner.os == 'Linux'
         env:

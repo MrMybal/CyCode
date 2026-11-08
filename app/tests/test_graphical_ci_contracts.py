@@ -14,6 +14,7 @@ class RunnerLaunchGuards(unittest.TestCase):
     def test_runner_checks_refuse_local_execution_before_spawning(self):
         cases = [
             ('verify_graphical_ci.py', ['--executable', 'not-used']),
+            ('prepare_windows_graphics_ci.py', ['--executable', 'not-used']),
             ('verify_viewports_ci.py', ['--executable', 'not-used']),
             ('verify_installer_ci.py', ['--setup', 'not-used.exe']),
             ('verify_mcp_runtime_ci.py', ['--installation', 'not-used', '--fixture-root', 'not-used', '--reports', 'not-used']),
