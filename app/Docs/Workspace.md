@@ -10,7 +10,8 @@ The non-Windows implementation currently polls directory metadata once per secon
 (up to 200,000 entries, 64 directory levels, no symlink traversal). Windows falls
 back to it if notifications cannot start or fail. Its backend/error is visible in
 workspace.poll. Only Windows native notifications have been executed locally;
-Linux/macOS polling is implemented but unverified. Polling a large tree has a cost;
+The a176a31 remote matrix executes the filesystem reconciliation fixture on
+Linux/macOS; native OS event backends are not provided there. Polling a large tree has a cost;
 native Linux/macOS watchers remain planned.
 
 The desktop reconciles in a background future every 500 ms. A clean document whose
@@ -21,6 +22,14 @@ and saved baseline. Removed, unreadable, oversized or invalid UTF-8 files retain
 their last valid buffer too. A visible warning accompanies diskConflict metadata.
 Saving still rejects external changes. An explicit discard/reload is required to
 replace a dirty buffer; no automatic last-writer-wins save is added.
+
+The asynchronous disk observation is bound to the document identity, revision,
+dirty state and exact saved disk bytes. A concurrent edit, save, close or reopen
+invalidates its conflict result and requests reconciliation of the current owner.
+A late explicit/automatic reload rejects a closed document before opening or
+publishing another lifetime. A successful reload preserves the current identity.
+Public stale-reload, no-resurrection/event and identity regressions are added to
+the existing core/workspace targets; actual interleaving coverage remains limited.
 
 Every two seconds a reconciliation also checks open documents, even if notifications
 were coalesced or the path is in an index-excluded directory. Directory notifications

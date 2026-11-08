@@ -1,4 +1,8 @@
 """Actual documentation/parameter shortcuts. All application windows stay hidden."""
+import argparse
+import hashlib
+import os
+import sys
 import json
 from pathlib import Path
 import subprocess
@@ -10,15 +14,23 @@ def chord(frame,*keys):
     return [{'frame':frame,'keys':keys,'down':True},{'frame':frame+2,'keys':keys,'down':False}]
 
 def main():
-    executable=ROOT/'CyCode.exe'
-    if not executable.is_file():
-        raise SystemExit('CyCode.exe is absent. Resolve the application/protection report before running GUI acceptance; this script does not restore executables or change protection settings.')
-    reports=ROOT/'data/reports/information';reports.mkdir(parents=True,exist_ok=True)
-    base=ROOT/'data/validation';base.mkdir(parents=True,exist_ok=True)
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--executable',type=Path,default=ROOT/('CyCode.exe' if sys.platform=='win32' else 'CyCode'))
+    parser.add_argument('--output',type=Path)
+    parser.add_argument('--ci',action='store_true')
+    args=parser.parse_args()
+    if args.ci and os.environ.get('GITHUB_ACTIONS')!='true':
+        parser.error('--ci requires an explicit GitHub Actions runner')
+    executable=args.executable.resolve(strict=True)
+    if args.ci and not executable.is_relative_to(ROOT/'runtime'):
+        parser.error('Use this checkout production executable.')
+    reports=(args.output or ROOT/'data/reports/information').resolve();reports.mkdir(parents=True,exist_ok=True)
+    base=ROOT/('runtime/test-workspaces/information-ci' if args.ci else 'data/validation');base.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='information-',dir=base) as directory:
         root=Path(directory)
         text='/// Combine two values.\nint combine(int left, int right) { return left + right; }\nint main() { return combine(1, 2); }\n'
-        (root/'main.cpp').write_text(text,'utf-8')
+        (root/'main.cpp').write_bytes(text.encode('utf-8'))
+        source_digest=hashlib.sha256((root/'main.cpp').read_bytes()).hexdigest()
         for profile in ('rider','visualstudio','vscode'):
             for mode in ('hover','signature'):
                 offset=text.rfind('combine(')+2 if mode=='hover' else text.rfind('2);')
@@ -42,7 +54,7 @@ def main():
                 if mode=='signature':
                     selected=information['signatures'][information['activeSignature']]
                     assert selected['activeParameter']==1 and selected['parameters'][1]['label']=='int right',selected
-                assert not state['dirty'] and (root/'main.cpp').read_text('utf-8')==text,'Information query edited the source'
+                assert not state['dirty'] and hashlib.sha256((root/'main.cpp').read_bytes()).hexdigest()==source_digest,'Information query edited the source'
                 print(name+': actual shortcut, live server information and hidden window passed',flush=True)
 
 if __name__=='__main__': main()

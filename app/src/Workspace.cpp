@@ -12,14 +12,14 @@ Json Engine::pollWorkspace() {
         lastWorkspacePoll_ = now;
         struct Snapshot {
             std::string path, disk;
-            uint64_t revision;
+            uint64_t identity, revision;
             bool dirty;
         };
         std::vector<Snapshot> documents;
         {
             std::lock_guard lock(mutex_);
             for (const auto &[path, doc] : documents_)
-                documents.push_back({path, doc.disk, doc.revision, doc.dirty});
+                documents.push_back({path, doc.disk, doc.identity, doc.revision, doc.dirty});
         }
         for (const auto &doc : documents) {
             std::string conflict;
@@ -44,6 +44,14 @@ Json Engine::pollWorkspace() {
             }
             std::lock_guard lock(mutex_);
             if (auto found = documents_.find(doc.path); found != documents_.end()) {
+                // Disk I/O and reload run outside this lock. A save, edit, close
+                // or reopen can supersede the observation without changing its path.
+                const auto &current=found->second;
+                if (current.identity!=doc.identity || current.revision!=doc.revision ||
+                    current.dirty!=doc.dirty || current.disk!=doc.disk) {
+                    polledWorkspaceRevision_=0; // Reconcile the current owner on the next poll.
+                    continue;
+                }
                 const auto previous=found->second.diskConflict;
                 found->second.diskConflict = conflict;
                 if(previous!=conflict)documentEvent("document.conflict",doc.path,found->second);

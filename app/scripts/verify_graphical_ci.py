@@ -25,10 +25,12 @@ def main():
     reports.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='workspace-', dir=parent) as temporary:
         workspace = Path(temporary)
-        text = '// Synthetic code example: no user project data.\n#include <string>\nint main() { std::string message = "Hello"; return message.empty(); }\n'
+        text = '// Synthetic code example: no user project data.\n// UTF-8: été — Σ — кириллица.\n#include <string>\nint main() { std::string message = "Hello"; return message.empty(); }\n'
         source = workspace / 'main.cpp'
-        source.write_text(text, 'utf-8')
-        for language, theme in [('en', 'graphite'), ('fr', 'light-grey')]:
+        source.write_bytes(text.encode('utf-8'))
+        source_digest=hashlib.sha256(source.read_bytes()).hexdigest()
+        theme_hashes=set()
+        for language, theme in [('en', theme) for theme in ('graphite','navy','mid-grey','light-grey','amber-night','violet')] + [('fr','graphite'),('fr','light-grey')]:
             prefix = reports / (language + '-' + theme)
             capture, report = prefix.with_suffix('.bmp'), prefix.with_suffix('.json')
             command = [str(executable), '--workspace', str(workspace), '--open', 'main.cpp',
@@ -43,15 +45,17 @@ def main():
             fonts=state['ui']['fonts']
             assert 'Roboto-Regular.ttf' in fonts['ui'] and 'JetBrainsMono-Regular.ttf' in fonts['mono'], fonts
             assert fonts['portableIconsMerged'] and fonts['icons'], fonts
-            assert source.read_text('utf-8') == text, 'Smoke session changed its source file'
+            assert hashlib.sha256(source.read_bytes()).hexdigest()==source_digest, 'Smoke session changed exact source bytes'
             pixels = capture.read_bytes()
             assert pixels[:2] == b'BM' and len(pixels) > 1024
             width, height = struct.unpack_from('<ii', pixels, 18)
             assert width >= 800 and abs(height) >= 500, 'Unexpected capture dimensions'
             offset = struct.unpack_from('<I', pixels, 10)[0]
             assert len(set(pixels[offset:])) > 16, 'Blank or uniform rendered capture'
+            if language=='en':theme_hashes.add(hashlib.sha256(pixels).hexdigest())
             print(json.dumps({'language': language, 'theme': theme, 'width': width,
                 'height': abs(height), 'captureSha256': hashlib.sha256(pixels).hexdigest()}))
+        assert len(theme_hashes)==6,'Requested English themes did not produce six distinct renders.'
     print('Actual runner startup/render/font/source preservation passed; this is not full keyboard/DPI acceptance.')
 
 if __name__ == '__main__':

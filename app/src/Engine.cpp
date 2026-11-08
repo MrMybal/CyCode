@@ -768,7 +768,10 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
     }
     if (method == "documents.reload") {
         const auto key = pathUtf8(resolve(params.at("path")).lexically_relative(root_));
-        auto &doc = openLocked(key);
+        const auto found=documents_.find(key);
+        if (found==documents_.end())
+            throw std::runtime_error("RevisionConflict: document closed before reload");
+        auto &doc=found->second;
         if (params.at("expectedRevision") != doc.revision) throw std::runtime_error("RevisionConflict: document changed before reload");
         if (doc.dirty && !params.value("discard",false)) throw std::runtime_error("Save or reconcile modified text before reloading from disk");
         auto previous = documents_.extract(key);

@@ -14,8 +14,10 @@ class RunnerLaunchGuards(unittest.TestCase):
     def test_runner_checks_refuse_local_execution_before_spawning(self):
         cases = [
             ('verify_graphical_ci.py', ['--executable', 'not-used']),
+            ('verify_viewports_ci.py', ['--executable', 'not-used']),
             ('verify_installer_ci.py', ['--setup', 'not-used.exe']),
             ('verify_shortcuts.py', ['--ci', '--executable', 'not-used']),
+            ('verify_information.py', ['--ci', '--executable', 'not-used']),
         ]
         for name, arguments in cases:
             with self.subTest(script=name):

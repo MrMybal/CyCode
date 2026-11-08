@@ -110,7 +110,10 @@ Json Engine::gitMerge(const std::string &method, const Json &params) {
     auto ref = [&](const std::string &name) {
         const auto result = git({"rev-parse", "--verify", "--quiet", name});
         if (result.timedOut || result.truncated || (result.exitCode != 0 && result.exitCode != 1))
-            throw std::runtime_error("Cannot inspect Git merge reference");
+            throw std::runtime_error("Cannot inspect Git merge reference: " +
+                Json{{"reference",name},{"exitCode",result.exitCode},{"timedOut",result.timedOut},
+                     {"truncated",result.truncated},
+                     {"output",processOutputText(std::string_view(result.output).substr(0,2048),true)}}.dump());
         return result.exitCode ? std::string{} : trimmed(result.output);
     };
     const auto admin =

@@ -16,6 +16,27 @@ byte for byte with the pinned optional authoring tool. No native fixture or GUI
 is launched by these data checks.
 
 
+The production workflow adds runner-only native viewport/isolation acceptance
+through `python app/scripts/verify_viewports_ci.py --executable runtime/build/CyCode`
+(under `xvfb-run -a` on Linux). It launches two owned native GUI processes, talks
+to their real loopback Engine bridges and checks editor/panel OS windows, close,
+reopen, redocking, unsaved-buffer isolation, independent shutdown and descriptor
+cleanup. It neither substitutes a Python document model nor claims SDK/MCP
+coverage. The CLI guard refuses local execution before reading an executable or
+spawning a process. Reports omit bridge tokens. Native runs remain remote only.
+
+The existing `verify_information.py` accepts `--ci --executable PATH --output DIR`
+for actual hover and signature help through all three keyboard profiles. Linux
+uses its Xvfb display; macOS uses the real runner window system. A real clangd
+server supplies the selected second parameter and source documentation. The
+runner guard is checked before filesystem/process actions; no language service
+is substituted or simulated. These six new graphical cases still need execution.
+
+The hidden renderer now requests all six English themes plus French graphite and
+light-grey; these eight new cases and the viewport lifecycle must actually pass
+before being described as verified. No simulated DPI or second physical monitor
+is claimed. Existing Linux twelve-case keyboard acceptance stays separate.
+
 Header/source and include navigation have 106 compiler-evaluated helper contracts
 on the actual native constexpr owners. The 27 additions cover inline comments,
 logical LF/CRLF components, spliced keywords, physical header offsets, conservative

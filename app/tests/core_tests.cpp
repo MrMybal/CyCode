@@ -231,6 +231,10 @@ static void journalChecks(const std::filesystem::path &root) {
     write(workspace / "a.cpp", "int value=3;\n");
     doc = engine.dispatch("documents.reload", {{"path", "a.cpp"}, {"expectedRevision", doc.at("revision")}});
     engine.dispatch("documents.close", {{"path", "a.cpp"}});
+    rejects([&] {engine.dispatch("documents.reload",{{"path","a.cpp"},{"expectedRevision",doc.at("revision")}});},
+            "Reload accepted a retired document revision");
+    check(engine.dispatch("documents.list").at("documents").empty(),
+          "Rejected reload opened a closed document or published a new lifetime");
     const auto events = engine
                             .dispatch("events.read", {{"epoch", start.at("epoch")},
                                                       {"afterSequence", start.at("nextSequence")},

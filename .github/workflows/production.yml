@@ -39,13 +39,16 @@ jobs:
         if: runner.os == 'Linux'
         run: >-
           sudo apt-get update && sudo apt-get install -y
-          ninja-build ripgrep xvfb xauth libgl1-mesa-dev libegl1-mesa-dev
+          ninja-build ripgrep clangd xvfb xauth libgl1-mesa-dev libegl1-mesa-dev
           libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev
           libxfixes-dev libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev
           libdbus-1-dev libudev-dev libdrm-dev libgbm-dev libasound2-dev libpulse-dev
       - name: macOS build tools
         if: runner.os == 'macOS'
-        run: brew install ninja ripgrep
+        run: brew install ninja ripgrep llvm
+      - name: Use LLVM language tools on macOS
+        if: runner.os == 'macOS'
+        run: echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
       - name: Fetch pinned build sources
         run: python app/scripts/fetch_dependencies.py
       - name: Compile desktop, CLI and bundled providers without native test targets
@@ -65,6 +68,22 @@ jobs:
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
         run: xvfb-run -a python app/scripts/verify_shortcuts.py --ci --hidden --executable runtime/build/CyCode --output runtime/reports/keyboard-ci
+      - name: Exercise real Linux documentation and parameter shortcuts
+        if: runner.os == 'Linux'
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run -a python app/scripts/verify_information.py --ci --executable runtime/build/CyCode --output runtime/reports/information-ci
+      - name: Exercise real macOS documentation and parameter shortcuts
+        if: runner.os == 'macOS'
+        run: python app/scripts/verify_information.py --ci --executable runtime/build/CyCode --output runtime/reports/information-ci
+      - name: Exercise real Linux detached windows and simultaneous native instances
+        if: runner.os == 'Linux'
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run -a python app/scripts/verify_viewports_ci.py --executable runtime/build/CyCode
+      - name: Exercise real macOS detached windows and simultaneous native instances
+        if: runner.os == 'macOS'
+        run: python app/scripts/verify_viewports_ci.py --executable runtime/build/CyCode
       - name: Locate or install the Windows installer compiler
         if: runner.os == 'Windows'
         shell: pwsh
@@ -91,5 +110,7 @@ jobs:
             runtime/reports/graphical-ci/*
             runtime/reports/installer-ci/*
             runtime/reports/keyboard-ci/*
+            runtime/reports/viewports-ci/*
+            runtime/reports/information-ci/*
           if-no-files-found: ignore
           retention-days: 7

@@ -2,11 +2,13 @@
 #include "cycode/GitMerge.h"
 #include "cycode/GitReplay.h"
 #include <fstream>
+#include <iostream>
+#include <source_location>
 namespace cycode {
 void gitReplayContracts(const std::filesystem::path &root) {
-    auto require = [](bool value, const char *message) {
+    auto require = [](bool value, const char *message, const std::source_location location=std::source_location::current()) {
         if (!value)
-            throw std::runtime_error(message);
+            throw std::runtime_error(std::string(message)+" at replay line "+std::to_string(location.line()));
     };
     auto rejects = [&](const std::function<void()> &call) {
         bool rejected = false;
@@ -25,6 +27,7 @@ void gitReplayContracts(const std::filesystem::path &root) {
     rejects([&] { gitReplayRequest({{"action", "continue"}, {"commit", oid}}); });
     rejects([&] { gitReplayRequest({{"action", "abort"}}); });
     for (const auto *scenario : {"clean", "continue", "quit"}) {
+        std::cout<<"Replay scenario: "<<scenario<<'\n'<<std::flush;
         const auto folder = root / (std::string("replay-") + scenario);
         std::filesystem::create_directories(folder);
         auto git = [&](std::vector<std::string> args) {

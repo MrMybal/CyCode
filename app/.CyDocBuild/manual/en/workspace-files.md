@@ -5,7 +5,7 @@ description: Create, move and restore physical files without confusing them with
 section: Work in CyCode
 parent: editing
 order: 41
-revision: 1
+revision: 2
 ---
 
 ## Browse physical files {#files}
@@ -59,6 +59,8 @@ Clean open documents reload detected disk changes; dirty or conflicted buffers
 retain their text. Saving refuses a conflicting disk baseline. Review the change
 and deliberately reload/discard when appropriate. File watching is separate from
 the recoverable text checkpoints in [Recovery](doc:recovery#recover).
+
+A reload issued for a document that has since closed is refused; it does not reopen that tab. Background disk observations are discarded when an edit, save or reopen has replaced their document state. The current text and saved baseline remain authoritative.
 
 The index respects ignore rules and holds at most 200,000 paths. Explicit refresh
 rebuilds it; changes to global Git exclusions can require that refresh. SDK clients

@@ -16,12 +16,12 @@ runtime behavior, and an unavailable external tool is a skipped test, not a pass
 
 | Gate | Current evidence | Required before completion |
 |---|---|---|
-| Windows/Linux/macOS core | Complete a176a31 matrix: Linux 57 passed / 1 platform skip; Windows 55 passed / 3 failures; macOS 55 passed / 1 timeout / 2 skips | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
+| Windows/Linux/macOS core | 8490f94: Linux 63 passed / 1 platform skip; macOS 62 passed / 1 Git reference failure / 1 platform skip; Windows still running | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
 | Production GUI and CLI | Full production app/CLI builds pass on Windows, Linux and macOS; Linux EN graphite / FR light-grey hidden rendering passes; 62 UI files pass strict Clang syntax | Linux 12 keyboard/Undo/search/keymap cases pass; Linux/macOS actual EN/FR font/icon rendering passes; detached windows and wider platform interaction acceptance remain |
 | Source/schema checks | 233 descriptors / 466 schemas match; 30 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
 | Offline help and website | Merged 610-page / 6316-route reader and DOM controls pass | Keep exports current with final fixes; validate actual browser/desktop help handoff |
-| Installer and application updates | Actual a176a31 Windows runner Setup, payload hashes, busy/pending guards, French repair and uninstall/data retention pass | Full installed/portable online update, cancellation/recovery/restart and pristine-machine runtime acceptance |
-| Editor and SDK/plugins | Implemented milestones are documented individually | Runtime source/selection/Undo/lifecycle/permission and graphical acceptance |
+| Installer and application updates | Actual 8490f94 Windows runner Setup, payload hashes, busy/pending guards, French repair and uninstall/data retention pass | Full installed/portable online update, cancellation/recovery/restart and pristine-machine runtime acceptance |
+| Editor and SDK/plugins | Implemented milestones are documented individually; distribution currently omits Python/SDK | Package the real CyToolsCore/MCP runtime; execute official-client, source/selection/Undo/lifecycle/permission and graphical acceptance |
 | Advanced development workflows | See Roadmap.md | Complete explicitly missing services and validate against real tools |
 
 Local native fixture/application launches remain suspended while the reported
@@ -151,3 +151,49 @@ line views avoid whole-line preview copies. Preview truncation retains UTF-8
 scalars. Public-API regressions retain disk bytes, columns, cancellation and limits.
 The new native path/search cases and macOS managed-debug execution still require
 their next runner results. See Workspace.md for search bounds and semantics.
+
+## Document observation ownership and extended graphical gates — 2026-11-08
+
+Workspace disk reads now revalidate document identity/revision/dirty state and
+the exact disk baseline before publishing a conflict. Superseded observations
+request another poll without writing into the replacement lifetime. Reload of
+a closed document fails before opening one, avoiding resurrection by a stale
+asynchronous call. Existing core/workspace fixtures assert the public refusal,
+no extra open event and stable identity of a successful automatic reload. Their
+actual execution remains pending for this correction; no race stress result is
+invented from syntax checks.
+
+The macOS a176a31 English graphite capture was also visually inspected and is
+readable with bundled fonts/icons. The next production workflow requests eight
+theme/language captures and actual detached native editor/panel windows plus two
+simultaneous Engine/bridge instances. These new runner-only scripts retain real
+GUI behavior and source bytes. They refuse local execution; no native GUI/helper
+or fixture has been launched on the user's machine. This new gate does not cover
+CyToolsCore/MCP, a second physical monitor, IME or multiple physical DPI settings.
+
+## 8490f94 results and the remaining distribution gap — 2026-11-08
+
+Production run 42457286801 passes all three complete builds and repeats the real
+Windows install/repair/uninstall and Linux/macOS EN/FR renders. The Linux keyboard
+suite passes again. Native run 42457286802 passes 63 Linux tests with only MSBuild
+skipped. macOS passes 62 tests, including actual .NET debugging, Unicode search
+and every repository/worktree assertion; MSBuild is skipped. Its isolated Git
+replay case fails while inspecting a merge reference. That refusal remains strict;
+the next build adds the exact reference, child status and bounded UTF-8 output.
+The Windows native job is still running at this entry; its result is not assumed.
+
+The next graphical checks also use real clangd hover/signature responses through
+Rider/Visual Studio/VS Code input, alongside eight theme/language captures and
+native viewport/two-instance acceptance. Sources stay byte-identical; the Unicode
+render fixture includes accents, Greek and Cyrillic. These added checks are pending.
+
+Package inspection confirms that the current Windows payload includes the MCP
+facade but requires separate installation of its Python/SDK environment. This
+remains incomplete for the requested bundled integration. Preparation has verified
+the local CyToolsCore 0.10.1 wheel against all 50 package files at published commit
+05352e1d2f58f423fa2ad57b8eec48d2609f2626, apart from checkout line endings. The
+32-wheel Windows/Python-3.13 candidate has 1,657 files / 41,877,451 bytes before
+normal wheel installation mapping. The official Python 3.13.17 embedded archive
+matches its published SHA-256. These are inventory/provenance checks only: no
+new interpreter, downloaded package, native application or fixture was executed
+locally, and the candidate environment is not yet packaged or runtime-validated.

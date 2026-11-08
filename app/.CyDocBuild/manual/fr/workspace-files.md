@@ -5,7 +5,7 @@ description: Créer, déplacer et restaurer les fichiers physiques en distinguan
 section: Travailler dans CyCode
 parent: editing
 order: 41
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 ## Parcourir les fichiers physiques {#files}
@@ -65,6 +65,8 @@ disque ; les buffers modifiés ou en conflit gardent leur texte. Enregistrer ref
 un état disque incompatible. Examinez le changement puis rechargez/abandonnez
 explicitement si nécessaire. La surveillance est distincte des points de reprise
 de texte de [Récupération](doc:recovery#recover).
+
+Un rechargement demandé pour un document fermé entre-temps est refusé ; il ne rouvre pas son onglet. Les observations du disque en arrière-plan sont écartées lorsqu’une modification, un enregistrement ou une réouverture a remplacé l’état observé. Le texte courant et son état disque enregistré restent la référence.
 
 L’index respecte les exclusions et contient au plus 200 000 chemins. Une
 actualisation explicite le reconstruit ; les exclusions Git globales peuvent
