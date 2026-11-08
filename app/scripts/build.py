@@ -54,13 +54,13 @@ def build_commands(args, cmake, ninja, editor):
         '-G', 'Ninja', f'-DCMAKE_MAKE_PROGRAM={ninja or "ninja"}']
     configure = [cmake, '-S', str(ROOT / 'app'), '-B', str(build), *generator,
                  f'-DCMAKE_BUILD_TYPE={args.configuration}', f'-DCYUI_DIR={args.cyui or ""}',
-                 f'-DCYCODE_EDITOR_ROOT={editor}',
-                 f'-DCYCODE_BUILD_GUI={"OFF" if args.core_only else "ON"}',
+
+                 '-DCYCODE_BUILD_GUI=OFF',
                  f'-DBUILD_TESTING={"ON" if args.build_tests else "OFF"}']
     compile_command = [cmake, '--build', str(build), '--config', args.configuration,
                        '--parallel', '4']
     if not args.build_tests:
-        compile_command += ['--target', *([] if args.core_only else ['CyCode']),
+        compile_command += ['--target',
                             'cycode_cli', 'cycode_sample', 'cycode_unreal', 'cycode_svn', 'cycode_perforce', 'cycode_mercurial', 'cycode_diversion']
     return build, [configure, compile_command]
 
@@ -84,7 +84,7 @@ def main():
     mode.add_argument('--reader-only', action='store_true', help='Deprecated: CyCodeReader now has its own repository/build')
     parser.add_argument('--configuration', default='Release')
     parser.add_argument('--cyui', type=Path, help='Clean checkout at app/cyui-source.lock.json (default: pinned cache)')
-    parser.add_argument('--editor-root', type=Path, help='Development checkout of CyCodeReader (default: pinned dependency)')
+    parser.add_argument('--editor-root', type=Path, help='Deprecated and ignored: Core does not depend on Reader')
     parser.add_argument('--distribution', action='store_true', help='Build packaged GUI/CLI without downloading optional language/debug toolchains')
     parser.add_argument('--no-install', action='store_true', help='Keep all build outputs in runtime; do not copy a root executable')
     parser.add_argument('--build-tests', action='store_true', help='Opt in to compiling native test executables in a separate build; does not run them or install the app')
@@ -99,17 +99,18 @@ def main():
         parser.error('--keep-going-tests requires --run-tests')
     if args.test_filter and not args.run_tests:
         parser.error('--test-filter requires --run-tests')
+    args.core_only = True
     args.build_tests = args.build_tests or args.run_tests
     if args.plan:
-        editor = args.editor_root or os.environ.get('CYCODE_EDITOR_ROOT') or ROOT / 'runtime/deps/cycode-reader'
+        editor = None
         cmake = shutil.which('cmake') or 'cmake'
         build, commands = build_commands(args, cmake, shutil.which('ninja'), editor)
         print(json.dumps({'buildDirectory': str(build), 'commands': commands,
                           'testCommand': test_command(args, cmake, build) if args.run_tests else None,
                           'installsExecutable': not (args.core_only or args.no_install or args.build_tests)}, indent=2))
         return 0
-    from editor_dependency import ensure_editor
-    editor=ensure_editor(args.editor_root)
+    editor = None
+    args.core_only = True
     if not args.core_only and not args.reader_only and not args.distribution:
         from fetch_runtime_tools import ensure_runtime_tools
         ensure_runtime_tools()

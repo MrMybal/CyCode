@@ -4,8 +4,11 @@ title: CyCode
 description: Choisissez une tâche pour commencer à travailler dans l’IDE.
 section: Bien démarrer
 order: 0
-sourceRevision: 3
+sourceRevision: 4
 ---
+
+Le Core CyCode et l’interface sont en cours de séparation. Consultez [l’architecture native](doc:native-core#ownership) pour les builds et services actuels.
+
 
 ## Commencer {#getting-started}
 

@@ -23,7 +23,7 @@ class References(HTMLParser):
         if tag == 'link' and 'href' in attrs: self.assets.append(attrs['href'])
 
 
-def verify(site):
+def verify(site, ui_sources=None):
     site = site.resolve(); data = site / 'DocData'
     manifest = json.loads((data / 'manifest.json').read_text('utf-8'))
     owned = json.loads((data / 'export-files.json').read_text('utf-8'))['files']
@@ -103,7 +103,7 @@ def verify(site):
     routes = re.findall(r'\{"([a-zA-Z]+)", "([a-z0-9-]+)", "([a-z0-9-]+)"\}', (app / 'src/HelpTopics.h').read_text('utf-8'))
     assert routes and len({route[0] for route in routes}) == len(routes), 'Invalid native help catalogue'
     panels = set()
-    for source in (app / 'src').glob('*.cpp'):
+    for source in (ui_sources or app / 'src').glob('*.cpp'):
         panels.update(re.findall(r'beginPanel\([^,\n]+,\s*"([a-zA-Z]+)"\)', source.read_text('utf-8')))
     assert panels <= {route[0] for route in routes}, 'A built-in panel has no contextual help'
     for _, identity, anchor in routes:

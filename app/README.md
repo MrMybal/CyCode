@@ -1,3 +1,5 @@
+> **Architecture en cours de séparation :** ce dépôt devient CyCode Core, le moteur natif commun. L’interface est dans [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE). Les téléchargements 0.2.3 et les captures ci-dessous concernent la version historique de l’IDE. Voir [la migration](Docs/CoreExtraction.md).
+
 # CyCode
 
 Navigate > Open included file follows supported literal C/C++ directives in the

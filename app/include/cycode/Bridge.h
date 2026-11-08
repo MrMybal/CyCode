@@ -1,5 +1,5 @@
 #pragma once
-#include "cycode/Engine.h"
+#include "cycode/CoreService.h"
 #include <atomic>
 #include <filesystem>
 #include <thread>
@@ -19,6 +19,7 @@ class Bridge {
     void serve();
     void serveClient(std::intptr_t,bool controlOnly=false);
     Engine &engine_;
+    CoreService service_;
     std::filesystem::path descriptor_;
     std::string token_;
     std::intptr_t listener_ = -1;

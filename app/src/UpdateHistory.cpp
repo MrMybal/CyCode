@@ -1,6 +1,6 @@
 #include "cycode/UpdateHistory.h"
-#include "UpdateFiles.h"
-#include "UpdateHistoryPolicy.h"
+#include "cycode/update/detail/UpdateFiles.h"
+#include "cycode/update/detail/UpdateHistoryPolicy.h"
 #include "cycode/Paths.h"
 #include <algorithm>
 #include <stdexcept>

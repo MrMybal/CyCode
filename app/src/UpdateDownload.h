@@ -1,5 +1,5 @@
 #pragma once
-#include "UpdateFiles.h"
+#include "cycode/update/detail/UpdateFiles.h"
 #include "UpdateRange.h"
 #include "cycode/UpdateProgress.h"
 

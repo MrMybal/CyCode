@@ -1,3 +1,5 @@
+> **Architecture en cours de séparation :** ce dépôt devient CyCode Core, le moteur natif commun. L’interface est dans [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE). Les téléchargements 0.2.3 et les captures ci-dessous concernent la version historique de l’IDE. Voir [la migration](app/Docs/CoreExtraction.md).
+
 <table width="100%">
   <tr>
     <td width="300" align="left" valign="top">

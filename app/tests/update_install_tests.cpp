@@ -1,6 +1,6 @@
 #include "../src/UpdateBudget.h"
-#include "../src/UpdateFiles.h"
-#include "../src/UpdateInstall.h"
+#include "cycode/update/detail/UpdateFiles.h"
+#include "cycode/update/detail/UpdateInstall.h"
 #include "cycode/UpdateRecoveryProgress.h"
 #include <fstream>
 #include <stdexcept>

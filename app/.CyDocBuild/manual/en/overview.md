@@ -4,8 +4,11 @@ title: CyCode
 description: Choose a task and start working in the IDE.
 section: Start here
 order: 0
-revision: 3
+revision: 4
 ---
+
+CyCode Core and the desktop interface are being separated. Read [the native architecture](doc:native-core#ownership) for current build/service ownership.
+
 
 ## Start here {#getting-started}
 

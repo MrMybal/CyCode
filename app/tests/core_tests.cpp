@@ -11,6 +11,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
+namespace cycode { void coreServiceChecks(const std::filesystem::path &); }
 using namespace cycode;
 static void check(bool value, const char *message) {
     if (!value)
@@ -403,6 +404,7 @@ int main(int argc, char **argv) {
                 check(stats["words"] == 2 && stats["lines"] == 2, "Real dynamic plugin");
             }
         }
+        coreServiceChecks(root);
         unicodeSearchChecks(root/"unicode-search");
         std::filesystem::remove_all(root);
         std::cout << "Core tests passed: revisions, disk conflicts, encoding, boundaries, unsaved search, "

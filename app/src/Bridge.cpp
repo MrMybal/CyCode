@@ -26,7 +26,7 @@ static void closeSocket(NativeSocket s) {
 }
 #endif
 namespace cycode {
-Bridge::Bridge(Engine &engine, const std::filesystem::path &path) : engine_(engine), descriptor_(path) {
+Bridge::Bridge(Engine &engine, const std::filesystem::path &path) : engine_(engine), service_(engine), descriptor_(path) {
 #ifdef _WIN32
     WSADATA data{};
     if (WSAStartup(MAKEWORD(2, 2), &data) != 0)
@@ -66,7 +66,8 @@ Bridge::Bridge(Engine &engine, const std::filesystem::path &path) : engine_(engi
                  {"host", "127.0.0.1"},
                  {"port", ntohs(address.sin_port)},
                  {"token", token_},
-                 {"workspace", pathUtf8(engine_.workspace())}})
+                 {"workspace", pathUtf8(engine_.workspace())},
+                 {"coreProtocol", CoreService::protocol}})
                .dump(2);
     out.close();
 #ifndef _WIN32
@@ -76,7 +77,7 @@ Bridge::Bridge(Engine &engine, const std::filesystem::path &path) : engine_(engi
 }
 Bridge::~Bridge() {
     stopping_ = true;
-    engine_.dispatch("project.cancel");
+    service_.beginShutdown();
     if (thread_.joinable())
         thread_.join();
     if (listener_ != -1)
@@ -142,11 +143,10 @@ void Bridge::serveClient(std::intptr_t socket,bool controlOnly) {
             auto input = Json::parse(request);
             if (input.value("token", std::string{}) != token_)
                 throw std::runtime_error("Access denied");
-            if (controlOnly && input.value("method","")!="project.cancel") throw std::runtime_error("Native connection capacity reached; retry later");
-            response = {
-                {"result", engine_.dispatch(input.at("method"), input.value("params", Json::object()))}};
+            if (controlOnly && input.value("method","")!="project.cancel" && input.value("method","")!="build.cancel" && input.value("method","")!="tests.cancel" && input.value("method","")!="service.status") throw std::runtime_error("Native connection capacity reached; retry later");
+            response = service_.respond(input);
         } catch (const std::exception &e) {
-            response = {{"error", {{"message", e.what()}}}};
+            response = CoreService::error("TransportError",e.what());
         }
         auto payload = response.dump(-1, ' ', false, Json::error_handler_t::replace) + "\n";
         size_t at = 0;

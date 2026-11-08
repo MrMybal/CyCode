@@ -56,7 +56,7 @@ def publish(source, destination):
         if parent.is_dir() and not any(parent.iterdir()): parent.rmdir()
 
 
-def build(outputs=()):
+def build(outputs=(), ide_root=None):
     node, package = prepare()
     settings = json.loads((WORK / 'cydoc.config.json').read_text('utf-8'))
     descriptor = json.loads((APP / 'CyTool.json').read_text('utf-8'))
@@ -80,7 +80,7 @@ def build(outputs=()):
         with (site / 'DocAI.md').open('a', encoding='utf-8') as ai:
             ai.write('\n## CyCode integration\n\nUse the official CyToolsCore SDK/MCP companion and native services. Editing requires explicit permission. Read document revisions before changes, preview transactions, and save only when requested. Poll asynchronous jobs and inspect process exit codes. Never infer language-service or debugger capabilities from syntax colouring. The public operation schemas are in DocData/manifest.json; implementation sources, local project data and credentials are not distributed.\n')
         (site / MARKER).write_text(json.dumps({'format': 2, 'generator': 'CyDoc', 'revision': json.loads((WORK / 'cydoc.lock.json').read_text('utf-8'))['revision'], 'files': inventory(site)}, indent=2) + '\n', encoding='utf-8')
-        verify(site)
+        verify(site, ui_sources=ide_root / "app/src" if ide_root else None)
         for destination in [APP / 'Documentation', *outputs]: publish(site, destination)
     print('CyDoc manual: ' + str(APP / 'Documentation/Documentation.html'))
 
@@ -88,8 +88,9 @@ def build(outputs=()):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, action='append', default=[])
+    parser.add_argument('--ide-root', type=Path, help='Check context help against the extracted IDE sources')
     args = parser.parse_args()
-    build(args.output)
+    build(args.output, args.ide_root)
 
 
 if __name__ == '__main__': main()

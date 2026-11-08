@@ -1,5 +1,5 @@
-#include "../src/UpdateFiles.h"
-#include "../src/UpdateHistoryPolicy.h"
+#include "cycode/update/detail/UpdateFiles.h"
+#include "cycode/update/detail/UpdateHistoryPolicy.h"
 #include "cycode/Paths.h"
 #include <fstream>
 #include <limits>

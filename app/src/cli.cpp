@@ -2,6 +2,7 @@
 #include "cycode/Tools.h"
 #include "cycode/Updates.h"
 #include <iostream>
+#include <limits>
 #ifdef _WIN32
 // clang-format off
 #include <windows.h>
@@ -36,7 +37,7 @@ int main(int argc, char **argv) {
         }
         if (argc < 3) {
             std::cerr << "Usage: cycode_cli [--disable-plugins] WORKSPACE METHOD [PARAMETERS_JSON]\n       cycode_cli WORKSPACE "
-                         "--serve DESCRIPTOR\n";
+                         "--serve DESCRIPTOR\n       cycode_cli WORKSPACE --stdio\n";
             return 2;
         }
         const auto installation=cycode::installationRoot();
@@ -44,6 +45,48 @@ int main(int argc, char **argv) {
         cycode::Engine engine(cycode::utf8Path(arguments[1]), installation.empty() ? std::filesystem::path{} : installation / "data/settings/language-servers",
             installation.empty() ? std::filesystem::path{} : installation / "data/settings/snippets");
         if(!disablePlugins&&!installation.empty())engine.plugins().loadInstalled(installation);
+        if (arguments[2] == "--stdio") {
+            // One Engine and its backend workers survive every request until
+            // explicit shutdown or EOF. stdout contains JSON lines only.
+            cycode::CoreService service(engine);
+            std::cout << cycode::Json({{"event","ready"},{"protocol",cycode::CoreService::protocol},
+                                      {"status",service.status()}}).dump() << '\n' << std::flush;
+            std::string line;
+            while (std::cin.good()) {
+                line.clear();
+                char c=0;
+                bool oversized=false, complete=false;
+                while (std::cin.get(c)) {
+                    if (c=='\n') {complete=true;break;}
+                    if (line.size()<cycode::CoreService::maximumRequestBytes) line.push_back(c);
+                    else oversized=true;
+                }
+                if (!complete && line.empty() && !oversized) break;
+                cycode::Json response;
+                bool shutdown=false;
+                try {
+                    if (oversized) response=cycode::CoreService::error("RequestTooLarge","Native request exceeds 8 MiB");
+                    else {
+                        const auto input=cycode::Json::parse(line);
+                        // A host control operation, deliberately absent from
+                        // the authenticated legacy socket/MCP dispatch surface.
+                        if (input.is_object() && input.value("method",cycode::Json())=="service.shutdown") {
+                            auto validation=input;
+                            validation["method"]="service.status";
+                            response=service.respond(validation);
+                            if (response.contains("result")) {
+                                service.beginShutdown();shutdown=true;
+                                response["result"]=service.status();
+                            }
+                        } else response=service.respond(input);
+                    }
+                } catch (const cycode::Json::exception &e) {response=cycode::CoreService::error("InvalidJson",e.what());}
+                std::cout << response.dump(-1,' ',false,cycode::Json::error_handler_t::replace) << '\n' << std::flush;
+                if (shutdown) break;
+            }
+            service.beginShutdown();
+            return 0;
+        }
         if (arguments[2] == "--serve") {
             if (argc < 4)
                 return 2;

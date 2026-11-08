@@ -1,5 +1,5 @@
 #include "../src/UpdateBudget.h"
-#include "../src/UpdateFiles.h"
+#include "cycode/update/detail/UpdateFiles.h"
 #include "cycode/Paths.h"
 #include "cycode/UpdateRecovery.h"
 #include "cycode/UpdateRecoveryProgress.h"

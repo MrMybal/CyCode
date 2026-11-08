@@ -1,6 +1,6 @@
 #include "../src/UpdateBudget.h"
 #include "../src/UpdateDownload.h"
-#include "../src/UpdateFeedback.h"
+#include "cycode/UpdateProgress.h"
 #include "cycode/Paths.h"
 #include <fstream>
 #include <stdexcept>
@@ -108,7 +108,7 @@ void updateDownloadContracts(const std::filesystem::path &parent) {
         downloadResponse(206, "bytes 0-41/42", "", "25", 17, 42);
         throw std::logic_error("Unsafe response accepted");
     } catch (const DownloadError &error) {
-        check(error.issue() == DownloadIssue::response && downloadFeedback(error.issue()).code == "response",
+        check(error.issue() == DownloadIssue::response,
               "Response rejection lost its structured failure category");
     }
     check(downloadResponse(200, "", "", "42", 0, 42), "Full response refused");

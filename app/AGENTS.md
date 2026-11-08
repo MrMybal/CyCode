@@ -1,7 +1,8 @@
-# CyCode development
+# CyCode Core development
 
 Read README.md, Docs/Architecture.md, Docs/CapabilityCoverage.md and Docs/Validation.md.
-This is a native C++20/CyUI IDE with a private CyToolsCore MCP companion.
+This repository provides the native C++20 Core and CLI/service. UI sources live in CyCodeIDE.
+Read Docs/CoreExtraction.md before changing the build or shared APIs.
 
 - Preserve the common native services used by the GUI and MCP; do not add an independent Python editor model.
 - Use the configured CyUI checkout. Read its docs/AI_GUIDE.md. Palette roles for colours, cyui::dp/style for dimensions. Do not edit its vendored ImGui.

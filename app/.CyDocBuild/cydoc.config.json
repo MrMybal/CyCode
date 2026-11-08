@@ -27,7 +27,7 @@
     "plugin-guide": "plugins#extensions",
     "sdk": "mcp#connection",
     "reference-app-docs-advanceddebugging": "debug-inspection#inspect",
-    "reference-app-docs-architecture": "overview#getting-started",
+    "reference-app-docs-architecture": "native-core#ownership",
     "reference-app-docs-branding": "overview#getting-started",
     "reference-app-docs-build": "build#configure",
     "reference-app-docs-buildcancellation": "project-tasks#cancel",
@@ -137,6 +137,7 @@
     "reference-app-docs-toolchainreliability": "build#toolchains",
     "reference-app-docs-usersnippets": "refactoring#user-snippets",
     "reference-app-docs-finalization": "overview#getting-started",
-    "reference-app-docs-releases-v023": "updates#windows-installation"
+    "reference-app-docs-releases-v023": "updates#windows-installation",
+    "reference-app-docs-coreextraction": "native-core#ownership"
   }
 }

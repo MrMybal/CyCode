@@ -1,5 +1,5 @@
-#include "UpdateManifest.h"
-#include "UpdateFiles.h"
+#include "cycode/update/detail/UpdateManifest.h"
+#include "cycode/update/detail/UpdateFiles.h"
 #include <algorithm>
 #include <cctype>
 #include <set>

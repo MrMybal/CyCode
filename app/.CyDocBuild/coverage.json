@@ -11,9 +11,9 @@
     {
       "source": "Docs/Architecture.md",
       "kind": "developer-reference",
-      "target": "overview#getting-started",
+      "target": "native-core#ownership",
       "legacyId": "reference-app-docs-architecture",
-      "sourceSha256": "191f0787a4281e964db005f301407641f06ce633158540dab4361cd594ef388b"
+      "sourceSha256": "7580f9d7e6612ce8ba53623dee2f1dfc54fb2aea0fed01326058407e7bea4809"
     },
     {
       "source": "Docs/Branding.md",
@@ -91,6 +91,13 @@
       "target": "refactoring#snippet-transforms",
       "legacyId": "reference-app-docs-completionvariables",
       "sourceSha256": "9e2e021c9287e8ef1cc13f4a3eebc7b8d0f60c43962540a85abf08b74be73ad7"
+    },
+    {
+      "source": "Docs/CoreExtraction.md",
+      "kind": "developer-reference",
+      "target": "native-core#ownership",
+      "legacyId": "reference-app-docs-coreextraction",
+      "sourceSha256": "bd63a6db37349f3ff5b10e5e567843f2e0d878ee07b3f8423ec42f5dd07d0f7d"
     },
     {
       "source": "Docs/CppCounterparts.md",
@@ -182,6 +189,13 @@
       "target": "debugging#launch",
       "legacyId": "reference-app-docs-execution",
       "sourceSha256": "3371f31a2a9c8c3f7eac3413470cc79bfcb23bc659e8a9f6a595accd531e02cf"
+    },
+    {
+      "source": "Docs/Finalization.md",
+      "kind": "developer-reference",
+      "target": "overview#getting-started",
+      "legacyId": "reference-app-docs-finalization",
+      "sourceSha256": "3e928cb30b5b3ca75a63923fc45db96189fa44d07f37022e7809d83a4f10064e"
     },
     {
       "source": "Docs/GitConflicts.md",
@@ -392,6 +406,13 @@
       "target": "updates#updates",
       "legacyId": "reference-app-docs-releases-v0.2.2",
       "sourceSha256": "842ca6c8bc35f5ed2f8dfd35ca840409c4acfb7b35c891a1c763ac2a3aa8224e"
+    },
+    {
+      "source": "Docs/Releases/v0.2.3.md",
+      "kind": "developer-reference",
+      "target": "updates#windows-installation",
+      "legacyId": "reference-app-docs-releases-v023",
+      "sourceSha256": "e05a4070bf78e295f56afa65ca68ae887a7fcfc6fe74e7a37715d51fb2392660"
     },
     {
       "source": "Docs/Resources.md",
@@ -616,20 +637,6 @@
       "target": "settings#windows",
       "legacyId": "reference-app-docs-workspacesessions",
       "sourceSha256": "c3db5082455e7becdb10d069139979d53525d587e6d0e4c8993f3da19db4e661"
-    },
-    {
-      "source": "Docs/Finalization.md",
-      "kind": "developer-reference",
-      "target": "overview#getting-started",
-      "legacyId": "reference-app-docs-finalization",
-      "sourceSha256": "3e928cb30b5b3ca75a63923fc45db96189fa44d07f37022e7809d83a4f10064e"
-    },
-    {
-      "source": "Docs/Releases/v0.2.3.md",
-      "kind": "developer-reference",
-      "target": "updates#windows-installation",
-      "legacyId": "reference-app-docs-releases-v023",
-      "sourceSha256": "e05a4070bf78e295f56afa65ca68ae887a7fcfc6fe74e7a37715d51fb2392660"
     }
   ]
 }

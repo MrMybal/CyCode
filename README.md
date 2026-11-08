@@ -1,3 +1,5 @@
+> **Core extraction in progress:** this repository now provides the native CyCode Core. The desktop interface lives in [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE). The 0.2.3 downloads and screenshots below describe the historical IDE. See [the migration and current build](app/Docs/CoreExtraction.md).
+
 <table width="100%">
   <tr>
     <td width="300" align="left" valign="top">

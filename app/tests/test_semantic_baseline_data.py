@@ -1,0 +1,50 @@
+"""Data-only checks; never spawn CLI, clangd or any native fixture."""
+import importlib.util
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+path=Path(__file__).resolve().parents[1]/'scripts/benchmark_semantic.py'
+spec=importlib.util.spec_from_file_location('semantic_baseline',path)
+api=importlib.util.module_from_spec(spec);spec.loader.exec_module(api)
+
+class BaselineDataTests(unittest.TestCase):
+    def test_position_counts_supplementary_characters_in_utf16(self):
+        self.assertEqual(api.position('// 🛠 été\nint value;', 'value'), {'line':1,'character':4})
+        self.assertEqual(api.position('🛠 value', 'value'), {'line':0,'character':3})
+
+    def test_corpus_is_path_independent_and_compiler_context_is_explicit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            a=Path(tmp)/'a';b=Path(tmp)/'b'
+            first=api.corpus(a,3);second=api.corpus(b,3)
+            self.assertEqual(first,second)
+            commands=json.loads((a/'compile_commands.json').read_text())
+            self.assertEqual(len(commands),4)
+            for item in commands:
+                self.assertIn('-DCYCODE_BENCH_FACTOR=2',item['arguments'])
+                self.assertEqual(item['directory'],str(a))
+            with self.assertRaises(FileExistsError):api.corpus(a,3)
+
+    def test_prepare_only_executes_no_native_process(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(api.subprocess,'Popen',side_effect=AssertionError('native start')), patch.object(api.subprocess,'check_output',side_effect=AssertionError('native query')):
+            output=Path(tmp)/'report'
+            self.assertEqual(api.main(['--prepare-only','--output',str(output),'--units','2']),0)
+            report=json.loads((output/'baseline.json').read_text())
+            self.assertEqual(report['execution'],'not-run: source-data-only')
+            self.assertEqual(report['runs'],[])
+
+    def test_local_native_execution_is_refused_before_writing(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(api.os.environ,{},clear=True):
+            output=Path(tmp)/'refused'
+            with self.assertRaises(SystemExit):api.main(['--ci','--cli','missing','--clangd','missing','--output',str(output)])
+            self.assertFalse(output.exists())
+
+    def test_statistics_preserve_raw_samples(self):
+        report=api.summarize([10,1,8,2,5])
+        self.assertEqual(report['samplesMilliseconds'],[10,1,8,2,5])
+        self.assertEqual(report['medianMilliseconds'],5)
+        self.assertEqual(report['p95Milliseconds'],10)
+
+if __name__=='__main__':unittest.main()
