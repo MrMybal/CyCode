@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "protocolVersion": "1.0",
   "id": "cy.code",
-  "name": "CyCode",
+  "name": "CyCode Core",
   "version": "0.2.3",
-  "description": "Native C++ IDE services, shared by CyUI and CyToolsCore MCP.",
+  "description": "Native C++20 code services for CyCodeIDE, CyCodeReader and CyToolsCore MCP.",
   "vendor": "Cyberalien",
   "author": "Cyberalien",
   "executable": "python app/tool.py",
@@ -82171,6 +82171,5 @@
       ]
     }
   ],
-  "standaloneExecutable": "CyCode.exe",
-  "distributionStatus": "Development milestone; see app/Docs/Validation.md"
+  "distributionStatus": "Native Core development source; see app/Docs/CoreExtraction.md"
 }
