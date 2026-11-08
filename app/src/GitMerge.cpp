@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/GitMerge.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
@@ -360,7 +361,7 @@ Json Engine::gitMerge(const std::string &method, const Json &params) {
                                     : std::vector<std::string>{"merge", "--quit"},
                              120, hooks, true);
     Json result = {{"exitCode", process.exitCode},
-                   {"output", process.output},
+                   {"output", processOutputText(process.output, true)},
                    {"timedOut", process.timedOut},
                    {"truncated", process.truncated},
                    {"action", request.at("action")},

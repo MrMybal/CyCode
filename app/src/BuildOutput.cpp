@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/TaskOutput.h"
 #include <algorithm>
 
@@ -130,7 +131,7 @@ TaskOutput::Json TaskOutput::read(const Json &parameters) const {
     for (auto &c : raw)
         if ((static_cast<unsigned char>(c) < 32 && c != '\r' && c != '\n' && c != '\t') || c == 127)
             c = '?';
-    result["output"] = Json::parse(Json(raw).dump(-1, ' ', false, Json::error_handler_t::replace));
+    result["output"] = processOutputText(raw, true);
     return result;
 }
 } // namespace cycode

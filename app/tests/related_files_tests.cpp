@@ -1,3 +1,4 @@
+#include <source_location>
 #include "cycode/RelatedFiles.h"
 // Exercise a real compiler directive in addition to the reader's string fixtures.
 # /* tokens */ in\
@@ -117,7 +118,9 @@ static_assert(relatedHelpAnchor(true)=="open-include");
 static_assert(relatedHelpAnchor(false)=="header-source");
 static_assert(relatedHelpAnchor(false,true)=="related-results");
 static_assert(relatedHelpAnchor(true,true)=="open-include");
-void require(bool test){if(!test)throw std::runtime_error("Header/source navigation contract failed");}
+void require(bool test, const std::source_location location = std::source_location::current()) {
+    if (!test) throw std::runtime_error("Header/source navigation contract failed at line " + std::to_string(location.line()));
+}
 template<class F> void rejects(F action){bool failed=false;try{action();}catch(...){failed=true;}require(failed);}
 }
 void relatedFileContracts(const std::filesystem::path &base) {

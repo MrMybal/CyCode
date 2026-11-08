@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/BuildSystem.h"
 #include "cycode/BuildLimits.h"
 #include "cycode/BuildOperations.h"
@@ -593,7 +594,7 @@ Json BuildSystem::runPreset(const Json &params,const std::atomic<bool> *cancella
         for(const auto *entry:{"codemodel-v2","toolchains-v1"})writeAtomic(resolve_(pathUtf8(query/entry)),"");
     }
     auto process=runProcess(args,source,timeout,8*1024*1024,cancellation,{},processOutputObserver(cancellation));
-    Json result={{"exitCode",process.exitCode},{"output",process.output},{"timedOut",process.timedOut},
+    Json result={{"exitCode",process.exitCode},{"output",processOutputText(process.output, true)},{"timedOut",process.timedOut},
                  {"truncated",process.truncated},{"cancelled",process.cancelled},{"plan",plan},{"project",nullptr}};
     // A completed external action cannot be rolled back by a later inspection failure.
     try {
@@ -756,7 +757,7 @@ Json BuildSystem::run(const std::string &method, const Json &params, const std::
     auto process = runProcess(args, presetMode ? source : root_, timeout, 8 * 1024 * 1024, cancellation,
                               {}, processOutputObserver(cancellation));
     Json result = {{"exitCode", process.exitCode},
-                   {"output", process.output},
+                   {"output", processOutputText(process.output, true)},
                    {"timedOut", process.timedOut},
                    {"truncated", process.truncated},
                    {"cancelled", process.cancelled}};

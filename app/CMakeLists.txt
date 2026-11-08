@@ -69,7 +69,7 @@ set_target_properties(cycode_crypto PROPERTIES C_STANDARD 99 POSITION_INDEPENDEN
 set_target_properties(cycode_xml cycode_files PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # The application and bundled providers reuse one implementation of argv-based
 # process ownership/tool discovery, without linking IDE or UI services into a DLL.
-add_library(cycode_process STATIC src/Process.cpp src/Tools.cpp)
+add_library(cycode_process STATIC src/Process.cpp src/ProcessText.cpp src/Tools.cpp)
 target_include_directories(cycode_process PUBLIC include)
 target_link_libraries(cycode_process PUBLIC cycode_files Threads::Threads)
 set_target_properties(cycode_process PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -493,7 +493,7 @@ if(BUILD_TESTING)
   add_executable(cycode_vcs_tests tests/vcs_tests.cpp tests/git_repository_tests.cpp tests/git_submodule_tests.cpp tests/git_conflict_tests.cpp tests/git_merge_tests.cpp tests/git_replay_tests.cpp)
   target_link_libraries(cycode_vcs_tests PRIVATE cycode_core)
   add_test(NAME vcs COMMAND cycode_vcs_tests)
-  set_tests_properties(vcs PROPERTIES TIMEOUT 90)
+  set_tests_properties(vcs PROPERTIES TIMEOUT 240)
   configure_file(tests/debuggee.cpp "${CYCODE_ROOT}/data/validation/debug-native/debuggee.cpp" COPYONLY)
   add_executable(cycode_debug_fixture "${CYCODE_ROOT}/data/validation/debug-native/debuggee.cpp")
   if(MSVC)

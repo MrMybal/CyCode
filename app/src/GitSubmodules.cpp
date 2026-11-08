@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/GitSubmodules.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
@@ -405,7 +406,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
         const auto result =
             git(selected.directory, model.at("arguments").get<std::vector<std::string>>(), 180);
         Json output = {{"exitCode", result.exitCode},
-                       {"output", result.output},
+                       {"output", processOutputText(result.output, true)},
                        {"timedOut", result.timedOut},
                        {"truncated", result.truncated}};
         try {
@@ -581,7 +582,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
         const auto result = git(selected.directory,
                                 settingsModel.at("arguments").get<std::vector<std::string>>(), 180, false);
         Json output = {{"exitCode", result.exitCode},
-                       {"output", result.output},
+                       {"output", processOutputText(result.output, true)},
                        {"timedOut", result.timedOut},
                        {"truncated", result.truncated}};
         try {
@@ -727,7 +728,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
         const auto result =
             git(selected.directory, reviewed.at("arguments").get<std::vector<std::string>>(), 180, false);
         Json output = {{"exitCode", result.exitCode},
-                       {"output", result.output},
+                       {"output", processOutputText(result.output, true)},
                        {"timedOut", result.timedOut},
                        {"truncated", result.truncated}};
         try {
@@ -782,7 +783,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
     const auto result =
         git(selected.directory, args, 180, action != "update" || params.value("fetch", false));
     Json output = {{"exitCode", result.exitCode},
-                   {"output", result.output},
+                   {"output", processOutputText(result.output, true)},
                    {"timedOut", result.timedOut},
                    {"truncated", result.truncated}};
     try {

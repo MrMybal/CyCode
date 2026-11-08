@@ -9,7 +9,7 @@
 namespace {
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
-void require(bool value, const char *message) {
+void require(bool value, const std::string &message) {
     if (!value)
         throw std::runtime_error(message);
 }
@@ -99,7 +99,7 @@ void pluginPackageContracts(const std::filesystem::path &fixture, const std::fil
     Json errors = Json::array();
     auto liveA = manager.load(errors), liveB = manager.load(errors);
     require(liveA.size() == 1 && liveB.size() == 1 && errors.empty(),
-            "Two instances cannot hold the same signed package");
+            "Two instances cannot hold the same signed package: " + errors.dump());
     auto b = manager.inspect(second);
     catalog = manager.install(second, b.at("revision"), b.at("trustRevision"), b.at("digest"));
     rejects([&] { manager.remove("fixture.managed", a.at("revision")); });

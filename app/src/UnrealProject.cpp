@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/FileTime.h"
 #include "cycode/UnrealProject.h"
 #include "cycode/BuildLimits.h"
@@ -352,7 +353,7 @@ Json UnrealProject::runLocked(const std::string &method, const Json &params,
     checkBuildCancellation(cancellation);
     auto result = runProcess(command, cwd, timeout, 8 * 1024 * 1024, cancellation,
                              {}, processOutputObserver(cancellation));
-    Json response = {{"exitCode", result.exitCode},   {"output", result.output},
+    Json response = {{"exitCode", result.exitCode},   {"output", processOutputText(result.output, true)},
                      {"timedOut", result.timedOut},   {"truncated", result.truncated},
                      {"cancelled", result.cancelled}, {"project", {{"available", false}}}};
     try {

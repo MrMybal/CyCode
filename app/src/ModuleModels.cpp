@@ -138,7 +138,7 @@ void OutlineModel::set(nlohmann::json symbols) {
         source_[row.at("parent").get<uint64_t>()].push_back(id);
     }
     for (auto &[parent, children] : source_)
-        std::stable_sort(children.begin(), children.end(), [&](auto a, auto b) {
+        std::stable_sort(children.begin(), children.end(), [&](uint64_t a, uint64_t b) {
             const auto &left = at(a).at("fullRange").at("start"), &right = at(b).at("fullRange").at("start");
             return std::pair{left.at("line").get<int>(), left.at("character").get<int>()} <
                    std::pair{right.at("line").get<int>(), right.at("character").get<int>()};
@@ -146,7 +146,7 @@ void OutlineModel::set(nlohmann::json symbols) {
     alphabetic_ = source_;
     for (auto &[parent, children] : alphabetic_)
         std::stable_sort(children.begin(), children.end(),
-                         [&](auto a, auto b) { return sortKeys.at(a) < sortKeys.at(b); });
+                         [&](uint64_t a, uint64_t b) { return sortKeys.at(a) < sortKeys.at(b); });
 }
 const nlohmann::json &OutlineModel::at(uint64_t node) const {
     return symbols_.at(indices_.at(node));

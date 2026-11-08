@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/GitReplay.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
@@ -168,7 +169,7 @@ Json Engine::gitReplay(const std::string &method, const Json &params) {
         throw std::runtime_error("Replay changed before dispatch; intent retained, review again");
     const auto process = git(args, true);
     Json result = {{"exitCode", process.exitCode},
-                   {"output", process.output},
+                   {"output", processOutputText(process.output, true)},
                    {"timedOut", process.timedOut},
                    {"truncated", process.truncated},
                    {"action", action},

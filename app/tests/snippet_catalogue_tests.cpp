@@ -1,3 +1,4 @@
+#include <source_location>
 #include "cycode/SnippetCatalogue.h"
 #include "cycode/Engine.h"
 #include "cycode/TextFile.h"
@@ -35,7 +36,9 @@ static_assert(!snippetRegistryFits(33,0));
 static_assert(!snippetRegistryFits(0,1024*1024+1));
 static_assert(!snippetRegistryFits(size_t(-1),0));
 static_assert(!snippetRegistryFits(0,size_t(-1)));
-void require(bool value) { if(!value)throw std::runtime_error("Snippet catalogue contract failed"); }
+void require(bool value, const std::source_location location = std::source_location::current()) {
+    if (!value) throw std::runtime_error("Snippet catalogue contract failed at line " + std::to_string(location.line()));
+}
 template<class F> void rejects(F function) { bool failed=false;try{function();}catch(...){failed=true;}require(failed); }
 }
 void snippetCatalogueContracts() {

@@ -131,10 +131,14 @@ int main(int argc, char **argv) {
                         {"position",{{"line",0},{"character",0}}}}}});
                 require(query.at("ok")==true && query.at("result").at("result").at("items").size()==1,
                     "Plugin host request did not share its own declarative snippets");
-                const auto denied=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method","snippets.userSave"},
-                    {"parameters",{{"text","{}"},{"expectedRevision","absent"}}}});
-                require(denied.at("ok")==false && denied.at("error").get<std::string>().find("settings.write")!=std::string::npos,
-                    "Workspace-only plugin changed personal settings");
+                bool denied = false;
+                try {
+                    first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method","snippets.userSave"},
+                        {"parameters",{{"text","{}"},{"expectedRevision","absent"}}}});
+                } catch (const std::exception &error) {
+                    denied = std::string(error.what()).find("settings.write") != std::string::npos;
+                }
+                require(denied, "Workspace-only plugin changed personal settings");
             }
             bool incompatible = false;
             for (const auto &entry : info.at("plugins"))
@@ -194,10 +198,14 @@ int main(int argc, char **argv) {
                     {"library",library},{"permissions",Json::array()}}.dump());
                 Engine readOnly(root/"read-workspace");readOnly.plugins().load(readDirectory);
                 for(const auto *method:{"changes.apply","changes.undo"}) {
-                    const auto denied=readOnly.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},
-                        {"parameters",{{"id","not-issued"}}}});
-                    require(!denied.at("ok").get<bool>() && denied.at("error").get<std::string>().find("permission")!=std::string::npos,
-                            "Refactoring host mutation bypassed workspace.write");
+                    bool denied = false;
+                    try {
+                        readOnly.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},
+                            {"parameters",{{"id","not-issued"}}}});
+                    } catch (const std::exception &error) {
+                        denied = std::string(error.what()).find("permission") != std::string::npos;
+                    }
+                    require(denied, "Refactoring host mutation bypassed workspace.write");
                 }
             }
             const auto templateList = first.plugins().invoke(

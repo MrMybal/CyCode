@@ -43,6 +43,7 @@ void gitReplayContracts(const std::filesystem::path &root) {
             return std::string(std::istreambuf_iterator<char>(file), {});
         };
         git({"init", "-b", "main"});
+        git({"config", "core.autocrlf", "false"});
         git({"config", "user.name", "CyCode fixture"});
         git({"config", "user.email", "fixture@example.invalid"});
         write("file.cpp", "base\n");
@@ -100,7 +101,7 @@ void gitReplayContracts(const std::filesystem::path &root) {
         if (std::string(scenario) == "clean") {
             require(result.at("exitCode") == 0 && !result.contains("inspectionError") &&
                         read("file.cpp") == "incoming\n",
-                    "Cherry-pick succeeds with hooks suppressed");
+                    (std::string("Cherry-pick succeeds with hooks suppressed: ") + result.dump()).c_str());
             state = engine.dispatch("vcs.replay.state");
             params = request("revert", result.at("newCommit"));
             plan = engine.dispatch("vcs.replay.plan", params);

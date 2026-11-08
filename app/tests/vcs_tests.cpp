@@ -38,12 +38,18 @@ static void conflictModelContracts() {
 int main() {
     const auto root = std::filesystem::temp_directory_path() / ("cycode-vcs-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     try {
+        std::cout << "VCS stage: conflictModelContracts\n" << std::flush;
         conflictModelContracts();
+        std::cout << "VCS stage: gitStructuralConflictContracts\n" << std::flush;
         gitStructuralConflictContracts(root);
+        std::cout << "VCS stage: gitMergeContracts\n" << std::flush;
         gitMergeContracts(root);
+        std::cout << "VCS stage: gitReplayContracts\n" << std::flush;
         gitReplayContracts(root);
+        std::cout << "VCS stage: gitSubmoduleContracts\n" << std::flush;
         gitSubmoduleContracts();
         std::filesystem::create_directories(root/"workspace");
+        std::cout << "VCS stage: gitRepositoryContracts\n" << std::flush;
         gitRepositoryContracts(root);
         const auto workspace = root/"workspace";
         auto git = [&](const std::filesystem::path &cwd, std::vector<std::string> args) {

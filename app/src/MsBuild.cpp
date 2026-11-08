@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/FileTime.h"
 #include "cycode/MsBuild.h"
 #include "cycode/BuildOperations.h"
@@ -63,7 +64,7 @@ static bool fresh(const Json &data,const fs::path &root,const BuildSystem::Resol
     if (!data.contains("inputs") || !data.at("inputs").is_array() || data.at("inputs").size() > 1024) return false;
     try { for (const auto &stamp : data.at("inputs")) if (inputStamp(resolve(stamp.at("path")),root) != stamp) return false; } catch (...) { return false; } return true;
 }
-static Json process(const ProcessResult &value) { return {{"exitCode",value.exitCode},{"output",value.output},{"timedOut",value.timedOut},{"truncated",value.truncated},{"cancelled",value.cancelled}}; }
+static Json process(const ProcessResult &value) { return {{"exitCode",value.exitCode},{"output",processOutputText(value.output, true)},{"timedOut",value.timedOut},{"truncated",value.truncated},{"cancelled",value.cancelled}}; }
 static Json diagnostics(const std::string &output,const fs::path &root,const BuildSystem::Resolver &resolve) {
     static const std::regex diagnostic(R"re(^(?:[0-9]+>)?(.*)\(([0-9]+)(?:,([0-9]+))?(?:,[0-9]+,[0-9]+)?\)\s*:\s*(?:fatal )?(error|warning)\s+([A-Za-z]+[0-9]+)\s*:\s*(.*)$)re");
     Json result = Json::array(); std::set<std::string> seen; std::istringstream lines(output); std::string line;

@@ -1,4 +1,29 @@
-# Validation — 2026-11-07
+# Validation — 2026-11-08
+
+## Finalization integration and real platform matrix — 2026-11-08
+
+The published 0.2.3 installer/updater and the preceding local editor/navigation
+milestones are reunited on the finalization branch without overwriting the
+development checkout. Installed/portable update selection and dependency notices
+are retained. The native core remains UI-free, with 233 unchanged public operation
+identities and matching source/generated input/output schemas.
+
+Windows production GUI/CLI/helper/providers compile with BUILD_TESTING=OFF.
+Strict Clang syntax checks pass all 61 interface translation units, including the
+revised outline comparator. Targeted MSVC /Zs checks evaluate production UTF-8 and
+integer policies and compile native regression bodies without producing or
+running fixtures. Twenty-six Python data-only tests cover build-plan boundaries,
+release authoring, navigation and snippet/schema contracts. Source syntax/data and
+the complete EN/FR reader remain separate checks from native behavior.
+
+The c2c72ba remote matrix actually executes the native suite and exposes failures,
+including absent optional servers, stale fixture assumptions, Windows legacy log
+encoding, signed/unsigned breakpoint IDs and worktree directory spelling. New
+fixes require another complete run; configured jobs are not claimed as passes.
+Local application/installer/helper/native fixture execution remains suspended
+during the antivirus issue. See Finalization.md for the current gates and the
+workflow artifacts for actual runner results.
+
 
 ## Logical includes, result actions, index pages and contextual help — 2026-11-07
 

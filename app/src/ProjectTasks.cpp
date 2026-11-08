@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/ProjectTasks.h"
 #include "cycode/TextFile.h"
 #include "cycode/Tools.h"
@@ -102,7 +103,7 @@ std::string javaMain(const fs::path &path) {
         auto name=strings[classes[self]];std::replace(name.begin(),name.end(),'/','.');(void)Json(name).dump();return name;
     } catch (...) { return ""; }
 }
-Json process(const ProcessResult &value) { return {{"exitCode",value.exitCode},{"output",value.output},{"timedOut",value.timedOut},{"truncated",value.truncated},{"cancelled",value.cancelled}}; }
+Json process(const ProcessResult &value) { return {{"exitCode",value.exitCode},{"output",processOutputText(value.output, true)},{"timedOut",value.timedOut},{"truncated",value.truncated},{"cancelled",value.cancelled}}; }
 std::vector<fs::path> shaderSources(const fs::path &directory) {
     std::vector<fs::path> files;size_t visited=0;
     for(auto it=fs::recursive_directory_iterator(directory,fs::directory_options::skip_permission_denied);it!=fs::recursive_directory_iterator();++it) {
@@ -272,7 +273,7 @@ Json ProjectTasks::perform(const std::string &method,const Json &params) {
             const auto compiler=requireTool(plan.tool.c_str());
             fs::create_directories(build);
             auto argv=plan.arguments;argv.insert(argv.begin(),compiler);execute(argv);
-            diagnostics=shaderBuildDiagnostics(combined.output,source,root_,directory,resolve_);
+            diagnostics=shaderBuildDiagnostics(processOutputText(combined.output, true),source,root_,directory,resolve_);
             if(combined.exitCode==0&&!combined.cancelled&&!combined.timedOut&&!combined.truncated&&!cancellation_.load()) {
                 validateShaderArtifact(output,plan.format);
                 artifacts.push_back({{"name",pathUtf8(source.filename())},{"path",pathUtf8(output.lexically_relative(root_))},{"format",plan.format},{"language",plan.language},{"stage",plan.stage}});
@@ -416,7 +417,7 @@ Json ProjectTasks::perform(const std::string &method,const Json &params) {
             for (const auto &source : project.at("sources")) { const auto path=resolve_(source);arguments<<std::quoted(pathUtf8(path))<<'\n';input(path); }
             writeTextFileAtomic(argumentFile,arguments.str(),std::nullopt);
             const auto result=execute({compiler,"-J-Duser.language=en","-J-Dstdout.encoding=UTF-8","-J-Dstderr.encoding=UTF-8","@"+pathUtf8(argumentFile)});
-            std::istringstream errors(result.output);std::string line;
+            std::istringstream errors(processOutputText(result.output, true));std::string line;
             while (std::getline(errors,line)) {
                 const auto suffix=line.find(".java:");if (suffix==std::string::npos) continue;
                 const auto end=line.find(':',suffix+6);if (end==std::string::npos) continue;

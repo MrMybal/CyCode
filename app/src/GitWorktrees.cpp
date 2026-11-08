@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
 #include "cycode/TextEdits.h"
@@ -16,7 +17,7 @@ std::string trimmed(std::string value) {
 }
 Json processResult(const ProcessResult &r) {
     return {
-        {"exitCode", r.exitCode}, {"output", r.output}, {"truncated", r.truncated}, {"timedOut", r.timedOut}};
+        {"exitCode", r.exitCode}, {"output", processOutputText(r.output, true)}, {"truncated", r.truncated}, {"timedOut", r.timedOut}};
 }
 } // namespace
 GitRepositorySelection Engine::gitSelection(const Json &params) const {

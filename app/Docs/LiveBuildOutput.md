@@ -64,12 +64,14 @@ from the front. Tail overflow does not truncate or stop the build. `incomplete`
 records a journal allocation failure, independently of the process outcome.
 Original per-process output retains its existing 8 MiB cap.
 
-Display text replaces invalid UTF-8 and NUL/control bytes, preserving CR/LF/tab;
+Display text repairs malformed encoding and NUL/control bytes, preserving CR/LF/tab;
 `encoding` is `utf8-repaired`. Polling/retention can split a character at an edge;
 a later replacement refreshes that display. Byte counters are not Unicode
 character counts or offsets in returned text. ANSI escapes are not interpreted;
-OEM/UTF-16/locale encodings are not detected. Original process output keeps its
-existing representation. No archive, temporary SDK artifact, MCP push, argument
+Malformed Windows UTF-8 lines use the system OEM code page; other malformed bytes
+get U+FFFD. Valid UTF-8 lines remain unchanged. UTF-16 or arbitrary/mixed encodings
+are not inferred. Original ProcessResult/protocol bytes keep their representation;
+final user-facing JSON log fields use the same text conversion. No archive, temporary SDK artifact, MCP push, argument
 dump, automatic export or clipboard write is added.
 
 ## Validation boundary

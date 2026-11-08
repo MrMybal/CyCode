@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
 #include "cycode/CompilerLocation.h"
 #include "cycode/Solution.h"
@@ -534,7 +535,7 @@ Json Engine::git(const std::string &method, const Json &params) {
                 {"message", result.exitCode ? result.output : ""}};
     }
     return {{"exitCode", result.exitCode},
-            {"output", result.output},
+            {"output", processOutputText(result.output, true)},
             {"timedOut", result.timedOut},
             {"truncated", result.truncated}};
 }

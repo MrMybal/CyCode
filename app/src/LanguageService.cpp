@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/LanguageService.h"
 #include <climits>
 #include "cycode/TextEdits.h"
@@ -555,6 +556,12 @@ void LanguageService::run() {
                 failure = client.error();
         }
         client.poll();
+        if (attempted && !client.running() && failure.empty()) {
+            failure = client.error();
+            if (failure.empty()) failure = "Language server stopped; install or configure the matching backend and restart it in Problems";
+            const auto logs = client.logs();
+            if (!logs.empty()) failure += "\n" + processOutputText(std::string_view(logs).substr(logs.size() > 4096 ? logs.size() - 4096 : 0), true);
+        }
         if (semanticRefresh != client.semanticRefreshGeneration()) {
             semanticTokens.clear();
             semanticRefresh = client.semanticRefreshGeneration();

@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/TestRunner.h"
 #include "cycode/Tools.h"
 #include <algorithm>
@@ -157,7 +158,7 @@ TestRunner::Json TestRunner::run(const Json &params) {
                                    : r.exitCode  ? "failed"
                                                  : "passed"},
                         {"exitCode", r.exitCode},
-                        {"output", r.output},
+                        {"output", processOutputText(r.output, true)},
                         {"milliseconds", std::chrono::duration_cast<std::chrono::milliseconds>(
                                              std::chrono::steady_clock::now() - start)
                                              .count()}});

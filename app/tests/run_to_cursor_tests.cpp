@@ -58,6 +58,14 @@ void runToCursorContracts() {
         invalid.update(update);
         rejects([&] { RunToCursor::plan(invalid, state, original); });
     }
+    auto unsignedRequest = request;
+    unsignedRequest["expectedDocumentId"] = UINT64_MAX;
+    unsignedRequest["expectedRevision"] = uint64_t(6);
+    require(RunToCursor::plan(unsignedRequest, state, original).at("original") == original,
+            "Unsigned document references were compared through a signed JSON bound");
+    auto negative = request;
+    negative["expectedDocumentId"] = -1;
+    rejects([&] { RunToCursor::plan(negative, state, original); });
     auto single = request;
     single["singleThread"] = false;
     auto caps = state;

@@ -19,17 +19,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Check sources without native executables
         run: python app/scripts/verify_sources.py
       - name: Verify update archive authoring without native processes
         run: python app/tests/test_release_package.py
       - name: Verify compiler failure diagnostics without native processes
         run: python app/tests/test_build_diagnostics.py
+      - name: Install the pinned JSON Schema validator
+        run: python -m pip install jsonschema==4.25.1
       - name: Verify public navigation and snippet contracts without native processes
-        run: |
-          python -m pip install jsonschema==4.25.1
-          python app/tests/test_navigation_contracts.py
-          python app/tests/test_snippet_contracts.py
+        run: python -m unittest discover -s app/tests -p "test_*contracts.py"
       - name: Resolve shared editor pin
         id: editor
         run: python -c "import json,os; from pathlib import Path; revision=json.loads(Path('app/editor-source.lock.json').read_text())['revision']; Path(os.environ['GITHUB_OUTPUT']).open('a').write('revision='+revision+'\n')"
@@ -42,13 +48,20 @@ jobs:
           persist-credentials: false
       - name: Install ripgrep on Linux
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y ripgrep ninja-build
+        run: sudo apt-get update && sudo apt-get install -y ripgrep ninja-build clangd
       - name: Install ripgrep on macOS
         if: runner.os == 'macOS'
-        run: brew install ripgrep ninja
+        run: brew install ripgrep ninja llvm
+      - name: Use the installed LLVM tools on macOS
+        if: runner.os == 'macOS'
+        run: echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
       - name: Install ripgrep on Windows
         if: runner.os == 'Windows'
         run: choco install ripgrep -y --no-progress
+      - name: Install the pinned real language backends used by the integration tests
+        run: python app/scripts/setup_languages.py --rust --java --web --python --glsl
+      - name: Install checksum-pinned debugger adapters for native integration
+        run: python app/scripts/setup_debugger.py
       - run: python app/scripts/fetch_dependencies.py --core-only
       - name: Explicit native validation on the CI runner
         run: python app/scripts/build.py --core-only --run-tests --keep-going-tests

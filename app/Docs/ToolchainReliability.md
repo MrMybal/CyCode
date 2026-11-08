@@ -76,3 +76,16 @@ to 64 bits or truncating subsecond changes. Existing 64-bit cache tokens retain
 their representation. Production compile-time checks include values beyond 64 bits
 when the compiler supports them. See the upstream
 [libc++ filesystem clock design](https://libcxx.llvm.org/DesignDocs/FileTimeType.html).
+
+
+## Process logs at the text boundary
+
+Child stdout/stderr remain raw bytes inside ProcessResult and protocol parsers.
+User-facing process-result JSON and live build/project tails convert a copy to
+valid UTF-8. Valid UTF-8 lines remain unchanged. Malformed Windows console lines
+use the system OEM code page; malformed non-Windows bytes are replaced explicitly.
+This prevents a legacy compiler log from breaking JSON serialization of an
+otherwise successful build, including accented workspace names. Source/blob data
+and structured JSON discovery are never transcoded by this display conversion.
+Mixed encodings within one line have no unambiguous automatic interpretation;
+prefer tools configured for UTF-8. No global console/code-page setting is changed.

@@ -73,7 +73,8 @@ Project byteCount/droppedBytes count bytes published to the display journal:
 rendered messages for Cargo, pipe text for ordinary commands. They are not Cargo
 JSON byte offsets, Unicode counts or a progress measure. UTF-8/control repair and
 partial edge-character limitations match [native live output](LiveBuildOutput.md).
-No ANSI interpretation or legacy-code-page detection is provided.
+No ANSI interpretation is provided. Malformed Windows UTF-8 lines use the system
+OEM fallback described in the shared native output guide; raw protocol bytes remain unchanged.
 
 Persistent Run terminals, arbitrary plugin processes, background Unreal analysis
 and standalone per-test result trees remain separate. Live Cargo text does not
