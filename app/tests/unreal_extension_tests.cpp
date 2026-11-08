@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "cycode/Engine.h"
 #include <fstream>
 #include <iostream>
@@ -29,11 +30,21 @@ int main(int argc, char **argv) {
         std::ofstream(folder / "workspace/Source/Demo/Snippets.cpp");
         {
             Engine engine(folder / "workspace/Demo.uproject");
+            const auto baselineAdapters = engine.dispatch("debug.adapters").at("adapters");
             engine.plugins().load(folder / "extensions");
             const auto inventory = engine.dispatch("plugins.list");
             require(inventory.at("debugAdapters").size()==1&&inventory.at("debugAdapters")[0].at("id")=="cycode.unreal.lldb", "Unreal extension omitted its native DAP contribution");
             const auto adapters=engine.dispatch("debug.adapters");
-            require(adapters.at("adapters").size()==2,"Contributed DAP did not reach the shared native service");
+            const auto &entries = adapters.at("adapters");
+            const auto contributed = std::find_if(entries.begin(), entries.end(), [](const auto &entry) {
+                return entry.value("id", "") == "cycode.unreal.lldb" &&
+                       entry.value("plugin", "") == "cycode.unreal";
+            });
+            require(entries.size() == baselineAdapters.size() + 1 && contributed != entries.end(),
+                    "Contributed DAP did not reach the shared native service");
+            for (const auto &entry : baselineAdapters)
+                require(std::find(entries.begin(), entries.end(), entry) != entries.end(),
+                        "Unreal activation replaced a built-in DAP provider");
             engine.dispatch("debug.configure",{{"adapterId","cycode.unreal.lldb"},{"adapterOptions",{{"sourceMap",Json::object()}}}});
             require(inventory.at("projects").size() == 1 && inventory.at("menus").size() == 5,
                     "Official Unreal extension did not contribute its views");
@@ -98,7 +109,7 @@ int main(int argc, char **argv) {
             const auto pending = engine.dispatch(
                 "templates.preview", {{"template", "cycode.unreal.cppGame"}, {"name", "DisabledGame"}});
             engine.dispatch("plugins.configure", {{"id", "cycode.unreal"}, {"enabled", false}});
-            require(engine.dispatch("debug.adapters").at("adapters").size()==2&&engine.dispatch("debug.profile").at("adapterId")=="cycode.unreal.lldb","Disabling plugin failed to remove DAP or silently rewrote profile");
+            require(engine.dispatch("debug.adapters").at("adapters")==baselineAdapters&&engine.dispatch("debug.profile").at("adapterId")=="cycode.unreal.lldb","Disabling plugin failed to remove DAP or silently rewrote profile");
             bool adapterRejected=false;
             try{engine.dispatch("debug.launch");}catch(const std::exception &){adapterRejected=true;}
             require(adapterRejected,"Disabled plugin started a DAP session");

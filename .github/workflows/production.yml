@@ -54,6 +54,22 @@ jobs:
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
         run: xvfb-run -a python app/scripts/verify_graphical_ci.py --executable runtime/build/CyCode
+      - name: Locate or install the Windows installer compiler
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $compiler = Get-ChildItem 'C:/Program Files*/Inno Setup*/ISCC.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $compiler) { choco install innosetup --no-progress -y; if ($LASTEXITCODE) { exit $LASTEXITCODE } }
+      - name: Compose the actual Windows distribution
+        if: runner.os == 'Windows'
+        run: python app/scripts/package_windows.py --build runtime/build-vs
+      - name: Exercise installation, ownership guards, repair and uninstall
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = (Get-Content app/CyTool.json -Raw | ConvertFrom-Json).version
+          python app/scripts/verify_installer_ci.py --setup "runtime/releases/CyCode-$version-windows-x64-setup.exe"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - name: Retain compilation and graphical evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -62,5 +78,6 @@ jobs:
           path: |
             runtime/build*/build.log
             runtime/reports/graphical-ci/*
+            runtime/reports/installer-ci/*
           if-no-files-found: ignore
           retention-days: 7

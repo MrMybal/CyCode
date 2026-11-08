@@ -623,6 +623,13 @@
       "target": "overview#getting-started",
       "legacyId": "reference-app-docs-finalization",
       "sourceSha256": "740b86f73302f3f58cb302b1dee5d1de9bf08bb59043a8a7797bd3e3481958e5"
+    },
+    {
+      "source": "Docs/Releases/v0.2.3.md",
+      "kind": "developer-reference",
+      "target": "updates#windows-installation",
+      "legacyId": "reference-app-docs-releases-v023",
+      "sourceSha256": "c20d8be1352fd26559bb8b30888704589cfc4beeb8cf228625bb812a088ddad5"
     }
   ]
 }
