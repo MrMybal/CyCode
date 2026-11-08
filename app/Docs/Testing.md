@@ -695,3 +695,10 @@ light-grey/French rendering, checks active source, theme, clean buffers and sour
 preservation, and retains bounded reports/images as workflow artifacts. That
 script refuses local invocation. Windows/macOS jobs compile only; no GUI/input,
 DPI, native updater or clean-machine installer acceptance is inferred from them.
+
+
+Each native test now has a 180-second default deadline (an existing explicit
+per-test timeout still takes precedence). CTest writes a JUnit result alongside
+its ordinary LastTest.log; CI retains both with the build log, including passing
+and skipped evidence. Obsolete runs on the same branch are cancelled by workflow
+concurrency so newer fixes do not queue behind repeated full builds.

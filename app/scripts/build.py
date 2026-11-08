@@ -68,7 +68,8 @@ def build_commands(args, cmake, ninja, editor):
 def test_command(args, cmake, build):
     ctest = str(Path(cmake).with_name('ctest.exe' if sys.platform == 'win32' else 'ctest'))
     command = [ctest, '--test-dir', str(build), '-C', args.configuration,
-               '--output-on-failure', '--no-tests=error', '--parallel', '1']
+               '--output-on-failure', '--no-tests=error', '--parallel', '1',
+               '--timeout', '180', '--output-junit', str(build / 'native-results.xml')]
     if not args.keep_going_tests:
         command += ['--stop-on-failure']
     if args.test_filter:

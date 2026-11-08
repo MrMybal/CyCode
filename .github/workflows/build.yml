@@ -1,5 +1,8 @@
 name: Native core
 on: [push, pull_request]
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   core:
     env:
@@ -49,12 +52,15 @@ jobs:
       - run: python app/scripts/fetch_dependencies.py --core-only
       - name: Explicit native validation on the CI runner
         run: python app/scripts/build.py --core-only --run-tests --keep-going-tests
-      - name: Preserve failed native build diagnostics
-        if: failure()
+      - name: Preserve native build and test evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: native-build-log-${{ matrix.os }}
-          path: runtime/tests-core-build*/build.log
+          path: |
+            runtime/tests-core-build*/build.log
+            runtime/tests-core-build*/native-results.xml
+            runtime/tests-core-build*/Testing/Temporary/LastTest.log
           if-no-files-found: ignore
           retention-days: 7
       # Private Reader access needs a read-only CYCODE_READER_READ_TOKEN secret.
