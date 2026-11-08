@@ -1,5 +1,7 @@
 name: Native semantic baseline
 on:
+  push:
+    branches: [codex/core-intelligence]
   workflow_dispatch:
 permissions:
   contents: read
