@@ -1,3 +1,4 @@
+#include "cycode/FileTime.h"
 #include "cycode/UnrealProject.h"
 #include "cycode/BuildLimits.h"
 #include "cycode/BuildOperations.h"
@@ -386,7 +387,7 @@ Json UnrealProject::prepare(const Json &params, const std::atomic<bool> *cancell
     auto addRule = [&](const fs::path &path) {
         if (file(path))
             inputs.push_back(pathUtf8(path) + ':' +
-                             std::to_string(fs::last_write_time(path).time_since_epoch().count()));
+                             fileTimeToken(fs::last_write_time(path)));
     };
     addRule(resolve_(profile.at("project")));
     for (const auto *section : {"targets", "modules", "plugins"})

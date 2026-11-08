@@ -64,3 +64,15 @@ The opt-in core/build sources additionally specify PATH/hint precedence, quoted
 entries, directory aliases, filename/case identity and real detected C++ driver
 paths. MSVC and Clang syntax-only checks use the installed Windows headers and
 ABI; they do not validate the POSIX branches or establish a macOS build.
+
+
+## Filesystem clock compatibility
+
+Unreal analysis and MSBuild file signatures serialize every filesystem tick as
+decimal text. libc++ on macOS uses a 128-bit filesystem clock representation;
+passing that count directly to std::to_string is ambiguous. The shared FileTime
+helper preserves the complete value, including negative limits, without narrowing
+to 64 bits or truncating subsecond changes. Existing 64-bit cache tokens retain
+their representation. Production compile-time checks include values beyond 64 bits
+when the compiler supports them. See the upstream
+[libc++ filesystem clock design](https://libcxx.llvm.org/DesignDocs/FileTimeType.html).

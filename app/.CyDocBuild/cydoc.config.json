@@ -135,6 +135,7 @@
     "reference-app-docs-snippetcapture": "refactoring#capture-snippet",
     "reference-app-docs-snippetcatalogue": "refactoring#snippet-catalogue",
     "reference-app-docs-toolchainreliability": "build#toolchains",
-    "reference-app-docs-usersnippets": "refactoring#user-snippets"
+    "reference-app-docs-usersnippets": "refactoring#user-snippets",
+    "reference-app-docs-finalization": "overview#getting-started"
   }
 }

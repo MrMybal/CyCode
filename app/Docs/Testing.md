@@ -676,3 +676,22 @@ advisory phase handling, foreign/missing identities, unsafe maps/hardlinks and
 mandatory backups. Native bodies remain unexecuted during the antivirus
 interruption; source/build/data checks cannot establish real recovery acceptance.
 See [Recovery resumption](UpdateRecovery.md).
+
+
+## Explicit remote platform validation
+
+The native GitHub matrix targets Windows Server 2022 / Visual Studio 2022,
+Ubuntu and macOS. The CI invocation explicitly opts into --run-tests and
+--keep-going-tests so one runner collects ordinary independent failures in one
+pass. Default local behavior still stops at the first test failure. Collection
+does not rebuild/retry failures or change antivirus settings, and ordinary
+application builds remain BUILD_TESTING=OFF. Data-only build-plan checks cover
+these boundaries. Three compiler platforms are not equivalent GUI platforms.
+
+Production desktop CI separately compiles the GUI/CLI/providers on all three
+platforms. Its Linux job explicitly runs verify_graphical_ci.py inside Xvfb/Mesa
+against a synthetic workspace. It captures actual hidden Graphite/English and
+light-grey/French rendering, checks active source, theme, clean buffers and source
+preservation, and retains bounded reports/images as workflow artifacts. That
+script refuses local invocation. Windows/macOS jobs compile only; no GUI/input,
+DPI, native updater or clean-machine installer acceptance is inferred from them.

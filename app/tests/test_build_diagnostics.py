@@ -1,6 +1,11 @@
 """Data-only build reporting checks: no compiler, native fixture or SDK process."""
 from pathlib import Path
 import runpy
+import contextlib
+import io
+import json
+import sys
+from unittest.mock import patch
 import tempfile
 import unittest
 
@@ -65,6 +70,34 @@ next source line
             self.assertLessEqual(len(text),2100)
             self.assertIn('earlier build output omitted',text)
             self.assertIn('expected expression',api['build_failure_excerpt'](text))
+
+
+    def plan(self, *arguments):
+        stream = io.StringIO()
+        with patch.object(sys, 'argv', ['build.py', '--plan', *arguments]), contextlib.redirect_stdout(stream):
+            self.assertEqual(api['main'](), 0)
+        return json.loads(stream.getvalue())
+
+    def test_ordinary_plan_never_builds_or_runs_native_fixtures(self):
+        plan = self.plan('--no-install')
+        self.assertIsNone(plan['testCommand'])
+        self.assertFalse(plan['installsExecutable'])
+        self.assertIn('-DBUILD_TESTING=OFF', plan['commands'][0])
+
+    def test_native_plan_keeps_default_stop_at_first_failure(self):
+        plan = self.plan('--core-only', '--run-tests')
+        self.assertIn('--stop-on-failure', plan['testCommand'])
+        self.assertFalse(plan['installsExecutable'])
+        self.assertIn('-DBUILD_TESTING=ON', plan['commands'][0])
+
+    def test_ci_collection_requires_explicit_native_opt_in(self):
+        plan = self.plan('--core-only', '--run-tests', '--keep-going-tests')
+        self.assertNotIn('--stop-on-failure', plan['testCommand'])
+        self.assertFalse(plan['installsExecutable'])
+        with patch.object(sys, 'argv', ['build.py', '--plan', '--keep-going-tests']), contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as error:
+                api['main']()
+        self.assertEqual(error.exception.code, 2)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,66 @@
+name: Production desktop
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 50
+    env:
+      CYCODE_EDITOR_ROOT: ${{ github.workspace }}/runtime/deps/cycode-reader
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve shared editor pin
+        id: editor
+        run: python -c "import json,os; from pathlib import Path; revision=json.loads(Path('app/editor-source.lock.json').read_text())['revision']; Path(os.environ['GITHUB_OUTPUT']).open('a').write('revision='+revision+'\n')"
+      - uses: actions/checkout@v4
+        with:
+          repository: MrMybal/CyCodeReader
+          ref: ${{ steps.editor.outputs.revision }}
+          path: runtime/deps/cycode-reader
+          token: ${{ secrets.CYCODE_READER_READ_TOKEN || github.token }}
+          persist-credentials: false
+      - name: Linux desktop development libraries and software renderer
+        if: runner.os == 'Linux'
+        run: >-
+          sudo apt-get update && sudo apt-get install -y
+          ninja-build ripgrep xvfb xauth libgl1-mesa-dev libegl1-mesa-dev
+          libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev
+          libxfixes-dev libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev
+          libdbus-1-dev libudev-dev libdrm-dev libgbm-dev libasound2-dev libpulse-dev
+      - name: macOS build tools
+        if: runner.os == 'macOS'
+        run: brew install ninja ripgrep
+      - name: Fetch pinned build sources
+        run: python app/scripts/fetch_dependencies.py
+      - name: Compile desktop, CLI and bundled providers without native test targets
+        run: python app/scripts/build.py --distribution --no-install
+      - name: Verify full offline help
+        run: python app/scripts/verify_documentation.py app/Documentation
+      - name: Exercise hidden Linux rendering in English and French
+        if: runner.os == 'Linux'
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run -a python app/scripts/verify_graphical_ci.py --executable runtime/build/CyCode
+      - name: Retain compilation and graphical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-evidence-${{ matrix.os }}
+          path: |
+            runtime/build*/build.log
+            runtime/reports/graphical-ci/*
+          if-no-files-found: ignore
+          retention-days: 7

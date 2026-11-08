@@ -68,7 +68,9 @@ def build_commands(args, cmake, ninja, editor):
 def test_command(args, cmake, build):
     ctest = str(Path(cmake).with_name('ctest.exe' if sys.platform == 'win32' else 'ctest'))
     command = [ctest, '--test-dir', str(build), '-C', args.configuration,
-               '--output-on-failure', '--stop-on-failure', '--no-tests=error', '--parallel', '1']
+               '--output-on-failure', '--no-tests=error', '--parallel', '1']
+    if not args.keep_going_tests:
+        command += ['--stop-on-failure']
     if args.test_filter:
         command += ['--tests-regex', args.test_filter]
     return command
@@ -86,11 +88,14 @@ def main():
     parser.add_argument('--no-install', action='store_true', help='Keep all build outputs in runtime; do not copy a root executable')
     parser.add_argument('--build-tests', action='store_true', help='Opt in to compiling native test executables in a separate build; does not run them or install the app')
     parser.add_argument('--run-tests', action='store_true', help='Opt in to building and running native tests (debuggers, child processes and generated programs included)')
+    parser.add_argument('--keep-going-tests', action='store_true', help='Explicit CI opt-in: collect all ordinary test failures in one run; requires --run-tests')
     parser.add_argument('--test-filter', help='CTest name regex; requires --run-tests')
     parser.add_argument('--plan', action='store_true', help='Print the build/test commands without downloads, configuration, compilation or execution')
     args = parser.parse_args()
     if args.reader_only:
         raise SystemExit('CyCodeReader moved to https://github.com/MrMybal/CyCodeReader. Run python scripts/build.py in that checkout.')
+    if args.keep_going_tests and not args.run_tests:
+        parser.error('--keep-going-tests requires --run-tests')
     if args.test_filter and not args.run_tests:
         parser.error('--test-filter requires --run-tests')
     args.build_tests = args.build_tests or args.run_tests
@@ -166,7 +171,7 @@ def main():
         test_environment = dict(environment, TMP=str(temporary), TEMP=str(temporary), TMPDIR=str(temporary))
         result = subprocess.run(test_command(args, cmake, build), env=test_environment, cwd=ROOT)
         if result.returncode:
-            print('Native tests stopped at the first failure. No automatic rebuild or retry. '
+            print(('Native test collection completed with failures. ' if args.keep_going_tests else 'Native tests stopped at the first failure. ') + 'No automatic rebuild or retry. '
                   'If a binary was removed, inspect the antivirus report before another native run.', file=sys.stderr)
             return result.returncode
     if not args.core_only and not args.no_install and not args.build_tests:

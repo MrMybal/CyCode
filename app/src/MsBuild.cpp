@@ -1,3 +1,4 @@
+#include "cycode/FileTime.h"
 #include "cycode/MsBuild.h"
 #include "cycode/BuildOperations.h"
 #include "cycode/BuildLimits.h"
@@ -49,7 +50,7 @@ static std::string cachePath(const Json &profile) {
     return ".cycode/msbuild-cache/"+std::to_string(hash);
 }
 static Json inputStamp(const fs::path &path,const fs::path &root) {
-    return {{"path",pathUtf8(path.lexically_relative(root))},{"time",std::to_string(fs::last_write_time(path).time_since_epoch().count())},{"size",fs::file_size(path)}};
+    return {{"path",pathUtf8(path.lexically_relative(root))},{"time",fileTimeToken(fs::last_write_time(path))},{"size",fs::file_size(path)}};
 }
 static Json inputs(const Json &model,const fs::path &root,const BuildSystem::Resolver &resolve,const std::vector<std::string> &additional = {}) {
     std::set<std::string> paths{model.at("profile").at("entry")};
