@@ -55,6 +55,13 @@ class BaselineDataTests(unittest.TestCase):
         process.wait.assert_called_once_with(timeout=15)
         process.kill.assert_not_called()
 
+    def test_member_completion_uses_backend_insertion_spelling(self):
+        self.assertTrue(api.has_member_completion([{'label':' value : int','filterText':'value'}],'value'))
+        self.assertTrue(api.has_member_completion([{'label':' value'}],'value'))
+        self.assertTrue(api.has_member_completion([{'label':'display','textEdit':{'newText':'value'}}],'value'))
+        self.assertFalse(api.has_member_completion([{'label':'value2','filterText':'value2'}],'value'))
+        self.assertFalse(api.has_member_completion([{'label':'value','filterText':'different'}],'value'))
+
     def test_statistics_preserve_raw_samples(self):
         report=api.summarize([10,1,8,2,5])
         self.assertEqual(report['samplesMilliseconds'],[10,1,8,2,5])

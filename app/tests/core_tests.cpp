@@ -11,7 +11,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
-namespace cycode { void coreServiceChecks(const std::filesystem::path &); }
+namespace cycode { void coreServiceChecks(const std::filesystem::path &); void nativeDocumentContracts(const std::filesystem::path &); void sharedSnippetContracts(); }
 using namespace cycode;
 static void check(bool value, const char *message) {
     if (!value)
@@ -269,6 +269,8 @@ int main(int argc, char **argv) {
         ("cycode-test-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     try {
         std::filesystem::create_directories(root);
+        nativeDocumentContracts(root);
+        sharedSnippetContracts();
         pathContainmentChecks();
         longLeaseChecks(root);
         toolAliasChecks(root);

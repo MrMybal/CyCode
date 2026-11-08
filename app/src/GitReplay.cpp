@@ -49,9 +49,11 @@ Json Engine::gitReplay(const std::string &method, const Json &params) {
                            {"GIT_EDITOR", ":"}});
     };
     auto checked = [&](std::vector<std::string> args) {
-        const auto reply = git(std::move(args));
+        const auto reply = git(args);
         if (reply.exitCode || reply.timedOut || reply.truncated)
-            throw std::runtime_error("Git replay inspection failed: " + reply.output);
+            throw std::runtime_error("Git replay inspection failed: " +
+                Json({{"arguments",args},{"exitCode",reply.exitCode},{"timedOut",reply.timedOut},
+                      {"cancelled",reply.cancelled},{"truncated",reply.truncated},{"output",reply.output}}).dump());
         return reply.output;
     };
     const auto admin =

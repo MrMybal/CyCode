@@ -54,6 +54,18 @@ def corpus(directory, units):
             'compileArguments': ['clang++','-std=c++20','-DCYCODE_BENCH_FACTOR=2','-I<corpus>','-c','<source>']}
 
 
+def has_member_completion(items, member):
+    # Labels are presentation text. clangd may add leading spacing or type detail;
+    # filterText/insertText/textEdit.newText carry the exact completion spelling.
+    for item in items:
+        spellings=[item.get('filterText'),item.get('insertText')]
+        edit=item.get('textEdit')
+        if isinstance(edit,dict):spellings.append(edit.get('newText'))
+        if any(isinstance(value,str) and value.strip()==member for value in spellings):return True
+        if not any(isinstance(value,str) for value in spellings) and item.get('label','').strip()==member:return True
+    return False
+
+
 def linux_memory(root_pid):
     """RSS sum includes shared pages more than once; record this explicitly."""
     if platform.system() != 'Linux':
@@ -202,7 +214,9 @@ def run_host(cli, clangd, workspace, report_directory, iteration, samples):
                 if name=='completion':
                     payload=result.get('result',{})
                     items=payload.get('items',[]) if isinstance(payload,dict) else payload
-                    if not any(item.get('label')=='value' for item in items): raise RuntimeError('Completion lost the actual member')
+                    if not has_member_completion(items,'value'):
+                        (report_directory/f'completion-failure-{iteration}.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
+                        raise RuntimeError('Completion lost the actual member; bounded native result preserved for diagnosis')
                 if name=='renamePreview':
                     if result.get('state')!='preview' or not result.get('editCount',0): raise RuntimeError('Rename returned no guarded preview')
                     # No apply/save here: preview timings include native preparation only.
