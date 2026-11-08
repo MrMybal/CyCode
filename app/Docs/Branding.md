@@ -31,3 +31,17 @@ register file extensions or change system defaults.
 Windows x64 resource embedding and native icon/logo rendering have been verified.
 Linux/macOS runtime and native desktop/bundle packaging remain unverified; a
 Wayland desktop entry or a macOS application bundle is still separate work.
+
+## Portable typography and control glyphs
+
+Roboto regular/bold and JetBrains Mono are offline fallback faces for the existing
+CyUI loader. A small Codicons-derived font maps the 104 public CyUI control glyphs
+without replacing source text. CyCode retains the library's palette, spacing,
+contexts and DPI handling. The application's icon checks inspect the current font;
+no static cross-context font owner or second ImGui instance is added.
+
+The original notices, source URLs and SHA-256 inventories ship in
+`app/resources/fonts`. See Build.md for reproducible authoring and the remaining
+CyUI Windows-only decoration flag. Resource-data checks validate the actual TTF
+character maps; hidden CI rendering checks the real loaded font names and glyphs.
+Unicode shaping/CJK/emoji and detached-window DPI still need broader acceptance.

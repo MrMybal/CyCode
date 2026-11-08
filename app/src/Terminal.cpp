@@ -230,7 +230,13 @@ void TerminalSession::start(const std::filesystem::path &cwd, const std::vector<
                 finished = true;
                 break;
             }
-            if (observed < 0 && errno != EINTR) break;
+            if (observed < 0 && errno != EINTR) {
+                // A tracer may temporarily own wait notifications (notably on
+                // macOS). Keep the terminal live while its issued PID exists.
+                const auto waitError=errno;
+                if (waitError!=ECHILD) break;
+                if (kill(pid,0)!=0 && errno!=EPERM) break;
+            }
             // A debugger can report a traced child's stop to its real parent.
             // Neither a stop/continue notification nor EINTR means it exited.
             std::this_thread::sleep_for(std::chrono::milliseconds(20));

@@ -252,8 +252,12 @@ int main(int argc, char **argv) {
             const auto projectInspection=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method","project.inspect"},{"parameters",Json::object()}});
             require(projectInspection.at("ok")&&projectInspection.at("result").contains("profile"),"Plugin cannot inspect shared project tasks");
             for(const auto *method:{"project.configure","project.build","project.test","project.install","project.script","project.launch","project.debug","project.cancel"}) {
-                const auto denied=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},{"parameters",Json::object()}});
-                require(!denied.at("ok").get<bool>()&&denied.at("error").get<std::string>().find("permission")!=std::string::npos,"Project task plugin service bypassed process.execute");
+                std::string failure;
+                try {
+                    first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},{"parameters",Json::object()}});
+                } catch (const std::exception &error) {failure=error.what();}
+                require(failure.find("Plugin permission is missing: process.execute")!=std::string::npos,
+                        "Project task plugin service bypassed process.execute: "+failure);
             }
             require(first.dispatch("vcs.status").at("hostWriteDenied").get<bool>(),
                     "Read provider mutated host documents");

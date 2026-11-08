@@ -145,6 +145,7 @@ class Application {
     std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> brandingIcon_{nullptr, SDL_DestroySurface};
     bool brandingWindowIcon_=false;
     std::string brandingError_;
+    Json fontResources_=Json::object();
     void optionsProperties();
     void newUntitled();
     void beginSaveAs(const std::shared_ptr<Tab> &);

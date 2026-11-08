@@ -1,5 +1,21 @@
 # Local verification and native tests
 
+## Current remote evidence and historical entries
+
+Finalization.md records the latest actual platform results. The milestone notes
+below retain what was checked at the time; the local native-run suspension still
+applies, while the separately configured GitHub runners explicitly run CTest.
+Windows update contracts already exercised real owned filesystem staging,
+locked-file rollback, payload verification and user-data retention. They do not
+prove complete online GUI consent/download/helper/restart behavior.
+
+Offline font tests read the actual TTF tables with Python's standard library,
+verify seven resource hashes/notices and all 104 control codepoints, and check
+Latin accents, Greek and Cyrillic examples. Regeneration reproduces the assets
+byte for byte with the pinned optional authoring tool. No native fixture or GUI
+is launched by these data checks.
+
+
 Header/source and include navigation have 106 compiler-evaluated helper contracts
 on the actual native constexpr owners. The 27 additions cover inline comments,
 logical LF/CRLF components, spliced keywords, physical header offsets, conservative

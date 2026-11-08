@@ -40,6 +40,9 @@ def main():
             state = json.loads(report.read_text('utf-8'))
             assert state['hiddenWindow'] and state['active'] == 'main.cpp' and not state['error'], state
             assert state['theme'] == theme and not state['dirty'], state
+            fonts=state['ui']['fonts']
+            assert 'Roboto-Regular.ttf' in fonts['ui'] and 'JetBrainsMono-Regular.ttf' in fonts['mono'], fonts
+            assert fonts['portableIconsMerged'] and fonts['icons'], fonts
             assert source.read_text('utf-8') == text, 'Smoke session changed its source file'
             pixels = capture.read_bytes()
             assert pixels[:2] == b'BM' and len(pixels) > 1024
@@ -49,7 +52,7 @@ def main():
             assert len(set(pixels[offset:])) > 16, 'Blank or uniform rendered capture'
             print(json.dumps({'language': language, 'theme': theme, 'width': width,
                 'height': abs(height), 'captureSha256': hashlib.sha256(pixels).hexdigest()}))
-    print('Actual Linux startup/render/source preservation passed; this is not full keyboard/DPI acceptance.')
+    print('Actual runner startup/render/font/source preservation passed; this is not full keyboard/DPI acceptance.')
 
 if __name__ == '__main__':
     main()

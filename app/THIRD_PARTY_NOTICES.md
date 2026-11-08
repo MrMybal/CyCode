@@ -121,3 +121,16 @@ Windows packages include app-local Microsoft Visual C++ runtime DLLs from the
 Visual Studio toolchain. These Microsoft redistributables retain their separate
 Microsoft terms and are not covered by CyCode’s GPL license. The update helper
 stages verified copies of the same runtime.
+
+## Portable interface resources
+
+Roboto (Google, Apache 2.0) and JetBrains Mono (JetBrains, SIL OFL 1.1) are
+distributed as offline fallback fonts in `app/resources/fonts`, with the original
+license texts. Exact upstream revisions and file hashes are recorded there in
+`font-resources.json`.
+
+CyCode Controls is adapted from Microsoft Codicons 0.0.36 (Microsoft Corporation,
+CC BY 4.0, https://github.com/microsoft/vscode-codicons). Its glyphs are subset,
+mapped to CyUI's public icon codepoints and the family renamed. Codicons' original
+license is retained in `app/resources/fonts/Codicons-LICENSE.txt`. This resource
+does not redistribute Microsoft's Windows Segoe fonts. CyUI itself is unchanged.

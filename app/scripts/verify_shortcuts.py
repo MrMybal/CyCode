@@ -22,7 +22,7 @@ def main():
     parent = ROOT / 'runtime/test-workspaces/keyboard'
     parent.mkdir(parents=True, exist_ok=True)
     workspace = Path(tempfile.mkdtemp(prefix='keys-', dir=parent))
-    reports = args.output or ROOT / 'data/reports'
+    reports = (args.output or ROOT / 'data/reports').resolve()
     workspace.mkdir(parents=True, exist_ok=True)
     reports.mkdir(parents=True, exist_ok=True)
     original = 'int First = 1;\nint Second = 2;\n'

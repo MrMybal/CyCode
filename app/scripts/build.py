@@ -170,6 +170,12 @@ def main():
         temporary = ROOT / 'runtime/test-workspaces' / ('core' if args.core_only else 'native')
         temporary.mkdir(parents=True, exist_ok=True)
         test_environment = dict(environment, TMP=str(temporary), TEMP=str(temporary), TMPDIR=str(temporary))
+        # Owned temporary projects without .git must not inherit the checkout's
+        # repository merely because CI puts TMP inside this source tree.
+        ceilings = [str(temporary)]
+        if environment.get('GIT_CEILING_DIRECTORIES'):
+            ceilings.append(environment['GIT_CEILING_DIRECTORIES'])
+        test_environment['GIT_CEILING_DIRECTORIES'] = os.pathsep.join(ceilings)
         result = subprocess.run(test_command(args, cmake, build), env=test_environment, cwd=ROOT)
         if result.returncode:
             print(('Native test collection completed with failures. ' if args.keep_going_tests else 'Native tests stopped at the first failure. ') + 'No automatic rebuild or retry. '

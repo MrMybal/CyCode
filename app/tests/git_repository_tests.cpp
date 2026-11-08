@@ -1,3 +1,4 @@
+#include <source_location>
 #include "cycode/Engine.h"
 #include "cycode/TextFile.h"
 #include <fstream>
@@ -8,13 +9,13 @@ void require(bool value, const char *message) {
     if (!value)
         throw std::runtime_error(message);
 }
-template <class F> void reject(F fn) {
+template <class F> void reject(F fn, const std::source_location location = std::source_location::current()) {
     try {
         fn();
     } catch (const std::exception &) {
         return;
     }
-    throw std::runtime_error("Unsafe repository operation accepted");
+    throw std::runtime_error("Unsafe repository operation accepted" + std::string(" at line ") + std::to_string(location.line()));
 }
 std::string records(std::initializer_list<std::string> fields) {
     std::string out;

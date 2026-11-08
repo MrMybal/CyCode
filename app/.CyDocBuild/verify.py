@@ -95,6 +95,7 @@ def verify(site):
     for entry in entries:
         assert entry['kind'] in {'developer-reference', 'user-workflow'}
         assert re.fullmatch('[0-9a-f]{64}', entry['sourceSha256'])
+        assert hashlib.sha256((app / entry['source']).read_text('utf-8').encode('utf-8')).hexdigest() == entry['sourceSha256'], 'Review changed documentation source: ' + entry['source']
         assert aliases[entry['legacyId']] == entry['target'], 'Source guide lost its legacy route'
         identity, _, anchor = entry['target'].partition('#')
         for locale in ('en', 'fr'):

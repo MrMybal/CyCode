@@ -9,10 +9,10 @@ are retained. The native core remains UI-free, with 233 unchanged public operati
 identities and matching source/generated input/output schemas.
 
 Windows production GUI/CLI/helper/providers compile with BUILD_TESTING=OFF.
-Strict Clang syntax checks pass all 61 interface translation units, including the
+Strict Clang syntax checks pass all 62 interface translation units, including the
 revised outline comparator. Targeted MSVC /Zs checks evaluate production UTF-8 and
 integer policies and compile native regression bodies without producing or
-running fixtures. Twenty-seven Python data-only tests cover build-plan boundaries,
+running fixtures. Twenty-nine Python data-only tests cover build-plan boundaries,
 release authoring, navigation and snippet/schema contracts. Source syntax/data and
 the complete EN/FR reader remain separate checks from native behavior.
 
@@ -24,8 +24,8 @@ The actual c2c72ba Windows runner installed Setup, verified managed-file hashes,
 refused busy/pending changes, repaired in French and uninstalled while retaining
 user data. A complete installed/portable online update remains a separate gate.
 
-Native run 42443628691 passed 50 Windows, 50 Linux and 49 macOS cases; it also
-recorded 7/6/6 failures and 1/2/3 skips respectively. Real Java/TypeScript/Rust
+Native run 42445780816 passed 54 Windows, 55 Linux and 53 macOS cases; it also
+recorded 4/2/3 failures and 0/1/2 skips respectively. Real Java/TypeScript/Rust
 completion/actions, native debugging on Linux/Windows and semantic highlighting
 now execute, but the remaining failures require correction and rerun. No skipped
 case is included in the passed counts. See Finalization.md for the correction

@@ -339,3 +339,25 @@ or published payload. Production tests stay OFF; see [Recovery](UpdateRecovery.m
 GUI builds also generate the bundled offline manual with Node.js 22+ / npm and
 the pinned CyDoc package. See [Documentation](../.CyDocBuild/README.md) for cache,
 checkout, regeneration and validation options. Core-only builds do not need Node.
+
+## Offline interface fonts
+
+The UI target uses CyUI Core's fallback-folder contract with the checked-in
+`app/resources/fonts` resources. Ordinary builds require no font package manager,
+network request or new native library. CMake installation and Windows packaging
+copy the same allow-listed fonts, inventory and license notices. The UI-free
+core/CLI do not load them. Windows can retain its system Segoe faces and glyphs.
+
+`python app/scripts/prepare_fonts.py` verifies the shipped bytes. Resource authors
+can explicitly install `fonttools==4.60.1` in their private Python environment and
+run `python app/scripts/prepare_fonts.py --regenerate`. That command downloads only
+the exact, digest-checked upstream resources, rebuilds the 104-glyph subset and
+checks all outputs before replacement. It does not run during build or startup.
+The codepoint/semantic mapping and sources are in `font-resources.json`.
+
+CyUI's pinned public `iconsAvailable()` state currently describes its own Windows
+font loader. The application merges an open glyph font through the existing
+ImGui host contract, so common icon buttons and host resource rows can render
+without copying CyUI widgets. Some optional CyUI decorations still consult that
+Windows-only state and remain omitted outside Windows. Do not represent that
+library limit as complete cross-platform icon parity.

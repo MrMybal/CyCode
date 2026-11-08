@@ -138,11 +138,14 @@ void gitReplayContracts(const std::filesystem::path &root) {
                 plan = engine.dispatch("vcs.replay.plan", params);
                 params["expectedPlanRevision"] = plan.at("revision");
                 const auto quitted = engine.dispatch("vcs.replay.apply", params);
+                const auto afterDocument=engine.dispatch("documents.read", {{"path", "file.cpp"}});
+                const auto indexUnchanged=git({"ls-files", "--stage", "-z"}) == index;
+                const auto diskUnchanged=read("file.cpp") == disk;
+                const auto detail=Json{{"result",quitted},{"indexUnchanged",indexUnchanged},
+                    {"diskUnchanged",diskUnchanged},{"documentBefore",doc},{"documentAfter",afterDocument}};
                 require(quitted.at("exitCode") == 0 && !quitted.contains("inspectionError") &&
-                            quitted.at("state").at("kind") == "none" &&
-                            git({"ls-files", "--stage", "-z"}) == index && read("file.cpp") == disk &&
-                            engine.dispatch("documents.read", {{"path", "file.cpp"}}) == doc,
-                        "Quit preserves unresolved index, working file and dirty source buffer");
+                            quitted.at("state").at("kind") == "none" && indexUnchanged && diskUnchanged && afterDocument==doc,
+                        ("Quit preserves unresolved index, working file and dirty source buffer: "+detail.dump()).c_str());
             }
         }
     }

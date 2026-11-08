@@ -1,4 +1,5 @@
 #include "cycode/Application.h"
+#include "cycode/UiFonts.h"
 #include "cycode/FileIcons.h"
 #include <algorithm>
 #include <cyui/Core.h>
@@ -224,7 +225,7 @@ void Application::resourcePanel() {
                     resourceAssetPaths_[id] = path;
                     const bool folder = entry.at("directory");
                     auto name = entry.at("name").get<std::string>();
-                    if (cyui::iconsAvailable())
+                    if (applicationIconAvailable(folder ? cyui::icon::folder : cyui::icon::document))
                         name = std::string(folder ? cyui::icon::folder : cyui::icon::document) + "  " + name;
                     items.push_back({id, current.empty() ? 0 : uiId("resource/" + current), name,
                                      pathUtf8(utf8Path(path).extension()), 0, folder,

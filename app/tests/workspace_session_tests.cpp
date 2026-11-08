@@ -1,3 +1,4 @@
+#include <source_location>
 #include "cycode/Paths.h"
 #include "cycode/WorkspaceSession.h"
 #include <fstream>
@@ -9,14 +10,14 @@ void require(bool value, const char *message) {
     if (!value)
         throw std::runtime_error(message);
 }
-template <class F> void rejects(F f) {
+template <class F> void rejects(F f, const std::source_location location = std::source_location::current()) {
     bool failed = false;
     try {
         f();
     } catch (const std::exception &) {
         failed = true;
     }
-    require(failed, "Invalid workspace session state was accepted");
+    if (!failed) throw std::runtime_error("Invalid workspace session state was accepted" + std::string(" at line ") + std::to_string(location.line()));
 }
 } // namespace
 void workspaceSessionContracts(const std::filesystem::path &root) {

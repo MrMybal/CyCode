@@ -16,9 +16,9 @@ runtime behavior, and an unavailable external tool is a skipped test, not a pass
 
 | Gate | Current evidence | Required before completion |
 |---|---|---|
-| Windows/Linux/macOS core | Complete 1f56042 matrix: 50 Windows, 50 Linux and 49 macOS native tests passed, with 7/6/6 failures and 1/2/3 explicit skips | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
-| Production GUI and CLI | Full production app/CLI builds pass on Windows, Linux and macOS; Linux EN graphite / FR light-grey hidden rendering passes; 61 UI files pass strict Clang syntax | Finish actual keyboard/Undo, font/icon resources, detached windows and platform interaction acceptance |
-| Source/schema checks | 233 descriptors / 466 schemas match; 27 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
+| Windows/Linux/macOS core | Complete 6566784 matrix: 54 Windows, 55 Linux and 53 macOS native tests passed, with 4/2/3 failures and 0/1/2 explicit skips | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
+| Production GUI and CLI | Full production app/CLI builds pass on Windows, Linux and macOS; Linux EN graphite / FR light-grey hidden rendering passes; 62 UI files pass strict Clang syntax | Finish actual keyboard/Undo, font/icon resources, detached windows and platform interaction acceptance |
+| Source/schema checks | 233 descriptors / 466 schemas match; 29 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
 | Offline help and website | Merged 610-page / 6316-route reader and DOM controls pass | Keep exports current with final fixes; validate actual browser/desktop help handoff |
 | Installer and application updates | Actual c2c72ba Windows runner Setup, payload hashes, busy/pending guards, French repair and uninstall/data retention pass | Full installed/portable online update, cancellation/recovery/restart and pristine-machine runtime acceptance |
 | Editor and SDK/plugins | Implemented milestones are documented individually | Runtime source/selection/Undo/lifecycle/permission and graphical acceptance |
@@ -82,3 +82,33 @@ published from a failing development matrix.
 Production run 42443628690 and native run 42443628691 retain the exact evidence
 for 1f56042. Subsequent fixes require a new run. The Linux captures expose fallback
 font/icon rendering, which remains a real interface issue, despite pixel checks.
+
+## Portable typography, keyboard reports and remaining contracts — 2026-11-08
+
+The 6566784 matrix now executes C# with the pinned actual language server. Its
+snippet catalogue, real C++ actions, Rust services and Windows/Linux managed
+debugging pass. Linux retains extension permission-assertion and inherited-Git
+fixture failures; Windows additionally exposes session/repository rejection cases;
+macOS retains strict replay preservation and attach liveness cases. New source
+locations and structured payloads keep those failures actionable. Do not mark them
+fixed until the next run.
+
+MSBuild correctly returned a navigable C2065 error after external MSB8029 warnings;
+the fixture now finds the error by severity/code/path instead of assuming order.
+Owned test TMP directories get a Git ceiling only during explicit CTest, preventing
+unversioned fixtures from inheriting the parent CI checkout. No application Git
+discovery or plugin permission policy is weakened.
+
+Checked-in Roboto regular/bold, JetBrains Mono and a 104-glyph Codicons-derived
+control face use the existing CyUI/ImGui host font APIs. No CyUI source, widget,
+context or new runtime dependency is copied. Source hashes, semantic mapping and
+original licenses accompany the resources; optional authoring reproduces all bytes.
+Actual TTF cmap/hash tests pass, as do 62 strict Clang UI syntax checks and the
+Windows production build. The new font rendering still requires runner evidence.
+Some optional CyUI decorations remain constrained by its Windows-only icon flag.
+
+The first Linux keyboard run exposed a report path relative to the child process's
+different working directory; it now passes an absolute path. The twelve actual
+keyboard cases must still execute. macOS production now also has to run the hidden
+EN/FR renderer, rather than merely compile it. The documentation verifier rejects
+changed, unreviewed source-guide hashes with normalized checkout line endings.

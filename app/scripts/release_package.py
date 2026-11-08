@@ -9,6 +9,10 @@ import zipfile
 MAXIMUM = 256 * 1024 * 1024
 REQUIRED = {'CyCode.exe', 'CyCodeUpdater.exe', 'cycode_cli.exe',
             'app/CyTool.json', 'app/locales/ui.json', 'LICENSE', 'COPYRIGHT'}
+REQUIRED.update('app/resources/fonts/' + name for name in (
+    'Roboto-Regular.ttf','Roboto-Bold.ttf','JetBrainsMono-Regular.ttf',
+    'CyCodeControls-Regular.ttf','font-resources.json','Roboto-LICENSE.txt',
+    'JetBrainsMono-OFL.txt','Codicons-LICENSE.txt'))
 
 
 def version_tuple(value):

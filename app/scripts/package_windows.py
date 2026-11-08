@@ -74,7 +74,7 @@ def main():
                  'app/README.md', 'app/THIRD_PARTY_NOTICES.md', 'app/tool.py', 'app/contracts.py',
                  'app/locales/ui.json', 'app/include/cycode/PluginAPI.h']:
         include(ROOT / name)
-    for pattern in ['app/*lock.json', 'app/licenses/*', 'app/scripts/*.py',
+    for pattern in ['app/*lock.json', 'app/licenses/*', 'app/resources/fonts/*', 'app/scripts/*.py',
                     'app/examples/hello/*']:
         for source in sorted(ROOT.glob(pattern)):
             if source.is_file():

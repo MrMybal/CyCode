@@ -1,4 +1,5 @@
 #include "cycode/Application.h"
+#include "cycode/UiFonts.h"
 #include "ApplicationHelp.h"
 #include "cycode/SymbolCatalogue.h"
 #include "cycode/DiagnosticAnnotations.h"
@@ -83,7 +84,7 @@ Application::Application(LaunchOptions options, SDL_Window *window)
     cyui::apply(config);
     cyui::setLocale(locale_.c_str());
     applyEditorTheme(theme_);
-    cyui::loadFonts();
+    fontResources_ = loadApplicationFonts(root_);
     ImGui::GetStyle().FontScaleMain = textScale_;
     auto workspace = options.workspace;
     if (workspace.empty())
@@ -247,6 +248,7 @@ Json Application::testState() const {
     result["fileCount"] = files_.size();
     result["ui"] = {{"quickOpen", quickOpenVisible_}, {"lastShortcut", lastShortcut_}};
     result["ui"]["branding"]={{"logo",bool(brandingLogo_)},{"windowIcon",brandingWindowIcon_},{"error",brandingError_}};
+    result["ui"]["fonts"] = fontResources_;
     result["ui"]["paletteMode"] = paletteMode_;
     result["ui"]["keymap"] = keymapProfile_;
     result["ui"]["options"] = options_;
