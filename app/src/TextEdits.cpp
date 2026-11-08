@@ -67,7 +67,9 @@ bool containsPath(const std::filesystem::path &root, const std::filesystem::path
     for (; a != root.end(); ++a, ++b) {
         if (b == path.end()) return false;
 #ifdef _WIN32
-        if (_wcsicmp(a->c_str(), b->c_str())) return false;
+        // path equality treats / and \ as the same Windows root separator.
+        // Keep case-insensitive component comparison for ordinary names.
+        if (*a != *b && _wcsicmp(a->c_str(), b->c_str())) return false;
 #else
         if (*a != *b) return false;
 #endif

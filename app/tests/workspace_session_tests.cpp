@@ -49,7 +49,12 @@ void workspaceSessionContracts(const std::filesystem::path &root) {
     for (const auto *folder : {"../outside", "/absolute", "C:/outside", "a\\b", ".git/objects", "a/.CYCODE/x",
                                "a/./b", "untitled://draft"}) {
         selected["git"]["root"] = folder;
-        rejects([&] { validateWorkspaceSession(selected, key); });
+        try {
+            (void)validateWorkspaceSession(selected, key);
+        } catch (const std::exception &) {
+            continue;
+        }
+        throw std::runtime_error("Invalid saved Git path accepted: " + std::string(folder));
     }
     rejects([&] { validateSessionGit({{"version", 1}, {"root", "one"}, {"identity", ""}}); });
     rejects([&] { validateSessionGit({{"version", 1}, {"root", ""}, {"identity", "other"}}); });

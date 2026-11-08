@@ -1,3 +1,4 @@
+#include <string_view>
 #include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
 #include "cycode/CompilerLocation.h"
@@ -361,13 +362,15 @@ Json Engine::searchText(const Json &params, const std::atomic<bool> *cancellatio
                 dirty[path] = doc.text;
         for (const auto &[path, doc] : untitled_) dirty[path] = doc.text;
     }
-    auto record = [&](std::string path, size_t line, size_t column, std::string text) {
-        if (text.size() > 512)
-            text.resize(512);
-        while (!text.empty() && (text.back() == '\r' || text.back() == '\n'))
-            text.pop_back();
+    auto record = [&](const std::string &path, size_t line, size_t column, std::string_view text) {
+        if (text.size() > 512) {
+            size_t end=512;
+            while (end && (static_cast<unsigned char>(text[end]) & 0xc0)==0x80) --end;
+            text=text.substr(0,end); // Allocate only the scalar-safe bounded preview.
+        }
+        while (!text.empty() && (text.back() == '\r' || text.back() == '\n')) text.remove_suffix(1);
         if (matches.size() < static_cast<size_t>(limit))
-            matches.push_back({{"path", path}, {"line", line}, {"column", column}, {"text", text}});
+            matches.push_back({{"path", path}, {"line", line}, {"column", column}, {"text", std::string(text)}});
     };
     std::istringstream stream(result.output);
     std::string line;
@@ -390,14 +393,34 @@ Json Engine::searchText(const Json &params, const std::atomic<bool> *cancellatio
                 over = true;
                 break;
             }
-            record(path, d["line_number"].get<size_t>(), sub["start"].get<size_t>() + 1, d["lines"]["text"]);
+            record(path, d["line_number"].get<size_t>(), sub["start"].get<size_t>() + 1, d["lines"]["text"].get_ref<const std::string &>());
         }
     }
-    // Unsaved buffers supersede disk results. Keep regex semantics/cancellation
-    // in ripgrep by searching host-owned numeric snapshots, never project files.
-    if(regex&&!dirty.empty()) {
-        struct Snapshots {std::filesystem::path folder;~Snapshots(){if(!folder.empty()){std::error_code ec;std::filesystem::remove_all(folder,ec);}}} snapshots;
-        std::random_device random;const auto parent=std::filesystem::canonical(std::filesystem::temp_directory_path());
+    // Ripgrep supplies the same Unicode simple-case folding as disk searches.
+    // Keep the in-memory fast path for byte-exact and all-ASCII literal searches.
+    const auto nonAscii=[](const std::string &value) {
+        return std::any_of(value.begin(),value.end(),[](unsigned char c){return c>=128;});
+    };
+    const bool unicodeCaseless=!sensitive && (nonAscii(query) ||
+        std::any_of(dirty.begin(),dirty.end(),[&](const auto &entry){return nonAscii(entry.second);}));
+    const bool snapshotSearch=regex || unicodeCaseless;
+    // Unsaved buffers supersede disk results. Search host-owned numeric snapshots,
+    // never project files, through the existing bounded/cancellable process owner.
+    if(snapshotSearch&&!dirty.empty()) {
+        struct Snapshots {
+            std::filesystem::path folder,parent;
+            std::vector<std::string> owned;
+            ~Snapshots() {
+                if (folder.empty()) return;
+                std::error_code error;
+                if (std::filesystem::is_symlink(folder,error) ||
+                    std::filesystem::canonical(folder,error)!=folder || folder.parent_path()!=parent || error) return;
+                for (const auto &name:owned) std::filesystem::remove(folder/name,error);
+                // Unknown entries prevent removal; no recursive cleanup or link traversal.
+                std::filesystem::remove(folder,error);
+            }
+        } snapshots;
+        std::random_device random;const auto parent=std::filesystem::canonical(std::filesystem::temp_directory_path());snapshots.parent=parent;
         for(int attempt=0;attempt<16;++attempt){const auto candidate=parent/("cycode-search-"+std::to_string(random())+"-"+std::to_string(random()));if(std::filesystem::create_directory(candidate)){snapshots.folder=candidate;break;}}
         if(snapshots.folder.empty())throw std::runtime_error("Cannot create private search snapshots");
 #ifndef _WIN32
@@ -405,10 +428,10 @@ Json Engine::searchText(const Json &params, const std::atomic<bool> *cancellatio
 #endif
         std::map<std::string,std::string> paths;size_t bytes=0;
         for(const auto &[path,text]:dirty){if(cancellation&&cancellation->load())return {{"matches",Json::array()},{"truncated",false},{"cancelled",true}};
-            bytes+=text.size();if(paths.size()>=128||bytes>64*1024*1024)throw std::runtime_error("Unsaved regex search exceeds 128 buffers / 64 MiB");
-            const auto name=std::to_string(paths.size())+".txt";std::ofstream out(snapshots.folder/name,std::ios::binary);out.write(text.data(),std::streamsize(text.size()));if(!out)throw std::runtime_error("Cannot write search snapshot");paths[name]=path;
+            bytes+=text.size();if(paths.size()>=128||bytes>64*1024*1024)throw std::runtime_error("Unsaved snapshot search exceeds 128 buffers / 64 MiB");
+            const auto name=std::to_string(paths.size())+".txt";snapshots.owned.push_back(name);std::ofstream out(snapshots.folder/name,std::ios::binary);out.write(text.data(),std::streamsize(text.size()));if(!out)throw std::runtime_error("Cannot write search snapshot");paths[name]=path;
         }
-        std::vector<std::string> arguments={"rg","--json","--no-ignore","--hidden","--max-count",std::to_string(limit)};if(!sensitive)arguments.push_back("--ignore-case");arguments.insert(arguments.end(),{"--",query,"."});
+        std::vector<std::string> arguments={"rg","--json","--no-ignore","--hidden","--max-count",std::to_string(limit)};if(!sensitive)arguments.push_back("--ignore-case");if(!regex)arguments.push_back("--fixed-strings");arguments.insert(arguments.end(),{"--",query,"."});
         const auto live=runProcess(arguments,snapshots.folder,std::chrono::seconds(15),8*1024*1024,cancellation);
         if(live.cancelled)return {{"matches",Json::array()},{"truncated",false},{"cancelled",true}};
         if(live.exitCode>1&&!live.truncated&&!live.timedOut)throw std::runtime_error(live.output);
@@ -417,32 +440,41 @@ Json Engine::searchText(const Json &params, const std::atomic<bool> *cancellatio
         while(std::getline(rows,row)){const auto item=Json::parse(row,nullptr,false);if(item.is_discarded()||item.value("type","")!="match")continue;
             const auto &data=item.at("data");if(!data.at("path").contains("text")||!data.at("lines").contains("text"))continue;
             const auto file=pathUtf8(utf8Path(data.at("path").at("text").get<std::string>()).filename());if(!paths.contains(file))continue;
-            for(const auto &sub:data.at("submatches")){if(matches.size()>=size_t(limit)){over=true;break;}record(paths.at(file),data.at("line_number"),sub.at("start").get<size_t>()+1,data.at("lines").at("text"));}
+            for(const auto &sub:data.at("submatches")){if(matches.size()>=size_t(limit)){over=true;break;}record(paths.at(file),data.at("line_number"),sub.at("start").get<size_t>()+1,data.at("lines").at("text").get_ref<const std::string &>());}
         }
     }
-    if (!regex)
-        for (const auto &[path, text] : dirty) {
-            std::istringstream lines(text);
-            size_t number = 0;
-            while (std::getline(lines, line)) {
+    if (!snapshotSearch) {
+        const auto lower=[](unsigned char c) { return static_cast<char>(c>='A' && c<='Z' ? c+'a'-'A' : c); };
+        std::string needle=query;
+        if (!sensitive) std::transform(needle.begin(),needle.end(),needle.begin(),lower);
+        for (const auto &[path,text]:dirty) {
+            if (over) break;
+            size_t number=0,start=0;
+            while (start<text.size()) {
+                if (cancellation && cancellation->load())
+                    return {{"matches",Json::array()},{"truncated",false},{"cancelled",true}};
                 ++number;
-                std::string needle = query, haystack = line;
+                const auto newline=text.find('\n',start);
+                const auto current=std::string_view(text).substr(start,
+                    newline==std::string::npos ? text.size()-start : newline-start);
+                std::string folded;
+                std::string_view haystack(current);
                 if (!sensitive) {
-                    auto lower = [](unsigned char c) { return static_cast<char>(std::tolower(c)); };
-                    std::transform(needle.begin(), needle.end(), needle.begin(), lower);
-                    std::transform(haystack.begin(), haystack.end(), haystack.begin(), lower);
+                    folded=current;
+                    std::transform(folded.begin(),folded.end(),folded.begin(),lower);
+                    haystack=folded;
                 }
-                size_t at = 0;
-                while ((at = haystack.find(needle, at)) != std::string::npos) {
-                    if (matches.size() >= static_cast<size_t>(limit)) {
-                        over = true;
-                        break;
-                    }
-                    record(path, number, at + 1, line);
-                    at += std::max<size_t>(needle.size(), 1);
+                size_t at=0;
+                while ((at=haystack.find(needle,at))!=std::string_view::npos) {
+                    if (matches.size()>=static_cast<size_t>(limit)) {over=true;break;}
+                    record(path,number,at+1,current);
+                    at+=std::max<size_t>(needle.size(),1);
                 }
+                if (over || newline==std::string::npos) break;
+                start=newline+1;
             }
         }
+    }
     return {{"matches", matches},
             {"truncated", over || result.truncated},
             {"timedOut", result.timedOut},

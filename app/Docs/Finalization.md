@@ -16,11 +16,11 @@ runtime behavior, and an unavailable external tool is a skipped test, not a pass
 
 | Gate | Current evidence | Required before completion |
 |---|---|---|
-| Windows/Linux/macOS core | Complete 6566784 matrix: 54 Windows, 55 Linux and 53 macOS native tests passed, with 4/2/3 failures and 0/1/2 explicit skips | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
-| Production GUI and CLI | Full production app/CLI builds pass on Windows, Linux and macOS; Linux EN graphite / FR light-grey hidden rendering passes; 62 UI files pass strict Clang syntax | Finish actual keyboard/Undo, font/icon resources, detached windows and platform interaction acceptance |
-| Source/schema checks | 233 descriptors / 466 schemas match; 29 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
+| Windows/Linux/macOS core | Complete a176a31 matrix: Linux 57 passed / 1 platform skip; Windows 55 passed / 3 failures; macOS 55 passed / 1 timeout / 2 skips | Validate fixes with real installed language/debug backends; resolve remaining package/snippet/navigation/Git/server cases |
+| Production GUI and CLI | Full production app/CLI builds pass on Windows, Linux and macOS; Linux EN graphite / FR light-grey hidden rendering passes; 62 UI files pass strict Clang syntax | Linux 12 keyboard/Undo/search/keymap cases pass; Linux/macOS actual EN/FR font/icon rendering passes; detached windows and wider platform interaction acceptance remain |
+| Source/schema checks | 233 descriptors / 466 schemas match; 30 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
 | Offline help and website | Merged 610-page / 6316-route reader and DOM controls pass | Keep exports current with final fixes; validate actual browser/desktop help handoff |
-| Installer and application updates | Actual c2c72ba Windows runner Setup, payload hashes, busy/pending guards, French repair and uninstall/data retention pass | Full installed/portable online update, cancellation/recovery/restart and pristine-machine runtime acceptance |
+| Installer and application updates | Actual a176a31 Windows runner Setup, payload hashes, busy/pending guards, French repair and uninstall/data retention pass | Full installed/portable online update, cancellation/recovery/restart and pristine-machine runtime acceptance |
 | Editor and SDK/plugins | Implemented milestones are documented individually | Runtime source/selection/Undo/lifecycle/permission and graphical acceptance |
 | Advanced development workflows | See Roadmap.md | Complete explicitly missing services and validate against real tools |
 
@@ -112,3 +112,42 @@ different working directory; it now passes an absolute path. The twelve actual
 keyboard cases must still execute. macOS production now also has to run the hidden
 EN/FR renderer, rather than merely compile it. The documentation verifier rejects
 changed, unreviewed source-guide hashes with normalized checkout line endings.
+
+## Completed a176a31 runners and next correction pass — 2026-11-08
+
+Native run 42447474984 reports 57 Linux passes with only Windows-specific MSBuild
+skipped. Windows reports 55 passes and three failures: saved rooted Git paths,
+open sibling-worktree protection and final owned-directory cleanup. macOS reports
+55 passes, two skips and a 240-second composite Git timeout. Its actual native
+debugger attach/detach now passes. No skip counts as successful execution.
+
+Production run 42447475064 passes all three full app/CLI builds. Linux and macOS
+both actually render the English graphite and French light-grey views with the
+bundled fonts and mapped icon glyphs. Linux's twelve real keyboard scenarios pass,
+including editing/Undo, VS/VS Code chords, all three searches, double Shift,
+command palette, keymap settings, reopen and navigation history. Linux captures
+were visually inspected. Windows Setup/repair/uninstall passes again, including
+actual managed-file hashes and retained user data. No native launch occurred on
+the user's machine. The local-browser tool rejects file://, so its actual offline
+handoff remains unverified; export/DOM checks do not substitute for that gate.
+
+The next corrections preserve these assertions: session paths reject drive-less
+root directories on Windows; path containment compares equivalent slash spellings
+before case-insensitive names. Owned test cleanup validates the exact new temporary
+directory and uses Windows extended paths to remove long lease filenames. A failed
+cleanup reports remaining relative names and is still a failure, without retry.
+
+The existing VCS executable now exposes seven complete workflow groups to CTest,
+so each keeps its assertions and bounded timeout without one aggregate 240-second
+deadline hiding later repository checks. No additional test executable is added.
+The official macOS NetCoreDbg ZIP installer restores executable metadata and repairs
+a matching non-executable cache, rather than skipping the real managed-debug case.
+A data-only ZIP contract proves extraction/cache behavior without running code.
+
+Unsaved Unicode-insensitive literal search now uses ripgrep fixed strings through
+the existing numeric snapshots, matching saved-text simple-fold behavior. Exact
+and ASCII-only matching keep the in-memory route; queries are folded once and
+line views avoid whole-line preview copies. Preview truncation retains UTF-8
+scalars. Public-API regressions retain disk bytes, columns, cancellation and limits.
+The new native path/search cases and macOS managed-debug execution still require
+their next runner results. See Workspace.md for search bounds and semantics.

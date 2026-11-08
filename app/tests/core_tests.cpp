@@ -1,3 +1,5 @@
+#include "cycode/TextFile.h"
+#include "cycode/TextEdits.h"
 #include "cycode/NativeFileLease.h"
 #ifdef _WIN32
 #include <windows.h>
@@ -27,6 +29,22 @@ static void write(const std::filesystem::path &path, const std::string &text) {
     std::ofstream out(path, std::ios::binary);
     out << text;
 }
+static void pathContainmentChecks() {
+    check(containsPath(utf8Path("/workspace"),utf8Path("/workspace/src/main.cpp")),
+          "Ordinary path containment failed");
+    check(!containsPath(utf8Path("/workspace"),utf8Path("/workspace-other/main.cpp")),
+          "Containment accepted a string-prefix neighbour");
+#ifdef _WIN32
+    check(containsPath(utf8Path("D:/Workspace"),std::filesystem::path(L"D:\\Workspace\\src\\main.cpp")),
+          "Windows containment treated equivalent root separators as different");
+    check(containsPath(std::filesystem::path(L"D:\\WORKSPACE"),utf8Path("d:/workspace/src/main.cpp")),
+          "Windows containment lost case-insensitive component comparison");
+    check(!containsPath(utf8Path("D:/Workspace"),utf8Path("E:/Workspace/src/main.cpp")),
+          "Windows containment crossed a drive");
+    check(!containsPath(utf8Path("D:/Workspace"),utf8Path("D:/Workspace-other/main.cpp")),
+          "Windows containment accepted a string-prefix neighbour");
+#endif
+}
 static void longLeaseChecks(const std::filesystem::path &root) {
     const auto file = root / utf8Path("lease-" + std::string(224, 'x') + ".lock");
     {
@@ -47,6 +65,48 @@ static void longLeaseChecks(const std::filesystem::path &root) {
 #else
     check(std::filesystem::remove(file), "Cannot retire the owned lease fixture");
 #endif
+}
+static void unicodeSearchChecks(const std::filesystem::path &root) {
+    std::filesystem::create_directory(root);
+    const std::string baseline="// Original disk only\n";
+    write(root/"main.cpp",baseline);
+    Engine engine(root);engine.configureLanguage("",false,false);
+    auto doc=engine.dispatch("documents.read",{{"path","main.cpp"}});
+    auto replace=[&](const std::string &text) {
+        doc=engine.dispatch("documents.replace",{{"path","main.cpp"},{"text",text},{"expectedRevision",doc.at("revision")}});
+    };
+    auto search=[&](const std::string &query,bool sensitive=false,bool regex=false) {
+        return engine.dispatch("search.text",{{"query",query},{"caseSensitive",sensitive},{"regex",regex}}).at("matches");
+    };
+    const std::string unicode="// ÉTÉ Σ ς K Straße ẞ\n";
+    replace(unicode);
+    const auto accents=search("été");
+    check(accents.size()==1 && accents[0].at("path")=="main.cpp" && accents[0].at("column")==4,
+          "Unsaved accent-insensitive search lost byte columns");
+    const auto sigma=search("σ");
+    check(sigma.size()==2 && sigma[0].at("column")==unicode.find("Σ")+1 &&
+          sigma[1].at("column")==unicode.find("ς")+1,"Unicode simple-case equivalents do not match");
+    check(search("k").size()==1,"ASCII query did not match the Unicode Kelvin equivalent");
+    check(search("ss").empty() && search("ß").size()==2,"Literal search changed Unicode simple-fold semantics");
+    check(search("été",true).empty() && search("ÉTÉ",true).size()==1,"Case-sensitive Unicode search changed");
+    replace("[ÉTÉ].*\n");
+    check(search("[été].*").size()==1,"Literal metacharacters became regular expressions");
+    replace(std::string(511,'x')+"éNeedle\n");
+    for (const bool regex:{false,true}) {
+        const auto result=search("Needle",false,regex);
+        check(result.size()==1 && result[0].at("column")==514 &&
+              result[0].at("text").get<std::string>().size()==511,"UTF-8 preview split a scalar or lost a byte column");
+        (void)result.dump(); // The public result must remain serializable UTF-8.
+    }
+    replace("needle needle\nneedle\n");
+    const auto limited=engine.dispatch("search.text",{{"query","needle"},{"limit",1}});
+    check(limited.at("matches").size()==1 && limited.at("truncated").get<bool>(),
+          "Literal search did not report its exact result limit");
+    std::atomic<bool> cancellation{true};
+    const auto cancelled=engine.searchText({{"query","needle"}},&cancellation);
+    check(cancelled.value("cancelled",false) && cancelled.at("matches").empty(),
+          "Cancelled literal search exposed a partial observation");
+    check(readTextFileBytes(root/"main.cpp")==baseline,"Unsaved Unicode search modified source bytes");
 }
 static void toolAliasChecks(const std::filesystem::path &root) {
     check(sameExecutableInvocation(root / "compiler-cpp", root / "." / "compiler-cpp"),
@@ -204,6 +264,7 @@ int main(int argc, char **argv) {
         ("cycode-test-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     try {
         std::filesystem::create_directories(root);
+        pathContainmentChecks();
         longLeaseChecks(root);
         toolAliasChecks(root);
         relatedFileContracts(root);
@@ -338,6 +399,7 @@ int main(int argc, char **argv) {
                 check(stats["words"] == 2 && stats["lines"] == 2, "Real dynamic plugin");
             }
         }
+        unicodeSearchChecks(root/"unicode-search");
         std::filesystem::remove_all(root);
         std::cout << "Core tests passed: revisions, disk conflicts, encoding, boundaries, unsaved search, "
                      "Git, native plugin.\n";

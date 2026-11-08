@@ -12,24 +12,28 @@ Windows production GUI/CLI/helper/providers compile with BUILD_TESTING=OFF.
 Strict Clang syntax checks pass all 62 interface translation units, including the
 revised outline comparator. Targeted MSVC /Zs checks evaluate production UTF-8 and
 integer policies and compile native regression bodies without producing or
-running fixtures. Twenty-nine Python data-only tests cover build-plan boundaries,
+running fixtures. Thirty Python data-only tests cover build-plan boundaries,
 release authoring, navigation and snippet/schema contracts. Source syntax/data and
 the complete EN/FR reader remain separate checks from native behavior.
 
-The 1f56042 production matrix compiles the full GUI and CLI on Windows, Linux
-and macOS. Linux hidden English/graphite and French/light-grey renders preserve
-the source buffers and actual pixels. Visual inspection also exposes missing
-portable fonts/icons; a successful render does not establish visual parity.
-The actual c2c72ba Windows runner installed Setup, verified managed-file hashes,
-refused busy/pending changes, repaired in French and uninstalled while retaining
-user data. A complete installed/portable online update remains a separate gate.
+Production run 42447475064 at a176a31 passes full GUI/CLI builds on Windows,
+Linux and macOS. Linux and macOS actually render English graphite and French
+light-grey views with checked-in fonts and icon glyphs. Linux visual inspection
+confirms readable text, accents and portable controls; its twelve real keyboard
+scenarios all pass. Windows actually installs Setup, checks payload hashes,
+refuses busy/pending changes, repairs in French and uninstalls while retaining
+user data. Full installed/portable online updating remains a separate gate.
 
-Native run 42445780816 passed 54 Windows, 55 Linux and 53 macOS cases; it also
-recorded 4/2/3 failures and 0/1/2 skips respectively. Real Java/TypeScript/Rust
-completion/actions, native debugging on Linux/Windows and semantic highlighting
-now execute, but the remaining failures require correction and rerun. No skipped
-case is included in the passed counts. See Finalization.md for the correction
-ledger and the Actions artifacts for full logs.
+Native run 42447474984 reports Linux 57 passed / 1 platform skip, Windows 55
+passed / 3 failed, and macOS 55 passed / 1 timeout / 2 skipped. Real C#/Java/
+TypeScript/Rust services, native debugger attach/detach and Windows/Linux managed
+debugging execute. The macOS NetCoreDbg preparation bug is corrected in source,
+but its managed-debug execution is still pending. Windows session-root and
+worktree containment corrections, long-path cleanup, seven separately bounded
+VCS workflow groups and new unsaved Unicode search regressions require a fresh
+native run. No skipped or timed-out case is counted as passed. See Finalization.md
+and the Actions artifacts for exact evidence.
+
 Local application/installer/helper/native fixture execution remains suspended
 during the antivirus issue. See Finalization.md for the current gates and the
 workflow artifacts for actual runner results.
@@ -3985,8 +3989,11 @@ every frame. File rows are clipped to the visible portion of the explorer.
   1 MiB body limit. Mixed newlines are retained on no-op saves and normalized to the
   detected convention on edits. Legacy text encodings are rejected rather than converted.
 - Dirty buffers override disk results for literal and regex search. Unsaved regex
-  snapshots are limited to 128 buffers / 64 MiB. Case folding in dirty literal buffers is
-  currently ASCII-oriented. Search previews/row counts and process output are bounded.
+  and Unicode-insensitive literal snapshots are limited to 128 buffers / 64 MiB.
+  The Unicode literal route now shares ripgrep's simple-fold semantics; exact
+  and all-ASCII literal matching retain the in-memory path. Actual new Unicode
+  regression execution remains pending. Search previews/row counts and process
+  output are bounded; previews retain complete UTF-8 scalars.
 - The path snapshot is capped at 200,000 files/32 MiB of ripgrep output and cached
   in memory, with 20,000-item/8 MiB pages. Windows notifications invalidate structural
   changes; ignored/open files also reconcile periodically. Global Git ignore changes

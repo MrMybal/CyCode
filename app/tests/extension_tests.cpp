@@ -1,3 +1,4 @@
+#include "OwnedTestDirectory.h"
 #include "cycode/Commands.h"
 #include "cycode/Engine.h"
 #include "cycode/PluginManifest.h"
@@ -22,9 +23,8 @@ static void rejected(const std::function<void()> &call) {
     require(failed, "Expected an operation rejection");
 }
 int main(int argc, char **argv) {
-    const auto root = std::filesystem::temp_directory_path() /
-                      utf8Path("cycode-extensions-" +
-                               std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const OwnedTestDirectory owned("cycode-extensions-");
+    const auto &root=owned.path();
     try {
         require(argc == 3, "Expected fixture and dependency libraries");
         const auto hostInfo = pluginHostInfo();
@@ -348,7 +348,7 @@ int main(int argc, char **argv) {
                                                             {"expectedRevision", view.at("revision")}});
             require(changed.at("properties").at(0).at("value") == 42, "Panel property commit failed");
         }
-        std::filesystem::remove_all(root);
+        owned.clean();
         std::cout << "Extensions passed: ABI compatibility, instances, permissions, revisions, dependencies, "
                      "activation, provider routing and persistence.\n";
         return 0;

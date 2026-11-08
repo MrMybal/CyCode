@@ -594,7 +594,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "86541de86e53f83e98a2248ede2ad6d6a111b02fd6ba52512a2ea3955843f360"
+      "sourceSha256": "47c73911d79bce8afabca8cbd1cfc8699f060eecd333cce71a35b6970b7c436e"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -608,7 +608,7 @@
       "kind": "user-workflow",
       "target": "workspace-files#monitoring",
       "legacyId": "reference-app-docs-workspace",
-      "sourceSha256": "a0dd5e2aa5780bc82651b616304abc2b532083d7446d83fbfcd8a93d9b4d252f"
+      "sourceSha256": "4a09460c06bbe7808cb83fa84d2b4d0ef59eabd5dd821a919b134b03c4273bfb"
     },
     {
       "source": "Docs/WorkspaceSessions.md",
@@ -622,7 +622,7 @@
       "kind": "developer-reference",
       "target": "overview#getting-started",
       "legacyId": "reference-app-docs-finalization",
-      "sourceSha256": "1b00a397dfcaded9827697e140ff21d97ffbb4245c8e0d127bcfca36142fb0a0"
+      "sourceSha256": "85c410131203b133b7531bde16bd5876e82d92653377e5e168a3685ce1b96a62"
     },
     {
       "source": "Docs/Releases/v0.2.3.md",

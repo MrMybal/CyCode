@@ -57,3 +57,25 @@ service from GUI, CLI and CyToolsCore/MCP.
 CTest workspace_monitor uses actual filesystem operations in an owned temporary
 workspace: clean edits, dirty conflicts, deletion/recreation, invalid content,
 Unicode paths, pagination and cache invalidation. It does not alter user projects.
+
+## Unsaved Unicode search
+
+Dirty/untitled text replaces on-disk matches for the same document. Byte-exact
+literal and all-ASCII insensitive queries keep the native in-memory path. When
+insensitive matching involves non-ASCII text, the existing numeric snapshot owner
+uses ripgrep fixed strings, sharing Unicode simple folding with disk results.
+Regex queries retain the same owner and syntax. No PCRE2 runtime or new process
+model is added. Sigma/final sigma, Kelvin and capital sharp-S match their simple
+equivalents; multi-character folding and Unicode normalization are not performed.
+
+The snapshot route retains 128-buffer / 64 MiB and 15-second / 8 MiB subprocess
+bounds, cancellation, dirty-source precedence and one-based UTF-8 byte columns.
+ASCII folding is locale independent. A 512-byte result preview backs up to a
+complete UTF-8 scalar instead of returning malformed JSON text. Cleanup removes
+only recorded numeric files inside the verified temporary folder, leaving unknown
+entries intact; it never recursively removes a redirected folder.
+
+Public-API cases in the existing opt-in core fixture assert accents, sigma,
+Kelvin/ASCII queries, sharp-S behavior, literal punctuation, exact sensitivity,
+byte positions, scalar-safe preview serialization and unchanged source bytes.
+They are compiled syntax-only locally; actual execution remains a CI gate.
