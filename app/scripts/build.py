@@ -53,7 +53,7 @@ def build_commands(args, cmake, ninja, editor):
     generator = ['-G', 'Visual Studio 17 2022', '-A', 'x64'] if sys.platform == 'win32' else [
         '-G', 'Ninja', f'-DCMAKE_MAKE_PROGRAM={ninja or "ninja"}']
     configure = [cmake, '-S', str(ROOT / 'app'), '-B', str(build), *generator,
-                 f'-DCMAKE_BUILD_TYPE={args.configuration}', f'-DCYUI_DIR={args.cyui or ""}',
+                 f'-DCMAKE_BUILD_TYPE={args.configuration}',
 
                  '-DCYCODE_BUILD_GUI=OFF',
                  f'-DBUILD_TESTING={"ON" if args.build_tests else "OFF"}']

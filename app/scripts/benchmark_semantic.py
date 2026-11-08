@@ -85,11 +85,23 @@ class Host:
         self.lines = queue.Queue(maxsize=4)
         self.reader = threading.Thread(target=self._read, daemon=True); self.reader.start()
         self.sequence = 0
-        ready = self.receive(45)
-        if ready.get('event')!='ready' or ready.get('protocol')!=PROTOCOL:
-            raise RuntimeError('Unexpected native handshake')
-        self.startup_ms = (time.perf_counter()-self.started)*1000
-        self.context = ready['status']['engine']['context']
+        try:
+            ready = self.receive(45)
+            if ready.get('event')!='ready' or ready.get('protocol')!=PROTOCOL:
+                raise RuntimeError('Unexpected native handshake')
+            self.startup_ms = (time.perf_counter()-self.started)*1000
+            self.context = ready['status']['engine']['context']
+        except BaseException:
+            # Even a malformed/missing handshake must release our own host.
+            # EOF first allows the same Engine shutdown as a normal session.
+            self.process.stdin.close()
+            try:
+                self.process.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                self.process.kill(); self.process.wait(timeout=10)
+            self.reader.join(timeout=5)
+            self.process.stdout.close(); self.stderr.close()
+            raise
 
     def _read(self):
         try:

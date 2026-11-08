@@ -1,10 +1,11 @@
 """Data-only checks; never spawn CLI, clangd or any native fixture."""
 import importlib.util
+import io
 import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 path=Path(__file__).resolve().parents[1]/'scripts/benchmark_semantic.py'
 spec=importlib.util.spec_from_file_location('semantic_baseline',path)
@@ -40,6 +41,19 @@ class BaselineDataTests(unittest.TestCase):
             output=Path(tmp)/'refused'
             with self.assertRaises(SystemExit):api.main(['--ci','--cli','missing','--clangd','missing','--output',str(output)])
             self.assertFalse(output.exists())
+
+    def test_bad_handshake_closes_owned_host_without_native_execution(self):
+        process=Mock()
+        process.stdin=io.BytesIO()
+        process.stdout=io.BytesIO(b'{"event":"unexpected"}\n')
+        process.wait.return_value=0
+        with tempfile.TemporaryDirectory() as tmp, patch.object(api.subprocess,'Popen',return_value=process):
+            with self.assertRaisesRegex(RuntimeError,'Unexpected native handshake'):
+                api.Host(Path('mock-cli'),Path(tmp),Path(tmp)/'stderr.log')
+        self.assertTrue(process.stdin.closed)
+        self.assertTrue(process.stdout.closed)
+        process.wait.assert_called_once_with(timeout=15)
+        process.kill.assert_not_called()
 
     def test_statistics_preserve_raw_samples(self):
         report=api.summarize([10,1,8,2,5])
