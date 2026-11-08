@@ -16,9 +16,9 @@ runtime behavior, and an unavailable external tool is a skipped test, not a pass
 
 | Gate | Current evidence | Required before completion |
 |---|---|---|
-| Windows/Linux/macOS core | 32ff605: Windows 64 passed; Linux/macOS 63 passed each / 1 MSBuild platform skip each | Preserve real installed adapter coverage; repeat the previously intermittent Mac Git replay path; complete remaining Roadmap workflows |
+| Windows/Linux/macOS core | ab82791: Windows 64 passed; Linux/macOS 63 passed each / 1 MSBuild platform skip each; three extra Mac replay passes | Preserve real installed adapter coverage; repeat the previously intermittent Mac Git replay path; complete remaining Roadmap workflows |
 | Production GUI and CLI | 32ff605: full production app/CLI builds on all three; eight Linux/Mac EN/FR renders; Linux 12 keyboard, 6 clangd information and detached-window/two-instance cases pass | Execute corrected Mac primary-modifier/keyboard/information/viewports cases; obtain actual Windows graphical and wider physical keyboard/IME/DPI acceptance |
-| Source/schema checks | 233 descriptors / 466 schemas match; 36 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
+| Source/schema checks | 233 descriptors / 466 schemas match; 38 data tests pass; source checks pass | Keep these checks passing with subsequent changes |
 | Offline help and website | Merged 610-page / 6316-route reader and DOM controls pass | Keep exports current with final fixes; validate actual browser/desktop help handoff |
 | Installer and application updates | Actual 32ff605 Windows runner Setup, payload hashes, busy/pending guards, French repair and uninstall/data retention pass | Full installed/portable online update, cancellation/recovery/restart and pristine-machine runtime acceptance |
 | Editor and SDK/plugins | Pinned Windows Python/SDK authoring is implemented; both source/wheel authoring give the same reviewed payload | Execute installed official-client/shared-Core/permission/plugin/lifecycle acceptance and remaining source/selection/Undo/graphical workflows |
@@ -276,3 +276,46 @@ Actual command-availability waits bound startup/apply/Undo without bypassing
 input handlers. C# managed semantic acceptance remains separate; no backend or
 process is simulated and no new native fixture executable is added. This is
 prepared coverage, still awaiting actual remote results.
+
+## macOS scripted chord cadence correction — 2026-11-08
+
+Production ab82791 reaches the actual Rider editing case, then Visual Studio's
+comment chord expires and dispatches Copy. At the observed roughly 24 seconds
+per 115 frames, the authored nine-frame gap can exceed the unchanged 1.5-second
+keymap deadline. Double Shift's unchanged 0.4-second window has the same fixture
+issue. Explicit scripted input now declares a fixed 60 Hz ImGui delta and records
+the actual maximum SDL frame delta; ordinary physical input and native deadlines
+retain real clocks. Actual focus/queue/commands/services/Undo remain exercised.
+This is a deterministic cadence fixture, not a physical timing/performance claim.
+The corrected keyboard/information/refactoring matrix remains pending.
+
+## ab82791 actual native matrix and installed MCP progress — 2026-11-08
+
+Native run 42462705540 passes all 64 Windows cases and 63 on each POSIX platform
+with only MSBuild skipped. macOS additionally passes the targeted replay case
+three times (135.66 / 136.38 / 127.18 seconds); the intermittent refusal is not
+called root-caused. Production 42462705649 builds all platforms and passes the
+extended Linux desktop suite. Mac's primary-modifier editing passes; its next
+multi-stroke case exposes the slow-frame cadence issue described above.
+
+Windows actually installs and repairs the newly composed package, runs the
+bundled CPython 3.13.17 and imports the exact installed dependencies and SDK.
+Two official MCP clients share the real Core service. Catalogue discovery,
+Unicode native live editing, read-only denial, private job isolation and stale
+revision refusal reach their assertions successfully. The subsequent plugin
+inventory job fails strict output validation: native `snippetCatalogues` was
+missing from the published output schema. This is an actual contract bug, not a
+runtime dependency/import failure. The schema now declares typed catalogue
+summaries while preserving closed output objects; older hosts may omit this
+additive property. One new data regression covers valid/absent inventories and
+malformed/missing/unknown properties, giving 38 total data-only checks.
+
+The corrected full installed SDK/plugin/shutdown/unchanged-runtime/uninstall
+sequence remains pending. No failure is presented as a completed installer/MCP
+pass, no new release was published, and no local native runtime was launched.
+
+Contract regeneration also exposed a stale hard-coded 0.2.2 in write_manifest.
+CyDoc's version consistency check stopped the build before commit/publication.
+The generator now preserves the descriptor's release-owned version and writes
+stable LF. A data-only regression regenerates a future version twice and asserts
+version preservation and byte-identical output; the total data suite is 38 cases.

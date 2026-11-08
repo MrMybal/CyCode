@@ -49,6 +49,7 @@ def main():
                 result=subprocess.run(argv,capture_output=True,timeout=70)
                 assert result.returncode==0 and report.is_file(),(name,result.returncode,result.stderr.decode(errors='replace'))
                 state=json.loads(report.read_text('utf-8'));information=state['information']['result']
+                assert abs(state['scriptedInput']['fixedDeltaSeconds']-1/60)<1e-9,state['scriptedInput']
                 assert state['hiddenWindow'] and not state['error'] and not state['information']['error'],state
                 assert command in state['ui']['commands'] and information['available'],state
                 assert state['information']['method']=='language.'+mode,state

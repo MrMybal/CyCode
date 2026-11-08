@@ -1,5 +1,22 @@
 # Validation — 2026-11-08
 
+## Actual packaged MCP and repeated native matrix — 2026-11-08
+
+Run 42462705540 at ab82791 again passes Windows 64/64 and Linux/macOS 63 with one
+MSBuild platform skip each. Three additional actual Mac Git replay cases pass.
+Production 42462705649 passes extended Linux rendering/input/information/windows.
+Mac actual primary-modifier editing passes; slow software frames expire its next
+scripted chord. Only scripted input now declares a fixed 60 Hz frame clock; the
+ordinary physical keymap deadlines remain unchanged and unvalidated by that fix.
+
+Windows's real newly installed MCP passes interpreter/dependency isolation and
+the official-client shared-Core/Unicode/edit/permission/private-job/stale guards,
+then fails at plugins_list: its native snippetCatalogues metadata was absent
+from the closed output schema. The additive typed schema and a strict data
+regression now cover that actual wire mismatch. The full corrected installer/
+MCP/shutdown/uninstall path and new Windows/semantic graphical cases remain
+pending remote execution. The current data-only suite totals 38 tests.
+
 ## Complete native matrix and redistributable MCP implementation — 2026-11-08
 
 Native run 42459406339 at 32ff605 passes all 64 Windows cases and 63 cases on

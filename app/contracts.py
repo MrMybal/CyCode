@@ -1050,6 +1050,9 @@ OPERATIONS = [
     ('plugins_list', 'plugins.list', 'List loaded native plugins, commands and revision-control providers.', schema(),
      schema({'abi': {'type': 'integer'}, 'supportedAbis':{'type':'array','items':{'type':'integer'}}, 'revision':REVISION,
              'host':{'type':'object'},'eventSubscriptions':ARRAY,'debugAdapters':ARRAY,
+             'snippetCatalogues':{'type':'array','items':schema({'id':STRING,'plugin':STRING,'title':STRING,
+                 'order':{'type':'integer'},'definitionCount':{'type':'integer','minimum':0}},
+                 ('id','plugin','title','order','definitionCount'))},
              'plugins': ARRAY, 'commands': ARRAY, 'knownCommands':ARRAY, 'vcsProviders': ARRAY, 'menus':ARRAY, 'panels':ARRAY, 'projects':ARRAY,'syntaxes':ARRAY,'templates':ARRAY,'languageServers':ARRAY},
             ('abi','supportedAbis','revision','plugins','commands','knownCommands','vcsProviders','menus','panels','projects','syntaxes','templates')), []),
     ('plugins_invoke', 'plugins.invoke', 'Execute a registered command or panel callback from a trusted native plugin. Native code and exported host services require editing/process permissions.', schema({'command': STRING, 'input': {'type': 'object'}}, ('command',)), {'type': 'object'}, ['plugins.execute','workspace.write','process.execute']),
@@ -1097,7 +1100,7 @@ for _id, _method, _description, _inputs, _outputs, _permissions in OPERATIONS:
 def write_manifest():
     path = Path(__file__).with_name('CyTool.json')
     manifest = json.loads(path.read_text('utf-8'))
-    manifest.update(description='Native C++ IDE services, shared by CyUI and CyToolsCore MCP.', version='0.2.2',
+    manifest.update(description='Native C++ IDE services, shared by CyUI and CyToolsCore MCP.',
                     executable='python app/tool.py', standaloneExecutable='CyCode.exe', categories=['development'], tags=['IDE', 'C++', 'plugins'],
                     capabilities=['jobs', 'cancellation', 'live-documents', 'text-search', 'cpp-navigation', 'cpp-symbols', 'cpp-refactoring', 'csharp-language', 'multilingual-lsp', 'project-tasks', 'readonly-sdk-sources', 'terminal', 'dap-debugger', 'git', 'native-plugins', 'msbuild'],
                     concurrency={'policy': 'Concurrent', 'maxWorkers': 4}, distributionStatus='Development milestone; see app/Docs/Validation.md')
@@ -1110,7 +1113,7 @@ def write_manifest():
         **({'exclusiveGroups':['user-settings']} if method=='snippets.userSave' else {'exclusiveGroups':['plugin-packages']} if method.startswith('packages.') and method not in ('packages.list','packages.inspect') else
            {'exclusiveGroups': ['workspace-mutations']} if permissions and method not in ('terminal.list','terminal.read','debug.status','debug.profile','unreal.launchProfile','debug.cancelReload','project.cancel','project.output','tests.cancel','build.cancel','build.output','packages.list','packages.inspect') else {}))
         for op, method, description, inputs, outputs, permissions in OPERATIONS]
-    path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+    path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8', newline='\n')
 
 if __name__ == '__main__':
     write_manifest()

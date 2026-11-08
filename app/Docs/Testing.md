@@ -49,6 +49,23 @@ No visible application is launched locally by the data/safety-contract checks.
 The fixtures do not substitute for physical keyboard, screen-reader, IME or DPI
 acceptance. The color captures still need visual inspection after actual CI.
 
+## Scripted input cadence
+
+Actual macOS keyboard acceptance at ab82791 executes Rider duplicate/delete/Undo,
+then reports only `edit.copy` for Visual Studio's two-stroke comment chord. A
+115-frame software-rendered session takes about 24 seconds: its nine-frame gap
+can exceed the real keymap's unchanged 1.5-second deadline. This also makes a
+seven-frame double-Shift interval exceed the unchanged 0.4-second tap window.
+
+Only when explicit `--test-keys` events are present, their authored frame units
+now use an ImGui delta of 1/60 second. Ordinary physical input keeps the SDL frame
+clock; language workers, process/network deadlines and test readiness gates keep
+real clocks. Reports expose the fixed input delta and maximum observed SDL frame
+delta. The runner scripts assert the declared cadence and still exercise actual
+ImGui events, focus, command routing, native services and Undo. This deliberately
+does not prove physical input timing/responsiveness on the slow runner or any
+machine. The revised Mac cases still need execution.
+
 ## Current remote evidence and historical entries
 
 Finalization.md records the latest actual platform results. The milestone notes

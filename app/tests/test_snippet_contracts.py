@@ -3,6 +3,8 @@ import importlib.util
 import json
 from pathlib import Path
 import unittest
+import tempfile
+from unittest.mock import patch
 
 from jsonschema import Draft202012Validator
 
@@ -27,6 +29,37 @@ class SnippetContracts(unittest.TestCase):
                 self.assertEqual(entry['outputSchema'], outputs)
                 Draft202012Validator.check_schema(inputs)
                 Draft202012Validator.check_schema(outputs)
+
+    def test_regeneration_preserves_release_version(self):
+        with tempfile.TemporaryDirectory(prefix='cycode-contract-data-') as folder:
+            path=Path(folder)/'CyTool.json'
+            descriptor=json.loads((APP/'CyTool.json').read_text('utf-8'))
+            descriptor['version']='12.34.56'
+            path.write_text(json.dumps(descriptor),'utf-8')
+            with patch.object(self.contracts,'__file__',str(Path(folder)/'contracts.py')):
+                self.contracts.write_manifest()
+                first=path.read_bytes()
+                self.assertEqual(json.loads(first)['version'],'12.34.56')
+                self.assertNotIn(b'\r\n',first)
+                self.contracts.write_manifest()
+                self.assertEqual(path.read_bytes(),first)
+
+    def test_plugin_catalogue_inventory_is_validated(self):
+        validate=Draft202012Validator(self.operations['plugins_list']['outputSchema'])
+        inventory=dict(abi=2,supportedAbis=[1,2],revision=1,plugins=[],commands=[],
+            knownCommands=[],vcsProviders=[],menus=[],panels=[],projects=[],syntaxes=[],templates=[])
+        self.assertTrue(validate.is_valid(inventory),'Older hosts may omit catalogue metadata.')
+        self.assertTrue(validate.is_valid({**inventory,'snippetCatalogues':[]}))
+        catalogue=dict(id='sample.snippets',plugin='sample',title='Sample snippets',order=0,definitionCount=2)
+        current={**inventory,'snippetCatalogues':[catalogue]}
+        self.assertTrue(validate.is_valid(current),'Actual native inventory metadata must cross MCP unchanged.')
+        for key in catalogue:
+            missing=dict(catalogue);del missing[key]
+            self.assertFalse(validate.is_valid({**inventory,'snippetCatalogues':[missing]}))
+        for count in (-1,True,'2'):
+            self.assertFalse(validate.is_valid({**inventory,'snippetCatalogues':[{**catalogue,'definitionCount':count}]}))
+        self.assertFalse(validate.is_valid({**current,'unexpected':True}))
+        self.assertFalse(validate.is_valid({**inventory,'snippetCatalogues':[{**catalogue,'unexpected':True}]}))
 
     def test_read_states_include_zero_generation(self):
         missing = dict(available=True, editable=True, valid=True, revision='absent',

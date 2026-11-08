@@ -51,6 +51,7 @@ def main():
         if name == 'keymap-settings': args_list += ['--test-capture', str(reports / 'keymap-settings.bmp'), '--capture-panel', 'options']
         subprocess.run(args_list, env=environment, cwd=ROOT.parent, timeout=25, check=True, capture_output=True)
         state = json.loads(report.read_text('utf-8'))
+        assert abs(state['scriptedInput']['fixedDeltaSeconds']-1/60)<1e-9,state['scriptedInput']
         assert state['error'] == '', (name, state['error'])
         assert state['fileCount'] == 2, (name, state['fileCount'])
         assert state['textScale'] >= 1.1, state['textScale']

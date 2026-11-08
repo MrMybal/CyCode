@@ -173,6 +173,7 @@ int main(int argc, char **argv) {
             bool exit = false;
             int frames = 0, idleFrames = 0;
             Uint64 gateStarted = 0;
+            double maximumObservedInputFrameSeconds = 0;
             const auto started = SDL_GetTicks();
             SDL_Event queued{};
             bool hasQueued = false;
@@ -204,6 +205,14 @@ int main(int argc, char **argv) {
                     handle(event);
                 ImGui_ImplOpenGL3_NewFrame();
                 ImGui_ImplSDL3_NewFrame();
+                if (!testKeys.empty()) {
+                    // Script events are authored in 60 Hz frame units. Keep their
+                    // timing independent of a slow software-rendered CI frame.
+                    // Physical input and native worker/deadline clocks stay real.
+                    maximumObservedInputFrameSeconds=std::max(maximumObservedInputFrameSeconds,
+                        static_cast<double>(io.DeltaTime));
+                    io.DeltaTime=1.0f/60.0f;
+                }
                 if (!testProject.empty() && frames == 30) app.openProject(cycode::utf8Path(testProject));
                 bool advanceTestFrame = true;
                 for (const auto &event : testKeys) if (event.at("frame") == frames && event.contains("waitForCommand")) {
@@ -269,6 +278,9 @@ int main(int argc, char **argv) {
                         std::filesystem::create_directories(path.parent_path());
                         std::ofstream out(path);
                         auto state=app.testState();
+                        if (!testKeys.empty()) state["scriptedInput"]={
+                            {"fixedDeltaSeconds",1.0/60.0},
+                            {"maximumObservedFrameSeconds",maximumObservedInputFrameSeconds}};
                         const auto graphics=[](GLenum field) {
                             const auto *value=glGetString(field);
                             return value?std::string(reinterpret_cast<const char *>(value)):std::string{};

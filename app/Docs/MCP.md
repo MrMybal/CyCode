@@ -1,5 +1,14 @@
 # Integrated MCP
 
+Actual Windows package acceptance at ab82791 starts the bundled interpreter and
+SDK, initializes two official MCP clients on shared Core, and passes Unicode live
+edits, permissions/private jobs and stale revision checks. Its next plugins_list
+job exposes a missing snippetCatalogues output-schema property. This additive
+metadata is now typed without opening the surrounding schema. Full corrected
+plugin/shutdown/runtime-integrity/uninstall acceptance remains pending; this
+partial result is not a complete installed-MCP pass. See Finalization.md.
+
+
 ## Bundled Windows runtime and shared service
 
 Windows distributions built from this revision contain CPython 3.13.17,

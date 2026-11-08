@@ -61,6 +61,7 @@ def main():
         if panel: args+=['--capture-panel',panel]
         subprocess.run(args,check=True,timeout=80,capture_output=True)
         state=json.loads(report.read_text('utf-8'))
+        assert abs(state['scriptedInput']['fixedDeltaSeconds']-1/60)<1e-9,state['scriptedInput']
         assert state['error']=='',state
         for filename,text in (('main.cpp',source),('widget.hpp',header),('widget.cpp',implementation)):
             assert (workspace/filename).read_bytes()==text.encode('utf-8'), 'GUI test saved source unexpectedly'

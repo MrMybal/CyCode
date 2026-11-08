@@ -45,6 +45,7 @@ def main():
     from mcp_bundle import load_bundle
     assert Path(tool.__file__).resolve()==installation/'app/tool.py'
     load_bundle(installation,lock)
+    print('Installed MCP phase: isolated interpreter, exact dependency versions and runtime integrity passed.',flush=True)
     manifest=json.loads((installation/'app/CyTool.json').read_text('utf-8'))
     expected={'op_'+entry['id'] for entry in manifest['operations']}
     fixture=Path(tempfile.mkdtemp(prefix='mcp-owned-',dir=parent))
@@ -94,6 +95,7 @@ def main():
                     await reader.initialize();await writer.initialize()
                     names={entry.name for entry in (await reader.list_tools()).tools}
                     assert expected<=names,'Installed manifest operations are missing from the official MCP catalogue.'
+                    print('Installed MCP phase: official clients and all manifest operations share the real Core service.',flush=True)
                     _,original=await job(reader,'documents_read',{'path':'main.cpp'})
                     doc=original['outputs'];assert doc['text']==baseline
                     invalid=await reader.call_tool('op_documents_read',{'parameters':{}})
@@ -114,9 +116,12 @@ def main():
                         'path':'main.cpp','expectedRevision':doc['revision'],'text':'stale text'},success=False)
                     assert client.call('documents.read',{'path':'main.cpp'})['text']==changed
                     _,plugins=await job(reader,'plugins_list',{})
+                    print('Installed MCP phase: Unicode live edits, read-only permission, private jobs and stale revision refusal passed.',flush=True)
                     packaged={json.loads(p.read_text('utf-8'))['id'] for p in (installation/'extensions').glob('*.json')}
                     active={p['id'] for p in plugins['outputs']['plugins'] if p.get('active') and p.get('loaded')}
                     assert packaged<=active,'A bundled native plugin failed to load in the installed host.'
+                    assert isinstance(plugins['outputs']['snippetCatalogues'],list)
+                    print('Installed MCP phase: all bundled native plugins and typed snippet catalogue inventory passed.',flush=True)
                     assert source.read_bytes()==baseline.encode('utf-8'),'MCP editing unexpectedly saved source bytes.'
         asyncio.run(scenario())
         native.stdin.close();native.wait(timeout=20)
