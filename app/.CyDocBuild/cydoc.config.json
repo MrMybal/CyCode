@@ -138,6 +138,9 @@
     "reference-app-docs-usersnippets": "refactoring#user-snippets",
     "reference-app-docs-finalization": "overview#getting-started",
     "reference-app-docs-releases-v023": "updates#windows-installation",
-    "reference-app-docs-coreextraction": "native-core#ownership"
+    "reference-app-docs-coreextraction": "native-core#ownership",
+    "reference-app-docs-agents": "core-agents#connect",
+    "reference-app-docs-windowssecurity": "native-core#antivirus",
+    "reference-app-docs-coreinstallation": "core-installation#distribution"
   }
 }

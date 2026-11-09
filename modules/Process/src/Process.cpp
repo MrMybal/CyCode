@@ -6,6 +6,7 @@
 #include <thread>
 #ifdef _WIN32
 #include <windows.h>
+#include "cycode/WindowsChildHandles.h"
 #else
 #include <cerrno>
 #include <csignal>
@@ -139,12 +140,20 @@ static ProcessResult runProcessImpl(const std::vector<std::string> &argv, const 
     SetHandleInformation(reader, HANDLE_FLAG_INHERIT, 0);
     HANDLE input = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &security,
                                OPEN_EXISTING, 0, nullptr);
-    STARTUPINFOW si{};
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput = input;
-    si.hStdOutput = writer;
-    si.hStdError = writer;
+    WindowsChildHandles inheritedHandles{input,writer};
+    if(!inheritedHandles.get()) {
+        result.output="Cannot restrict process handle inheritance (Windows error "+std::to_string(inheritedHandles.error())+")";
+        CloseHandle(reader);CloseHandle(writer);
+        if(input && input!=INVALID_HANDLE_VALUE)CloseHandle(input);
+        return result;
+    }
+    STARTUPINFOEXW si{};
+    si.StartupInfo.cb = sizeof(si);
+    si.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+    si.StartupInfo.hStdInput = input;
+    si.StartupInfo.hStdOutput = writer;
+    si.StartupInfo.hStdError = writer;
+    si.lpAttributeList=inheritedHandles.get();
     PROCESS_INFORMATION pi{};
     std::wstring command;
     for (const auto &arg : commandArgs) {
@@ -191,8 +200,8 @@ static ProcessResult runProcessImpl(const std::vector<std::string> &argv, const 
     }
     environment.push_back(0);
     BOOL created = CreateProcessW(nullptr, command.data(), nullptr, nullptr, TRUE,
-                                  CREATE_NO_WINDOW | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT,
-                                  environment.data(), cwd.empty() ? nullptr : cwd.c_str(), &si, &pi);
+                                  CREATE_NO_WINDOW | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | EXTENDED_STARTUPINFO_PRESENT,
+                                  environment.data(), cwd.empty() ? nullptr : cwd.c_str(), &si.StartupInfo, &pi);
     const auto creationError = created ? ERROR_SUCCESS : GetLastError();
     CloseHandle(writer);
     CloseHandle(input);
@@ -215,7 +224,13 @@ static ProcessResult runProcessImpl(const std::vector<std::string> &argv, const 
         result.output = "Cannot own the process tree (Windows error " + std::to_string(error) + ")";
         return result;
     }
-    ResumeThread(pi.hThread);
+    if(ResumeThread(pi.hThread)==static_cast<DWORD>(-1)) {
+        const auto error=GetLastError();
+        TerminateJobObject(job,124);WaitForSingleObject(pi.hProcess,INFINITE);
+        CloseHandle(pi.hThread);CloseHandle(pi.hProcess);CloseHandle(reader);CloseHandle(job);
+        result.output="Cannot resume the owned process (Windows error "+std::to_string(error)+")";
+        return result;
+    }
     CloseHandle(pi.hThread);
     for (;;) {
         DWORD available = 0;

@@ -178,8 +178,10 @@ Engine::Document &Engine::openLocked(const std::string &path, bool publish) {
     auto full = resolve(path);
     auto key = pathUtf8(full.lexically_relative(root_));
     auto found = documents_.find(key);
-    if (found != documents_.end())
+    if (found != documents_.end()) {
+        if(publish)analysisTemporaryDocuments_.erase(key);
         return found->second;
+    }
     const auto raw=readFile(full);
     // Preserve the project's UTF-8-only policy. Standalone text sessions may
     // explicitly select other encodings through the same native buffer service.
@@ -214,17 +216,47 @@ Json Engine::prepareUnrealAnalysis(const Json &params, const std::atomic<bool> *
     }
     return result;
 }
+namespace {
+std::string navigationCompilerContext(LanguageService &language,const std::string &backend) {
+    const auto configuration=language.configuration(backend);
+    auto result=configuration.dump();
+    auto directory=language.compilationDatabase(backend);
+    if(configuration.contains("arguments")) {
+        const auto &args=configuration.at("arguments");
+        for(size_t i=0;i<args.size();++i) {
+            const auto arg=args[i].get<std::string>();
+            const auto prefix=arg.starts_with("--compile-commands-dir=")?23:arg.starts_with("-compile-commands-dir=")?22:0;
+            if(prefix)directory=utf8Path(arg.substr(prefix));
+            else if((arg=="--compile-commands-dir" || arg=="-compile-commands-dir") && i+1<args.size())directory=utf8Path(args[++i].get<std::string>());
+        }
+    }
+    if(!directory.empty()) {
+        std::error_code error;
+        const auto file=std::filesystem::weakly_canonical(directory/"compile_commands.json",error);
+        result+=pathUtf8(file);
+        const auto stamp=std::filesystem::last_write_time(file,error);
+        if(error)result+="missing";
+        else {result+=std::to_string(stamp.time_since_epoch().count());result+=':';result+=std::to_string(std::filesystem::file_size(file,error));}
+    }
+    return result;
+}
+}
 Json Engine::languageQuery(const std::string &method, const Json &params) {
     const auto supplied = params.at("path").get<std::string>();
     const auto path = supplied.starts_with("sdk://") ? supplied : pathUtf8(resolve(supplied).lexically_relative(root_));
     if (!language_.accepts(path))
         throw std::runtime_error("No language backend for this file type");
     std::future<Json> reply;
+    bool refreshContext=false;
+    Json request;
     std::uint64_t revision, identity, generation, epoch;
     const auto navigation = locationRequest(method);
     const bool occurrences=method=="language.documentHighlights";
     const bool inspection=navigation || occurrences;
-    std::string backend,sourceUri;
+    std::string backend,sourceUri,cacheKey,compilerContext;
+    uint64_t cacheWorkspaceRevision=0;
+    const bool cacheable=(method=="language.definition" || method=="language.declaration" || method=="language.typeDefinition") &&
+                         !params.value("includeExternal",false) && !path.starts_with("sdk://");
     const auto &position = params.at("position");
     {
         std::lock_guard lock(mutex_);
@@ -243,11 +275,46 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
             throw std::runtime_error("Navigation positions must contain integer UTF-16 coordinates");
         (void)utf16Offset(doc.text,position);
         sourceUri=LanguageClient::uri(full);
-        Json request = {{"textDocument", {{"uri", sourceUri}}},
+        if(cacheable) {
+            cacheWorkspaceRevision=monitor_.snapshot().revision;
+            compilerContext=navigationCompilerContext(language_,backend);
+            auto identityParams=params;identityParams.erase("refresh");
+            cacheKey=method+":"+path+":"+std::to_string(identity)+":"+identityParams.dump();
+            const auto found=navigationCache_.find(cacheKey);
+            if(found!=navigationCache_.end() && !params.value("refresh",false)) {
+                const auto &entry=found->second;
+                bool valid=entry.generation==generation && entry.workspaceRevision==cacheWorkspaceRevision && entry.epoch==epoch &&
+                    entry.compilerContext==compilerContext && std::chrono::steady_clock::now()-entry.created<std::chrono::minutes(5);
+                for(const auto &[file,stamp]:entry.targets) {
+                    std::error_code error;
+                    if(std::filesystem::last_write_time(file,error)!=stamp.first || error ||
+                       std::filesystem::file_size(file,error)!=stamp.second || error)valid=false;
+                }
+                if(valid) {auto hit=entry.result;hit["cacheHit"]=true;return hit;}
+            }
+        }
+        if(backend=="cpp") {
+            const auto previous=navigationContexts_.find(path);
+            refreshContext=previous!=navigationContexts_.end() && previous->second.revision==revision && previous->second.generation!=generation;
+
+        }
+        request = {{"textDocument", {{"uri", sourceUri}}},
                         {"position", position}};
         if (method == "language.references")
             request["context"] = {{"includeDeclaration", params.value("includeDeclaration", true)}};
         if (method == "language.signature") request["context"] = {{"triggerKind",1},{"isRetrigger",false}};
+    }
+    {
+        std::lock_guard lock(mutex_);
+        auto [document,full]=semanticDocumentLocked(path);
+        if(document->revision!=revision || document->identity!=identity || generation!=nextRevision_ ||
+           language_.backendEpoch(backend)!=epoch)
+            throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: navigation dependency context changed");
+        if(backend=="cpp") {
+            if(refreshContext)language_.sync(path,document->text,revision,identity,true,true);
+            if(navigationContexts_.size()>=128)navigationContexts_.clear();
+            navigationContexts_[path]={revision,generation,epoch};
+        }
         // Engine's mutex orders document changes and requests; the service owns the transport.
         reply = language_.request(occurrences ? "textDocument/documentHighlight" : navigation ? navigation
                                   : method == "language.hover"      ? "textDocument/hover"
@@ -256,6 +323,32 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
                                   std::move(request));
     }
     auto result = reply.get(); // Backend deadline includes initialization (15s C++, 60s C#).
+    Json astSymbols;
+    bool astReconciled=false;
+    if(backend=="cpp" && (method=="language.definition" || method=="language.declaration")) {
+        std::future<Json> ast;
+        {
+            std::lock_guard lock(mutex_);
+            bool liveTarget=false;
+            const auto rows=result.is_array()?result:Json::array({result});
+            if(rows.size()<=32)for(const auto &row:rows) {
+                try {
+                    const auto uri=row.at(row.contains("targetUri")?"targetUri":"uri").get<std::string>();
+                    const auto name=pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(uri))).lexically_relative(root_));
+                    if(name!=path && documents_.contains(name) && LanguageService::supportsCpp(name)){liveTarget=true;break;}
+                } catch(const std::exception &) {}
+            }
+            if(liveTarget) {
+                if(generation!=nextRevision_)throw NativeError(ErrorCode::RevisionConflict,"Navigation dependency changed");
+                ast=language_.request("textDocument/symbolInfo",{{"textDocument",{{"uri",sourceUri}}},{"position",position}});
+            }
+        }
+        if(ast.valid())astSymbols=ast.get();
+    }
+    if(!astSymbols.is_null()) {
+        auto reconciled=reconcileNavigationTargets(result,astSymbols,generation,epoch);
+        astReconciled=reconciled!=result;result=std::move(reconciled);
+    }
     std::lock_guard lock(mutex_);
     const auto current = path.starts_with("sdk://")
         ? (externalSources_.contains(path) && externalSources_.at(path).loaded ? &externalSources_.at(path).document : nullptr)
@@ -288,6 +381,30 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
         });
     report.update({{"path",path},{"revision",revision},{"documentId",identity},{"backend",backend},{"epoch",epoch},
         {"position",position},{"method",method},{"positionEncoding","utf-16"}});
+    if(astReconciled)report["astReconciled"]=true;
+    if(cacheable) {
+        report["cacheHit"]=false;
+        if(generation==nextRevision_ && cacheWorkspaceRevision==monitor_.snapshot().revision && !report.at("truncated").get<bool>() &&
+           report.at("invalid")==0 && report.at("outsideWorkspace")==0 && !report.at("locations").empty() && report.at("locations").size()<=32) {
+            NavigationCacheEntry entry;entry.result=report;entry.generation=generation;entry.workspaceRevision=cacheWorkspaceRevision;
+            entry.epoch=epoch;entry.compilerContext=compilerContext;
+            bool valid=true;
+            for(const auto &location:report.at("locations")) {
+                const auto name=location.at("path").get<std::string>();
+                if(name.starts_with("sdk://")){valid=false;break;}
+                const auto file=resolve(name);std::error_code error;
+                const auto stamp=std::filesystem::last_write_time(file,error);if(error){valid=false;break;}
+                const auto bytes=std::filesystem::file_size(file,error);if(error){valid=false;break;}
+                entry.targets.push_back({file,{stamp,bytes}});
+            }
+            const auto bytes=report.dump().size();
+            if(valid && bytes<=1024*1024) {
+                if(navigationCache_.size()>=64 || navigationCacheBytes_+bytes>4*1024*1024){navigationCache_.clear();navigationCacheBytes_=0;}
+                if(navigationCache_.contains(cacheKey))navigationCacheBytes_-=navigationCache_.at(cacheKey).result.dump().size();
+                navigationCacheBytes_+=bytes;navigationCache_.insert_or_assign(cacheKey,std::move(entry));
+            }
+        }
+    }
     return report;
 }
 Json Engine::files(const Json &params) {
@@ -699,6 +816,7 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
                 {"version", CYCODE_VERSION},
                 {"solution", solution_}};
     }
+    if(method=="analysis.prepare" || method=="analysis.status" || method=="analysis.cancel" || method=="analysis.results")return analysisOperation(method,params);
     if (method == "workspace.files")
         return files(params);
     if (method == "search.text")

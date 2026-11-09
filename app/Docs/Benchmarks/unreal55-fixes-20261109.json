@@ -1,0 +1,135 @@
+{
+  "format": 1,
+  "date": "2026-11-09",
+  "platform": "Windows x64",
+  "engineVersion": "5.5.4",
+  "clangdVersion": "18.1.8",
+  "source": {
+    "parentCommit": "e07a4e45ebdfcbe296fc493af256d8785695b0bb",
+    "uncommittedChanges": true,
+    "sha256": {
+      "app/CMakeLists.txt": "129c616d29c84ab662a878c187fbc9b7560c7fe5af3c99832a3b8afd4b28a7ed",
+      "app/contracts.py": "0824d616c80ba5743341e77a16f2c875be57712bab9b0642e03dc694baaf1c1d",
+      "app/CyTool.json": "460c6849405d2a87e5920319968fb791668c56d271d9ea6026caf0baa67536a6",
+      "app/tool.py": "5c8231cd18bd5136df8611c318549f4ad62f79240156d2f65bc5b9b7b282ce74",
+      "app/core_host.py": "ad7220a1169b72025a2818bec79ab9eea5749bf011b116f777a3c346d57b8849",
+      "app/include/cycode/Engine.h": "e264c3e702c60c9d93f9b765c12627f0edd653194d0ca290b1dbc99af76799b5",
+      "app/include/cycode/LanguageService.h": "c5ce456ad041c31fae8393fce17e123cda9c570a4076586175c1bb4cb1694e45",
+      "app/src/Engine.cpp": "01e26d8c059460c93a6f41ee74b2e78a352e2365f278f1734f5a8626ed3c2124",
+      "app/src/Semantic.cpp": "ef942c2f0ea35c48c13e93580661035f33e72bd772a6432e55e230a89574185d",
+      "app/src/SemanticPreparation.cpp": "8f4608aef30ef4030024f2f9e29ed408dabece57ed496336bbd45c001a1cb347",
+      "app/src/NavigationReconciliation.cpp": "b5839d47724e9e88114a5775a5a1dd3c0d8543f5f656c6d9fbce7fa597fa22e1",
+      "app/src/LanguageClient.cpp": "12448fe0e49f87876510bd8d2cceac7931cf875cf4467930d24768a19e3c1a91",
+      "app/src/LanguageService.cpp": "e9087866848beb1042c4328d4edcf884f68ba7f259350aaaf7021eaa18c154e3",
+      "app/src/Bridge.cpp": "5c508001b75d02967ed6586b8633c80f244823f1150fe0bf8efa7c11fea9db03",
+      "app/src/CoreService.cpp": "68e56ae8247eee073a633e4e157d93a7ae3af25149ee6d24a996c24307072617"
+    }
+  },
+  "cliSha256": "0a9e0a0a1e6cacaf838332cb8a951c4934b885d99d9d9d9e30aaf75d64ae878b",
+  "baseline": "unreal55-windows-20261109.json",
+  "firstRename": {
+    "milliseconds": 6275.82490000168,
+    "files": [
+      "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp",
+      "Engine/Source/Runtime/Core/Public/Misc/DateTime.h",
+      "Engine/Source/Runtime/Online/HTTP/Private/HttpRetrySystem.cpp"
+    ],
+    "edits": 3,
+    "coverage": {
+      "limitations": [
+        "Source-spelled candidates inside this workspace; not serialized Unreal assets, token-pasted names or external projects"
+      ],
+      "preparedFiles": 3,
+      "strategy": "workspace-spelling-candidates",
+      "wholeProjectIndexCompleteness": "unknown"
+    }
+  },
+  "crossFileApplyUndoPassed": true,
+  "changedScopeRefused": true,
+  "localParameter": {
+    "milliseconds": 58.51590000020224,
+    "edits": 9,
+    "coverage": {
+      "limitations": [],
+      "preparedFiles": 1,
+      "strategy": "compiler-local-parameter",
+      "wholeProjectIndexCompleteness": "unknown"
+    }
+  },
+  "explicitAnalysisPrepare": {
+    "state": "completed",
+    "total": 2
+  },
+  "navigationCache": {
+    "firstMilliseconds": 7.69399999990128,
+    "cachedSamplesMilliseconds": [
+      0.5106999997224193,
+      0.5645000001095468,
+      0.4685000003519235,
+      0.44630000047618523,
+      0.5375000000640284,
+      0.41769999916141387,
+      0.572900000406662,
+      0.7121999988157768,
+      0.6572000002051936,
+      0.5024000001867535
+    ],
+    "cachedMedianMilliseconds": 0.5240999998932239,
+    "refreshBypassedCache": true,
+    "targetLiveEditInvalidatedCache": true,
+    "targetLineShiftCorrect": true,
+    "restoredCoordinatesCorrect": true,
+    "referencesNotCached": true
+  },
+  "MCP": {
+    "discovery": {
+      "domainOperations": 236,
+      "SDKControls": 21
+    },
+    "readonlyPermissions": true,
+    "readonlyHostDrained": true,
+    "languageStatusTypedContract": true,
+    "SDKCancellation": {
+      "terminal": "Cancelled",
+      "progressObserved": true
+    },
+    "crossFileRenameApplyUndo": {
+      "files": 3,
+      "coverage": {
+        "limitations": [
+          "Source-spelled candidates inside this workspace; not serialized Unreal assets, token-pasted names or external projects"
+        ],
+        "preparedFiles": 3,
+        "strategy": "workspace-spelling-candidates",
+        "wholeProjectIndexCompleteness": "unknown"
+      }
+    },
+    "structuredNativeRevisionConflict": "RevisionConflict",
+    "capacityRefusesPartialPreview": "CapacityExceeded",
+    "editingHostDrained": true
+  },
+  "sharedMCP": {
+    "sameNativeContext": true,
+    "sharedUnicodeLiveBuffer": true,
+    "privateJobReadAndCancellationDenied": true,
+    "readerMutationDenied": true,
+    "normalOwnedNativeShutdown": true
+  },
+  "allProbedDiskSourcesUnchanged": true,
+  "normalNativeExitCode": 0,
+  "sharedNativeExitCode": 0,
+  "rawPrivateReports": [
+    "native-20261109-150800/report.json",
+    "mcp-20261109-151033/report.json",
+    "mcp-shared-20261109-151302/report.json"
+  ],
+  "limits": [
+    "Single Windows machine and actual installed clangd; caches are warming; not a controlled comparison to the earlier eight-module run",
+    "The source-spelled rename preparation covers at most 128 candidate documents; excess scope fails without a partial preview",
+    "Whole-engine semantic-index completeness remains unknown; serialized UE assets, token-pasted names and external projects are not covered",
+    "Compiler USR reconciliation covers definition/declaration into opened C++ targets; ambiguous matches are invalid, not guessed",
+    "Engine-only UBT compilation context still requires a manual export; automatic engine-only preparation is not implemented",
+    "No Linux/macOS execution, GUI acceptance or new installer/release validation in this change",
+    "GitHub Actions remain paused; native fixture executables were not built or run"
+  ]
+}

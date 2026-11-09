@@ -50,6 +50,17 @@ void localEndpointChecks(const std::filesystem::path &base) {
     LocalEndpoint endpoint(path,options);
     const auto descriptor=Json::parse(readTextFileBytes(path));
     require(descriptor.at("host")=="127.0.0.1" && descriptor.at("protocol")=="transport-test/1","Descriptor identity changed");
+    const auto token=descriptor.at("token").get<std::string>();
+    require(token.size()==64 && token.find_first_not_of("0123456789abcdef")==std::string::npos,"Endpoint OS secret has the wrong wire format");
+#ifndef _WIN32
+    using P=std::filesystem::perms;
+    const auto mode=std::filesystem::status(path).permissions();
+    require((mode&(P::group_all|P::others_all))==P::none,"Native descriptor grants another account file permissions");
+#endif
+    for(const auto at:{size_t{0},size_t{63}}) {
+        auto altered=token;altered[at]=altered[at]=='0'?'1':'0';
+        require(exchange(descriptor,{{"token",altered},{"method","echo"}}).at("error").at("code")=="TransportError","Native secret mismatch was accepted");
+    }
     require(exchange(descriptor,{{"method","echo"},{"id","request-7"}}).at("result")=="request-7","Request dispatch lost identity");
     require(exchange(descriptor,{{"token","wrong"},{"method","echo"}}).at("error").at("code")=="TransportError","Unauthenticated transport request accepted");
     require(exchange(descriptor,{{"method","large"}}).at("error").at("message")=="Native response exceeds 20 MiB","Response memory bound was not enforced");

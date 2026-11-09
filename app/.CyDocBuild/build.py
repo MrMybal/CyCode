@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from prepare import prepare
@@ -57,6 +58,7 @@ def publish(source, destination):
 
 
 def build(outputs=(), ide_root=None):
+    subprocess.run([sys.executable,'-B',str(APP/'scripts/generate_mcp_reference.py'),'--check'],check=True)
     node, package = prepare()
     settings = json.loads((WORK / 'cydoc.config.json').read_text('utf-8'))
     descriptor = json.loads((APP / 'CyTool.json').read_text('utf-8'))

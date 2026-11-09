@@ -1,5 +1,93 @@
 # Validation — 2026-11-08
 
+## Standalone installed Core/MCP — second antivirus interruption
+
+The owner lifted the earlier hold for this delivery. Production builds pass,
+and the installed isolated CPython 3.13.17 / CyToolsCore 0.10.1 / MCP 1.30.0
+exposes all 237 operations plus 21 controls. Actual CyCodeIDE search, MSBuild
+evaluation (62 C++ units), definition/four references and two clean version-bound
+diagnostic observations passed. The Core created and explicitly saved the IDE
+agent guide through actual MCP operations. Two defects found in this acceptance
+were corrected: missing typed hierarchy capability fields, and omitted evaluated
+MSVC exception handling in the derived compiler database. Older analysis caches
+are invalidated. Ten data-only installer tests and six analysis contract tests pass.
+
+Kaspersky then deleted the installed CLI at 19:20 Europe/Paris. Its MD5 matches
+the recorded build. The full installed acceptance failed at host cleanup and is
+not marked passing. MCP was disabled, no Core process remains, and no native
+retry followed. Only source/skill preparation and an agents-only draft may be
+delivered now; executable publication and final Setup acceptance remain blocked.
+See Benchmarks/core-agents-windows-20261109.json and WindowsSecurity.md.
+
+
+## Standalone agent installation preparation — 2026-11-09
+
+The standalone installer source, isolated MCP payload packaging, project-scoped
+Codex registration and cycode-core skill are present. Nine process-free data
+tests pass, including settings/skill preservation, CRLF handling, permissions,
+missing-native refusal and incomplete-package labelling. The automatic approval
+review refused both an instruction-file change and rebuilding the flagged Core.
+No instruction file was changed, binary rebuilt or native process executed by
+this delivery. Actual complete Setup/portable installation, MCP activation and
+production acceptance remain blocked. GitHub Actions stay manually disabled.
+
+
+## Recovered AV evidence and private transport sources — 2026-11-09
+
+Two original avp Application-log records identify the removed production Core
+as SHA-256 90a9b3ce88c53f26911e6367d7a2a10865966a744508808f88559c38c59e3b27.
+The event times match the interrupted MCP operation. Product version and database
+stamp were recovered read-only; opaque vendor codes do not explain the detection.
+The updated local dossier does not contain raw private event fields or a sample.
+
+Native transport sources now use OS entropy and private-at-creation descriptor
+permissions, verified Windows ACLs and atomic publication. Windows MSVC `/Zs`
+passes without a binary; data-only evidence tests cover the new import path.
+The existing native endpoint assertions were extended but not executed. Native
+link/runtime/POSIX acceptance and a changed antivirus verdict remain unverified;
+the owner hold and GitHub Actions pause remain active. See WindowsSecurity.md.
+
+
+## Windows source hardening after the PDM alert — 2026-11-09
+
+The generic process runner and language-server launcher now use explicit Windows
+child handle lists. The latter also refuses failed job setup/assignment or thread
+resume, rather than running an unowned child. Both sources pass MSVC `/Zs`; no
+binary was produced or executed. The local evidence tool handles missing samples,
+exact hashes and private export metadata without uploads or sample copies. The
+owner does not intend to buy a signing certificate; no certificate, protection
+setting or vendor verdict has been changed. Runtime and antivirus acceptance
+remain blocked. See [Windows security](WindowsSecurity.md) for the precise scope.
+
+
+## Semantic scaling and production antivirus hold — 2026-11-09
+
+The former 128-file preparation ceiling has been removed. On Windows, 160 real
+compiled Runtime/Core sources passed in four 40-file batches, all with clean
+version-bound diagnostics. Metadata pagination returned 128 + 32 records, only
+the three pre-existing editor buffers remained open, and a real document change
+rejected the stale continuation. The 37,679-command inventory contained 37,557
+unique translation units. This narrow selection does not certify the engine.
+
+The later official MCP run discovered 237 domain operations plus 21 SDK controls
+and passed read-only permission, cancellation/progress, cancelled-checkpoint
+resumption, compiler-database prefix filtering and typed result pages. It was
+then interrupted between rename Apply and Undo by loss of the native endpoint.
+The owner supplied a matching 16:07 Kaspersky PDM:Trojan.Win32.Generic alert for
+the production CLI. This run is **not a passing end-to-end MCP acceptance**;
+disk source hashes remained unchanged. The exact detected behaviour is unknown,
+so a false positive has not been established. All local native execution and
+rebuild/retry are suspended. No exclusions, quarantine restoration, renamed
+binaries, protection changes or uploads were used. GitHub Actions remain paused.
+
+Unexpected host exits now retain a bounded 64 KiB log tail and exit metadata in
+the trusted private data directory's `native-core-failures` folder before deleting
+the temporary endpoint descriptor. This Python change is checked with process-free
+unit tests only; it has not been exercised by another native run. The benchmark
+record `Benchmarks/unreal55-scaling-20261109.json` separates passed and interrupted
+evidence, executable hashes and remaining limitations.
+
+
 ## Actual packaged MCP and repeated native matrix — 2026-11-08
 
 Run 42462705540 at ab82791 again passes Windows 64/64 and Linux/macOS 63 with one

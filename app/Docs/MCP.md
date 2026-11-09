@@ -1,5 +1,18 @@
 # Integrated MCP
 
+## Current native Core agent integration
+
+The current source contract exposes **237 native operations** through the real
+CyToolsCore SDK/MCP adapter. Three additions provide service status and semantic
+preparation/status; job ownership and cancellation remain SDK controls.
+`app/core_host.py` can own one persistent production CLI without the IDE.
+Read [Agents.md](Agents.md) for startup, workflow and safety semantics;
+[the generated catalogue](../MCPMethods.json) contains every exact method and
+complete schema. Regenerate with `python app/scripts/generate_mcp_reference.py`
+and verify with `--check`. Earlier package evidence below retains its original
+revision/count and does not validate a new installer.
+
+
 Actual Windows package acceptance at ab82791 starts the bundled interpreter and
 SDK, initializes two official MCP clients on shared Core, and passes Unicode live
 edits, permissions/private jobs and stale revision checks. Its next plugins_list
@@ -8,6 +21,17 @@ metadata is now typed without opening the surrounding schema. Full corrected
 plugin/shutdown/runtime-integrity/uninstall acceptance remains pending; this
 partial result is not a complete installed-MCP pass. See Finalization.md.
 
+
+## Current source acceptance — 2026-11-09
+
+The production Core/real Unreal acceptance passed all 236 domain-tool names,
+21 official SDK controls, read-only denial, current language-status output,
+progress and cancellation through native stop, three-file rename/Apply/Undo,
+structured RevisionConflict and CapacityExceeded refusal without a partial plan.
+Two official clients on one SDK service passed Unicode live-buffer sharing,
+private-job read/cancel denial and normal native exit. Disk sources were unchanged.
+See Benchmarks/unreal55-fixes-20261109.json. These Windows source/runtime checks
+do not establish a new installed package, GUI acceptance or Linux/macOS execution.
 
 ## Bundled Windows runtime and shared service
 
@@ -44,7 +68,7 @@ runtime packaging is not implemented by the Windows authoring script.
 ## Development milestone record
 
 The notes below retain earlier contracts and their historical operation counts.
-The current generated API reference/manifest has 233 operations; the capability
+The current generated API reference/manifest has 237 operations; the capability
 ledger and individual feature guides supersede old pending-status statements.
 
 

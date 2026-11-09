@@ -76,6 +76,627 @@
   },
   "operations": [
     {
+      "id": "service_status",
+      "name": "Service Status",
+      "description": "Inspect the persistent native Core context, lifecycle and transport limits. Service ready is not proof of backend initialization or complete semantic indexing. Use language_status for per-backend state and analysis_status for semantic preparation progress.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "protocol": {
+            "const": "cycode-core/1"
+          },
+          "version": {
+            "type": "string"
+          },
+          "service": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "enum": [
+                  "ready",
+                  "draining"
+                ]
+              },
+              "uptimeMilliseconds": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "state",
+              "uptimeMilliseconds"
+            ],
+            "additionalProperties": false
+          },
+          "engine": {
+            "type": "object",
+            "properties": {
+              "context": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "workspace": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "context",
+              "state",
+              "workspace"
+            ],
+            "additionalProperties": false
+          },
+          "analysis": {
+            "type": "object",
+            "properties": {
+              "statusMethod": {
+                "const": "language.status"
+              },
+              "projectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "readyMeaning": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "statusMethod",
+              "projectIndexCompleteness",
+              "readyMeaning"
+            ],
+            "additionalProperties": false
+          },
+          "limits": {
+            "type": "object",
+            "properties": {
+              "requestBytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "responseBytes": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "requestBytes",
+              "responseBytes"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "protocol",
+          "version",
+          "service",
+          "engine",
+          "analysis",
+          "limits"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "analysis_status",
+      "name": "Analysis Status",
+      "description": "Read aggregate native semantic-preparation progress without starting work. A completed preparation proves the stated source-file scope, not exhaustive whole-project semantic coverage. Per-job ownership, polling and cancellation remain CyToolsCore cy_get_job/cy_cancel_job.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "enum": [
+              "idle",
+              "running",
+              "pending",
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "phase": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "progress": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "error": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "diagnosticClean": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "diagnosticErrors": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "diagnosticUnknown": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "commands": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "translationUnits": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "outOfScope": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "observed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "remaining": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "diagnosticClean",
+              "diagnosticErrors",
+              "diagnosticUnknown",
+              "commands",
+              "translationUnits",
+              "outOfScope",
+              "observed",
+              "remaining"
+            ],
+            "additionalProperties": false
+          },
+          "resumable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "state",
+          "phase",
+          "completed",
+          "total",
+          "progress",
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "analysis_prepare",
+      "name": "Analysis Prepare",
+      "description": "Prepare explicit existing sources without a fixed file-count ceiling, or enumerate the active C++ compilation database (optional workspace pathPrefix). Rolling compiler analysis retains one temporary native buffer at a time and preserves existing/dirty documents. Compilation-database scope defaults to batches of 64; batchSize 0 inventories without analysing. Continue pending/cancelled work with its continuation/session ID and optional batchSize; document, workspace or compiler-context changes invalidate the checkpoint. No restart-persistent proof. Returns first 128 metadata rows; analysis_results pages the rest. Version-bound clean/error/unknown diagnostics and observed/remaining units are distinct from exhaustive Unreal/index completeness. Slow provider attempts retry until cancellation or a real failure; no source saves or backend installation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+            }
+          },
+          "scope": {
+            "const": "compilation-database"
+          },
+          "pathPrefix": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "continuation": {
+            "type": "string"
+          },
+          "batchSize": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4096
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "paths"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "scope"
+                  ]
+                },
+                {
+                  "required": [
+                    "pathPrefix"
+                  ]
+                },
+                {
+                  "required": [
+                    "continuation"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "required": [
+              "scope"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "paths"
+                  ]
+                },
+                {
+                  "required": [
+                    "continuation"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "required": [
+              "continuation"
+            ],
+            "properties": {
+              "continuation": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "scope"
+                  ]
+                },
+                {
+                  "required": [
+                    "pathPrefix"
+                  ]
+                },
+                {
+                  "required": [
+                    "paths"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "enum": [
+              "idle",
+              "running",
+              "pending",
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "phase": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "progress": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "error": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "diagnosticClean": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "diagnosticErrors": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "diagnosticUnknown": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "commands": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "translationUnits": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "outOfScope": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "observed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "remaining": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "diagnosticClean",
+              "diagnosticErrors",
+              "diagnosticUnknown",
+              "commands",
+              "translationUnits",
+              "outOfScope",
+              "observed",
+              "remaining"
+            ],
+            "additionalProperties": false
+          },
+          "resumable": {
+            "type": "boolean"
+          },
+          "documents": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "diagnostics": {
+                  "enum": [
+                    "clean",
+                    "errors",
+                    "unknown"
+                  ]
+                },
+                "errors": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "path",
+                "revision",
+                "diagnostics",
+                "errors"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "scope": {
+            "enum": [
+              "explicit-files",
+              "workspace-spelling-candidates",
+              "compilation-database"
+            ]
+          },
+          "wholeProjectIndexCompleteness": {
+            "const": "unknown"
+          },
+          "continuation": {
+            "type": "string"
+          },
+          "nextOffset": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "state",
+          "phase",
+          "completed",
+          "total",
+          "progress",
+          "error",
+          "session",
+          "coverage",
+          "documents",
+          "scope",
+          "wholeProjectIndexCompleteness",
+          "continuation",
+          "nextOffset"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": true,
+      "exclusiveGroups": [
+        "semantic-preparation"
+      ]
+    },
+    {
+      "id": "analysis_results",
+      "name": "Analysis Results",
+      "description": "Read a metadata page from the latest native preparation checkpoint. Rows are historical observations for that session, not proof of current whole-project completeness. Pending work is continued through analysis_prepare; SDK job ownership/cancellation is unchanged.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 256
+          }
+        },
+        "required": [
+          "session"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "diagnostics": {
+                  "enum": [
+                    "clean",
+                    "errors",
+                    "unknown"
+                  ]
+                },
+                "errors": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "path",
+                "revision",
+                "diagnostics",
+                "errors"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextOffset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "available": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "session",
+          "documents",
+          "offset",
+          "nextOffset",
+          "available",
+          "total",
+          "hasMore"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
       "id": "unreal_automation_plan",
       "name": "Unreal Automation Plan",
       "description": "Preview one Unreal Engine 5 cook/package action without executing tools or creating output files. Requires a discovered non-Editor game target and a precompiled AutomationTool/.NET host plus editor commandlet binary. Supports explicit existing /Game map packages, desktop platform/configuration, build, Pak/IoStore/compression and a 1..86400-second deadline (3600 default). Source descriptors/rules/map stamps, engine version/tool stamps, workspace/engine identities and exact argv are reviewed. Issues one of 16 native previews for 10 minutes, with a new managed staging/archive/log folder. Trusted Unreal/project tools can modify normal cook/build/DDC/engine caches; no deploy/run/sign/upload, SDK installation or arbitrary arguments. An argument preview is not a complete content snapshot or package validation.",
@@ -64252,7 +64873,7 @@
     {
       "id": "language_rename",
       "name": "Language Rename",
-      "description": "Prepare a semantic rename preview across references. Does not edit buffers or save files. Unreal Blueprint assets and serialized reflection names are not migrated.",
+      "description": "Prepare compiler-issued semantic rename edits. C++ first analyses all workspace source-spelled candidates, including declarations, callers and generated C++ files; compiler-confirmed local parameters avoid a whole-tree scan. Live revisions and the discovery scope are guarded through apply. More than 128 preparation candidates refuses without issuing a partial preview. Inspect coverage.strategy and limitations; this does not claim exhaustive macro/token-paste, serialized Unreal asset or external-project refactoring. Does not edit or save source text. Slow preparation exposes SDK progress and supports owner cancellation.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -64387,6 +65008,34 @@
               ],
               "additionalProperties": false
             }
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "preparedFiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wholeProjectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "strategy",
+              "preparedFiles",
+              "wholeProjectIndexCompleteness",
+              "limitations"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -64405,7 +65054,10 @@
       "permissions": [],
       "canRunAsync": true,
       "canCancel": true,
-      "supportsProgress": false
+      "supportsProgress": true,
+      "exclusiveGroups": [
+        "semantic-preparation"
+      ]
     },
     {
       "id": "language_format",
@@ -64574,6 +65226,34 @@
               ],
               "additionalProperties": false
             }
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "preparedFiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wholeProjectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "strategy",
+              "preparedFiles",
+              "wholeProjectIndexCompleteness",
+              "limitations"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -64817,6 +65497,34 @@
               ],
               "additionalProperties": false
             }
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "preparedFiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wholeProjectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "strategy",
+              "preparedFiles",
+              "wholeProjectIndexCompleteness",
+              "limitations"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -64948,6 +65656,34 @@
               ],
               "additionalProperties": false
             }
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "preparedFiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wholeProjectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "strategy",
+              "preparedFiles",
+              "wholeProjectIndexCompleteness",
+              "limitations"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -70457,6 +71193,78 @@
             "type": "integer",
             "minimum": 0
           },
+          "configured": {
+            "type": "boolean"
+          },
+          "initialized": {
+            "type": "boolean"
+          },
+          "launchAttempted": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "string"
+          },
+          "compilationDatabase": {
+            "type": "string"
+          },
+          "synchronizedRevisions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "revision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "id": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "lspVersion": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "revision",
+                "id",
+                "lspVersion"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "analysis": {
+            "type": "object",
+            "properties": {
+              "backend": {
+                "type": "string"
+              },
+              "projectIndexCompleteness": {
+                "type": "string"
+              },
+              "openDocuments": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "synchronizedDocuments": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "versionBoundDiagnosticDocuments": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "synchronizationMeaning": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "backend",
+              "projectIndexCompleteness"
+            ],
+            "additionalProperties": false
+          },
           "diagnosticRevisions": {
             "type": "object",
             "additionalProperties": {
@@ -70609,6 +71417,12 @@
               "documentSymbols": {
                 "type": "boolean"
               },
+              "callHierarchy": {
+                "type": "boolean"
+              },
+              "typeHierarchy": {
+                "type": "boolean"
+              },
               "rename": {
                 "type": "boolean"
               },
@@ -70715,6 +71529,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -70865,6 +71751,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -70951,6 +71843,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -71101,6 +72065,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -71187,6 +72157,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -71337,6 +72379,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -71423,6 +72471,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -71573,6 +72693,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -71659,6 +72785,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -71809,6 +73007,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -71895,6 +73099,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -72045,6 +73321,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -72131,6 +73413,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -72281,6 +73635,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -72367,6 +73727,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -72517,6 +73949,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -72603,6 +74041,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -72753,6 +74263,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -72839,6 +74355,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -72989,6 +74577,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -73087,6 +74681,78 @@
                 "epoch": {
                   "type": "integer",
                   "minimum": 0
+                },
+                "configured": {
+                  "type": "boolean"
+                },
+                "initialized": {
+                  "type": "boolean"
+                },
+                "launchAttempted": {
+                  "type": "boolean"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "compilationDatabase": {
+                  "type": "string"
+                },
+                "synchronizedRevisions": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "revision": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "id": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "lspVersion": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    },
+                    "required": [
+                      "revision",
+                      "id",
+                      "lspVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "analysis": {
+                  "type": "object",
+                  "properties": {
+                    "backend": {
+                      "type": "string"
+                    },
+                    "projectIndexCompleteness": {
+                      "type": "string"
+                    },
+                    "openDocuments": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "synchronizedDocuments": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "versionBoundDiagnosticDocuments": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "synchronizationMeaning": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "backend",
+                    "projectIndexCompleteness"
+                  ],
+                  "additionalProperties": false
                 },
                 "diagnosticRevisions": {
                   "type": "object",
@@ -73238,6 +74904,12 @@
                       "type": "boolean"
                     },
                     "documentSymbols": {
+                      "type": "boolean"
+                    },
+                    "callHierarchy": {
+                      "type": "boolean"
+                    },
+                    "typeHierarchy": {
                       "type": "boolean"
                     },
                     "rename": {
@@ -73638,6 +75310,78 @@
             "type": "integer",
             "minimum": 0
           },
+          "configured": {
+            "type": "boolean"
+          },
+          "initialized": {
+            "type": "boolean"
+          },
+          "launchAttempted": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "string"
+          },
+          "compilationDatabase": {
+            "type": "string"
+          },
+          "synchronizedRevisions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "revision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "id": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "lspVersion": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "revision",
+                "id",
+                "lspVersion"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "analysis": {
+            "type": "object",
+            "properties": {
+              "backend": {
+                "type": "string"
+              },
+              "projectIndexCompleteness": {
+                "type": "string"
+              },
+              "openDocuments": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "synchronizedDocuments": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "versionBoundDiagnosticDocuments": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "synchronizationMeaning": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "backend",
+              "projectIndexCompleteness"
+            ],
+            "additionalProperties": false
+          },
           "diagnosticRevisions": {
             "type": "object",
             "additionalProperties": {
@@ -73790,6 +75534,12 @@
               "documentSymbols": {
                 "type": "boolean"
               },
+              "callHierarchy": {
+                "type": "boolean"
+              },
+              "typeHierarchy": {
+                "type": "boolean"
+              },
               "rename": {
                 "type": "boolean"
               },
@@ -73896,6 +75646,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -74046,6 +75868,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -74132,6 +75960,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -74282,6 +76182,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -74368,6 +76274,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -74518,6 +76496,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -74604,6 +76588,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -74754,6 +76810,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -74840,6 +76902,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -74990,6 +77124,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -75076,6 +77216,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -75226,6 +77438,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -75312,6 +77530,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -75462,6 +77752,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -75548,6 +77844,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -75698,6 +78066,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -75784,6 +78158,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -75934,6 +78380,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -76020,6 +78472,78 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "configured": {
+                    "type": "boolean"
+                  },
+                  "initialized": {
+                    "type": "boolean"
+                  },
+                  "launchAttempted": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "synchronizedRevisions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lspVersion": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "id",
+                        "lspVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "analysis": {
+                    "type": "object",
+                    "properties": {
+                      "backend": {
+                        "type": "string"
+                      },
+                      "projectIndexCompleteness": {
+                        "type": "string"
+                      },
+                      "openDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizedDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "versionBoundDiagnosticDocuments": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "synchronizationMeaning": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "backend",
+                      "projectIndexCompleteness"
+                    ],
+                    "additionalProperties": false
+                  },
                   "diagnosticRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -76170,6 +78694,12 @@
                         "type": "boolean"
                       },
                       "documentSymbols": {
+                        "type": "boolean"
+                      },
+                      "callHierarchy": {
+                        "type": "boolean"
+                      },
+                      "typeHierarchy": {
                         "type": "boolean"
                       },
                       "rename": {
@@ -76268,6 +78798,78 @@
                 "epoch": {
                   "type": "integer",
                   "minimum": 0
+                },
+                "configured": {
+                  "type": "boolean"
+                },
+                "initialized": {
+                  "type": "boolean"
+                },
+                "launchAttempted": {
+                  "type": "boolean"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "compilationDatabase": {
+                  "type": "string"
+                },
+                "synchronizedRevisions": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "revision": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "id": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "lspVersion": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    },
+                    "required": [
+                      "revision",
+                      "id",
+                      "lspVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "analysis": {
+                  "type": "object",
+                  "properties": {
+                    "backend": {
+                      "type": "string"
+                    },
+                    "projectIndexCompleteness": {
+                      "type": "string"
+                    },
+                    "openDocuments": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "synchronizedDocuments": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "versionBoundDiagnosticDocuments": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "synchronizationMeaning": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "backend",
+                    "projectIndexCompleteness"
+                  ],
+                  "additionalProperties": false
                 },
                 "diagnosticRevisions": {
                   "type": "object",
@@ -76419,6 +79021,12 @@
                       "type": "boolean"
                     },
                     "documentSymbols": {
+                      "type": "boolean"
+                    },
+                    "callHierarchy": {
+                      "type": "boolean"
+                    },
+                    "typeHierarchy": {
                       "type": "boolean"
                     },
                     "rename": {
@@ -77287,6 +79895,34 @@
                   ],
                   "additionalProperties": false
                 }
+              },
+              "coverage": {
+                "type": "object",
+                "properties": {
+                  "strategy": {
+                    "type": "string"
+                  },
+                  "preparedFiles": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "wholeProjectIndexCompleteness": {
+                    "const": "unknown"
+                  },
+                  "limitations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "strategy",
+                  "preparedFiles",
+                  "wholeProjectIndexCompleteness",
+                  "limitations"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -77697,6 +80333,34 @@
               ],
               "additionalProperties": false
             }
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "preparedFiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wholeProjectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "strategy",
+              "preparedFiles",
+              "wholeProjectIndexCompleteness",
+              "limitations"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -78120,6 +80784,9 @@
           "includeExternal": {
             "type": "boolean"
           },
+          "refresh": {
+            "type": "boolean"
+          },
           "limit": {
             "type": "integer",
             "minimum": 1,
@@ -78362,6 +81029,12 @@
           },
           "truncated": {
             "type": "boolean"
+          },
+          "cacheHit": {
+            "type": "boolean"
+          },
+          "astReconciled": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -78424,6 +81097,9 @@
             "additionalProperties": false
           },
           "includeExternal": {
+            "type": "boolean"
+          },
+          "refresh": {
             "type": "boolean"
           },
           "limit": {
@@ -78668,6 +81344,12 @@
           },
           "truncated": {
             "type": "boolean"
+          },
+          "cacheHit": {
+            "type": "boolean"
+          },
+          "astReconciled": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -78730,6 +81412,9 @@
             "additionalProperties": false
           },
           "includeExternal": {
+            "type": "boolean"
+          },
+          "refresh": {
             "type": "boolean"
           },
           "limit": {
@@ -78974,6 +81659,12 @@
           },
           "truncated": {
             "type": "boolean"
+          },
+          "cacheHit": {
+            "type": "boolean"
+          },
+          "astReconciled": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -79036,6 +81727,9 @@
             "additionalProperties": false
           },
           "includeExternal": {
+            "type": "boolean"
+          },
+          "refresh": {
             "type": "boolean"
           },
           "limit": {
@@ -79234,6 +81928,9 @@
             "additionalProperties": false
           },
           "includeExternal": {
+            "type": "boolean"
+          },
+          "refresh": {
             "type": "boolean"
           },
           "limit": {
@@ -79478,6 +82175,12 @@
           },
           "truncated": {
             "type": "boolean"
+          },
+          "cacheHit": {
+            "type": "boolean"
+          },
+          "astReconciled": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -79540,6 +82243,9 @@
             "additionalProperties": false
           },
           "includeExternal": {
+            "type": "boolean"
+          },
+          "refresh": {
             "type": "boolean"
           },
           "limit": {
@@ -79786,6 +82492,12 @@
             "minimum": 0
           },
           "truncated": {
+            "type": "boolean"
+          },
+          "cacheHit": {
+            "type": "boolean"
+          },
+          "astReconciled": {
             "type": "boolean"
           }
         },

@@ -20,7 +20,7 @@ These contracts describe the native service exposed by the official SDK/MCP inte
 - [`language_symbols`](doc:operation-language-symbols-language-symbols) — Search actual configured project symbols, optionally filtered to types.
 - [`language_symbol_resolve`](doc:operation-language-symbol-resolve-language-symbol-resolve) — Resolve the location.range of one issued URI-only workspace symbol through its original backend.
 - [`language_document_symbols`](doc:operation-language-document-symbols-language-document-symbols) — Read document structure from the live buffer, preserving hierarchy as snapshot-local node/parent/depth and fullRange alongside the legacy navigation range.
-- [`language_rename`](doc:operation-language-rename-language-rename) — Prepare a semantic rename preview across references.
+- [`language_rename`](doc:operation-language-rename-language-rename) — Prepare compiler-issued semantic rename edits.
 - [`language_format`](doc:operation-language-format-language-format) — Prepare formatting edits from the selected language server.
 - [`language_configure`](doc:operation-language-configure-language-configure) — Enable, restart or disable a built-in or plugin language server in this trusted workspace.
 - [`language_preferences`](doc:operation-language-preferences-language-preferences) — Read and refresh per-workspace language preferences from application-owned local storage.

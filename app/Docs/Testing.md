@@ -1,5 +1,20 @@
 # Local verification and native tests
 
+The owner later authorised a controlled standalone production delivery. The
+installed MCP completed scoped CyCodeIDE calls, then a second Kaspersky detection
+deleted its CLI at 19:20 Europe/Paris. That attempt is interrupted, MCP is disabled,
+and native retries/binary publication are suspended again. See Validation.md.
+
+## Production CLI antivirus hold — 2026-11-09
+
+The owner's PDM alert also targets the production CLI. Local native execution and
+rebuild/retry are suspended, including production-only acceptance. Existing runner
+commands below remain historical/opt-in, and GitHub Actions remain paused.
+Read [Windows antivirus investigation](WindowsSecurity.md) before attempting
+another native run. Source/data/documentation and `/Zs` syntax-only checks remain
+available; no exclusion, quarantine restoration or alternate binary retry is used.
+
+
 ## Windows graphical runner preparation
 
 The production workflow now prepares a separate owned runner fixture with a

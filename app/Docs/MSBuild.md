@@ -7,7 +7,7 @@ configuration rules, tool prerequisites and pending execution validation.
 Open a .sln, .slnx, .vcxproj, .csproj, .fsproj or .vbproj directly. Non-Unreal solutions use
 the native MSBuild service; Unreal continues to use UnrealBuildTool. A directory
 with CMakeLists.txt keeps its CMake workflow, while opening its generated .sln
-explicitly selects MSBuild. .slnx is not supported yet.
+explicitly selects MSBuild. The native XML reader also supports .slnx; see ProjectFormats.md.
 
 The MSBuild panel selects the solution configuration/platform, whole solution or
 one local project, and Visual Studio MSBuild or dotnet msbuild. It exposes build,
@@ -44,7 +44,7 @@ services or a managed debugger.
 Prepare code analysis uses MSBuild 17.8+ structured property/item evaluation. For
 enabled local .vcxproj files it derives compile_commands.json from actual ClCompile
 items, include paths, preprocessor definitions, forced includes, language standard
-and compile-as mode. It skips ExcludedFromBuild items. Analysis is capped at eight
+compile-as mode and evaluated exception handling (Sync, Async, SyncCThrow). It skips ExcludedFromBuild items. Generated analysis metadata now has a format revision; older caches require explicit preparation again. Analysis is capped at eight
 projects, 20,000 translation units and 32 MiB per operation. Select a project to
 prepare a separate index. AdditionalOptions produce review warnings rather than
 being silently treated as complete compiler flags. Advanced PCH/modules/custom
@@ -77,3 +77,5 @@ Linux/macOS execution and F#/VB project builds remain unverified.
 Primary references: [MSBuild property/item evaluation](https://learn.microsoft.com/en-us/visualstudio/msbuild/evaluate-items-and-properties),
 [solution project targets](https://learn.microsoft.com/en-us/visualstudio/msbuild/how-to-build-specific-targets-in-solutions-by-using-msbuild-exe?view=visualstudio),
 [command-line reference](https://learn.microsoft.com/en-us/visualstudio/msbuild/msbuild-command-line-reference).
+
+The CL metadata mappings follow [Microsoft’s CL task reference](https://learn.microsoft.com/en-us/visualstudio/msbuild/cl-task?view=vs-2022#parameters). AdditionalOptions still require explicit review.

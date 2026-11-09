@@ -302,3 +302,84 @@ Runtime validation tracks progressive index revision 4f50871 and transaction
 revision 5dc05f4. The native matrix for the latter is
 https://github.com/MrMybal/CyCode/actions/runs/42609650125 ; the new assertions live
 in the existing native/Core and real-clangd cases, not new test executables.
+
+
+## Unreal rename, navigation and agent integration — 2026-11-09
+
+The production-only Windows acceptance now prepares `FDateTime::ParseHttpDate`
+across its implementation, header and actual HTTP caller on the initial request.
+Apply/Undo restores all three live buffers, with unchanged disk sources. A
+changed preparation scope refuses the whole stale plan. Compiler-confirmed local
+parameter rename still avoids the global scan (nine actual edits in the measured
+case). Preparation retries slow compiler attempts and reports native progress;
+it does not claim a complete whole-engine index. More than 128 source-spelled
+rename candidates fails explicitly without issuing a partial preview.
+
+Definition/declaration/type-definition use a revision/context-guarded bounded
+response cache; references and implementations remain uncached. Ten repeated
+World.cpp queries on the final run had a median of about 0.52 ms. Opening/editing
+a target invalidates reuse; definition coordinates were verified after a valid
+header edit and restoration. Exact compiler USR matching in the target's current
+AST reconciles stale clangd index positions. Unambiguous current destinations
+are preserved; an ambiguous replacement is counted invalid. These samples are
+not a controlled speed comparison to the earlier eight-module indexing run.
+
+The official MCP client discovered all 236 domain tools plus 21 SDK controls.
+Read-only permissions, typed backend status, semantic-preparation progress,
+owner cancellation through native stop, three-file preview/Apply/Undo and
+preserved RevisionConflict/CapacityExceeded codes passed on actual Unreal.
+Two identities on one official SDK runtime observed the same Unicode live buffer,
+denied cross-identity job access/cancellation and exited the owned Core normally.
+This validates source/runtime integration, not a newly installed desktop package.
+
+Read [Agents.md](Agents.md), the generated MCPMethods.json and
+Benchmarks/unreal55-fixes-20261109.json for the workflow, exact samples, executable
+fingerprint and source hashes. The historical benchmark remains intact. No
+private source contents, compiler argv, identity tokens or raw engine logs are
+published. GitHub Actions remain disabled; GUI/native-fixture execution was not
+resumed. Linux/macOS execution and exhaustive semantic completeness remain unverified.
+
+
+## Progressive semantic coverage — 2026-11-09
+
+The former 128-file preparation ceiling and 100-file WorkspaceEdit ceiling have
+been removed. Analysis uses one temporary native buffer at a time, retains editor
+buffers and exposes compiler-database inventories, resumable batches and paginated
+observations through the official SDK MCP contracts. Checkpoints are process-local,
+guarded by native revisions, workspace observations, backend epochs and compiler
+database context. No partial global rename preview is issued. Global C++ renames
+collect each file's real compiler edits after exact USR matching; they retain the
+16 MiB transaction budget. Current diagnostic errors/unknown publications refuse
+the complete preview. Explicit preparation refreshes C++ LSP drafts to obtain
+version-bound diagnostics without modifying native buffer identity/text/revision.
+
+The source contract now contains 237 native operations (the earlier 236-operation
+acceptance above remains historical). `analysis_results` pages observed metadata;
+whole-project semantic completeness remains unknown. Compile-command inventory,
+AST responses and clean diagnostics are separately reported evidence, not proof
+of Blueprint/serialized assets or every inactive Unreal configuration.
+
+The former 128-file preparation ceiling has been removed. On Windows, 160 real
+compiled Runtime/Core sources passed in four 40-file batches, all with clean
+version-bound diagnostics. Metadata pagination returned 128 + 32 records, only
+the three pre-existing editor buffers remained open, and a real document change
+rejected the stale continuation. The 37,679-command inventory contained 37,557
+unique translation units. This narrow selection does not certify the engine.
+
+The later official MCP run discovered 237 domain operations plus 21 SDK controls
+and passed read-only permission, cancellation/progress, cancelled-checkpoint
+resumption, compiler-database prefix filtering and typed result pages. It was
+then interrupted between rename Apply and Undo by loss of the native endpoint.
+The owner supplied a matching 16:07 Kaspersky PDM:Trojan.Win32.Generic alert for
+the production CLI. This run is **not a passing end-to-end MCP acceptance**;
+disk source hashes remained unchanged. The exact detected behaviour is unknown,
+so a false positive has not been established. All local native execution and
+rebuild/retry are suspended. No exclusions, quarantine restoration, renamed
+binaries, protection changes or uploads were used. GitHub Actions remain paused.
+
+Unexpected host exits now retain a bounded 64 KiB log tail and exit metadata in
+the trusted private data directory's `native-core-failures` folder before deleting
+the temporary endpoint descriptor. This Python change is checked with process-free
+unit tests only; it has not been exercised by another native run. The benchmark
+record `Benchmarks/unreal55-scaling-20261109.json` separates passed and interrupted
+evidence, executable hashes and remaining limitations.

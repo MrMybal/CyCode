@@ -147,6 +147,36 @@ class Engine {
     uint64_t nextSymbolSession_=1;
 
     Json prepareChange(const std::string &, const Json &);
+    Json analysisOperation(const std::string &,const Json &);
+    Json reconcileNavigationTargets(Json,const Json &,uint64_t,uint64_t);
+    Json prepareAnalysis(const Json &,const std::string &symbol={},const std::string &source={},uint64_t *generation=nullptr,Json *renameEdits=nullptr);
+    struct AnalysisSession {
+        std::string id,scope,compilerContext;
+        bool discoveryComplete=false;
+        std::vector<std::string> paths;
+        Json records=Json::array(),summary=Json::object();
+        uint64_t generation=0,workspaceRevision=0;
+        std::map<std::string,uint64_t> epochs;
+    };
+    AnalysisSession analysisSession_;
+    uint64_t nextAnalysisSession_=1;
+    std::set<std::string> analysisTemporaryDocuments_; // guarded by mutex_; ordinary readers promote ownership
+    std::string analysisCompilerContext() const;
+    mutable std::mutex analysisMutex_,analysisStateMutex_;
+    std::shared_ptr<std::atomic<bool>> analysisCancellation_;
+    std::string analysisOperationId_;
+    Json analysisState_={{"state","idle"},{"phase","idle"},{"completed",0},{"total",0},{"progress",0},{"error",""}};
+    struct NavigationCacheEntry {
+        Json result;
+        uint64_t generation=0,workspaceRevision=0,epoch=0;
+        std::string compilerContext;
+        std::chrono::steady_clock::time_point created=std::chrono::steady_clock::now();
+        std::vector<std::pair<std::filesystem::path,std::pair<std::filesystem::file_time_type,uintmax_t>>> targets;
+    };
+    std::map<std::string,NavigationCacheEntry> navigationCache_;
+    size_t navigationCacheBytes_=0;
+    struct NavigationContext { uint64_t revision=0,generation=0,epoch=0; };
+    std::map<std::string,NavigationContext> navigationContexts_;
     Json changeOperation(const std::string &, const Json &);
     Json changeDescription(const std::string &) const;
     Json sourceOperation(const std::string &, const Json &);
@@ -159,7 +189,9 @@ class Engine {
         std::uint64_t revision = 0, appliedRevision = 0;
     };
     struct ChangePlan {
-        Json annotations = Json::array();
+        Json annotations = Json::array(),coverage;
+        uint64_t scopeGeneration=0,scopeWorkspaceRevision=0,scopeEpoch=0;
+        std::string scopeBackend;
         std::string title, state = "preview";
         std::vector<FileChange> files;
         std::chrono::steady_clock::time_point created = std::chrono::steady_clock::now();

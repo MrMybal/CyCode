@@ -8,6 +8,7 @@
 #include <sstream>
 #ifdef _WIN32
 #include <windows.h>
+#include "cycode/WindowsChildHandles.h"
 #else
 #include <cerrno>
 #include <csignal>
@@ -103,7 +104,7 @@ bool LanguageClient::start(const std::filesystem::path &root, const std::string 
                            const std::filesystem::path &compilationDatabase, Json settings) {
     waitForWorkspace_ = false;
     if (!compilationDatabase.empty()) settings["compilationDatabasePath"] = pathUtf8(compilationDatabase);
-    return startImpl(root, {executable, "--background-index", "--log=error", "--header-insertion=never", "--completion-style=detailed"}, settings, false);
+    return startImpl(root, {executable, "--background-index", "--rename-file-limit=0", "--use-dirty-headers", "--log=error", "--header-insertion=never", "--completion-style=detailed"}, settings, false);
 }
 bool LanguageClient::startServer(const std::filesystem::path &root, const std::vector<std::string> &argv, Json configuration, bool waitForWorkspace, Json environment) {
     waitForWorkspace_ = waitForWorkspace;
@@ -166,18 +167,26 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
         !CreatePipe(&child_->output, &childOut, &security, 0) ||
         !CreatePipe(&child_->errors, &childErr, &security, 0)) {
         error_ = "Cannot create language server pipes";
+        for(auto handle:{childIn,childOut,childErr})if(handle)CloseHandle(handle);
         stop();
         return false;
     }
     SetHandleInformation(child_->input, HANDLE_FLAG_INHERIT, 0);
     SetHandleInformation(child_->output, HANDLE_FLAG_INHERIT, 0);
     SetHandleInformation(child_->errors, HANDLE_FLAG_INHERIT, 0);
-    STARTUPINFOW si{};
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput = childIn;
-    si.hStdOutput = childOut;
-    si.hStdError = childErr;
+    WindowsChildHandles inheritedHandles{childIn,childOut,childErr};
+    if(!inheritedHandles.get()) {
+        error_="Cannot restrict language-server handle inheritance (Windows error "+std::to_string(inheritedHandles.error())+")";
+        for(auto handle:{childIn,childOut,childErr})CloseHandle(handle);
+        stop();return false;
+    }
+    STARTUPINFOEXW si{};
+    si.StartupInfo.cb = sizeof(si);
+    si.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+    si.StartupInfo.hStdInput = childIn;
+    si.StartupInfo.hStdOutput = childOut;
+    si.StartupInfo.hStdError = childErr;
+    si.lpAttributeList=inheritedHandles.get();
     PROCESS_INFORMATION process{};
     std::wstring command;
     for (const auto &arg : argv) {
@@ -195,8 +204,11 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     child_->job = CreateJobObjectW(nullptr, nullptr);
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit{};
     limit.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-    if (child_->job)
-        SetInformationJobObject(child_->job, JobObjectExtendedLimitInformation, &limit, sizeof(limit));
+    if (!child_->job || !SetInformationJobObject(child_->job, JobObjectExtendedLimitInformation, &limit, sizeof(limit))) {
+        error_="Cannot create the language-server process job (Windows error "+std::to_string(GetLastError())+")";
+        for(auto handle:{childIn,childOut,childErr})CloseHandle(handle);
+        stop();return false;
+    }
     // Windows accepts duplicate Path/PATH entries; MSBuild/.NET reject them.
     auto insensitive = [](const std::wstring &a,const std::wstring &b) { return _wcsicmp(a.c_str(),b.c_str()) < 0; };
     std::map<std::wstring,std::wstring,decltype(insensitive)> variables(insensitive);
@@ -220,20 +232,31 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     for (const auto &[key,value] : variables) { environment.insert(environment.end(),value.begin(),value.end()); environment.push_back(0); }
     environment.push_back(0);
     bool created =
-        CreateProcessW(nullptr, command.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT,
-                       environment.data(), root.c_str(), &si, &process) != FALSE;
+        CreateProcessW(nullptr, command.data(), nullptr, nullptr, TRUE,
+                       CREATE_NO_WINDOW | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | EXTENDED_STARTUPINFO_PRESENT,
+                       environment.data(), root.c_str(), &si.StartupInfo, &process) != FALSE;
+    const auto creationError=created?ERROR_SUCCESS:GetLastError();
     CloseHandle(childIn);
     CloseHandle(childOut);
     CloseHandle(childErr);
     if (!created) {
-        error_ = "Cannot start language server: " + argv.front();
+        error_ = "Cannot start language server: " + argv.front()+" (Windows error "+std::to_string(creationError)+")";
         stop();
         return false;
     }
     child_->process = process.hProcess;
-    if (child_->job)
-        AssignProcessToJobObject(child_->job, process.hProcess);
-    ResumeThread(process.hThread);
+    if (!AssignProcessToJobObject(child_->job, process.hProcess)) {
+        error_="Cannot own the language-server process tree (Windows error "+std::to_string(GetLastError())+")";
+        // Only the child handle returned by our own CreateProcess is terminated.
+        // It is still suspended and has not executed server/project code.
+        TerminateProcess(process.hProcess,1);WaitForSingleObject(process.hProcess,INFINITE);
+        CloseHandle(process.hThread);stop();return false;
+    }
+    if(ResumeThread(process.hThread)==static_cast<DWORD>(-1)) {
+        error_="Cannot resume the owned language server (Windows error "+std::to_string(GetLastError())+")";
+        TerminateJobObject(child_->job,1);WaitForSingleObject(process.hProcess,INFINITE);
+        CloseHandle(process.hThread);stop();return false;
+    }
     CloseHandle(process.hThread);
 #else
     int in[2], out[2], err[2];

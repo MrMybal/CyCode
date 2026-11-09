@@ -221,5 +221,231 @@
     "Background clangd standard-library indexing reported an incomplete result in the first long observation",
     "Foreground diagnostics cover the two stated translation units, not all engine code",
     "Native test executables and GUI were not launched locally; owner explicitly authorized production Core/installed UE tools"
-  ]
+  ],
+  "extendedValidation": {
+    "date": "2026-11-09",
+    "platform": "Windows x64",
+    "runtimeCliSha256": "ecf93487ad38c249b8ccd09e16973f62f7ba51f7fb7a6a14749222209624fd23",
+    "githubActionsUsed": false,
+    "nativeTestExecutablesUsed": false,
+    "guiLaunched": false,
+    "prolongedObservation": {
+      "seconds": 1205.333770100001,
+      "completeEightModuleRounds": 19,
+      "navigationOperationsVerifiedAgainstRealIdentifierRanges": 152,
+      "diagnosticPublications": 35,
+      "diagnosticPublicationsWithErrors": 0,
+      "backendErrors": [],
+      "moduleDefinitionMilliseconds": {
+        "Core": {
+          "samples": 19,
+          "median": 72.10179999947286,
+          "minimum": 14.795699999922363,
+          "maximum": 112.29749999984051
+        },
+        "CoreGuid": {
+          "samples": 19,
+          "median": 13.190499999836902,
+          "minimum": 8.111699999972188,
+          "maximum": 61.56280000050174
+        },
+        "CoreUObject": {
+          "samples": 19,
+          "median": 170.5830999999307,
+          "minimum": 141.8628000001263,
+          "maximum": 280.4089000001113
+        },
+        "Engine": {
+          "samples": 19,
+          "median": 1207.5659000001906,
+          "minimum": 1065.15010000021,
+          "maximum": 1811.80570000015
+        },
+        "RenderCore": {
+          "samples": 19,
+          "median": 166.28270000001066,
+          "minimum": 152.41260000038892,
+          "maximum": 217.04349999981787
+        },
+        "SlateCore": {
+          "samples": 19,
+          "median": 44.945699999516364,
+          "minimum": 40.71819999990112,
+          "maximum": 71.49900000058551
+        },
+        "UnrealEd": {
+          "samples": 19,
+          "median": 964.1980000005788,
+          "minimum": 853.2036000005974,
+          "maximum": 1455.0630000003366
+        },
+        "Niagara": {
+          "samples": 19,
+          "median": 341.47399999983463,
+          "minimum": 298.2879999999568,
+          "maximum": 528.8132000005135
+        }
+      },
+      "maximumSampledPrivateCommitBytes": 4099928064,
+      "memoryScope": "Instantaneous sampled Core plus live descendants; not an OS peak or constant memory bound",
+      "firstReferences": {
+        "seconds": 47.66858279999997,
+        "locationsChecked": 113,
+        "distinctLocalFiles": 71,
+        "allReturnedLocalRangesContainIdentifier": true,
+        "wholeProjectCompleteness": "unknown"
+      },
+      "lastReferences": {
+        "seconds": 1201.5966701000007,
+        "locationsChecked": 184,
+        "distinctLocalFiles": 112,
+        "allReturnedLocalRangesContainIdentifier": true,
+        "wholeProjectCompleteness": "unknown"
+      },
+      "cacheFilesBefore": 12593,
+      "cacheFilesAfter": 22585,
+      "newlyIndexedTranslationUnitsObservedInLogs": 1487,
+      "cacheCountMeaning": "Files in clangd persistent index; not a count of fully analysed translation units or proof of complete coverage",
+      "shutdownMilliseconds": 351.1577000008401,
+      "exitCode": 0,
+      "diskSourcesUnchanged": true,
+      "measurementCorrection": {
+        "incorrectExpectation": "Only handwritten NiagaraFunctionLibrary.h or .cpp",
+        "observedCorrectDeclaration": "UHT NiagaraFunctionLibrary.generated.h:66, reflected constructor declaration",
+        "rawAssertionsPreserved": 19,
+        "correctedHarness": "extended_unreal.py accepts the actual generated constructor declaration"
+      }
+    },
+    "confirmation": {
+      "seconds": 127.22902160000012,
+      "success": true,
+      "navigationOperationsVerified": 16,
+      "localApplyUndoCycles": 10,
+      "allObservedTransactionDiagnosticsCurrent": true,
+      "crossFileTransaction": {
+        "symbol": "FDateTime::ParseHttpDate",
+        "files": 2,
+        "edits": 2,
+        "paths": [
+          "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp",
+          "Engine/Source/Runtime/Core/Public/Misc/DateTime.h"
+        ],
+        "conflictRejected": true,
+        "rejectedPlanChangedNoOtherBuffer": true,
+        "apply": "applied",
+        "undo": "undone",
+        "allPreviewsMatchedAppliedText": true,
+        "allBuffersRestoredClean": true,
+        "coverage": "Only the actual issued plan; exhaustive engine rename coverage remains unknown"
+      },
+      "rapidUnsavedUpdates": {
+        "replacementsWithoutDiagnosticWait": 21,
+        "correctFinalIdentifierRange": true,
+        "hoverUsesFinalIdentifier": true,
+        "diagnosticsRevision": 63,
+        "elapsedMilliseconds": 471.92530000029365,
+        "definitionMilliseconds": 97.09680000014487,
+        "originalTextRestored": true
+      },
+      "staleRevisionRejected": true,
+      "twoEngineUnsavedIsolation": true,
+      "closeReopenCycles": 5,
+      "allObservedOwnedProcessesExited": true,
+      "dirtyBuffersBeforeCleanup": 0,
+      "diskSourcesUnchanged": true,
+      "shutdownMilliseconds": 484.4721000008576,
+      "exitCode": 0,
+      "lastReferences": {
+        "locationsChecked": 190,
+        "distinctLocalFiles": 115,
+        "allReturnedLocalRangesContainIdentifier": true,
+        "wholeProjectCompleteness": "unknown"
+      }
+    },
+    "globalSearch": {
+      "success": true,
+      "queries": [
+        {
+          "query": "FPlatformTime::SystemTime",
+          "nativeMilliseconds": 9926.439099999698,
+          "nativeMatches": 5,
+          "nativeTruncated": false,
+          "directMilliseconds": 2346.8525000007503,
+          "directMatches": 5,
+          "nativeMatchesDirect": true,
+          "nativeHasNoDuplicateLocations": true
+        },
+        {
+          "query": "FDateTime::UtcNow",
+          "nativeMilliseconds": 3339.816800000335,
+          "nativeMatches": 493,
+          "nativeTruncated": false,
+          "directMilliseconds": 2336.5556000007928,
+          "directMatches": 493,
+          "nativeMatchesDirect": true,
+          "nativeHasNoDuplicateLocations": true
+        },
+        {
+          "query": "CyCodeNoSuchSymbol_20261109_UE55",
+          "nativeMilliseconds": 2315.3689999999187,
+          "nativeMatches": 0,
+          "nativeTruncated": false,
+          "directMilliseconds": 2247.842899999341,
+          "directMatches": 0,
+          "nativeMatchesDirect": true,
+          "nativeHasNoDuplicateLocations": true
+        }
+      ],
+      "unsavedUnicodeSearch": {
+        "matches": 1,
+        "correctLivePath": true,
+        "truncated": false
+      },
+      "diskSourceUnchanged": true
+    },
+    "knownRenameCoverageGap": {
+      "reproduced": true,
+      "symbol": "FDateTime::ParseHttpDate",
+      "sourceOnly": {
+        "files": [
+          "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp"
+        ],
+        "edits": 1
+      },
+      "afterHttpCallerAnalysis": {
+        "files": [
+          "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp",
+          "Engine/Source/Runtime/Online/HTTP/Private/HttpRetrySystem.cpp"
+        ],
+        "edits": 2
+      },
+      "afterHeaderAnalysis": {
+        "files": [
+          "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp",
+          "Engine/Source/Runtime/Core/Public/Misc/DateTime.h",
+          "Engine/Source/Runtime/Online/HTTP/Private/HttpRetrySystem.cpp"
+        ],
+        "edits": 3
+      },
+      "knownCallerResolvedToSameFunction": true,
+      "knownCallerOmittedInitially": true,
+      "knownDeclarationOmittedInitially": true,
+      "diagnosticErrorsInProbedFiles": 0,
+      "diskSourcesUnchanged": true,
+      "meaning": "A rename plan can omit a known caller and declaration while semantic coverage is incomplete. Opening/analyzing these files expands the plan. Atomic application is not proof of exhaustive rename correctness.",
+      "status": "Reproduced, not fixed by this validation; global semantic coverage remains unknown"
+    },
+    "preservation": {
+      "originalApplicationFilesUnchanged": 154,
+      "allProbedUnrealDiskSourceChecksPassed": true
+    },
+    "remainingLimits": [
+      "Whole-engine semantic index completeness is unknown; the full 37,557-source UBT scope was not exhaustively validated",
+      "Global rename coverage is demonstrably incomplete until relevant files are analysed; no exhaustive rename guarantee",
+      "Clangd standard-library background indexing still reported an incomplete result in this observation",
+      "World.cpp and EditorEngine.cpp navigation medians are about 1.2 s and 0.96 s with eight documents during indexing",
+      "One Windows machine, actual installed clangd 18.1.8 and warming caches; no universal performance claim",
+      "Engine-only compile context was prepared manually with UBT; no automatic engine-only adapter support established"
+    ]
+  }
 }

@@ -5,7 +5,7 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 6
+revision: 12
 ---
 
 ## Ownership {#ownership}
@@ -61,7 +61,9 @@ descriptors cycode-native/1 and cycodereader-native/1 retain compatibility and
 advertise coreProtocol. Socket shutdown remains owned by the parent through
 stdin/EOF. Transport joins handlers, bounds clients/messages and preserves a
 newer instance's descriptor. CyToolsCore continues to own MCP, jobs, identities,
-permissions and scheduling; these host controls are not new SDK/MCP operations.
+permissions and scheduling. MCP `service_status` exposes lifecycle inspection;
+trusted native shutdown remains an owning-host control. See the
+[AI integration guide](doc:core-agents#connect) for preparation and jobs.
 
 service.status describes lifecycle/context. language.status.servers describes
 each backend's configuration, observed launch, initialization, capabilities,
@@ -129,6 +131,59 @@ retains aggregate timings and precise limits. Manual UBT export was required:
 automatic engine-only Unreal preparation and whole-index completeness are not
 established. This scoped test does not resume local GUI/native-fixture launches.
 
+The local production Core now passes the actual Unreal three-file
+`FDateTime::ParseHttpDate` rename on the first request, plus Apply/Undo and changed
+scope refusal. Definition coordinates survive a valid header edit and restoration;
+ten repeated World.cpp queries measured a cache median of about 0.52 ms. This is
+one warming Windows run, not a controlled comparison to earlier samples.
+
+The earlier real MCP acceptance covered 236 domain operations and 21 SDK controls; the current contract adds `analysis_results`. Read-only
+permissions, progress, owner cancellation through native stop, native error codes,
+shared Unicode buffers, private jobs and normal Core exit were checked. See the
+[agent workflow](doc:core-agents#connect) for exact contracts and limits, including
+rolling preparation, resumable batches, paginated coverage and unknown whole-engine semantic completeness.
+
+The 128-file ceiling is removed: 160 actual compiled Runtime/Core sources
+passed in four batches with current clean diagnostics, paginated observations and
+three retained editor buffers. The inventory counts 37,557 unique Unreal units;
+this small selection does not establish exhaustive engine semantics.
+
+The subsequent 237-operation MCP run passed discovery, permissions, progress,
+cancellation and checkpoint/page contracts, but was interrupted between Apply
+and Undo. The owner reported a matching Kaspersky PDM alert on the production CLI.
+Local native runs and rebuild/retry are suspended; the final MCP acceptance is
+not marked passing. Disk sources stayed unchanged. Source/data/documentation
+checks continue; no protection bypass or automatic restart was introduced.
+
+## Windows antivirus investigation {#antivirus}
+
+The owner reported a PDM alert on the production CLI. Its exact detected behaviour
+is unknown; two recovered avp Windows events now identify its original SHA-256,
+even though the executable is unavailable at its build path. Local native runs and rebuild/retry remain suspended. Windows source
+changes now restrict child handle inheritance and refuse language-server launch
+unless job ownership and thread resume succeed. MSVC syntax-only checks pass;
+native behaviour and the antivirus outcome have not been retested.
+
+`app/scripts/antivirus_evidence.py` prepares a local JSON report and vendor request.
+It hashes only explicitly selected files, never runs/copies/rebuilds the sample,
+never includes private report contents and never uploads data. A missing original
+or hash remains explicit, rather than being replaced with a different build.
+
+No paid signing certificate is required for this investigation. The
+[official reanalysis procedure](https://support.kaspersky.com/common/error/other/1870)
+and [free developer program](https://www.kaspersky.com/partners/allowlist-program)
+provide vendor review paths, subject to eligibility and assessment. No submission,
+protection change or false-positive confirmation has occurred. The detailed
+antivirus event/export is still required to identify the flagged operation.
+
+The transport's native credential now uses OS entropy and a descriptor created
+privately before token bytes are written: protected user/LocalSystem ACLs on
+Windows, mode 0600 on POSIX. Atomic publication avoids inherited old file ACLs
+and a chmod-after-publication interval. The protocol and SDK ownership stay
+unchanged; native acceptance remains unexecuted. The evidence tool can import
+explicit avp event XML while excluding private command lines and rejecting
+conflicting original hashes. No quarantine or protection setting was accessed.
+
 ## Remaining stages {#limits}
 
 Large Unreal/MSBuild performance acceptance, complete context/dependency
@@ -138,3 +193,11 @@ Existing semantic edits retain previews, revision/disk checks, explicit saves
 and Undo. Unsupported backend actions stay unavailable. IDE presentation and
 installer/update identity need their own acceptance before a CyCodeIDE release;
 the historical updater is disabled in this development build.
+
+The owner later authorised production installation and MCP validation for this
+delivery. The installed runtime completed real CyCodeIDE search, 62-unit MSBuild
+evaluation, clean diagnostics on two observed files, compiler navigation and
+guarded guide authoring. Kaspersky deleted that installed CLI again at 19:20
+Europe/Paris. Its MD5 matches the built payload; full installed acceptance is
+interrupted, MCP is disabled and binary publication is suspended. No automatic
+native retry followed. See [Core installation](core-installation#distribution).

@@ -5,7 +5,7 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 6
+sourceRevision: 12
 ---
 
 ## Propriété des services {#ownership}
@@ -66,7 +66,9 @@ restent compatibles et annoncent coreProtocol. Le parent contrôle l’arrêt du
 socket par stdin/EOF. Le transport attend ses appelants, borne les connexions
 et messages et préserve le descripteur d’une instance plus récente. CyToolsCore
 possède toujours le MCP, les jobs, identités, permissions et l’ordonnanceur ;
-ces contrôles d’hôte ne sont pas de nouvelles opérations SDK/MCP.
+MCP `service_status` expose l’inspection du cycle de vie ; l’arrêt natif reste
+un contrôle de l’hôte propriétaire. Le [guide IA](doc:core-agents#connect)
+décrit la préparation et les jobs.
 
 service.status décrit le cycle de vie et le contexte. language.status.servers
 décrit chaque moteur : configuration, lancement observé, initialisation,
@@ -142,6 +144,67 @@ L’export UBT a été préparé explicitement : la préparation automatique d�
 seul et la complétude de l’index sémantique ne sont pas établies. Ce test ciblé
 ne réactive pas les lancements locaux d’IDE ou d’exécutables de test natifs.
 
+Le Core de production passe maintenant le renommage réel
+`FDateTime::ParseHttpDate` sur trois fichiers dès la première demande, avec
+Apply/Undo et refus d’une portée modifiée. Les positions résistent à une édition
+valide d’en-tête puis à sa restauration. Dix navigations répétées dans World.cpp
+mesurent environ 0,52 ms de médiane avec le cache. Il s’agit d’un passage Windows
+avec caches en cours de chauffe, sans comparaison contrôlée aux mesures antérieures.
+
+La vérification MCP précédente couvrait 236 opérations métier et 21 contrôles SDK ; le contrat actuel ajoute `analysis_results`. Les
+permissions de lecture, la progression, l’annulation jusqu’à l’arrêt natif, les
+codes d’erreur, buffers Unicode partagés, jobs privés et arrêt normal du Core ont
+été vérifiés. Le [guide IA](doc:core-agents#connect) précise les contrats et limites,
+dont les lots reprenables, les observations paginées et la complétude sémantique globale inconnue.
+
+Le plafond de 128 fichiers est supprimé : 160 vraies sources compilées de
+Runtime/Core ont passé quatre lots, avec diagnostics actuels sans erreur,
+observations paginées et seulement trois documents utilisateur conservés ouverts.
+L’inventaire retrouve 37 557 unités Unreal uniques ; cet échantillon réduit ne
+démontre pas la sémantique exhaustive du moteur.
+
+Le parcours MCP à 237 opérations a ensuite validé découverte, permissions,
+progression, annulation, reprise et pages typées, puis a été interrompu entre
+Apply et Undo. Le propriétaire a fourni une alerte Kaspersky PDM correspondante
+sur le CLI de production. Les exécutions natives et reconstructions suivies de
+relances sont suspendues ; la validation MCP finale n’est pas déclarée réussie.
+Les sources disque sont intactes. Les contrôles de source, données et documentation
+continuent, sans contournement de protection ni redémarrage automatique.
+
+## Enquête antivirus Windows {#antivirus}
+
+Le propriétaire a signalé une alerte PDM sur le CLI de production. Le comportement
+exact détecté est inconnu ; deux événements Windows avp récupérés identifient
+désormais son SHA-256 d’origine, malgré l’absence du fichier à son emplacement
+de compilation. Les exécutions natives et
+reconstructions suivies de relances restent suspendues. Les sources Windows
+limitent désormais l’héritage de handles des enfants et refusent le lancement
+d’un serveur sans responsabilité vérifiée de son job et reprise réussie du thread.
+La syntaxe MSVC est validée ; le comportement natif et le verdict antivirus n’ont
+pas été retestés.
+
+`app/scripts/antivirus_evidence.py` prépare un rapport JSON local et une demande
+d’analyse. Il calcule seulement l’empreinte des fichiers explicitement choisis,
+sans lancer, copier ou recréer l’exécutable, inclure les contenus de rapports
+privés ni envoyer de données. Un original ou une empreinte absents restent
+explicitement indisponibles, sans substitution par une autre compilation.
+
+Aucun certificat payant n’est nécessaire pour cette enquête. La
+[procédure officielle de réanalyse](https://support.kaspersky.com/common/error/other/1870)
+et le [programme gratuit pour développeurs](https://www.kaspersky.com/partners/allowlist-program)
+permettent une étude par l’éditeur, sous conditions d’éligibilité et d’examen.
+Aucun dossier n’a été envoyé, aucune protection modifiée et aucun faux positif
+confirmé. Le rapport détaillé de l’événement reste nécessaire pour identifier
+l’opération détectée.
+
+Le jeton natif utilise désormais l’aléa sécurisé du système et un fichier privé
+avant écriture : ACL protégée utilisateur/LocalSystem sur Windows, mode 0600 sur
+POSIX. La publication atomique évite la reprise des anciennes ACL et l’intervalle
+avant chmod. Le protocole et les responsabilités du SDK restent identiques ; la
+validation native reste à effectuer. L’outil importe les exports XML avp choisis
+explicitement, en excluant les commandes privées et les empreintes contradictoires.
+Aucune quarantaine ni configuration de protection n’a été consultée ou modifiée.
+
 ## Étapes restantes {#limits}
 
 Les mesures sur de grands projets Unreal/MSBuild, la couverture complète de
@@ -152,3 +215,11 @@ contrôles de révision/disque, sauvegardes explicites et annulations. Les actio
 non prises en charge restent indisponibles. La présentation IDE et l’identité
 de son installateur/updater exigent leur propre validation avant publication ;
 l’ancien updater reste désactivé dans cette version de développement.
+
+Le propriétaire a ensuite autorisé l'installation de production et sa validation
+MCP. Le runtime installé a exécuté recherches, évaluation MSBuild de 62 unités,
+diagnostics sans erreur sur deux fichiers observés, navigation et rédaction
+protégée du guide CyCodeIDE. Kaspersky a de nouveau supprimé le CLI installé à
+19 h 20 (Europe/Paris). Son MD5 correspond au build. L'acceptation complète reste
+interrompue, le MCP est désactivé et la publication binaire suspendue. Aucune
+relance native automatique n'a suivi. Voir [l'installation](core-installation#distribution).

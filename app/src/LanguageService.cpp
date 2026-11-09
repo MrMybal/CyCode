@@ -148,6 +148,11 @@ void LanguageService::configureManaged(std::string executable, bool enabled, boo
     else if (managed_)
         configure(executable.empty() ? managedExecutable() : std::move(executable), enabled, prewarm);
 }
+std::filesystem::path LanguageService::compilationDatabase(const std::string &backend) const {
+    std::lock_guard route(routingMutex_);
+    if(children_.contains(backend))return children_.at(backend)->compilationDatabase(backend);
+    std::lock_guard lock(mutex_);return compilationDatabase_;
+}
 void LanguageService::configureBackend(const std::string &backend, const std::vector<std::string> &argv,
                                        const Json &settings, bool enabled, bool prewarm, const Json &cargoProject) {
     std::lock_guard route(routingMutex_);
@@ -271,11 +276,11 @@ void LanguageService::setCompilationDatabase(std::filesystem::path directory, bo
     }
     wake_.notify_one();
 }
-void LanguageService::sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity, bool diagnosticCheckpoint) {
+void LanguageService::sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity, bool diagnosticCheckpoint, bool refreshAnalysis, bool reopenAnalysis) {
     std::lock_guard route(routingMutex_);
     const auto backend = this->backend(path);
     if (children_.contains(backend)) {
-        children_.at(backend)->sync(path, text, revision, identity, diagnosticCheckpoint);
+        children_.at(backend)->sync(path, text, revision, identity, diagnosticCheckpoint,refreshAnalysis,reopenAnalysis);
         return;
     }
     if (backend != backend_)
@@ -284,8 +289,12 @@ void LanguageService::sync(const std::string &path, const std::string &text, std
         std::lock_guard lock(mutex_);
         const auto previous=updates_.find(path);
         if(previous!=updates_.end()&&previous->second&&previous->second->revision==revision&&previous->second->identity==identity)
+        {
             diagnosticCheckpoint=diagnosticCheckpoint||previous->second->diagnosticCheckpoint;
-        updates_[path] = Document{text, revision, identity, diagnosticCheckpoint};
+            refreshAnalysis=refreshAnalysis||previous->second->refreshAnalysis;
+            reopenAnalysis=reopenAnalysis||previous->second->reopenAnalysis;
+        }
+        updates_[path] = Document{text, revision, identity, diagnosticCheckpoint,refreshAnalysis,reopenAnalysis};
     }
     wake_.notify_one();
 }
@@ -535,7 +544,11 @@ void LanguageService::run() {
             if (doc) {
                 const auto previous=documents.find(path);
                 if(previous!=documents.end()&&previous->second.revision==doc->revision&&previous->second.identity==doc->identity)
+                {
                     doc->diagnosticCheckpoint=doc->diagnosticCheckpoint||previous->second.diagnosticCheckpoint;
+                    doc->refreshAnalysis=doc->refreshAnalysis||previous->second.refreshAnalysis;
+                    doc->reopenAnalysis=doc->reopenAnalysis||previous->second.reopenAnalysis;
+                }
                 documents.insert_or_assign(path, std::move(*doc));
             } else documents.erase(path);
         }
@@ -544,7 +557,15 @@ void LanguageService::run() {
             if (!argv.empty()) {
                 if (backend_ == "cpp" && !compilationDatabase.empty())
                     settings["compilationDatabasePath"] = pathUtf8(compilationDatabase);
-                if (!client.startServer(root_, argv, settings, managed_, environment))
+                auto launch=argv;
+                // The built-in C++ backend is clangd (14+ for draft headers).
+                // Honour an explicit opt-out, while keeping unsaved includes in
+                // the default editor/compiler context. Other LSPs are untouched.
+                if(backend_=="cpp" && std::none_of(launch.begin(),launch.end(),[](const auto &arg){return arg.starts_with("--use-dirty-headers");}))
+                    launch.push_back("--use-dirty-headers");
+                if(backend_=="cpp" && std::none_of(launch.begin(),launch.end(),[](const auto &arg){return arg.starts_with("--rename-file-limit") || arg.starts_with("-rename-file-limit");}))
+                    launch.push_back("--rename-file-limit=0");
+                if (!client.startServer(root_, launch, settings, managed_, environment))
                     failure = client.error();
             } else if (managed_) {
                 std::vector<std::string> argv{executable};
@@ -595,7 +616,7 @@ void LanguageService::run() {
         // preserves notification order; queries wait for the load progress to end.
         if (client.initialized()) {
             for (auto it = sent.begin(); it != sent.end();) {
-                if (documents.contains(it->first) && documents.at(it->first).identity == sentIdentities.at(it->first)) {
+                if (documents.contains(it->first) && documents.at(it->first).identity == sentIdentities.at(it->first) && !documents.at(it->first).reopenAnalysis) {
                     ++it;
                     continue;
                 }
@@ -611,14 +632,18 @@ void LanguageService::run() {
                 sentIdentities.erase(it->first);
                 it = sent.erase(it);
             }
-            for (const auto &[path, doc] : documents) {
+            // Publish every changed dependency before forcing unchanged includers.
+            // std::map path order can place Private/Foo.cpp before Public/Foo.h.
+            for(const bool refreshing : {false,true})
+            for (auto &[path, doc] : documents) {
+                if(doc.refreshAnalysis!=refreshing)continue;
                 auto uri = LanguageClient::uri(root_ / utf8Path(path));
                 auto entry = sent.find(path);
                 if (entry != sent.end() && sentIdentities.at(path) != doc.identity) {
                     synchronized = false; // didClose has not been accepted yet.
                     continue;
                 }
-                if ((entry == sent.end() || entry->second.first != doc.revision) && nextVersion == INT_MAX) {
+                if ((entry == sent.end() || entry->second.first != doc.revision || doc.refreshAnalysis) && nextVersion == INT_MAX) {
                     synchronized = false;
                     failure = "Language document versions exhausted; restart this language server";
                     continue;
@@ -633,12 +658,12 @@ void LanguageService::run() {
                                          {"version", nextVersion + 1},
                                          {"text", doc.text}}}})) {
                         sent[path] = {doc.revision, ++nextVersion};
-                        sentIdentities[path] = doc.identity;
+                        sentIdentities[path] = doc.identity;doc.refreshAnalysis=false;doc.reopenAnalysis=false;
                         client.invalidateSemantic();
                         semanticTokens.erase(LanguageClient::uriKey(uri));
                     } else
                         synchronized = false;
-                } else if (entry->second.first != doc.revision) {
+                } else if (entry->second.first != doc.revision || doc.refreshAnalysis) {
                     Json change={{"textDocument",{{"uri",uri},{"version",nextVersion+1}}},
                                  {"contentChanges",Json::array({{{"text",doc.text}}})}};
                     // Explicit transactions need diagnostics for the exact settled
@@ -648,7 +673,7 @@ void LanguageService::run() {
                     if(doc.diagnosticCheckpoint&&client.supportsForcedDiagnostics())change["wantDiagnostics"]=true;
                     if (client.notify("textDocument/didChange",std::move(change))) {
                         entry->second.first = doc.revision;
-                        entry->second.second = ++nextVersion;
+                        entry->second.second = ++nextVersion;doc.refreshAnalysis=false;
                         client.invalidateSemantic();
                     } else
                         synchronized = false;

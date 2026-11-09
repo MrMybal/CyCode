@@ -137,7 +137,7 @@ Json MsBuild::inspectLocked(const Json &params) {
     model["available"] = true; model["profile"] = profile; model["tools"] = tools_.is_object() ? tools_.at("tools") : Json::array();
     model["message"] = !tools_.is_object() ? "Detect MSBuild tools to select a build engine." : model.at("tools").empty() ? "Install Visual Studio Build Tools or a .NET SDK." : "";
     const auto metadata = resolve_(cachePath(profile)+"/model.json");
-    if (fs::is_regular_file(metadata)) { auto data = Json::parse(read(metadata)); if (data.value("profile",Json()) == profile && fresh(data,root_,resolve_)) {
+    if (fs::is_regular_file(metadata)) { auto data = Json::parse(read(metadata)); if (data.value("analysisFormat",0) == 1 && data.value("profile",Json()) == profile && fresh(data,root_,resolve_)) {
         model["artifacts"] = data.value("artifacts",Json::array()); model["analysisWarnings"] = data.value("analysisWarnings",Json::array());
         const auto database = resolve_(cachePath(profile)+"/compile_commands.json"); if (data.value("entries",0) > 0 && fs::is_regular_file(database)) model["compilationDatabase"] = {{"available",true},{"path",pathUtf8(database.lexically_relative(root_))},{"entries",data.at("entries")}};
     } }
@@ -233,6 +233,13 @@ Json MsBuild::run(const std::string &method,const Json &params,const std::atomic
             addPaths(props.value("IncludePath",""),"/I"); addPaths(file.value("AdditionalIncludeDirectories",""),"/I"); addPaths(file.value("ForcedIncludeFiles",""),"/FI");
             for (const auto &define : list(file.value("PreprocessorDefinitions",""))) args.push_back("/D"+define);
             const auto standard = file.value("LanguageStandard",""); if (!standard.empty()) { if (standard == "stdcpplatest") args.push_back("/std:c++latest"); else if (standard.starts_with("stdcpp")) args.push_back("/std:c++"+standard.substr(6)); }
+            // Use evaluated CL metadata, not unparsed AdditionalOptions. clangd
+            // otherwise sees MSVC C++ headers with exceptions disabled.
+            const auto exceptions = file.value("ExceptionHandling", "");
+            if (exceptions == "Sync") args.push_back("/EHsc");
+            else if (exceptions == "Async") args.push_back("/EHa");
+            else if (exceptions == "SyncCThrow") args.push_back("/EHs");
+            else if (!exceptions.empty() && exceptions != "false") warning("Unsupported ExceptionHandling metadata for " + file.at("Identity").get<std::string>());
             const auto compileAs = file.value("CompileAs",""); if (compileAs == "CompileAsC") args.push_back("/TC"); else if (compileAs == "CompileAsCpp") args.push_back("/TP");
             if (!file.value("AdditionalOptions","").empty()) warning("AdditionalOptions require review for "+file.at("Identity").get<std::string>()+"; the derived index uses evaluated includes, definitions, language mode and forced includes.");
             Json unit = {{"directory",pathUtf8(directory)},{"file",pathUtf8(source)},{"arguments",args}};
@@ -242,7 +249,7 @@ Json MsBuild::run(const std::string &method,const Json &params,const std::atomic
     checkBuildCancellation(cancellation);
     if (!evaluated) throw std::runtime_error("No enabled local C++ project to index");
     if (!combined.exitCode && database.empty()) { combined.exitCode = 1; combined.output += "\nNo supported C++ translation units were evaluated.\n"; }
-    if (!combined.exitCode) { const auto text = database.dump(2); if (text.size() > 32*1024*1024) throw std::runtime_error("MSBuild analysis exceeds 32 MiB; select a smaller project"); atomic(resolve_(cachePath(profile)+"/compile_commands.json"),text); atomic(resolve_(cachePath(profile)+"/model.json"),Json{{"profile",profile},{"artifacts",artifacts},{"entries",database.size()},{"analysisWarnings",warnings},{"inputs",inputs(model,root_,resolve_,configurationInputs)}}.dump(2)); save(); }
+    if (!combined.exitCode) { const auto text = database.dump(2); if (text.size() > 32*1024*1024) throw std::runtime_error("MSBuild analysis exceeds 32 MiB; select a smaller project"); atomic(resolve_(cachePath(profile)+"/compile_commands.json"),text); atomic(resolve_(cachePath(profile)+"/model.json"),Json{{"analysisFormat",1},{"profile",profile},{"artifacts",artifacts},{"entries",database.size()},{"analysisWarnings",warnings},{"inputs",inputs(model,root_,resolve_,configurationInputs)}}.dump(2)); save(); }
     auto result = process(combined); result["project"] = inspectLocked(profile); return result;
 }
 } // namespace cycode

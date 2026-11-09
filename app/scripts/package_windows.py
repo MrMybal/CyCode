@@ -74,6 +74,7 @@ def main():
                  'VERSION.fr.md', 'CHANGELOG.md', f'app/Docs/Releases/v{version}.md',
                  'website/assets/workspace.png', 'website/assets/git-conflicts.png', 'app/CyTool.json',
                  'app/README.md', 'app/THIRD_PARTY_NOTICES.md', 'app/tool.py', 'app/contracts.py',
+                 'app/core_host.py', 'app/MCPMethods.json',
                  'app/locales/ui.json', 'app/include/cycode/PluginAPI.h']:
         include(ROOT / name)
     for pattern in ['app/*lock.json', 'app/licenses/*', 'app/resources/fonts/*', 'app/scripts/*.py',

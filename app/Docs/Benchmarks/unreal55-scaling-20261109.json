@@ -1,0 +1,112 @@
+{
+  "format": "cycode-unreal-semantic-scaling/1",
+  "date": "2026-11-09",
+  "platform": "Windows x64",
+  "engine": "Unreal Engine 5.5.4 source",
+  "backend": "clangd 18.1.8",
+  "compilerDatabase": {
+    "commands": 37679,
+    "uniqueTranslationUnits": 37557,
+    "bytes": 22396096
+  },
+  "bulkAcceptance": {
+    "binarySha256": "8a981ac6342c891ba4414e8637834ae236a9b29f08394ec25ab0e1e359b0a90c",
+    "selection": "160 smallest compiled C++ sources in Runtime/Core/Private; intentionally narrow, not a representative full-engine sample",
+    "passed": true,
+    "seconds": 182.15922019999925,
+    "files": 160,
+    "retainedDocuments": 3,
+    "pages": [
+      128,
+      32
+    ],
+    "coverage": {
+      "commands": 0,
+      "diagnosticClean": 160,
+      "diagnosticErrors": 0,
+      "diagnosticUnknown": 0,
+      "observed": 160,
+      "outOfScope": 0,
+      "remaining": 0,
+      "translationUnits": 0
+    },
+    "batchSize": 40,
+    "staleResumeRefused": true,
+    "sourceHashesUnchanged": true,
+    "exitCode": 0,
+    "threeFileRenameApplyUndo": true,
+    "renameSeconds": 13.113523100000748,
+    "inventorySeconds": 6.044433700000809
+  },
+  "finalMcpAcceptance": {
+    "binarySha256": "90a9b3ce88c53f26911e6367d7a2a10865966a744508808f88559c38c59e3b27",
+    "status": "interrupted-not-passing",
+    "completedChecks": {
+      "discovery": {
+        "domainOperations": 237,
+        "SDKControls": 21
+      },
+      "readonlyPermissions": true,
+      "readonlyHostDrained": true,
+      "languageStatusTypedContract": true,
+      "SDKCancellation": {
+        "terminal": "Cancelled",
+        "progressObserved": true
+      },
+      "cancelledCheckpointResumable": "analysis-1",
+      "compilerDatabaseResumeAndTypedPages": {
+        "total": 465,
+        "completed": 2,
+        "coverage": {
+          "commands": 37679,
+          "diagnosticClean": 2,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 0,
+          "observed": 2,
+          "outOfScope": 37092,
+          "remaining": 463,
+          "translationUnits": 37557
+        }
+      }
+    },
+    "interruptedOperation": "changes_undo",
+    "observedError": "NativeUnavailable: connection refused",
+    "sourceHashesUnchanged": true,
+    "hashEvidence": {
+      "origin": "Original avp Windows Application event exports recovered after the interrupted run",
+      "records": [
+        22418236,
+        22418237
+      ],
+      "eventId": 4662,
+      "rawPrivateFieldsPublished": false
+    }
+  },
+  "antivirus": {
+    "ownerReportedDetection": "PDM:Trojan.Win32.Generic",
+    "ownerScreenshotLocalTime": "2026-11-09 16:07 Europe/Paris",
+    "target": "production cycode_cli.exe",
+    "exactBehaviour": "unknown",
+    "falsePositiveEstablished": false,
+    "nativeExecutionAndRebuildRetrySuspended": true,
+    "protectionSettingsChanged": false,
+    "binariesUploaded": false,
+    "productVersion": "21.26.4.406",
+    "databaseStampAsReported": "2026.11.09 10:03:00:000"
+  },
+  "limits": [
+    "Whole-engine semantic completeness remains unknown; 160 clean files do not prove all 37,557 translation units.",
+    "Process-local checkpoints; no proof persisted across Core restart. Global rename restarts after cancellation.",
+    "16 MiB atomic transaction budget and 4 MiB source-file limit remain explicit.",
+    "Serialized Unreal assets, token-pasted names, inactive configurations and external projects are not certified.",
+    "Final MCP end-to-end acceptance, Linux/macOS and desktop GUI validation remain unverified."
+  ],
+  "sourceSha256AtRecord": {
+    "app/src/SemanticPreparation.cpp": "466da026c1b7514c5b8e65533d67b3eb5e1dd1aa378d92b9c93b1b903652ce0a",
+    "app/src/Semantic.cpp": "4754a8c5f7cb01184d3f8efe80cba89da9749ff3f6001a59a8552b45c55b4ad5",
+    "app/src/LanguageService.cpp": "717f4e98b7482ed0f8a624d35427c070910e053863971054af6367362faca44b",
+    "app/contracts.py": "ef3715c62fcd707b1345b9c1692bac636cea60142dfdcc81425dd7dbe164fc05",
+    "app/core_host.py": "b02e2b14ef0b4fa00e1397e1514b7a1e6789dafbc2ea1d769a5314c8f2e53c7a"
+  },
+  "provenance": "Uncommitted worktree based on e07a4e45ebdfcbe296fc493af256d8785695b0bb; bulk run precedes final discovery/resume hardening. Host failure-log retention added afterward and checked without a process."
+}

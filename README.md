@@ -73,6 +73,15 @@ language.status backend readiness and revision-bound diagnostics. Shutdown/EOF
 never saves dirty buffers. Existing loopback descriptor protocols remain
 compatible. CyToolsCore continues to own SDK/MCP jobs, identities and permissions.
 
+## AI agents and MCP
+
+Standalone packages and the reusable AI skill: [Core installation](app/Docs/CoreInstallation.md).
+
+Use [the agent guide](app/Docs/Agents.md) for persistent headless startup,
+analysis preparation, asynchronous jobs and guarded changes. The generated
+[MCP method catalogue](app/MCPMethods.json) lists all 236 native operations and
+their complete schemas. The official CyToolsCore SDK owns MCP and permissions.
+
 ## Evidence and limits
 
 Core 84e4c78 passed the 63-case native suite on Windows x64, Ubuntu x64 and macOS
@@ -80,15 +89,16 @@ arm64 (MSBuild is skipped on POSIX), including concurrent child ownership checks
 The corrected macOS Git replay also passed three additional repetitions. Reader
 671c588 passed 17 service/view cases on those systems and its separate headless
 profile. Exact CI links and tested limits are recorded in the integration guide.
-Local native execution stays suspended during
-the existing antivirus investigation; source checks and production compilation
-are reported separately.
+The owner separately authorised production-only Core/clangd tests on real
+UE 5.5.4: initial three-file rename, Apply/Undo, navigation cache invalidation and
+official MCP workflows now pass. See [the scoped results](app/Docs/Benchmarks/unreal55-fixes-20261109.json).
+GUI/native-fixture launches remain suspended; GitHub Actions remain paused.
 
 The semantic baseline includes actual clangd requests against the real Core CMake
 project (121 translation units). Raw samples, corpus identity, memory scope,
 exact CI links and remaining work are in [the architecture guide](app/Docs/CoreExtraction.md).
 Compilation, a path cache or a nonempty references response does not establish
-whole-project semantic coverage. Large Unreal/MSBuild baselines, broader
+whole-project semantic coverage. Exhaustive Unreal/real MSBuild acceptance, broader
 invalidation, incremental synchronization and advanced transformations remain
 further work. No CLion/IntelliJ parity is claimed.
 

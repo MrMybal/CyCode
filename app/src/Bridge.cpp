@@ -4,7 +4,7 @@ Bridge::Bridge(Engine &engine,const std::filesystem::path &path):service_(engine
     LocalEndpoint::Options options;
     options.descriptor={{"protocol","cycode-native/1"},{"workspace",pathUtf8(engine.workspace())},{"coreProtocol",CoreService::protocol}};
     options.respond=[this](const Json &input){return service_.respond(input);};
-    options.control=[](const std::string &method){return method=="service.status" || method=="project.cancel" || method=="build.cancel" || method=="tests.cancel";};
+    options.control=[](const std::string &method){return method=="service.status" || method=="project.cancel" || method=="build.cancel" || method=="tests.cancel" || method=="analysis.status" || method=="analysis.cancel" || method=="analysis.results";};
     options.error=[](const std::string &message){return CoreService::error("TransportError",message);};
     endpoint_=std::make_unique<LocalEndpoint>(descriptor_,std::move(options));
 }

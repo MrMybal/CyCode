@@ -5,7 +5,7 @@ description: Connect to the running IDE with a read or editing identity.
 section: Work in CyCode
 order: 260
 parent: plugins
-revision: 3
+revision: 5
 ---
 
 ## Connect {#connection}
@@ -21,3 +21,7 @@ The default configuration is read-only. Select editing access deliberately for d
 The official MCP adapter exposes `op_<operationId>`, `cy_get_job`, `cy_events` and `cy_cancel_job`. A submitted job is not its completed result: wait for Completed, Failed or Cancelled. For process results, also inspect `exitCode`, `timedOut` and `truncated`.
 
 Reads and writes use the same native documents as the editor. Read a fresh revision before replacing text; save explicitly afterward. Workspace source documents are persistent references, not disposable task artifacts. The [public operation reference](doc:api-links#contract) documents parameters and results.
+
+## Headless Core {#headless}
+
+The [AI integration guide](doc:core-agents#connect) documents standalone Core startup, all 237 operation contracts, permissions, jobs, analysis preparation, navigation and guarded refactorings.

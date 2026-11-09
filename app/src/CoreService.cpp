@@ -30,14 +30,14 @@ Json CoreService::error(const std::string &code,const std::string &message,const
 Json CoreService::respond(const Json &input) noexcept {
     return respondNative(input,[this](const std::string &method,const Json &params)->Json {
         if(method=="service.status")return status();
-        if(draining() && method!="project.cancel" && method!="build.cancel" && method!="tests.cancel")
+        if(draining() && method!="project.cancel" && method!="build.cancel" && method!="tests.cancel" && method!="analysis.cancel")
             throw NativeError(ErrorCode::ServiceStopping,"The project context is draining");
         return engine_.dispatch(method,params);
     });
 }
 void CoreService::beginShutdown() noexcept {
     if (draining_.exchange(true)) return;
-    for (const auto *method : {"build.cancel","tests.cancel","project.cancel"})
+    for (const auto *method : {"build.cancel","tests.cancel","project.cancel","analysis.cancel"})
         try { engine_.dispatch(method); } catch (...) {}
 }
 } // namespace cycode

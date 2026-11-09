@@ -303,7 +303,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
         }
         return future.get();
     };
-    Json edits;
+    Json edits,coverage;
     std::string title;
     if (rename) {
         // CSS supports rename without prepareRename. Its symbol range is the
@@ -329,8 +329,29 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
             auto name=request.at("newName").get<std::string>();
             if (!name.starts_with('.') && !name.starts_with('#')) request["newName"]=oldName.substr(0,1)+name;
         }
-        edits = ask("textDocument/rename", request);
-        if (!LanguageService::supportsCpp(key) && !LanguageService::supportsManaged(key)) {
+        if(LanguageService::supportsCpp(key)) {
+            // Clangd can return a valid but incomplete WorkspaceEdit before its
+            // background index knows unopened declarations/callers. Prepare every
+            // source-spelled candidate before asking for the authoritative edits.
+            // A compiler-confirmed parameter is confined to its function and
+            // does not need a project-wide spelling scan.
+            bool parameter=false;
+            try {
+                const auto ast=ask("textDocument/ast",{{"textDocument",request.at("textDocument")},{"range",range}});
+                const auto kind=ast.value("kind",std::string{});
+                parameter=kind=="ParmVar" || kind=="ParmVarDecl";
+            } catch(const NativeError &error) {
+                if(error.code()==ErrorCode::RevisionConflict || error.code()==ErrorCode::Cancelled)throw;
+            }
+            if(!parameter) {
+                const auto preparation=prepareAnalysis(params,oldName,key,&generation,&edits);
+                coverage={{"strategy","workspace-spelling-candidates"},{"preparedFiles",preparation.at("total")},
+                    {"wholeProjectIndexCompleteness","unknown"},
+                    {"limitations",Json::array({"Source-spelled candidates inside this workspace; not serialized Unreal assets, token-pasted names or external projects"})}};
+            } else coverage={{"strategy","compiler-local-parameter"},{"preparedFiles",1},{"wholeProjectIndexCompleteness","unknown"},{"limitations",Json::array()}};
+        }
+        if(edits.is_null())edits = ask("textDocument/rename", request);
+        {
             // A server may coalesce edits over whole method bodies. Acquire disk
             // baselines and send live versions for previously unopened targets,
             // then recompute the edits against those exact buffers. The first
@@ -345,7 +366,6 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
                     if (!change.contains("textDocument")) throw std::runtime_error("File operations are not supported in refactor previews");
                     paths.insert(pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(change.at("textDocument").at("uri")))).lexically_relative(root_)));
                 }
-                if (paths.size()>100) throw std::runtime_error("Refactoring exceeds the 100-document limit");
                 for (const auto &path : paths) if (!documents_.contains(path)) { openLocked(path);synchronize=true; }
                 generation=nextRevision_;
             }
@@ -359,7 +379,16 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
     }
     std::lock_guard lock(mutex_);
     if (generation != nextRevision_ || !documents_.contains(key) || documents_.at(key).revision != revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during refactoring");
-    return workspaceChangeLocked(title,edits,LanguageService::supportsCpp(key) || LanguageService::supportsManaged(key) ? oldName : "",rename && !LanguageService::supportsCpp(key) && !LanguageService::supportsManaged(key));
+    auto result=workspaceChangeLocked(title,edits,LanguageService::supportsCpp(key) || LanguageService::supportsManaged(key) ? oldName : "",rename);
+    if(!coverage.is_null()) {
+        auto &plan=changes_.at(result.at("id").get<std::string>());plan.coverage=coverage;
+        if(coverage.at("strategy")=="workspace-spelling-candidates") {
+            plan.scopeGeneration=nextRevision_;plan.scopeWorkspaceRevision=monitor_.snapshot().revision;
+            plan.scopeBackend=language_.backend(key);plan.scopeEpoch=language_.backendEpoch(plan.scopeBackend);
+        }
+        result["coverage"]=std::move(coverage);
+    }
+    return result;
 }
 Json Engine::workspaceEditFilesLocked(const Json &supplied) {
     auto edits=supplied;
@@ -383,7 +412,6 @@ Json Engine::workspaceEditFilesLocked(const Json &supplied) {
         if (files.contains(uri)) throw std::runtime_error("Duplicate document in workspace edit");
         files[uri] = change.at("edits");
     }
-    if (files.size() > 100) throw std::runtime_error("Refactoring exceeds the 100-document limit");
     Json canonical=Json::object();
     for (auto i=files.begin();i!=files.end();++i) {
         const auto path=pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(i.key()))).lexically_relative(root_));
@@ -442,7 +470,9 @@ Json Engine::changeDescription(const std::string &id) const {
     const auto &plan = changes_.at(id);
     Json files = Json::array(); size_t edits = 0;
     for (const auto &file : plan.files) { edits += file.edits.size(); files.push_back({{"path", file.path}, {"expectedRevision", file.revision}, {"editCount", file.edits.size()}}); }
-    return {{"id", id}, {"title", plan.title}, {"state", plan.state}, {"files", files}, {"editCount", edits}, {"annotations",plan.annotations}};
+    Json result={{"id", id}, {"title", plan.title}, {"state", plan.state}, {"files", files}, {"editCount", edits}, {"annotations",plan.annotations}};
+    if(!plan.coverage.is_null())result["coverage"]=plan.coverage;
+    return result;
 }
 Json Engine::changeOperation(const std::string &method, const Json &params) {
     std::lock_guard lock(mutex_);
@@ -460,6 +490,9 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
     }
     const bool undo = method == "changes.undo";
     if (plan.state != (undo ? "applied" : "preview")) throw std::runtime_error("Refactoring is not in the expected state");
+    if(!undo && plan.scopeGeneration && (plan.scopeGeneration!=nextRevision_ ||
+        plan.scopeWorkspaceRevision!=monitor_.snapshot().revision || language_.backendEpoch(plan.scopeBackend)!=plan.scopeEpoch))
+        throw NativeError(ErrorCode::RevisionConflict,"Rename preparation scope changed; prepare the rename again");
     if (!undo) confirmChangeAnnotations(plan.annotations,params.value("confirmedAnnotations",Json::array()));
     // Validate EVERY affected buffer and disk baseline before mutating ANY buffer.
     for (const auto &file : plan.files) {

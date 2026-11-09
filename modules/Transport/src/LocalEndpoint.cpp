@@ -1,13 +1,11 @@
 #include "cycode/LocalEndpoint.h"
 #include "cycode/TextFile.h"
+#include "EndpointSecurity.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <future>
-#include <iomanip>
 #include <mutex>
-#include <random>
-#include <sstream>
 #include <thread>
 #include <vector>
 #ifdef _WIN32
@@ -74,9 +72,7 @@ struct LocalEndpoint::Impl {
         socklen_t size=sizeof(address);
 #endif
         if(getsockname(listener.value,reinterpret_cast<sockaddr *>(&address),&size))throw std::runtime_error("Cannot inspect local endpoint");
-        std::random_device random;std::ostringstream secret;
-        for(unsigned i=0;i<8;++i)secret<<std::hex<<std::setw(8)<<std::setfill('0')<<random();
-        token=secret.str();
+        token=detail::nativeEndpointSecret();
         auto value=options.descriptor;value["host"]="127.0.0.1";value["port"]=ntohs(address.sin_port);value["token"]=token;
         published=value.dump(2)+"\n";
     }
@@ -85,10 +81,7 @@ struct LocalEndpoint::Impl {
         if(!descriptor.parent_path().empty())std::filesystem::create_directories(descriptor.parent_path());
         std::optional<std::string> baseline;
         if(std::filesystem::exists(descriptor))baseline=readTextFileBytes(descriptor);
-        writeTextFileAtomic(descriptor,published,baseline);ownsDescriptor=true;
-#ifndef _WIN32
-        std::filesystem::permissions(descriptor,std::filesystem::perms::owner_read|std::filesystem::perms::owner_write,std::filesystem::perm_options::replace);
-#endif
+        detail::publishNativeDescriptor(descriptor,published,baseline);ownsDescriptor=true;
         thread=std::thread([this]{serve();});
     }
     void stop() noexcept {
@@ -134,7 +127,7 @@ struct LocalEndpoint::Impl {
                 }
                 const auto input=Json::parse(request);
                 if(!input.is_object())throw std::runtime_error("Expected a native request object");
-                if(input.value("token",std::string{})!=token)throw std::runtime_error("Access denied");
+                if(!detail::nativeEndpointSecretMatches(input.value("token",std::string{}),token))throw std::runtime_error("Access denied");
                 const auto method=input.value("method",std::string{});
                 if(controlOnly && (!options.control || !options.control(method)))throw std::runtime_error("Native connection capacity reached; retry later");
                 response=options.respond(input);

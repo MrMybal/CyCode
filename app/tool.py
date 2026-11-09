@@ -1,4 +1,4 @@
-"""CyToolsCore facade over the running native IDE. No UI or MCP reimplementation."""
+"""Official CyToolsCore SDK/MCP facade over one persistent native CyCode Core."""
 import asyncio
 import argparse
 import json
@@ -18,17 +18,20 @@ class NativeClient:
     def __init__(self, descriptor):
         self.descriptor = Path(descriptor)
 
-    def call(self, method, parameters, cancellation=None):
+    def call(self, method, parameters, cancellation=None, progress=None):
         try:
             project_operation=method.startswith('project.') and method not in ('project.inspect','project.cancel','project.status','project.output')
             test_operation=method in ('tests.discover','tests.run')
             java_reload=method == 'debug.hotReload'
+            analysis_operation=method in ('analysis.prepare','language.rename')
             build_operation=method in ('build.configure','build.run','build.presetRun','msbuild.build','msbuild.rebuild',
                 'msbuild.clean','msbuild.restore','msbuild.evaluate','msbuild.prepare',
                 'unreal.generate','unreal.database','unreal.build','unreal.prepare','unreal.automationRun')
             # Bundled VCS providers may validate identity/mapping, inspect local
             # changes and then run a separate bounded network operation.
             wait_seconds = 86460 if method.startswith('packages.') else 1200 if method.startswith('vcs.replay.') else 600 if method == 'vcs.providerAction' or method.startswith('vcs.merge.') or method.startswith('vcs.checkout.') or method.startswith('vcs.conflict.') or method.startswith('vcs.worktree.') or method.startswith('vcs.submodule') else 200
+            if analysis_operation:
+                wait_seconds=86460
             if build_operation or project_operation:
                 timeout = parameters.get('timeoutSeconds', 150 if method in ('msbuild.build','msbuild.rebuild','msbuild.clean','msbuild.restore') else 180)
                 if type(timeout) is not int or not 1 <= timeout <= 86400:
@@ -36,7 +39,7 @@ class NativeClient:
                 # A saved project profile can own its deadline when no override
                 # is supplied; wait for that owner rather than releasing a live job.
                 wait_seconds = max(200, timeout + 60) if not project_operation or 'timeoutSeconds' in parameters else 86460
-            operation_id=(parameters.get('operationId') or uuid.uuid4().hex) if java_reload else uuid.uuid4().hex if project_operation or test_operation or build_operation else None
+            operation_id=(parameters.get('operationId') or uuid.uuid4().hex) if java_reload else uuid.uuid4().hex if project_operation or test_operation or build_operation or analysis_operation else None
             if operation_id:
                 parameters={**parameters,'operationId':operation_id}
             def stop_if_cancelled():
@@ -48,7 +51,7 @@ class NativeClient:
                     # Match the executing call; a queued cancelled job must not
                     # stop a different actor's build in the shared native service.
                     try:
-                        self.call('debug.cancelReload' if java_reload else 'tests.cancel' if test_operation else 'build.cancel' if build_operation else 'project.cancel',{'operationId':operation_id})
+                        self.call('analysis.cancel' if analysis_operation else 'debug.cancelReload' if java_reload else 'tests.cancel' if test_operation else 'build.cancel' if build_operation else 'project.cancel',{'operationId':operation_id})
                     except Exception:
                         # A failed cancellation notification must not release the
                         # owning SDK reservation while its native call is alive.
@@ -63,6 +66,8 @@ class NativeClient:
                 connection.sendall((json.dumps(request, ensure_ascii=False) + '\n').encode('utf-8'))
                 data = bytearray()
                 deadline = time.monotonic() + wait_seconds
+                last_progress=None
+                progress_error=None
                 # Keep the reservation until native work actually stops, even
                 # after cancellation. Custom build deadlines also extend this
                 # transport wait; the native owner still performs termination.
@@ -71,11 +76,23 @@ class NativeClient:
                         chunk = connection.recv(65536)
                     except socket.timeout:
                         stop_if_cancelled()
-                        if time.monotonic() > deadline:
+                        if analysis_operation and progress:
+                            try:
+                                state=self.call('analysis.status',{'operationId':operation_id})
+                                signature=(state['phase'],state['completed'],state['total'])
+                                if signature!=last_progress:
+                                    last_progress=signature
+                                    progress(state)
+                            except Exception as error:
+                                # A cancelled SDK progress callback can itself
+                                # raise. Keep the job reservation until this
+                                # native operation acknowledges/stops.
+                                progress_error=error
+                        if not analysis_operation and time.monotonic() > deadline:
                             raise OSError('Native operation did not stop within its deadline')
                         continue
                     if not chunk:
-                        raise OSError('The native IDE disconnected')
+                        raise OSError('The native Core disconnected')
                     data.extend(chunk)
                     if len(data) > 20 * 1024 * 1024:
                         raise ValueError('Native response exceeds 20 MiB')
@@ -89,7 +106,11 @@ class NativeClient:
                         self.call('terminal.close',{'id':terminal['id']})
                     raise
             if 'error' in response:
-                raise CyToolError('NativeOperationFailed', response['error']['message'], recoverable=True)
+                failure=response['error']
+                raise CyToolError(failure.get('code','NativeOperationFailed'), failure['message'],
+                                  details=failure.get('details'),recoverable=failure.get('code') not in ('InvalidParams','InvalidRequest','UnsupportedProtocol'))
+            if progress_error is not None:
+                raise progress_error
             return response['result']
         except CyToolError:
             raise
@@ -114,13 +135,36 @@ def create_runtime(data_dir, **options):
     for operation_id, method in METHODS.items():
         def handler(context, parameters, native_method=method):
             context.cancellation.check()
+            def report_progress(state):
+                context.progress(state['progress'],currentStep=state['phase'],currentStepIndex=state['completed'],stepCount=max(1,state['total']))
             return client.call(native_method, native_parameters(native_method, parameters),
-                               None if native_method.startswith('packages.') or native_method.startswith('vcs.replay.') or native_method.startswith('vcs.merge.') or native_method.startswith('vcs.checkout.') or native_method.startswith('vcs.conflict.') or native_method.startswith('vcs.worktree.') or native_method.startswith('vcs.submodule') or native_method in DEBUG_MUTATIONS or native_method in DEBUG_EXECUTIONS or native_method in ('documents.createUntitled','documents.saveAs','documents.close','debug.dataBreakpoints','debug.runToCursor','debug.restoreRunToCursor','debug.instructionBreakpoints') else context.cancellation)
+                               None if native_method.startswith('packages.') or native_method.startswith('vcs.replay.') or native_method.startswith('vcs.merge.') or native_method.startswith('vcs.checkout.') or native_method.startswith('vcs.conflict.') or native_method.startswith('vcs.worktree.') or native_method.startswith('vcs.submodule') or native_method in DEBUG_MUTATIONS or native_method in DEBUG_EXECUTIONS or native_method in ('documents.createUntitled','documents.saveAs','documents.close','debug.dataBreakpoints','debug.runToCursor','debug.restoreRunToCursor','debug.instructionBreakpoints') else context.cancellation,
+                               report_progress if native_method in ('analysis.prepare','language.rename') else None)
         runtime.register(operation_id, handler)
     return runtime
 
-def main():
-    args = sys.argv[1:]
+def main(argv=None):
+    args = list(sys.argv[1:] if argv is None else argv)
+    if '--core-workspace' in args:
+        from core_host import ManagedCore
+        parser=argparse.ArgumentParser(add_help=False)
+        parser.add_argument('--core-workspace',type=Path,required=True)
+        parser.add_argument('--core-executable',type=Path)
+        parser.add_argument('--disable-native-plugins',action='store_true')
+        options,remaining=parser.parse_known_args(args)
+        directory=Path(remaining[remaining.index('--data-dir')+1]) if '--data-dir' in remaining else ROOT/'data/jobs'
+        previous=os.environ.get('CYCODE_BRIDGE')
+        try:
+            with ManagedCore(options.core_workspace,directory,options.core_executable,options.disable_native_plugins) as core:
+                os.environ['CYCODE_BRIDGE']=str(core.descriptor)
+                if ('--core-service' in remaining or '--desktop-service' in remaining) and '--native-descriptor' not in remaining:
+                    remaining+=['--native-descriptor',str(core.descriptor)]
+                return main(remaining)
+        finally:
+            if previous is None:os.environ.pop('CYCODE_BRIDGE',None)
+            else:os.environ['CYCODE_BRIDGE']=previous
+    if '--core-service' in args:
+        args[args.index('--core-service')]='--desktop-service'
     if '--desktop-service' in args:
         parser = argparse.ArgumentParser()
         parser.add_argument('--desktop-service', action='store_true')

@@ -77,6 +77,15 @@ dans language.status. L’arrêt/EOF n’enregistre pas les buffers modifiés. L
 protocoles de descripteurs locaux restent compatibles. CyToolsCore conserve la
 gestion des jobs SDK/MCP, identités et permissions.
 
+## Agents IA et MCP
+
+Paquets autonomes et skill IA réutilisable : [installation du Core](app/Docs/CoreInstallation.md).
+
+Le [guide des agents en français](app/.CyDocBuild/manual/fr/core-agents.md) décrit le démarrage sans interface,
+la préparation sémantique, les jobs et les transactions protégées. Le
+[catalogue MCP](app/MCPMethods.json) contient les 236 opérations natives avec
+leurs schémas complets. CyToolsCore possède le MCP et les permissions.
+
 ## Vérifications et limites
 
 Le Core 84e4c78 a passé la suite native de 63 cas sur Windows x64, Ubuntu x64 et
@@ -84,15 +93,17 @@ macOS arm64 (MSBuild est ignoré sur POSIX), dont les contrôles concurrents de
 propriété des processus. Le replay Git corrigé sur macOS a aussi passé trois
 répétitions supplémentaires. Reader 671c588 a passé 17 cas de services/vues et son
 profil headless séparé sur ces systèmes. Le guide donne les liens CI et les limites
-exactes. Les exécutions natives locales restent suspendues pendant le diagnostic antivirus ; les
-contrôles de sources et compilations sont distingués des tests d’exécution.
+exactes. Le propriétaire a autorisé séparément les tests du Core/clangd de
+production sur UE 5.5.4 : renommage initial sur trois fichiers, Apply/Undo,
+invalidation du cache et parcours MCP passent. Voir [les résultats délimités](app/Docs/Benchmarks/unreal55-fixes-20261109.json).
+Les lancements graphiques/exécutables de test restent suspendus ; GitHub Actions reste désactivé.
 
 La référence sémantique mesure les vraies requêtes clangd sur le projet CMake du
 Core (121 unités de compilation). Le [guide d’architecture](app/Docs/CoreExtraction.md)
 conserve les mesures brutes, l’identité du corpus, le périmètre mémoire, les liens
 CI et les limites. Une compilation, un cache de chemins ou une réponse de
 références non vide ne prouvent pas la couverture sémantique complète. Les
-mesures sur de grands projets Unreal/MSBuild, l’invalidation plus large, la
+vérifications exhaustives Unreal et sur de vrais projets MSBuild, l’invalidation plus large, la
 synchronisation incrémentale et les transformations avancées restent à poursuivre.
 Aucune équivalence CLion/IntelliJ n’est annoncée.
 

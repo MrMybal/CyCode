@@ -157,7 +157,7 @@ NAVIGATION_METHODS = ['language.definition','language.declaration','language.typ
 LOCATIONS = schema({'path':PATH,'revision':REVISION,'documentId':NONNEGATIVE,'backend':STRING,'epoch':NONNEGATIVE,
     'method':{'type':'string','enum':NAVIGATION_METHODS},'position':POSITION,'positionEncoding':{'const':'utf-16'},
     'locations':{'type':'array','maxItems':5000,'items':schema({'path':PATH,'range':RANGE,'fullRange':RANGE,'originRange':RANGE,'external':BOOL,'displayPath':STRING},('path','range','fullRange'))},
-    'outsideWorkspace':NONNEGATIVE,'invalid':NONNEGATIVE,'truncated':BOOL},
+    'outsideWorkspace':NONNEGATIVE,'invalid':NONNEGATIVE,'truncated':BOOL,'cacheHit':BOOL,'astReconciled':BOOL},
     ('path','revision','documentId','backend','epoch','method','position','positionEncoding','locations','outsideWorkspace','invalid','truncated'))
 def navigation_output(method):
     return {**LOCATIONS,'properties':{**LOCATIONS['properties'],'method':{'const':method}}}
@@ -167,7 +167,7 @@ OCCURRENCES = schema({'path':PATH,'revision':REVISION,'documentId':NONNEGATIVE,'
     'invalid':NONNEGATIVE,'truncated':BOOL},
     ('path','revision','documentId','backend','epoch','position','positionEncoding','occurrences','invalid','truncated'))
 LANGUAGE_INPUT = {'path': PATH, 'expectedRevision': REVISION, 'position': POSITION,
-                  'includeExternal': BOOL,
+                  'includeExternal': BOOL,'refresh':BOOL,
                   'limit': {'type': 'integer', 'minimum': 1, 'maximum': 5000}}
 LANGUAGE_NAV_INPUT = {**LANGUAGE_INPUT,'expectedDocumentId':NONNEGATIVE,'expectedEpoch':NONNEGATIVE}
 BACKENDS = ['cpp','csharp','rust','java','typescript','html','css','python','hlsl','glsl']
@@ -183,9 +183,13 @@ LANGUAGE_PREFERENCES_STATUS = schema({'available':BOOL,'revision':PREFERENCES_RE
     'backends':{'type':'object','maxProperties':42,'additionalProperties':BOOL}},('available','revision','error','backends'))
 LANGUAGE_SERVER = schema({'ready':BOOL, 'running':BOOL, 'error':STRING,'logs':STRING, 'diagnostics':{'type':'object'}, 'name':STRING, 'enabled':BOOL, 'available':BOOL,'plugin':STRING,'languages':ARRAY,'arguments':{'type':'array','items':STRING},'settings':{'type':'object'},
                          'diagnosticGeneration':{'type':'integer','minimum':0}, 'epoch':NONNEGATIVE,
+                         'configured':BOOL,'initialized':BOOL,'launchAttempted':BOOL,'state':STRING,'compilationDatabase':STRING,
+                         'synchronizedRevisions':{'type':'object','additionalProperties':schema({'revision':REVISION,'id':NONNEGATIVE,'lspVersion':REVISION},('revision','id','lspVersion'))},
+                         'analysis':schema({'backend':STRING,'projectIndexCompleteness':STRING,'openDocuments':NONNEGATIVE,'synchronizedDocuments':NONNEGATIVE,'versionBoundDiagnosticDocuments':NONNEGATIVE,'synchronizationMeaning':STRING},
+                            ('backend','projectIndexCompleteness')),
                          'diagnosticRevisions':{'type':'object','additionalProperties':schema({'revision':REVISION,'id':NONNEGATIVE,'uri':STRING},('revision','id','uri'))},
                          'configuration':schema(LANGUAGE_LAUNCH,('arguments','settings')),
-                         'methods':schema({key:BOOL for key in ['completion','completionResolve','codeActions','codeActionResolve','hover','signature','definition','declaration','typeDefinition','implementation','references','documentHighlights','symbols','symbolResolve','documentSymbols','rename','format','rangeFormat']}),
+                         'methods':schema({key:BOOL for key in ['completion','completionResolve','codeActions','codeActionResolve','hover','signature','definition','declaration','typeDefinition','implementation','references','documentHighlights','symbols','symbolResolve','documentSymbols','callHierarchy','typeHierarchy','rename','format','rangeFormat']}),
                          'semanticTokens':BOOL,'semanticGeneration':{'type':'integer','minimum':0}},
                          ('ready','running','error','diagnostics','name','enabled'))
 LANGUAGE_STATUS = schema({**LANGUAGE_SERVER['properties'], 'preferences':LANGUAGE_PREFERENCES_STATUS, 'servers':{'type':'object','properties':{key:LANGUAGE_SERVER for key in BACKENDS},'required':BACKENDS,'additionalProperties':LANGUAGE_SERVER}},
@@ -214,7 +218,8 @@ CHANGE_ANNOTATIONS = {'type':'array','maxItems':128,'items':schema({
     'files':{'type':'array','maxItems':100,'items':PATH}},('id','label','description','needsConfirmation','files'))}
 CHANGE = schema({'id': STRING, 'title': STRING, 'state': {'type': 'string', 'enum': ['preview', 'applied', 'undone']},
                  'files': {'type': 'array', 'items': schema({'path': PATH, 'expectedRevision': REVISION, 'editCount': {'type': 'integer', 'minimum': 0}}, ('path', 'expectedRevision', 'editCount'))},
-                 'editCount': {'type': 'integer', 'minimum': 0},'annotations':CHANGE_ANNOTATIONS}, ('id', 'title', 'state', 'files', 'editCount'))
+                 'editCount': {'type': 'integer', 'minimum': 0},'annotations':CHANGE_ANNOTATIONS,
+                 'coverage':schema({'strategy':STRING,'preparedFiles':NONNEGATIVE,'wholeProjectIndexCompleteness':{'const':'unknown'},'limitations':{'type':'array','items':STRING}},('strategy','preparedFiles','wholeProjectIndexCompleteness','limitations'))}, ('id', 'title', 'state', 'files', 'editCount'))
 USER_SNIPPETS = schema({'available':BOOL,'editable':BOOL,'valid':BOOL,'revision':STRING,
     'generation':NONNEGATIVE,'text':{'type':'string','maxLength':262144},'error':STRING},
     ('available','editable','valid','revision','generation','text','error'))
@@ -677,7 +682,43 @@ GIT_REPLAY_PLAN=schema(GIT_REPLAY_PLAN_PROPERTIES,tuple(GIT_REPLAY_PLAN_PROPERTI
 GIT_REPLAY_RESULT=schema({**PROCESS['properties'],'action':GIT_REPLAY_ACTION,'receipt':PATH,
     'newCommit':{'anyOf':[GIT_MERGE_OID,{'const':''}]},'state':GIT_REPLAY_STATE,'inspectionError':STRING},
     (*PROCESS['required'],'action','receipt','newCommit'))
+ANALYSIS_COVERAGE = schema({key:NONNEGATIVE for key in ('diagnosticClean','diagnosticErrors','diagnosticUnknown',
+    'commands','translationUnits','outOfScope','observed','remaining')},
+    ('diagnosticClean','diagnosticErrors','diagnosticUnknown','commands','translationUnits','outOfScope','observed','remaining'))
+ANALYSIS_DOCUMENT = schema({'path':PATH,'revision':REVISION,'diagnostics':{'enum':['clean','errors','unknown']},'errors':NONNEGATIVE},
+    ('path','revision','diagnostics','errors'))
+ANALYSIS_STATE = schema({'state':{'enum':['idle','running','pending','completed','failed','cancelled']},'phase':STRING,
+    'completed':NONNEGATIVE,'total':NONNEGATIVE,'progress':{'type':'number','minimum':0,'maximum':100},'error':STRING,
+    'session':STRING,'coverage':ANALYSIS_COVERAGE,'resumable':BOOL},('state','phase','completed','total','progress','error'))
+ANALYSIS_RESULT = schema({**ANALYSIS_STATE['properties'],
+    'documents':{'type':'array','maxItems':128,'items':ANALYSIS_DOCUMENT},
+    'scope':{'enum':['explicit-files','workspace-spelling-candidates','compilation-database']},
+    'wholeProjectIndexCompleteness':{'const':'unknown'},'continuation':STRING,'nextOffset':NONNEGATIVE},
+    (*ANALYSIS_STATE['required'],'session','coverage','documents','scope','wholeProjectIndexCompleteness','continuation','nextOffset'))
+ANALYSIS_INPUT = schema({'paths':{'type':'array','minItems':1,'uniqueItems':True,'items':PATH},
+    'scope':{'const':'compilation-database'},'pathPrefix':PATH,'continuation':STRING,
+    'batchSize':{'type':'integer','minimum':0,'maximum':4096}})
+ANALYSIS_INPUT['oneOf']=[{'required':['paths'],'not':{'anyOf':[{'required':[key]} for key in ('scope','pathPrefix','continuation')]}},
+    {'required':['scope'],'not':{'anyOf':[{'required':[key]} for key in ('paths','continuation')]}},
+    {'required':['continuation'],'properties':{'continuation':{'type':'string','minLength':1}},
+     'not':{'anyOf':[{'required':[key]} for key in ('scope','pathPrefix','paths')]}}]
+ANALYSIS_PAGE = schema({'session':STRING,'documents':{'type':'array','maxItems':256,'items':ANALYSIS_DOCUMENT},
+    'offset':NONNEGATIVE,'nextOffset':NONNEGATIVE,'available':NONNEGATIVE,'total':NONNEGATIVE,'hasMore':BOOL},
+    ('session','documents','offset','nextOffset','available','total','hasMore'))
+SERVICE_STATUS = schema({'protocol':{'const':'cycode-core/1'},'version':STRING,
+    'service':schema({'state':{'enum':['ready','draining']},'uptimeMilliseconds':NONNEGATIVE},('state','uptimeMilliseconds')),
+    'engine':schema({'context':STRING,'state':STRING,'workspace':STRING},('context','state','workspace')),
+    'analysis':schema({'statusMethod':{'const':'language.status'},'projectIndexCompleteness':{'const':'unknown'},'readyMeaning':STRING},('statusMethod','projectIndexCompleteness','readyMeaning')),
+    'limits':schema({'requestBytes':NONNEGATIVE,'responseBytes':NONNEGATIVE},('requestBytes','responseBytes'))},
+    ('protocol','version','service','engine','analysis','limits'))
+
 OPERATIONS = [
+    ('service_status','service.status','Inspect the persistent native Core context, lifecycle and transport limits. Service ready is not proof of backend initialization or complete semantic indexing. Use language_status for per-backend state and analysis_status for semantic preparation progress.',schema(),SERVICE_STATUS,[]),
+    ('analysis_status','analysis.status','Read aggregate native semantic-preparation progress without starting work. A completed preparation proves the stated source-file scope, not exhaustive whole-project semantic coverage. Per-job ownership, polling and cancellation remain CyToolsCore cy_get_job/cy_cancel_job.',schema(),ANALYSIS_STATE,[]),
+    ('analysis_prepare','analysis.prepare','Prepare explicit existing sources without a fixed file-count ceiling, or enumerate the active C++ compilation database (optional workspace pathPrefix). Rolling compiler analysis retains one temporary native buffer at a time and preserves existing/dirty documents. Compilation-database scope defaults to batches of 64; batchSize 0 inventories without analysing. Continue pending/cancelled work with its continuation/session ID and optional batchSize; document, workspace or compiler-context changes invalidate the checkpoint. No restart-persistent proof. Returns first 128 metadata rows; analysis_results pages the rest. Version-bound clean/error/unknown diagnostics and observed/remaining units are distinct from exhaustive Unreal/index completeness. Slow provider attempts retry until cancellation or a real failure; no source saves or backend installation.',
+     ANALYSIS_INPUT,ANALYSIS_RESULT,[]),
+    ('analysis_results','analysis.results','Read a metadata page from the latest native preparation checkpoint. Rows are historical observations for that session, not proof of current whole-project completeness. Pending work is continued through analysis_prepare; SDK job ownership/cancellation is unchanged.',
+     schema({'session':STRING,'offset':NONNEGATIVE,'limit':{'type':'integer','minimum':1,'maximum':256}},('session',)),ANALYSIS_PAGE,[]),
     ('unreal_automation_plan','unreal.automationPlan','Preview one Unreal Engine 5 cook/package action without executing tools or creating output files. Requires a discovered non-Editor game target and a precompiled AutomationTool/.NET host plus editor commandlet binary. Supports explicit existing /Game map packages, desktop platform/configuration, build, Pak/IoStore/compression and a 1..86400-second deadline (3600 default). Source descriptors/rules/map stamps, engine version/tool stamps, workspace/engine identities and exact argv are reviewed. Issues one of 16 native previews for 10 minutes, with a new managed staging/archive/log folder. Trusted Unreal/project tools can modify normal cook/build/DDC/engine caches; no deploy/run/sign/upload, SDK installation or arbitrary arguments. An argument preview is not a complete content snapshot or package validation.',
      schema(UNREAL_AUTOMATION_FIELDS,('action','target')),UNREAL_AUTOMATION_PLAN,[]),
     ('unreal_automation_run','unreal.automationRun','Execute a matching issued cook/package preview once, after revision/tool/input/output checks and saved/reconciled workspace documents. Requires the exact reviewed timeoutSeconds and expectedRevision. Uses precompiled AutomationTool directly with argv and the selected .NET host; executes trusted project rules/content tools. Owns the process tree through shared build.status/build.cancel and operationId; cancellation/timeouts retain generated work. Keeps persistent intent.json, bounded raw output.log, native result.json and UAT logs under the issued workspace directory, separate from SDK temporary artifacts. A newly staged/archive folder avoids overwriting a previous managed archive, but normal Unreal cook/build/DDC/engine caches can change. Actual process status, output repair, archive-file observation and inspection/receipt errors remain explicit; exit zero plus an archive file does not validate installation. No packaged-game launch, deployment, automatic retry, rollback, editor Undo or artifact deletion.',
@@ -909,7 +950,7 @@ OPERATIONS = [
      schema({'path': PATH, 'expectedRevision': REVISION, 'expectedDocumentId':NONNEGATIVE, 'expectedEpoch':NONNEGATIVE, 'includeExternal': BOOL, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 1000}}, ('path', 'expectedRevision')), DOCUMENT_SYMBOLS, []),
     ('sources_read', 'sources.read', 'Read an immutable SDK source view. Requires a sdk:// reference issued by symbol navigation. Arbitrary external paths and files outside registered Unreal/compiler SDK source roots are rejected.',
      schema({'source': {'type': 'string', 'minLength': 1, 'maxLength': 4096, 'pattern': '^sdk://[0-9]+/.+$'}}, ('source',)), SOURCE_DOCUMENT, []),
-    ('language_rename', 'language.rename', 'Prepare a semantic rename preview across references. Does not edit buffers or save files. Unreal Blueprint assets and serialized reflection names are not migrated.',
+    ('language_rename', 'language.rename', 'Prepare compiler-issued semantic rename edits. C++ first analyses all workspace source-spelled candidates, including declarations, callers and generated C++ files; compiler-confirmed local parameters avoid a whole-tree scan. Live revisions and the discovery scope are guarded through apply. More than 128 preparation candidates refuses without issuing a partial preview. Inspect coverage.strategy and limitations; this does not claim exhaustive macro/token-paste, serialized Unreal asset or external-project refactoring. Does not edit or save source text. Slow preparation exposes SDK progress and supports owner cancellation.',
      schema({'path': PATH, 'expectedRevision': REVISION, 'position': POSITION, 'newName': {'type': 'string', 'minLength': 1, 'maxLength': 256}}, ('path', 'expectedRevision', 'position', 'newName')), CHANGE, []),
     ('language_format', 'language.format', 'Prepare formatting edits from the selected language server. Does not apply changes or save files. A range limits formatting to the selection.',
      schema({'path': PATH, 'expectedRevision': REVISION, 'range': RANGE, 'tabSize': {'type': 'integer', 'minimum': 1, 'maximum': 16}, 'insertSpaces': BOOL}, ('path', 'expectedRevision')), CHANGE, []),
@@ -1110,8 +1151,8 @@ def write_manifest():
     manifest['operations'] = [dict(id=op, name=op.replace('_', ' ').title(),
         description=description+(' This typed operation always targets built-in Git in the selected workspace repository; use vcs_provider_action for plugins.' if method in GIT_METHODS else ''),
         inputSchema=inputs, outputSchema=outputs, resourceRequirements=({'ramBytes':64*1024*1024,**({'diskBytes':272*1024*1024} if method=='packages.install' else {})} if method.startswith('packages.') else {'ramBytes': (64 if method=='unreal.artifacts' else 256 if method.startswith(('vcs.conflict.','vcs.checkout.','vcs.merge.','vcs.replay.','unreal.automation')) else 16) * 1024 * 1024}),
-        supportedBackends=[], permissions=permissions, canRunAsync=True, canCancel=not (method.startswith('packages.') or method.startswith('vcs.replay.') or method.startswith('vcs.merge.') or method.startswith('vcs.checkout.') or method.startswith('vcs.conflict.') or method.startswith('vcs.worktree.') or method.startswith('vcs.submodule') or method in DEBUG_MUTATIONS or method in DEBUG_EXECUTIONS or method in ('snippets.userSave','documents.createUntitled','documents.saveAs','documents.close','debug.dataBreakpoints','debug.runToCursor','debug.restoreRunToCursor','debug.instructionBreakpoints')), supportsProgress=False,
-        **({'exclusiveGroups':['user-settings']} if method=='snippets.userSave' else {'exclusiveGroups':['plugin-packages']} if method.startswith('packages.') and method not in ('packages.list','packages.inspect') else
+        supportedBackends=[], permissions=permissions, canRunAsync=True, canCancel=not (method.startswith('packages.') or method.startswith('vcs.replay.') or method.startswith('vcs.merge.') or method.startswith('vcs.checkout.') or method.startswith('vcs.conflict.') or method.startswith('vcs.worktree.') or method.startswith('vcs.submodule') or method in DEBUG_MUTATIONS or method in DEBUG_EXECUTIONS or method in ('snippets.userSave','documents.createUntitled','documents.saveAs','documents.close','debug.dataBreakpoints','debug.runToCursor','debug.restoreRunToCursor','debug.instructionBreakpoints')), supportsProgress=method in ('analysis.prepare','language.rename'),
+        **({'exclusiveGroups':['semantic-preparation']} if method in ('analysis.prepare','language.rename') else {'exclusiveGroups':['user-settings']} if method=='snippets.userSave' else {'exclusiveGroups':['plugin-packages']} if method.startswith('packages.') and method not in ('packages.list','packages.inspect') else
            {'exclusiveGroups': ['workspace-mutations']} if permissions and method not in ('terminal.list','terminal.read','debug.status','debug.profile','unreal.launchProfile','debug.cancelReload','project.cancel','project.output','tests.cancel','build.cancel','build.output','packages.list','packages.inspect') else {}))
         for op, method, description, inputs, outputs, permissions in OPERATIONS]
     path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8', newline='\n')
