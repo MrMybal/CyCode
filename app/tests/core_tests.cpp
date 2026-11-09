@@ -262,7 +262,37 @@ void hierarchyContracts();
 void semanticTokenContracts();
 void annotationContracts();
 void updateContracts(const std::filesystem::path &);
+static void progressiveFileIndexContracts(const std::filesystem::path &root) {
+    const auto folder=root/"progressive-index";std::filesystem::create_directories(folder);
+    write(folder/"visible.cpp","int visible;\n");write(folder/"ignored.cpp","int ignored;\n");
+    write(folder/".gitignore","ignored.cpp\n");
+    WorkspaceFileIndex index(folder);
+    auto wait=[&](uint64_t revision,bool refresh=false) {
+        auto state=index.snapshot(revision,refresh);
+        const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(8);
+        while(state->indexing&&std::chrono::steady_clock::now()<deadline) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));state=index.snapshot(revision,false);
+        }
+        check(state->complete&&state->error.empty(),"Progressive file enumeration did not finish");
+        return state;
+    };
+    const auto first=wait(1);
+    check(first->files==Json::array({".gitignore","visible.cpp"}),"Streaming index lost sorted ignore-aware paths");
+    write(folder/"added.cpp","int added;\n");
+    const auto second=wait(2);
+    check(second->generation>first->generation&&second->files.size()==3,"A new filesystem revision did not rebuild the stream");
+    check(first->files==Json::array({".gitignore","visible.cpp"}),"Published file-index snapshot was mutated");
+    const auto refreshed=wait(2,true);
+    check(refreshed->generation>second->generation&&refreshed->revision==second->revision,
+          "Refresh reused an old cache generation");
+    index.stop();
+}
 int main(int argc, char **argv) {
+    if(argc>1&&std::string(argv[1])=="--stream-child") {
+        const std::string block(4096,'x');
+        for(size_t i=0;i<9216;++i)std::cout.write(block.data(),block.size());
+        return 0;
+    }
 #ifndef _WIN32
     if (argc>1 && std::string(argv[1])=="--group-child") {
         if (getpgrp()!=getpid()) return 3;
@@ -283,6 +313,7 @@ int main(int argc, char **argv) {
         localEndpointChecks(root);
         sharedSnippetContracts();
         pathContainmentChecks();
+        progressiveFileIndexContracts(root);
         longLeaseChecks(root);
         toolAliasChecks(root);
         relatedFileContracts(root);
@@ -401,6 +432,27 @@ int main(int argc, char **argv) {
             cancellation.join();
             check(stopped.cancelled && stopped.exitCode != 0,
                   "Cancellation terminates the actual child process");
+            {
+                std::atomic<bool> streamCancellation{false};size_t delivered=0;
+                const auto streamed=runProcessStreamed({pathUtf8(std::filesystem::absolute(argv[0])),"--stream-child"},root,
+                    streamCancellation,[&](std::string_view bytes) {
+                        check(bytes.find_first_not_of('x')==std::string_view::npos,"Stream content changed");
+                        delivered+=bytes.size();
+                    });
+                check(streamed.exitCode==0&&!streamed.truncated&&!streamed.timedOut&&delivered==36u*1024u*1024u,
+                      "Streaming discovery stopped at the former 32-MiB boundary");
+                check(streamed.output.size()<=8192,"Streaming diagnostics retained unbounded output");
+                const auto noDeadline=runProcessStreamed({pathUtf8(std::filesystem::absolute(argv[0])),"--sleep-child"},root,
+                    streamCancellation,[](std::string_view){});
+                check(noDeadline.exitCode==0&&!noDeadline.timedOut,"Continuous discovery inherited an immediate zero deadline");
+                std::thread stopStream([&] {std::this_thread::sleep_for(std::chrono::milliseconds(30));streamCancellation=true;});
+                const auto start=std::chrono::steady_clock::now();
+                const auto interrupted=runProcessStreamed({pathUtf8(std::filesystem::absolute(argv[0])),"--sleep-child"},root,
+                    streamCancellation,[](std::string_view){});
+                stopStream.join();
+                check(interrupted.cancelled&&interrupted.exitCode!=0&&std::chrono::steady_clock::now()-start<std::chrono::seconds(2),
+                      "Continuous discovery lost owned cancellation");
+            }
 #ifndef _WIN32
             {
                 const auto executable=pathUtf8(std::filesystem::absolute(argv[0]));

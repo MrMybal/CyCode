@@ -38,7 +38,7 @@ static std::string normalize(std::string text) {
     return normalizeEditorText(text);
 }
 Engine::Engine(std::filesystem::path root, std::filesystem::path languagePreferencesDirectory,std::filesystem::path userSnippetsDirectory)
-    : monitor_(workspaceRoot(root)),root_(workspaceRoot(root)), entry_(std::filesystem::canonical(root)),recovery_(root_), solution_(inspectSolution(root)),
+    : monitor_(workspaceRoot(root)),fileIndex_(workspaceRoot(root)),root_(workspaceRoot(root)), entry_(std::filesystem::canonical(root)),recovery_(root_), solution_(inspectSolution(root)),
       build_(root_, [this](const std::string &path) { return resolve(path); }),
       msbuild_(root_,entry_,[this](const std::string &path) { return resolve(path); }),
       unreal_(root_, std::filesystem::canonical(root), solution_,
@@ -118,6 +118,7 @@ Engine::Engine(std::filesystem::path root, std::filesystem::path languagePrefere
 }
 Engine::~Engine() {
     shuttingDown_=true;
+    fileIndex_.stop();
     debugger_.requestShutdown();
     eventWorker_.request_stop();eventWake_.notify_all();
     while(!eventWorkerFinished_.load()) {
@@ -290,42 +291,26 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
     return report;
 }
 Json Engine::files(const Json &params) {
+    const auto offsetValue=params.value("offset",Json(0)),limitValue=params.value("limit",Json(20000));
+    if(!offsetValue.is_number_integer()||offsetValue.get<int64_t>()<0||
+       !limitValue.is_number_integer()||limitValue.get<int64_t>()<1||limitValue.get<int64_t>()>20000)
+        throw std::runtime_error("Invalid file index page");
+    const auto offset=offsetValue.get<size_t>(),limit=limitValue.get<size_t>();
     std::lock_guard lock(filesMutex_);
-    const auto generation=monitor_.snapshot().indexRevision;
-    if(filesCache_.is_null()||generation!=filesIndexRevision_||params.value("refresh",false)) {
-    auto result = runProcess({"rg", "--files", "--hidden", "--no-require-git", "-0", "-g", "!.git", "-g",
-                              "!runtime", "-g", "!data", "-g", "!.cycode"},
-                             root_,std::chrono::seconds(30),32*1024*1024);
-    Json paths = Json::array();
-    if (result.exitCode != 0 && result.exitCode != 1 && !result.truncated && !result.timedOut)
-        throw std::runtime_error(result.output);
-    std::size_t start = 0;
-    while (start < result.output.size() && paths.size() < 200000) {
-        auto end = result.output.find('\0', start);
-        if (end == std::string::npos)
-            break;
-        auto path = result.output.substr(start, end - start);
-        std::replace(path.begin(), path.end(), '\\', '/');
-        paths.push_back(path);
-        start = end + 1;
-    }
-    std::sort(paths.begin(), paths.end());
-    RelatedFileIndex relatedIndex;relatedIndex.rebuild(paths);
-    filesIndexRevision_=generation;
-    filesCache_={{"files",std::move(paths)},{"truncated",result.truncated||result.timedOut||start<result.output.size()},{"indexRevision",generation}};
-    relatedFileIndex_=std::move(relatedIndex);++filesCacheGeneration_;
-    }
-    const auto offset=params.value("offset",size_t(0)),limit=params.value("limit",size_t(20000));
-    if(limit<1||limit>20000||offset>200000)throw std::runtime_error("Invalid file index page");
-    const auto &all=filesCache_.at("files");Json page=Json::array();size_t bytes=0,end=std::min(offset,all.size());
+    const auto revision=monitor_.snapshot().indexRevision;
+    filesSnapshot_=fileIndex_.snapshot(revision,params.value("refresh",false));
+    const auto &snapshot=*filesSnapshot_;
+    filesIndexRevision_=snapshot.revision;filesCacheGeneration_=snapshot.generation;
+    const auto &all=snapshot.files;Json page=Json::array();size_t bytes=0,end=std::min(offset,all.size());
     for(;end<all.size()&&page.size()<limit;++end) {
         const auto &path=all.at(end);bytes+=path.get_ref<const std::string &>().size()*6+4;
         if(bytes>8*1024*1024&&!page.empty())break;
         page.push_back(path);
     }
-    return {{"files",page},{"truncated",filesCache_.at("truncated").get<bool>()||end<all.size()},
-        {"nextOffset",end<all.size()?Json(end):Json(nullptr)},{"total",all.size()},{"indexRevision",filesCache_.at("indexRevision")},
-        {"generation",filesCacheGeneration_}};
+    return {{"files",page},{"truncated",!snapshot.complete||end<all.size()},
+        {"nextOffset",end<all.size()?Json(end):Json(nullptr)},{"total",all.size()},
+        {"indexRevision",snapshot.revision},{"generation",snapshot.generation},
+        {"indexing",snapshot.indexing},{"complete",snapshot.complete},{"indexError",snapshot.error}};
 }
 Json Engine::searchText(const Json &params, const std::atomic<bool> *cancellation) {
     auto query = params.at("query").get<std::string>();

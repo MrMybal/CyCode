@@ -4,7 +4,7 @@
   "id": "cy.code",
   "name": "CyCode Core",
   "version": "0.2.3",
-  "description": "Native C++20 code services for CyCodeIDE, CyCodeReader and CyToolsCore MCP.",
+  "description": "Native C++ Core services, shared by applications and CyToolsCore MCP.",
   "vendor": "Cyberalien",
   "author": "Cyberalien",
   "executable": "python app/tool.py",
@@ -12,7 +12,7 @@
     "development"
   ],
   "tags": [
-    "IDE",
+    "Core",
     "C++",
     "plugins"
   ],
@@ -68864,14 +68864,14 @@
     {
       "id": "workspace_files",
       "name": "Workspace Files",
-      "description": "Read a cached workspace path-index page, respecting ignore rules. Use nextOffset until null; refresh rebuilds the index. Each page reports both the watcher indexRevision and the actual cache rebuild generation. Validate both across pages: a manual rebuild may keep the same watcher revision while changing generation. A mismatch requires discarding or marking the assembly partial and retrying; offset pagination does not retain an issued frozen snapshot. Discovery remains bounded to 200000 paths / 32 MiB / 30 seconds, with an 8 MiB page payload budget.",
+      "description": "Read a cached workspace path-index page, respecting ignore rules. Use nextOffset until null; refresh rebuilds the index. Each page reports both the watcher indexRevision and the actual cache rebuild generation. Validate both across pages: a manual rebuild may keep the same watcher revision while changing generation. A mismatch requires discarding or marking the assembly partial and retrying; offset pagination does not retain an issued frozen snapshot. Enumeration continues in one owned background stream, publishing sorted immutable batches. There is no total 200000-path, 32-MiB-output or 30-second cutoff. indexing=true means work is still running: consume the current pages, then poll from offset 0 until complete=true. indexError reports actual enumeration failures. Batch publications and refresh change generation; discard mixed page assemblies and retry. Page payloads remain bounded to 8 MiB and 20000 paths.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "offset": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 200000
+            "maximum": 9223372036854775807
           },
           "limit": {
             "type": "integer",
@@ -68913,6 +68913,15 @@
           "generation": {
             "type": "integer",
             "minimum": 1
+          },
+          "indexing": {
+            "type": "boolean"
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "indexError": {
+            "type": "string"
           }
         },
         "required": [
@@ -82171,5 +82180,5 @@
       ]
     }
   ],
-  "distributionStatus": "Native Core development source; see app/Docs/CoreExtraction.md"
+  "distributionStatus": "Development milestone; see app/Docs/Validation.md"
 }

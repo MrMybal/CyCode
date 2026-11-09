@@ -108,6 +108,17 @@ class IncludeContracts(unittest.TestCase):
 
 
 class WorkspaceFilePageContracts(unittest.TestCase):
+    def test_progressive_state_and_large_offsets(self):
+        entries = json.loads((Path(__file__).resolve().parents[1] / 'CyTool.json').read_text('utf-8'))['operations']
+        operation = next(entry for entry in entries if entry['id'] == 'workspace_files')
+        self.assertTrue(Draft202012Validator(operation['inputSchema']).is_valid({'offset': 250001, 'limit': 10}))
+        record = dict(files=['Source/Foo.cpp'], truncated=True, nextOffset=None, total=1,
+                      indexRevision=7, generation=2, indexing=True, complete=False, indexError='')
+        valid = Draft202012Validator(operation['outputSchema'])
+        self.assertTrue(valid.is_valid(record))
+        self.assertTrue(valid.is_valid({**record, 'indexing': False, 'complete': True, 'truncated': False}))
+        self.assertFalse(valid.is_valid({**record, 'indexing': 'yes'}))
+
     def test_rebuild_generation_is_required(self):
         entries = json.loads((Path(__file__).resolve().parents[1] / 'CyTool.json').read_text('utf-8'))['operations']
         operation = next(entry for entry in entries if entry['id'] == 'workspace_files')

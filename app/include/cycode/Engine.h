@@ -16,6 +16,7 @@
 #include "cycode/ProjectTasks.h"
 #include "cycode/ProjectTemplates.h"
 #include "cycode/WorkspaceMonitor.h"
+#include "cycode/WorkspaceFileIndex.h"
 #include "cycode/Recovery.h"
 #include "cycode/RelatedFiles.h"
 #include "cycode/DocumentReference.h"
@@ -85,11 +86,11 @@ class Engine {
     Json recoveryOperation(const std::string &,const Json &);
     Json recoveryStatus();
     WorkspaceMonitor monitor_;
+    WorkspaceFileIndex fileIndex_;
     std::mutex workspacePollMutex_,filesMutex_;
     uint64_t polledWorkspaceRevision_=0,filesIndexRevision_=0;
     std::chrono::steady_clock::time_point lastWorkspacePoll_{};
-    Json filesCache_;
-    RelatedFileIndex relatedFileIndex_;
+    std::shared_ptr<const WorkspaceFileSnapshot> filesSnapshot_;
     uint64_t filesCacheGeneration_=0;
     Json git(const std::string &, const Json &);
     GitRepositorySelection gitSelection(const Json &) const;

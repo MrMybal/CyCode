@@ -942,9 +942,9 @@ OPERATIONS = [
              'candidates':{'type':'array','maxItems':128,'items':schema({'path':PATH,'relation':{'type':'string','enum':['source-relative','workspace-index']}},('path','relation'))},
              'index':RELATED_INDEX,'checked':{'type':'integer','minimum':0,'maximum':128},'unreadable':{'type':'integer','minimum':0,'maximum':128},'truncated':BOOL},
             ('path','revision','documentId','position','include','candidates','index','checked','unreadable','truncated')),[]),
-    ('workspace_files', 'workspace.files', 'Read a cached workspace path-index page, respecting ignore rules. Use nextOffset until null; refresh rebuilds the index. Each page reports both the watcher indexRevision and the actual cache rebuild generation. Validate both across pages: a manual rebuild may keep the same watcher revision while changing generation. A mismatch requires discarding or marking the assembly partial and retrying; offset pagination does not retain an issued frozen snapshot. Discovery remains bounded to 200000 paths / 32 MiB / 30 seconds, with an 8 MiB page payload budget.',
-     schema({'offset':{'type':'integer','minimum':0,'maximum':200000},'limit':{'type':'integer','minimum':1,'maximum':20000},'refresh':BOOL}),
-     schema({'files': {'type': 'array', 'items': STRING}, 'truncated': BOOL,'nextOffset':{'type':['integer','null']},'total':{'type':'integer'},'indexRevision':REVISION,'generation':REVISION}, ('files', 'truncated','nextOffset','total','indexRevision','generation')), []),
+    ('workspace_files', 'workspace.files', 'Read a cached workspace path-index page, respecting ignore rules. Use nextOffset until null; refresh rebuilds the index. Each page reports both the watcher indexRevision and the actual cache rebuild generation. Validate both across pages: a manual rebuild may keep the same watcher revision while changing generation. A mismatch requires discarding or marking the assembly partial and retrying; offset pagination does not retain an issued frozen snapshot. Enumeration continues in one owned background stream, publishing sorted immutable batches. There is no total 200000-path, 32-MiB-output or 30-second cutoff. indexing=true means work is still running: consume the current pages, then poll from offset 0 until complete=true. indexError reports actual enumeration failures. Batch publications and refresh change generation; discard mixed page assemblies and retry. Page payloads remain bounded to 8 MiB and 20000 paths.',
+     schema({'offset':{'type':'integer','minimum':0,'maximum':9223372036854775807},'limit':{'type':'integer','minimum':1,'maximum':20000},'refresh':BOOL}),
+     schema({'files': {'type': 'array', 'items': STRING}, 'truncated': BOOL,'nextOffset':{'type':['integer','null']},'total':{'type':'integer'},'indexRevision':REVISION,'generation':REVISION,'indexing':BOOL,'complete':BOOL,'indexError':STRING}, ('files', 'truncated','nextOffset','total','indexRevision','generation')), []),
     ('workspace_poll','workspace.poll','Reconcile disk changes: reload clean open buffers, retain dirty/missing buffers and report conflicts.',schema(),
      schema({'revision':REVISION,'indexRevision':REVISION,'pluginsRevision':REVISION,'reloaded':{'type':'array','items':STRING},'conflicts':ARRAY,'watcher':{'type':'object'},'recovery':RECOVERY_STATUS},('revision','indexRevision','pluginsRevision','reloaded','conflicts','watcher','recovery')),[]),
     ('search_text', 'search.text', 'Search project text. Unsaved buffers override disk for literal and regex searches. Regex uses private bounded temporary snapshots (128 buffers / 64 MiB) with native ripgrep cancellation; project files stay untouched.',
@@ -1100,8 +1100,9 @@ for _id, _method, _description, _inputs, _outputs, _permissions in OPERATIONS:
 def write_manifest():
     path = Path(__file__).with_name('CyTool.json')
     manifest = json.loads(path.read_text('utf-8'))
-    manifest.update(description='Native C++ IDE services, shared by CyUI and CyToolsCore MCP.',
-                    executable='python app/tool.py', standaloneExecutable='CyCode.exe', categories=['development'], tags=['IDE', 'C++', 'plugins'],
+    manifest.pop('standaloneExecutable',None)
+    manifest.update(name='CyCode Core',description='Native C++ Core services, shared by applications and CyToolsCore MCP.',
+                    executable='python app/tool.py', categories=['development'], tags=['Core', 'C++', 'plugins'],
                     capabilities=['jobs', 'cancellation', 'live-documents', 'text-search', 'cpp-navigation', 'cpp-symbols', 'cpp-refactoring', 'csharp-language', 'multilingual-lsp', 'project-tasks', 'readonly-sdk-sources', 'terminal', 'dap-debugger', 'git', 'native-plugins', 'msbuild'],
                     concurrency={'policy': 'Concurrent', 'maxWorkers': 4}, distributionStatus='Development milestone; see app/Docs/Validation.md')
     for platform in manifest['platforms']:

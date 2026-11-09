@@ -39,6 +39,11 @@ ProcessResult runProcess(const std::vector<std::string> &argv, const std::filesy
                          const std::atomic<bool> *cancellation = nullptr,
                          const std::map<std::string, std::string> &environment = {},
                          const ProcessOutputObserver &observer = {});
+// Incremental owned discovery: no total-output/time truncation, bounded 8 KiB
+// diagnostic tail, all chunks delivered to the consumer. The cancellation owner
+// must outlive this synchronous call. It remains responsible for consumer bounds.
+ProcessResult runProcessStreamed(const std::vector<std::string> &,const std::filesystem::path &,
+    const std::atomic<bool> &cancellation,const ProcessOutputObserver &);
 // Owned execution with explicit removal of ambient variables, for isolated providers.
 ProcessResult runProcessFiltered(const std::vector<std::string> &argv, const std::filesystem::path &cwd,
     std::chrono::milliseconds timeout, std::size_t maxOutput, const std::atomic<bool> *cancellation,

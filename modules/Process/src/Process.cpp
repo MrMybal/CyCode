@@ -78,11 +78,12 @@ static std::wstring quote(const std::string &s) {
     return result + L'\"';
 }
 #endif
-ProcessResult runProcessFiltered(const std::vector<std::string> &argv, const std::filesystem::path &cwd,
+static ProcessResult runProcessImpl(const std::vector<std::string> &argv, const std::filesystem::path &cwd,
                          std::chrono::milliseconds timeout, std::size_t maxOutput,
                          const std::atomic<bool> *cancellation,
                          const std::map<std::string, std::string> &overrides,
-                         const std::vector<std::string> &removed, const ProcessOutputObserver &observer) {
+                         const std::vector<std::string> &removed, const ProcessOutputObserver &observer,
+                         bool streamOnly) {
     ProcessResult result;
     if (cancellation && cancellation->load()) {
         result.cancelled = true;
@@ -111,6 +112,14 @@ ProcessResult runProcessFiltered(const std::vector<std::string> &argv, const std
     }
     auto start = std::chrono::steady_clock::now();
     auto append = [&](const char *data, std::size_t n) {
+        if (streamOnly) {
+            // The observer owns incremental consumption. Retain only a bounded
+            // diagnostic tail; retention must not terminate a healthy stream.
+            result.output.append(data,n);
+            if(result.output.size()>maxOutput)result.output.erase(0,result.output.size()-maxOutput);
+            if(observer)try {observer(std::string_view(data,n));}catch(...) {}
+            return;
+        }
         auto kept = std::min(n, maxOutput - result.output.size());
         result.output.append(data, kept);
         if (kept && observer) {
@@ -233,7 +242,7 @@ ProcessResult runProcessFiltered(const std::vector<std::string> &argv, const std
             }
             break;
         }
-        if (std::chrono::steady_clock::now() - start > timeout || result.truncated ||
+        if ((!(streamOnly && timeout.count()==0) && std::chrono::steady_clock::now() - start > timeout) || result.truncated ||
             (cancellation && *cancellation)) {
             result.cancelled = cancellation && *cancellation;
             result.timedOut = !result.truncated && !result.cancelled;
@@ -372,7 +381,7 @@ ProcessResult runProcessFiltered(const std::vector<std::string> &argv, const std
             }
             break;
         }
-        if (std::chrono::steady_clock::now() - start > timeout || result.truncated ||
+        if ((!(streamOnly && timeout.count()==0) && std::chrono::steady_clock::now() - start > timeout) || result.truncated ||
             (cancellation && *cancellation)) {
             result.cancelled = cancellation && *cancellation;
             result.timedOut = !result.truncated && !result.cancelled;
@@ -387,6 +396,16 @@ ProcessResult runProcessFiltered(const std::vector<std::string> &argv, const std
     result.exitCode = WIFEXITED(status) ? WEXITSTATUS(status) : 128 + WTERMSIG(status);
 #endif
     return result;
+}
+ProcessResult runProcessFiltered(const std::vector<std::string> &argv,const std::filesystem::path &cwd,
+    std::chrono::milliseconds timeout,std::size_t maxOutput,const std::atomic<bool> *cancellation,
+    const std::map<std::string,std::string> &environment,const std::vector<std::string> &removed,
+    const ProcessOutputObserver &observer) {
+    return runProcessImpl(argv,cwd,timeout,maxOutput,cancellation,environment,removed,observer,false);
+}
+ProcessResult runProcessStreamed(const std::vector<std::string> &argv,const std::filesystem::path &cwd,
+    const std::atomic<bool> &cancellation,const ProcessOutputObserver &observer) {
+    return runProcessImpl(argv,cwd,std::chrono::milliseconds(0),8192,&cancellation,{}, {},observer,true);
 }
 ProcessResult runProcess(const std::vector<std::string> &argv,const std::filesystem::path &cwd,
     std::chrono::milliseconds timeout,std::size_t maxOutput,const std::atomic<bool> *cancellation,

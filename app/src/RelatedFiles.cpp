@@ -190,14 +190,14 @@ Json Engine::relatedFiles(const Json &params,bool included) {
     {
         std::unique_lock cacheLock(filesMutex_,std::try_to_lock);
         if(!cacheLock.owns_lock())index.state=RelatedIndexState::busy;
-        else if(!filesCache_.is_null()) {
+        else if(bool(filesSnapshot_)) {
             index.revision=filesIndexRevision_;index.generation=filesCacheGeneration_;
             if(filesIndexRevision_!=monitor_.snapshot().indexRevision)index.state=RelatedIndexState::stale;
             else {
-                auto matches=included?relatedFileIndex_.findInclude(filesCache_.at("files"),utf8Path(target)):
-                                      relatedFileIndex_.find(filesCache_.at("files"),absolute);
+                auto matches=included?filesSnapshot_->related.findInclude(filesSnapshot_->files,utf8Path(target)):
+                                      filesSnapshot_->related.find(filesSnapshot_->files,absolute);
                 index.paths=std::move(matches.paths);index.state=matches.state;
-                if(filesCache_.at("truncated").get<bool>())index.state=RelatedIndexState::partial;
+                if(!filesSnapshot_->complete)index.state=RelatedIndexState::partial;
             }
         }
     }
