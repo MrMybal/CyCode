@@ -148,7 +148,7 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     workspaceFolders_ = Json::array({{{"uri",uri(root)},{"name",pathUtf8(root.filename())}}});
     raw_ = raw; incomingBytes_ = 0;
     child_ = std::make_unique<Child>();
-    initialized_ = false;
+    initialized_ = false;serverName_.clear();
     diagnostics_ = Json::object();diagnosticVersions_=Json::object();
     ++diagnosticGeneration_;
     {
@@ -335,6 +335,8 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
             }
             initialized_ = true;
             capabilities_ = result.value("capabilities",Json::object());
+            const auto info=result.value("serverInfo",Json());
+            serverName_=info.is_object()&&info.value("name",Json()).is_string()?info.at("name").get<std::string>():"";
             notify("initialized", Json::object());
             notify("workspace/didChangeConfiguration",{{"settings",configuration_}});
         }
@@ -382,7 +384,7 @@ void LanguageClient::stop() {
     child_.reset();
     socket_.reset();
     callbacks_.clear();
-    initialized_ = false;
+    initialized_ = false;serverName_.clear();
     diagnostics_ = Json::object();diagnosticVersions_=Json::object();
     ++diagnosticGeneration_;
 }

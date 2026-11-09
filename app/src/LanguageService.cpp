@@ -271,18 +271,21 @@ void LanguageService::setCompilationDatabase(std::filesystem::path directory, bo
     }
     wake_.notify_one();
 }
-void LanguageService::sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity) {
+void LanguageService::sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity, bool diagnosticCheckpoint) {
     std::lock_guard route(routingMutex_);
     const auto backend = this->backend(path);
     if (children_.contains(backend)) {
-        children_.at(backend)->sync(path, text, revision, identity);
+        children_.at(backend)->sync(path, text, revision, identity, diagnosticCheckpoint);
         return;
     }
     if (backend != backend_)
         return;
     {
         std::lock_guard lock(mutex_);
-        updates_[path] = Document{text, revision, identity};
+        const auto previous=updates_.find(path);
+        if(previous!=updates_.end()&&previous->second&&previous->second->revision==revision&&previous->second->identity==identity)
+            diagnosticCheckpoint=diagnosticCheckpoint||previous->second->diagnosticCheckpoint;
+        updates_[path] = Document{text, revision, identity, diagnosticCheckpoint};
     }
     wake_.notify_one();
 }
@@ -529,10 +532,12 @@ void LanguageService::run() {
         if (stop)
             break;
         for (auto &[path, doc] : updates) {
-            if (doc)
+            if (doc) {
+                const auto previous=documents.find(path);
+                if(previous!=documents.end()&&previous->second.revision==doc->revision&&previous->second.identity==doc->identity)
+                    doc->diagnosticCheckpoint=doc->diagnosticCheckpoint||previous->second.diagnosticCheckpoint;
                 documents.insert_or_assign(path, std::move(*doc));
-            else
-                documents.erase(path);
+            } else documents.erase(path);
         }
         if (!attempted && enabled && ((!documents.empty() && prewarm) || !pending.empty())) {
             attempted = true;
@@ -634,10 +639,14 @@ void LanguageService::run() {
                     } else
                         synchronized = false;
                 } else if (entry->second.first != doc.revision) {
-                    if (client.notify(
-                            "textDocument/didChange",
-                            {{"textDocument", {{"uri", uri}, {"version", nextVersion + 1}}},
-                             {"contentChanges", Json::array({{{"text", doc.text}}})}})) {
+                    Json change={{"textDocument",{{"uri",uri},{"version",nextVersion+1}}},
+                                 {"contentChanges",Json::array({{{"text",doc.text}}})}};
+                    // Explicit transactions need diagnostics for the exact settled
+                    // version, including a rapid Undo back to identical text. Keep
+                    // ordinary typing debounced; never relabel stale publications.
+                    // https://clangd.llvm.org/extensions#force-diagnostics-generation
+                    if(doc.diagnosticCheckpoint&&client.supportsForcedDiagnostics())change["wantDiagnostics"]=true;
+                    if (client.notify("textDocument/didChange",std::move(change))) {
                         entry->second.first = doc.revision;
                         entry->second.second = ++nextVersion;
                         client.invalidateSemantic();

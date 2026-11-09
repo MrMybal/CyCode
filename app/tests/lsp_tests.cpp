@@ -175,6 +175,17 @@ int main(int argc, char **argv) {
             require(preview.at("after").get<std::string>().find("widget.number")!=std::string::npos,"clangd resolved insertion preview");
             engine.dispatch("changes.apply",{{"id",prepared.at("plan").at("id")}});engine.dispatch("changes.undo",{{"id",prepared.at("plan").at("id")}});
             doc=engine.dispatch("documents.read",{{"path",name}});
+            {
+                const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(15);bool current=false;
+                while(std::chrono::steady_clock::now()<deadline) {
+                    const auto state=engine.languageStatus();
+                    const auto &cpp=state.at("servers").at("cpp");
+                    const auto publication=cpp.at("diagnosticRevisions").value(name,Json::object());
+                    if(publication.value("revision",uint64_t(0))==doc.at("revision")) {current=true;break;}
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+                require(current,"Rapid transaction Apply/Undo lost current-revision clangd diagnostics");
+            }
             const auto callText=std::string("#include \"widget.hpp\"\nvoid test() { Widget widget; widget.cal }\n");
             doc=engine.dispatch("documents.replace",{{"path",name},{"text",callText},{"expectedRevision",doc.at("revision")}});
             const auto calls=query("language.complete",callText," }");const auto &callItems=calls.at("result").at("items");

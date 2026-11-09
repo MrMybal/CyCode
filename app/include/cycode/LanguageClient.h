@@ -55,6 +55,7 @@ class LanguageClient {
         return diagnosticGeneration_;
     }
     const Json &capabilities() const { return capabilities_; }
+    bool supportsForcedDiagnostics() const { return serverName_=="clangd"; }
     size_t semanticGeneration() const { return semanticGeneration_; }
     size_t semanticRefreshGeneration() const { return semanticRefreshGeneration_; }
     void invalidateSemantic() { ++semanticGeneration_; }
@@ -95,6 +96,6 @@ class LanguageClient {
     Json diagnostics_ = Json::object();
     Json diagnosticVersions_=Json::object();
     size_t diagnosticGeneration_ = 0;
-    std::string error_,logs_;
+    std::string error_,logs_,serverName_;
 };
 } // namespace cycode

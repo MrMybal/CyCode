@@ -21,7 +21,7 @@ class LanguageService {
     void enableBackend(const std::string &backend, bool enabled, bool prewarm = true);
     void setProject(const std::filesystem::path &entry);
     void setCompilationDatabase(std::filesystem::path directory, bool reload = false);
-    void sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity = 0);
+    void sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity = 0, bool diagnosticCheckpoint = false);
     void close(const std::string &path);
     std::future<Json> request(std::string method, Json params, std::shared_ptr<std::atomic<bool>> cancelled = {});
     Json status() const;
@@ -45,6 +45,7 @@ class LanguageService {
     struct Document {
         std::string text;
         std::uint64_t revision, identity;
+        bool diagnosticCheckpoint=false;
     };
     struct Query {
         std::string method;

@@ -471,7 +471,7 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
         auto &doc = documents_.at(file.path);
         doc.text = undo ? file.before : file.after; doc.revision = nextRevision_++; doc.dirty = doc.text != doc.saved;
         if (!undo) file.appliedRevision = doc.revision;
-        language_.sync(file.path, doc.text, doc.revision, doc.identity);
+        language_.sync(file.path, doc.text, doc.revision, doc.identity, true);
     }
     plan.state = undo ? "undone" : "applied";
     for(const auto &file:plan.files)documentEvent("document.changed",file.path,documents_.at(file.path),id);
