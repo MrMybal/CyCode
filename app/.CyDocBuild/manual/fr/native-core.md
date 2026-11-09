@@ -5,7 +5,7 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 5
+sourceRevision: 6
 ---
 
 ## Propriété des services {#ownership}
@@ -121,6 +121,26 @@ la complétion et le délai modification/analyse étaient plus lents sur cette
 exécution. Cela ne prouve pas une accélération générale ni une comparaison
 contrôlée sur une même machine. Le guide conserve les rapports bruts et leurs
 révisions exactes.
+
+## Grands projets et poursuite de l’énumération {#large-projects}
+
+La découverte continue désormais dans un flux de fond possédé, avec publication
+de lots triés immuables. indexing/complete distinguent la progression de la fin
+d’un instantané ; les limites des pages ne tronquent pas le projet entier.
+L’IDE suit la progression et construit l’arbre hors du thread graphique.
+L’arrêt et l’actualisation terminent le processus possédé. Les vraies erreurs
+restent explicites ; la mémoire de l’index de chemins dépend de sa taille.
+
+Un test Windows du Core de production, explicitement autorisé, a utilisé le
+moteur Unreal 5.5.4 et 37 679 commandes UBT réelles. Les 177 797 chemins selon
+les règles d’exclusion correspondent exactement à une énumération indépendante.
+Diagnostics Core/CoreUObject, navigation, complétion, aperçu de renommage local
+et Apply/Undo ont été vérifiés sans sauvegarder les sources. Un défaut de
+publication des diagnostics après Undo rapide a été reproduit puis corrigé par
+le point de contrôle de clangd. Le guide source conserve les mesures et limites.
+L’export UBT a été préparé explicitement : la préparation automatique d’un moteur
+seul et la complétude de l’index sémantique ne sont pas établies. Ce test ciblé
+ne réactive pas les lancements locaux d’IDE ou d’exécutables de test natifs.
 
 ## Étapes restantes {#limits}
 

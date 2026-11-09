@@ -260,3 +260,45 @@ acceptance must be finished before a CyCodeIDE release; the historical updater i
 disabled in this development build. The existing bilingual CyDoc manual stays
 canonical in Core and is generated/staged by the IDE, preserving useful guides,
 media, routes and public API schemas without a second documentation tree.
+
+## Large-workspace continuation and local Unreal evidence — 2026-11-09
+
+The owner explicitly authorized the production Core and installed Unreal tools
+for this local engine checkout. This exception does not resume GUI launches,
+local native test executables, antivirus exclusions or quarantine restores.
+The original 154 local source changes remain separate and preserved.
+
+workspace.files now publishes sorted immutable batches from one owned background
+stream. A request budget returns progress instead of truncating the entire scan.
+The IDE polls indexing/complete, validates page generations, has no former 32-page
+assembly ceiling and builds its file tree off the UI thread. Page byte/count
+bounds and real errors remain explicit. Path-index memory scales with file count;
+this is not a disk-backed or semantic index. See Workspace.md for the contract.
+
+On the measured Windows UE 5.5.4 checkout, the first reply took 507 ms. The warm
+filesystem inventory completed in 2.87 seconds with 177,797 paths, identical to
+an independent ignore-aware enumeration. Shutdown during a refreshed scan took
+66 ms. The earlier 29.9-second first-page observation was not a controlled
+comparison: truncated also described pagination, and the filesystem was warming.
+It must not be presented as proof that paths were lost or as a universal speedup.
+
+The real UBT database has 37,679 commands / 37,557 unique source files. Warm
+foreground medians included about 16 ms definition, 48 ms completion and 32 ms
+local rename preview. This measured nine edits in one actual engine function;
+it does not prove exhaustive cross-engine references or multi-file rename coverage.
+The engine-only adapter gap, raw measurement scope and memory caveats are recorded
+in Unreal.md and Benchmarks/unreal55-windows-20261109.json. Raw private logs,
+compiler command lines and engine source content are not distributed.
+
+The extended transaction observation reproduced missing current-version
+diagnostics after rapid Apply/Undo. C++ transaction sync now uses clangd's
+documented wantDiagnostics checkpoint only after the server identifies as clangd.
+Ordinary typing retains its debounce. Same-revision read coalescing preserves
+the checkpoint; strict epoch/identity/revision checks remain unchanged and stale
+publications are never relabelled. The exact failed case then passed on Unreal.
+See https://clangd.llvm.org/extensions#force-diagnostics-generation.
+
+Runtime validation tracks progressive index revision 4f50871 and transaction
+revision 5dc05f4. The native matrix for the latter is
+https://github.com/MrMybal/CyCode/actions/runs/42609650125 ; the new assertions live
+in the existing native/Core and real-clangd cases, not new test executables.

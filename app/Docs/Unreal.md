@@ -122,3 +122,27 @@ read-only SDK tab, leaving the fixture's source on disk unchanged.
 References: [Epic project file generation](https://dev.epicgames.com/documentation/unreal-engine/how-to-generate-unreal-engine-project-files-for-your-ide),
 [Epic code/project management](https://dev.epicgames.com/documentation/unreal-engine/managing-game-code-in-unreal-engine),
 [Microsoft solution format](https://learn.microsoft.com/en-us/visualstudio/extensibility/internals/solution-dot-sln-file).
+
+## Engine-only source checkout validation — 2026-11-09
+
+The production Core was exercised locally on an owner-authorized Unreal 5.5.4
+source checkout. Its native Unreal adapter still expects a .uproject and reports
+unavailable for an engine-only UE5.sln root. This limitation was observed, not
+hidden with a fabricated project. The official installed UBT explicitly exported
+UnrealEditor / Win64 / Development commands into .cycode/unreal-analysis for the
+test; clangd was then configured with that real directory. UBT ran internal header
+inspection and reported zero generated source writes; no full C++ build was run.
+This is manual preparation evidence, not automatic engine-only adapter support.
+
+The export contained 37,679 commands for 37,557 unique source files. Core's
+ignore-aware path inventory completed with 177,797 paths, exactly matching an
+independent enumeration. Core/CoreUObject probes produced current-version
+diagnostics without errors, correct definitions, completion, hover and guarded
+local rename preview. Apply/Undo and unsaved analysis retained disk source bytes.
+The data-only aggregate report is Docs/Benchmarks/unreal55-windows-20261109.json.
+
+These Windows results do not establish complete analysis/reference coverage of
+all engine translation units, other platforms, or all optional Unreal SDKs.
+Background standard-library indexing reported an incomplete result during the
+first observation. Native diagnostics for the probed files and whole-project
+semantic-index completeness remain separate observations.

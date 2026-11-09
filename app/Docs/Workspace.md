@@ -39,18 +39,32 @@ sources retain their own reload lifecycle. Unsaved-buffer checkpoints are owned
 by a separate Engine worker; see [Recovery](Recovery.md). The watcher never treats
 checkpoint writes as project edits or automatically saves dirty buffers.
 
-workspace.files builds a sorted ripgrep path snapshot off the UI thread, respecting
-the existing ignore rules and excluding .git, runtime, data and .cycode. The cache
-holds up to 200,000 paths; ripgrep output is bounded to 32 MiB/30 seconds. Structural
-events and .gitignore/.ignore modifications invalidate it. Changes to global Git
-excludes or .git/info/exclude require an explicit refresh. The cache is in memory;
-there is no claim of a persistent path or symbol index.
+workspace.files starts one owned ripgrep stream off the request/UI thread,
+respecting the existing ignore rules and excluding .git, runtime, data and .cycode.
+It publishes immutable sorted batches as work proceeds. The initial request waits
+at most 500 ms for an initial batch; it does not stop the scanner at that budget.
+The former total 200,000-path, 32-MiB-output and 30-second cutoffs are removed.
+Only an 8-KiB diagnostic tail is retained by the process transport; path data is
+consumed incrementally. Path-cache memory still scales with the enumerated tree.
+Actual process/filesystem/resource failures remain visible through indexError.
+Shutdown and explicit refresh cancel and join the owned stream; refreshing starts
+a new enumeration. No detached subprocess or implicit source write is introduced.
+
+Structural events and .gitignore/.ignore modifications invalidate the cache.
+Changes to global Git excludes or .git/info/exclude require explicit refresh.
+The cache remains in memory; this is not a persistent path or semantic index.
 
 Clients request pages with offset (default 0), limit (1..20,000) and refresh
 (default false). Each response contains files, truncated, nextOffset, total,
 indexRevision and required positive generation. Continue at nextOffset until null;
 keep the same (indexRevision, generation) pair or discard the assembled pages and
-restart. A manual rebuild advances the process-local generation even if the
+restart. indexing=true means the original scan is still running. Once the current
+snapshot's pages end, poll again from offset 0 until complete=true. Batch publications
+advance generation even with the same watcher revision. A null nextOffset ends that
+snapshot only; truncated can mean further pages or incomplete enumeration and must
+not alone be interpreted as a failed/cut-off scan. indexError is empty on healthy
+progress. Page size remains at most 20,000 paths and the conservative 8-MiB payload
+budget; there is no former 200,000 offset ceiling. A manual rebuild advances the process-local generation even if the
 watcher's indexRevision is unchanged. These counters describe observations, not
 a frozen/persistent snapshot handle. Pages have an additional conservative 8 MiB
 JSON budget. truncated may mean another page exists or the overall snapshot

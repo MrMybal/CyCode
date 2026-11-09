@@ -97,7 +97,7 @@
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-coreextraction",
-      "sourceSha256": "a0ecd7af9d3939ab514c575ecdda85a4808aaccaa9e0154da89975153fc858e4"
+      "sourceSha256": "d3ca4b6bc219b45c9c6995c3c0066439c29d964e7168674104892bbc7cd12e38"
     },
     {
       "source": "Docs/CppCounterparts.md",
@@ -531,7 +531,7 @@
       "kind": "user-workflow",
       "target": "unreal#engine",
       "legacyId": "reference-app-docs-unreal",
-      "sourceSha256": "e5fdccd9ee9d956b65b66f8f8c14d9a3235939387e0762a164aeb4709f0002fd"
+      "sourceSha256": "8e3673e5100eb849d965bd7984b4d89cb7c17bd795ab5be2b296b0aacf0c4fa5"
     },
     {
       "source": "Docs/UnrealArtifacts.md",
@@ -629,7 +629,7 @@
       "kind": "user-workflow",
       "target": "workspace-files#monitoring",
       "legacyId": "reference-app-docs-workspace",
-      "sourceSha256": "243068d01316243e1def60435e5672bb703a52f7b0df1d89223298abf125dfd5"
+      "sourceSha256": "ce097e8b2b4cea177c9afdd4395272bc2a62eb371b83adc72d16f358461093c9"
     },
     {
       "source": "Docs/WorkspaceSessions.md",

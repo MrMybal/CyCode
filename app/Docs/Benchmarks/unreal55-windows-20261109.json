@@ -1,0 +1,225 @@
+{
+  "format": 1,
+  "date": "2026-11-09",
+  "platform": "Windows x64",
+  "engineVersion": "5.5.4",
+  "runtimeCommits": {
+    "progressiveIndex": "4f50871dfe0f4a2eebfccd12ad58f8ba756b6c4c",
+    "transactionDiagnostics": "5dc05f4bffe5d38e871250c9de23651c33d47221"
+  },
+  "clangdVersion": "18.1.8",
+  "compileContext": {
+    "origin": "Official UnrealBuildTool engine-only UnrealEditor Win64 Development export",
+    "commands": 37679,
+    "uniqueSourceFiles": 37557,
+    "bytes": 22396096,
+    "manualExportRequired": true
+  },
+  "pathIndex": {
+    "firstReplyMilliseconds": 507.3766999998952,
+    "enumerationSeconds": 2.8692707999998674,
+    "maximumStatusReplyMilliseconds": 0.1623000002837216,
+    "total": 177797,
+    "independentFileCount": 177797,
+    "matchesIndependentEnumeration": true,
+    "largeOffsetAccepted": true,
+    "refreshAdvancedGeneration": true,
+    "shutdownDuringScan": true,
+    "shutdownMilliseconds": 65.57399999974223
+  },
+  "foreground": {
+    "samplesPerOperation": 5,
+    "operations": [
+      {
+        "name": "definition",
+        "method": "language.definition",
+        "samplesMilliseconds": [
+          10.621299999911571,
+          16.043600000102742,
+          16.16059999969366,
+          15.978499999619089,
+          16.079699999863806
+        ],
+        "medianMilliseconds": 16.043600000102742,
+        "result": {
+          "locations": 1,
+          "paths": [
+            "Engine/Source/Runtime/Core/Public/Windows/WindowsPlatformTime.h"
+          ],
+          "projectIndexCompleteness": "unknown"
+        }
+      },
+      {
+        "name": "references",
+        "method": "language.references",
+        "samplesMilliseconds": [
+          15.746899999612651,
+          15.03869999987728,
+          15.606899999966117,
+          15.942099999847414,
+          14.931499999875086
+        ],
+        "medianMilliseconds": 15.606899999966117,
+        "result": {
+          "locations": 1,
+          "paths": [
+            "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp"
+          ],
+          "projectIndexCompleteness": "unknown"
+        }
+      },
+      {
+        "name": "completion",
+        "method": "language.complete",
+        "samplesMilliseconds": [
+          48.14630000009856,
+          48.32929999975022,
+          46.015199999601464,
+          48.345400000016525,
+          47.839700000167795
+        ],
+        "medianMilliseconds": 48.14630000009856,
+        "result": {
+          "items": 29,
+          "hasSystemTime": true
+        }
+      },
+      {
+        "name": "hover",
+        "method": "language.hover",
+        "samplesMilliseconds": [
+          15.088999999989028,
+          15.61649999985093,
+          15.968899999734276,
+          16.037000000324042,
+          15.120500000193715
+        ],
+        "medianMilliseconds": 15.61649999985093,
+        "result": {
+          "available": true,
+          "keys": [
+            "available",
+            "contents",
+            "path",
+            "positionEncoding",
+            "range",
+            "revision",
+            "truncated"
+          ]
+        }
+      },
+      {
+        "name": "localRenamePreview",
+        "method": "language.rename",
+        "samplesMilliseconds": [
+          31.985900000108813,
+          31.91190000006827,
+          31.78440000010596,
+          31.332300000030955,
+          31.917799999973795
+        ],
+        "medianMilliseconds": 31.91190000006827,
+        "result": {
+          "state": "preview",
+          "editCount": 9,
+          "scope": "Local variable in actual engine TU; preview only"
+        }
+      },
+      {
+        "name": "reflectionDefinition",
+        "method": "language.definition",
+        "samplesMilliseconds": [
+          5.729599999995116,
+          15.316800000164221,
+          16.011799999887444,
+          16.090900000108377,
+          16.06149999997797
+        ],
+        "medianMilliseconds": 16.011799999887444,
+        "result": {
+          "locations": 1,
+          "paths": [
+            "Engine/Source/Runtime/CoreUObject/Public/UObject/UObjectBase.h"
+          ],
+          "projectIndexCompleteness": "unknown"
+        }
+      },
+      {
+        "name": "unsavedDefinition",
+        "method": "language.definition",
+        "samplesMilliseconds": [
+          11.119700000108423,
+          16.078400000424153,
+          16.09839999991891
+        ],
+        "medianMilliseconds": 16.078400000424153,
+        "result": {
+          "locations": 1,
+          "paths": [
+            "Engine/Source/Runtime/Core/Public/Windows/WindowsPlatformTime.h"
+          ],
+          "projectIndexCompleteness": "unknown"
+        }
+      }
+    ],
+    "versionBoundDiagnostics": [
+      {
+        "path": "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp",
+        "revision": 1,
+        "milliseconds": 1058.9061999999103,
+        "errors": 0,
+        "messages": 4,
+        "backendEpoch": 1,
+        "versionBound": true
+      },
+      {
+        "path": "Engine/Source/Runtime/CoreUObject/Private/UObject/UObjectBase.cpp",
+        "revision": 2,
+        "milliseconds": 1665.790200000174,
+        "errors": 0,
+        "messages": 4,
+        "backendEpoch": 1,
+        "versionBound": true
+      },
+      {
+        "path": "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp",
+        "revision": 3,
+        "milliseconds": 152.09849999973812,
+        "errors": 0,
+        "messages": 4,
+        "backendEpoch": 1,
+        "versionBound": true
+      }
+    ],
+    "unsavedEditToDiagnosticsMilliseconds": 164.60129999995843
+  },
+  "steadySession": {
+    "seconds": 420.7233753999999,
+    "samples": 14,
+    "definitionMedianMilliseconds": 9.249499999896216,
+    "maximumSampledPrivateCommitBytes": 2432708608,
+    "memoryScope": "Largest instantaneous sampled sum for Core plus live descendants; not an OS peak or constant memory guarantee",
+    "transaction": {
+      "edits": 9,
+      "files": 1,
+      "applyState": "applied",
+      "undoState": "undone",
+      "textRestored": true,
+      "diskUnchanged": true
+    },
+    "persistentContext": true,
+    "persistentBackendEpoch": true,
+    "shutdownMilliseconds": 257.1589999997741,
+    "diskUnchanged": true,
+    "foregroundErrors": []
+  },
+  "limits": [
+    "One local machine and warm filesystem/backend caches; no controlled before/after speedup claim",
+    "Path count is the complete ripgrep ignore-aware scope, not every file on disk",
+    "Native Unreal adapter still requires a .uproject; engine-only UBT export was prepared explicitly",
+    "Whole-project semantic index completeness and exhaustive reference coverage remain unknown",
+    "Background clangd standard-library indexing reported an incomplete result in the first long observation",
+    "Foreground diagnostics cover the two stated translation units, not all engine code",
+    "Native test executables and GUI were not launched locally; owner explicitly authorized production Core/installed UE tools"
+  ]
+}

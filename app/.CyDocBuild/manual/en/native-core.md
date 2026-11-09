@@ -5,7 +5,7 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 5
+revision: 6
 ---
 
 ## Ownership {#ownership}
@@ -110,6 +110,24 @@ and rename preview near 10–11 ms instead of 19 ms. The real Core project run
 also completed, but completion and edit-to-analysis were slower in that
 observation. This is not a general speedup claim or a same-machine comparison.
 The architecture guide retains every raw report and exact workflow revision.
+
+## Large projects and continuing enumeration {#large-projects}
+
+File discovery now continues in an owned background stream, publishing immutable
+sorted batches. indexing/complete distinguish progress from an ended snapshot;
+page limits do not truncate the whole project. The IDE polls the evolving index
+and builds the tree off the UI thread. Shutdown/refresh stop the owned process.
+Actual failures remain explicit; path-index memory scales with the tree.
+
+An explicitly owner-authorized Windows production-Core test used a real Unreal
+5.5.4 engine source checkout and 37,679 UBT commands. Its 177,797 ignore-aware
+paths exactly matched an independent enumeration. Actual Core/CoreUObject
+diagnostics, navigation, completion, local rename preview and Apply/Undo were
+checked without saving source files. A rapid Undo diagnostic-publication issue
+was reproduced and fixed using clangd's transaction checkpoint. The source guide
+retains aggregate timings and precise limits. Manual UBT export was required:
+automatic engine-only Unreal preparation and whole-index completeness are not
+established. This scoped test does not resume local GUI/native-fixture launches.
 
 ## Remaining stages {#limits}
 
