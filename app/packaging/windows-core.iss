@@ -66,12 +66,12 @@ french.InvalidProject=Choisissez un dossier de projet existant ou laissez le cha
 english.RegistrationFailed=Files were installed, but agent registration failed. See INSTALL.md and register the project manually; existing settings were preserved.
 french.RegistrationFailed=Les fichiers sont installés, mais la connexion de l'agent a échoué. Consultez INSTALL.md pour la configuration manuelle ; les réglages existants ont été conservés.
 [Code]
-var ProjectPage: TInputDirWizardPage;
+var ProjectPage: TInputQueryWizardPage;
 procedure InitializeWizard();
 begin
-  ProjectPage := CreateInputDirPage(wpSelectDir, CustomMessage('AgentProject'),
-    CustomMessage('AgentProject'), CustomMessage('AgentDescription'), False, '');
-  ProjectPage.Add(CustomMessage('AgentFolder'));
+  ProjectPage := CreateInputQueryPage(wpSelectDir, CustomMessage('AgentProject'),
+    CustomMessage('AgentProject'), CustomMessage('AgentDescription'));
+  ProjectPage.Add(CustomMessage('AgentFolder'), False);
   ProjectPage.Values[0] := '';
 end;
 function HasProject(): Boolean;
