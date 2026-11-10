@@ -31,6 +31,16 @@ graphique partagé. Les [versions 0.2.3 historiques](https://github.com/MrMybal/
 précèdent cette séparation ; elles ne sont pas une nouvelle distribution du Core
 ou de CyCodeIDE.
 
+## Version Windows autonome
+
+[CyCodeCore 0.1.1 : installateur et ZIP portable](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1)
+fournit le CLI natif, le runtime privé Python/CyToolsCore MCP, ripgrep et le skill
+pour les agents. L’installateur propose CyCodeUpdater comme application séparée,
+avec vérification optionnelle à l’ouverture de Windows et installation confirmée
+des nouvelles versions GitHub du Core. Les compilateurs et serveurs de langage
+restent des prérequis externes. Voir le
+[guide d’installation et de mise à jour](app/Docs/CoreInstallation.md).
+
 ## Compiler sans interface
 
 ```sh

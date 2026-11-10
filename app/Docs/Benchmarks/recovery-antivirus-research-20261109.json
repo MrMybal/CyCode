@@ -1,0 +1,135 @@
+{
+  "format": "cycode-recovery-research/1",
+  "createdAt": "2026-11-09T21:05:03.948327+00:00",
+  "executedSampleSha256": "d351fc02181ca2e609463d985cf2dde3318799987c168d72ab4a9199e3a9c76f",
+  "priorEvidenceReanalysed": true,
+  "nativeCoreExecutedThisResearch": false,
+  "newCoreBinaryBuilt": false,
+  "newLifecycleMarkersRuntimeValidated": false,
+  "correlation": {
+    "format": "cycode-antivirus-correlation/1",
+    "sampleSha256": "d351fc02181ca2e609463d985cf2dde3318799987c168d72ab4a9199e3a9c76f",
+    "avEvents": [
+      {
+        "recordId": "22418291",
+        "utcTime": "2026-11-09T20:34:17.2751051Z"
+      },
+      {
+        "recordId": "22418292",
+        "utcTime": "2026-11-09T20:34:17.3074843Z"
+      }
+    ],
+    "nativeRecordCount": 74,
+    "lastNativeRecord": {
+      "format": "cycode-native-trace/1",
+      "seq": 74,
+      "utcMicros": 1794256457198927,
+      "span": 23,
+      "parent": 0,
+      "event": "recovery.checkpoint",
+      "phase": "end",
+      "outcome": "returned",
+      "systemError": 0
+    },
+    "eventMinusLastNativeMilliseconds": 76.1781,
+    "hostShutdownRequests": [
+      {
+        "utcTime": "2026-11-09T20:34:17.256418+00:00",
+        "eventMinusShutdownMilliseconds": 18.6871,
+        "avPublicationOrder": "after-request"
+      }
+    ],
+    "nativeLifecycleObserved": false,
+    "completedLifecycleSpans": [],
+    "openSpans": [],
+    "failedSpans": [],
+    "clockRegressionObserved": false,
+    "traceTruncated": false,
+    "partialLastLine": false,
+    "unknownParents": 0,
+    "unmatchedEnds": 0,
+    "attribution": "not-established",
+    "limits": [
+      "AV publication time is not the triggering activity time.",
+      "Sample hash matching does not by itself bind an event to one PID or prove a false positive.",
+      "Absent lifecycle spans can mean older instrumentation, truncation or interruption; they do not prove shutdown did not occur.",
+      "UTC timestamps can be adjusted; clock regression disables reliable elapsed-time interpretation."
+    ],
+    "nativeExecutedByAnalysis": false,
+    "uploaded": false
+  },
+  "sourceFindings": [
+    {
+      "topic": "Dirty checkpoint shutdown",
+      "classification": "source-derived expectation",
+      "observation": "The latest document revision and persisted checkpoint match. checkpointRecovery would find no new snapshot; retain would find no removed entry. Recovery State destruction skips metadata cleanup while its buffer index is nonempty.",
+      "sources": [
+        "app/src/RecoveryEngine.cpp:Engine::checkpointRecovery",
+        "app/src/Recovery.cpp:RecoveryStore::State::~State"
+      ]
+    },
+    {
+      "topic": "Autonomous file-index rewrite loop",
+      "classification": "source review",
+      "observation": "WorkspaceFileIndex starts scanning through snapshot(), not construction. WorkspaceMonitor filters .cycode and only updates in-memory revisions. These five recorded methods do not request a file-index snapshot.",
+      "sources": [
+        "app/src/WorkspaceFileIndex.cpp",
+        "app/src/WorkspaceMonitor.cpp",
+        "app/src/Engine.cpp",
+        "app/src/CoreService.cpp"
+      ]
+    },
+    {
+      "topic": "Recovery operations common to narrowed detected cases",
+      "classification": "candidate sequence, not a vendor verdict",
+      "observation": "Both checkpoint-then-save and re-checkpoint cases replace an existing recovery index and remove old text. Baseline deletion is absent in the re-checkpoint case; explicit document save and redundant consumed-temporary cleanup are also absent. The individual triggering call is not isolated."
+    }
+  ],
+  "existingEvidenceAvailability": {
+    "windowsEventFieldsOnly": [
+      "Number",
+      "Name",
+      "Confidence",
+      "ProcessSha256",
+      "ProcessPath",
+      "ProcessCommandLine",
+      "Bases"
+    ],
+    "vendorRuleDetailsInThoseFields": false,
+    "matchingApplicationErrorOrWerRecordsInSelectedWindow": 0,
+    "sysmonLogAvailable": false,
+    "adminToken": false,
+    "wprLocated": true,
+    "procmonOnPath": false,
+    "visibleTraceInventory": "Only KAV.dumpwriter.log was listed in the inspected Traces directory; its modification time predates the incident. No service diagnostic trace was found there; timestamps alone do not establish absence of all vendor data.",
+    "reportDatabaseOrdinaryRead": "ordinary-read-unavailable",
+    "reportDatabaseReadError": "PermissionError",
+    "reportDatabaseModified": false,
+    "quarantineAccessed": false
+  },
+  "preparedObservability": [
+    "service.drain",
+    "engine.shutdown (destructor body only)",
+    "recovery.scan",
+    "recovery.store.shutdown (skipped when dirty buffers remain)"
+  ],
+  "nextDiscriminatingComparison": "Keep the first dirty document checkpoint; checkpoint a second dirty document. This replaces the index without deleting any old payload. Observe before shutdown. A separate refresh case uses ordinary old-text cleanup. Both require fresh explicit native resumption after the last detection.",
+  "checks": {
+    "pythonDataTestsPassed": 28,
+    "msvcSyntaxOnlyTranslationUnits": 5,
+    "originalWorkspaceFilesPreserved": 154
+  },
+  "officialSources": [
+    "https://learn.microsoft.com/en-us/sysinternals/downloads/procmon",
+    "https://support.kaspersky.com/help/Kaspersky/Win21.7/en-US/84091.htm",
+    "https://support.kaspersky.com/help/Kaspersky/Win21.7/en-US/86654.htm"
+  ],
+  "vendorDocumentationVersionLimit": "The accessible Kaspersky help references are Win21.7; they are general diagnostic guidance, not a verified Win21.26 component-trace recipe.",
+  "antivirusCauseEstablished": false,
+  "falsePositiveEstablished": false,
+  "nativeHold": "active after avp 22418291/22418292",
+  "protectionChanged": false,
+  "uploaded": false,
+  "installationOrPublication": false,
+  "githubActionsUsed": false
+}

@@ -1,0 +1,305 @@
+{
+  "format": "cycode-recovery-windows-deletion-experiment/1",
+  "state": "antivirus-detection-reproduced-source-experiment-reverted",
+  "recordedAt": "2026-11-09T21:43:51.979471+00:00",
+  "preparationEvidence": {
+    "format": "cycode-recovery-cleanup-source-fix/1",
+    "createdAt": "2026-11-09T21:36:34.932534+00:00",
+    "state": "source-checked-native-and-antivirus-acceptance-pending",
+    "priorDetectionRecords": [
+      22418304,
+      22418305
+    ],
+    "scope": "Owned recovery file cleanup and empty owned session directory cleanup only",
+    "windowsFileDeletion": "DeleteFileW",
+    "windowsEmptyDirectoryDeletion": "RemoveDirectoryW",
+    "windowsMissingErrorsTreatedAsAbsent": [
+      "ERROR_FILE_NOT_FOUND",
+      "ERROR_PATH_NOT_FOUND"
+    ],
+    "windowsOtherErrors": "Preserved in std::system_category and existing payload cleanup trace outcomes",
+    "readOnlyAttributesCleared": false,
+    "posixDispositionRequestedByRecoveryCleanup": false,
+    "forcedFallbackOrAutomaticRetry": false,
+    "otherPlatforms": "Existing std::filesystem::remove branches unchanged; not compiled or executed here",
+    "commitOrder": "Publish new payloads, commit the index, then best-effort retire the obsolete payloads",
+    "cleanupFailureBehavior": "Keep the committed checkpoint. An undeletable obsolete payload remains unreferenced; no protection or attribute is overridden.",
+    "publicApiChanged": false,
+    "sourceChanges": [
+      {
+        "path": "app/src/Recovery.cpp",
+        "beforeSha256": "e9b1d4921861ecb3a67bc03f850b8ef7382677ebb5d16d4c2e96070e045ed76f",
+        "afterSha256": "3b404cdaf28ad1ccf93d8349b272444a265b167327225fa5cb7405710cac2f07"
+      },
+      {
+        "path": "app/tests/recovery_tests.cpp",
+        "beforeSha256": "157b2df1ae6a5961fd904387b867ce2d5c5e207f20ca60003ee9b5c246baf874",
+        "afterSha256": "a834352334772b34cb3bcf36592c71482e035e14ec46f27853bf18549a8127ed"
+      }
+    ],
+    "checks": {
+      "msvcSyntaxOnly": {
+        "mode": "MSVC /Zs",
+        "nativeExecuted": false,
+        "objectProduced": false,
+        "linked": false,
+        "results": [
+          {
+            "source": "app/src/Recovery.cpp",
+            "sha256": "3b404cdaf28ad1ccf93d8349b272444a265b167327225fa5cb7405710cac2f07",
+            "exitCode": 0,
+            "output": "Recovery.cpp\n"
+          },
+          {
+            "source": "app/tests/recovery_tests.cpp",
+            "sha256": "a834352334772b34cb3bcf36592c71482e035e14ec46f27853bf18549a8127ed",
+            "exitCode": 0,
+            "output": "recovery_tests.cpp\n"
+          }
+        ]
+      },
+      "nativeTraceDataTests": 18,
+      "antivirusCorrelationDataTests": 10,
+      "comparisonPostconditionDataTests": 8,
+      "sourceVerification": "84 Python / 42 JSON before adding this record",
+      "originalWorkspaceFilesPreserved": 154,
+      "diffWhitespaceCheck": "passed"
+    },
+    "newRecoveryTestCases": "Added to the existing opt-in recovery test target; syntax checked, not linked or executed",
+    "nativeBuilt": false,
+    "nativeExecuted": false,
+    "newAntivirusVerdictEstablished": false,
+    "protectionChanged": false,
+    "quarantineRestored": false,
+    "installed": false,
+    "published": false,
+    "githubActionsUsed": false,
+    "limitation": "The prior comparison is evidence for a candidate, not proof of a specific API/vendor rule. The source change is not an antivirus acceptance result."
+  },
+  "nativeComparison": {
+    "format": "cycode-recovery-cleanup-comparison/1",
+    "createdAt": "2026-11-09T21:40:02.053600+00:00",
+    "state": "interrupted",
+    "sourceCommit": "34323ccbb042cb14d3596dd177da967a3049e6b7",
+    "nativeSourceDigest": "725e8066a7426d642fd34699355be7995dd346b829f4aa5b03540fba1567086c",
+    "sampleSha256": "a711faea8b689975e5670de694c042ab4b2383f9691b1d819a88eb422006e483",
+    "sameSampleForBothCases": true,
+    "productionBuildExitCode": 0,
+    "compilerOptionsChanged": false,
+    "changedProductionFileSincePriorComparison": "app/src/Recovery.cpp",
+    "cases": [
+      {
+        "scenario": "index-replacement-without-payload-removal",
+        "state": "completed-no-detection-observed",
+        "nativeExitCode": 0,
+        "nativeExits": [
+          {
+            "phase": "first",
+            "exitCode": 0
+          }
+        ],
+        "startedAt": "2026-11-09T21:37:35.404297+00:00",
+        "finishedAt": "2026-11-09T21:38:39.367725+00:00",
+        "methods": [
+          "documents.create",
+          "documents.replace",
+          "recovery.flush",
+          "documents.create",
+          "documents.replace",
+          "recovery.flush"
+        ],
+        "postconditions": "Existing index replaced; every original checkpoint/payload retained unchanged",
+        "completedAliveObservations": [
+          "initial-checkpoint-alive",
+          "discriminating-phase-alive"
+        ],
+        "traceRecords": 184,
+        "traceClosedSpans": 92,
+        "traceComplete": true,
+        "indexReplacements": [
+          {
+            "span": 68,
+            "parent": 63,
+            "event": "file.replace.existing",
+            "outcome": "success",
+            "systemError": 0,
+            "startSeq": 131,
+            "endSeq": 132,
+            "durationMicros": 1222
+          }
+        ],
+        "oldTextRemovals": [],
+        "oldBaselineRemovals": [],
+        "shutdownSpans": [
+          {
+            "span": 89,
+            "parent": 0,
+            "event": "service.drain",
+            "outcome": "returned",
+            "systemError": 0,
+            "startSeq": 177,
+            "endSeq": 178,
+            "durationMicros": 61
+          },
+          {
+            "span": 90,
+            "parent": 0,
+            "event": "engine.shutdown",
+            "outcome": "returned",
+            "systemError": 0,
+            "startSeq": 179,
+            "endSeq": 182,
+            "durationMicros": 15574
+          },
+          {
+            "span": 92,
+            "parent": 0,
+            "event": "recovery.store.shutdown",
+            "outcome": "skipped",
+            "systemError": 0,
+            "startSeq": 183,
+            "endSeq": 184,
+            "durationMicros": 10
+          }
+        ],
+        "snapshotCounts": {
+          "before": {
+            "payloads": 2,
+            "checkpoints": 1
+          },
+          "after": {
+            "payloads": 4,
+            "checkpoints": 2
+          }
+        }
+      },
+      {
+        "scenario": "ordinary-refresh-with-old-text-removal",
+        "state": "interrupted",
+        "nativeExitCode": 5,
+        "nativeExits": [
+          {
+            "phase": "first",
+            "exitCode": 5
+          }
+        ],
+        "startedAt": "2026-11-09T21:38:39.375251+00:00",
+        "finishedAt": "2026-11-09T21:39:03.346614+00:00",
+        "methods": [
+          "documents.create",
+          "documents.replace",
+          "recovery.flush",
+          "documents.replace",
+          "recovery.flush"
+        ],
+        "postconditions": "Index replaced; original base retained; old text removed through normal recovery",
+        "completedAliveObservations": [
+          "initial-checkpoint-alive"
+        ],
+        "traceRecords": 126,
+        "traceClosedSpans": 63,
+        "traceComplete": true,
+        "indexReplacements": [
+          {
+            "span": 62,
+            "parent": 57,
+            "event": "file.replace.existing",
+            "outcome": "success",
+            "systemError": 0,
+            "startSeq": 119,
+            "endSeq": 120,
+            "durationMicros": 1164
+          }
+        ],
+        "oldTextRemovals": [
+          {
+            "span": 63,
+            "parent": 49,
+            "event": "recovery.payload.text.remove",
+            "outcome": "success",
+            "systemError": 0,
+            "startSeq": 123,
+            "endSeq": 124,
+            "durationMicros": 136
+          }
+        ],
+        "oldBaselineRemovals": [],
+        "shutdownSpans": [],
+        "snapshotCounts": {
+          "before": {
+            "payloads": 2,
+            "checkpoints": 1
+          },
+          "after": {
+            "payloads": 2,
+            "checkpoints": 1
+          }
+        }
+      }
+    ],
+    "newAntivirusEvents": [
+      {
+        "eventId": 4662,
+        "provider": "avp",
+        "utc": "2026-11-09T21:39:03.0460943Z",
+        "rawContentIncluded": false,
+        "imageName": "cycode_cli.exe",
+        "processSha256": "a711faea8b689975e5670de694c042ab4b2383f9691b1d819a88eb422006e483",
+        "recordId": 22418312
+      },
+      {
+        "eventId": 4662,
+        "provider": "avp",
+        "utc": "2026-11-09T21:39:03.0802123Z",
+        "rawContentIncluded": false,
+        "imageName": "cycode_cli.exe",
+        "processSha256": "a711faea8b689975e5670de694c042ab4b2383f9691b1d819a88eb422006e483",
+        "recordId": 22418313
+      }
+    ],
+    "samplePresentAtAssessment": false,
+    "originalWorkspaceFilesPreserved": 154,
+    "originalWorkspaceChangedPaths": [],
+    "nativeSourcesChangedDuringComparison": [],
+    "nativeSourceFileCount": 252,
+    "mcpServerStarted": false,
+    "cyToolsRuntimeStarted": false,
+    "projectCompilerStartedDuringScenarios": false,
+    "diagnosticTraceEnabled": true,
+    "protectionChanged": false,
+    "sampleCopied": false,
+    "uploaded": false,
+    "installedOrPublished": false,
+    "githubActionsUsed": false,
+    "observationSeconds": {
+      "initialCheckpointAlive": 20,
+      "secondPhaseAlive": 20,
+      "postExitPerCase": 20,
+      "finalPassive": 20
+    },
+    "finding": "Ordinary DeleteFileW recovery cleanup did not prevent the alert. The no-removal control passed, but ordinary refresh with successful old-text removal reproduced matching avp records and native exit 5 before requested shutdown.",
+    "limits": "One rebuilt sample and two ordered direct-CLI cases. No broad antivirus/false-positive certification, private vendor rule, full MCP, save/restore/discard acceptance or Linux/macOS runtime acceptance is established.",
+    "nativeAuthorization": "The one-rebuild/two-case authorization is consumed; no additional native case or installation is included.",
+    "eventMinusLastNativeMilliseconds": 79.7783,
+    "failingCaseEventMinusRequestedShutdownMilliseconds": -299.5167,
+    "experimentalSourceChangeReverted": true,
+    "nativeRebuildOrRunAfterNewDetection": false,
+    "samplePresentAtPostflight": false,
+    "coreProcessesAtPostflight": [],
+    "nativeHold": "Active again after avp 22418312/22418313. No additional native run, build or installation is covered.",
+    "interpretation": "Switching the recovery caller away from the toolset filesystem removal path was insufficient. The exact triggering Windows/kernel call, proprietary rule and false-positive status remain unproven."
+  },
+  "sourceExperimentReverted": {
+    "state": "unsuccessful-source-experiment-reverted",
+    "utc": "2026-11-09T21:42:32.657257+00:00",
+    "restoredOnlyAgentChangesFromThisTurn": true,
+    "earlierLocalEditsPreserved": true,
+    "experimentalPatchRetainedInLocalAudit": true,
+    "nativeBuiltOrExecutedAfterDetection": false,
+    "binaryRestoredOrCopied": false,
+    "paths": [
+      "app/src/Recovery.cpp",
+      "app/tests/recovery_tests.cpp"
+    ]
+  }
+}

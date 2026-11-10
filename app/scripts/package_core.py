@@ -12,7 +12,7 @@ from release_package import pe_machine, version_tuple
 from windows_installer import find_iscc, system_runtime
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 
 def sha(data):
@@ -30,10 +30,10 @@ def collect(root, bundle, *, agents_only=False, executable=None, build=None, out
         raise ValueError('The existing production Core is missing. Packaging never rebuilds or substitutes a binary.')
     entries = {}
     names = ['LICENSE', 'COPYRIGHT', 'icons/CyCode.ico', 'icons/CyCode.png',
-             'app/tool.py', 'app/core_host.py', 'app/contracts.py', 'app/CyTool.json',
+             'app/tool.py', 'app/core_host.py', 'app/core_updates.py', 'app/contracts.py', 'app/CyTool.json',
              'app/MCPMethods.json', 'app/requirements.txt', 'app/LICENSE-CyToolsCore.txt',
              'app/THIRD_PARTY_NOTICES.md', 'app/mcp-runtime.lock.json',
-             'app/scripts/install_core_agents.py', 'app/Docs/Agents.md',
+             'app/scripts/install_core_agents.py', 'apps/CyCodeUpdater/main.py', 'app/Docs/Agents.md',
              'app/Docs/CoreInstallation.md', 'app/Docs/WindowsSecurity.md']
     for name in names:
         entries[name] = read_file(root / name)
@@ -79,7 +79,7 @@ def manifest(entries, version, revision, *, agents_only):
     if not revision or len(revision) != 40 or any(c not in '0123456789abcdef' for c in revision):
         raise ValueError('An exact source commit is required')
     return {'format': 'cycode-core-distribution/1', 'product': 'CyCodeCore',
-            'version': version, 'engineVersion': json.loads(entries['app/CyTool.json'])['version'],
+            'version': version, 'channel': 'preview', 'engineVersion': json.loads(entries['app/CyTool.json'])['version'],
             'sourceRevision': revision, 'platform': 'windows-x64',
             'state': 'agents-only' if agents_only else 'complete', 'nativeExecutedByPackager': False,
             'files': [{'path': n, 'size': len(b), 'sha256': sha(b)} for n, b in sorted(entries.items())]}

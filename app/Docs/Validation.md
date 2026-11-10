@@ -1,5 +1,257 @@
 # Validation — 2026-11-08
 
+## 2026-11-10 - corrected standalone Core production acceptance
+
+The owner resumed the corrected delivery and removed the obsolete blanket native
+hold. The production target builds with BUILD_TESTING=OFF and private recovery
+reproductions disabled. The official CyToolsCore 0.10.1 / MCP bridge completed
+search, document reads, actual MSBuild evaluation and clangd definition/references
+on CyCodeIDE (62 compilation commands). A separate owned workspace completed twelve
+edit/checkpoint/save cycles, refused a stale revision without changing the buffer,
+and preserved the last saved text when closing with unsaved changes.
+
+The Core and its children drained normally. Kaspersky remained active and no new
+event was observed during the runs and their documented post-exit observation.
+This is scoped Windows evidence; complete GUI/Unreal and further Linux/macOS
+acceptance are not inferred. Installer/portable acceptance is recorded separately
+when that delivery step completes.
+
+## 2026-11-10 — private GSI collected and checked; Core hold preserved
+
+Following explicit owner approval of administrator/UAC collection and documented
+network diagnostics, the official Authenticode-valid Kaspersky GSI 6.2.2.110
+collector exited 0 and produced a local report. Its SHA-256, bounded ZIP structure
+and all entry CRCs pass; private names and contents were not exposed or extracted.
+The ZIP is ignored by Git and remains outside the minimised, unsent review draft.
+No Core rebuild/run, protection/installation change, restore, publication or upload.
+Original 154 dirty-file and 254 native-source hashes are intact. GSI does not
+establish a false positive or fix the Core detection; KSN/KPSN connectivity and
+any vendor-requested detailed trace remain unestablished. See
+[Windows security](WindowsSecurity.md) and
+[the diagnostic result](Benchmarks/gsi-local-report-20261110.json).
+
+## 2026-11-10 — isolated controls pass; complete sequence reproduces AV
+
+The owner's resumed campaign is finished: one normal production build, four native
+cases, all with the same original-path executable. Write-only, index-only and
+remove-only controls pass with exit 0, intended file effects, intact source/base
+and no observed AV event through their bounded observation windows. The fourth,
+complete existing files-only positive control reproduces matching behavioural
+avp 22418621/22418622, exit 5, actual PID 45656 confirmed by the official report.
+The first event is 155.2395 ms after successful old-text removal and 1021.8505 ms
+before requested shutdown. All 12 / 14 / 2 / 64 trace records are complete, with
+no failed/open spans. Kaspersky later deletes the executable; postflight has no
+Core process. The three isolated caches were host-preseeded; the full control
+includes its own initial publication history. The sequence/context is sufficient
+in this sample, while a single offending API/vendor rule remains unestablished.
+
+No production antivirus fix or false-positive verdict is claimed. The finite
+scope is consumed and no fifth case or post-alert rebuild was run. Original
+154 dirty-file and 254 native-source hashes remain intact. No native test
+executable, protection change, restore/relocation, installation, upload, publication
+or Actions operation occurred. The unsent vendor-review draft contains selected
+findings only. At the close of this native campaign the required GSI was still
+missing; its subsequent local collection is recorded above. No report has been
+submitted to the vendor. See [Windows security](WindowsSecurity.md) and
+[the measured result](Benchmarks/recovery-operations-20261110.json).
+
+## 2026-11-10 — isolated-operation sources checked; native campaign not started
+
+Four bounded private diagnostics now isolate text publication, index replacement,
+obsolete-text removal and the combined sequence using exact host-preseeded synthetic
+fixtures. MSVC /Zs passes for RecoveryDiagnostic.cpp and cli.cpp; six in-memory
+postcondition tests pass, including an index hash match to captured native evidence.
+No object or executable was produced and no Core process was started. All 154
+original local-file hashes are preserved; production storage and SDK/MCP are unchanged.
+The earlier two-case native approval is exhausted. The new campaign remains gated
+on explicit owner resumption under AGENTS.md. No AV fix, false-positive verdict or
+broader native/platform acceptance is claimed. See [Windows security](WindowsSecurity.md)
+and [the prepared comparison](Benchmarks/recovery-operation-preparation-20261110.json).
+
+## Minimal recovery diagnostics completed — alert reproduced in both paths
+
+The owner's explicit two-case approval was used for two production relinks and
+exactly two native diagnostic cases. RecoveryStore-only reproduced the behavioural
+alert without Engine, workers, CoreService, SDK or MCP. Files-only reproduced it
+without a RecoveryStore instance or lease, using the production atomic writer,
+owned text/base/index files and normal obsolete-text removal. Both first observed
+their initial checkpoint alive for 20 seconds without a new event. Both exited 5
+after matching alerts, 86.9839 ms / 52.2373 ms after old-text removal and before
+requested shutdown. Official vendor reports bind the actual PIDs. Traces and
+filesystem snapshots agree: 70 / 64 complete records, no failed/open spans, current
+text/base retained and source baseline unchanged. Kaspersky deleted both samples;
+postflight found no remaining Core process or executable.
+
+The source manifest and compiler flags are identical across both rebuilds, but
+executable hashes differ after deletion/relinking; this is not a same-sample A/B
+test. Production builds and minimal C++ syntax checks passed. The 20 trace,
+10 correlation and 4 boundary-snapshot data tests pass. Original 154 local files
+and all 254 native source hashes remain intact. No native test binaries, protection
+changes, restoration, relocation, upload, installation, publication or Actions.
+The approved campaign is exhausted; no third build/case was launched.
+
+The earlier approved 15-second boundary test also completed: committed index and
+unchanged old payloads survived the full measured pause, then old-text cleanup
+was followed by a matching alert. The conditional unpaused case did not start.
+Its earlier pending-approval note is historical and superseded by these results.
+No antivirus fix or vendor false-positive verdict is established. Full CLI/MCP,
+Unreal and other-platform runtime acceptance remain pending. See
+[Windows security](WindowsSecurity.md),
+[the boundary measurement](Benchmarks/recovery-cleanup-boundary-20261109.json) and
+[the minimal campaign](Benchmarks/recovery-minimal-20261109.json).
+
+## Ordinary Windows deletion trial — new AV detection, source experiment reverted
+
+The owner authorised one normal production rebuild and the prepared two-case
+comparison with DeleteFileW/RemoveDirectoryW cleanup. Build passed at unchanged
+compiler options. The no-removal control passed with exit 0, 184 complete trace
+records and the 20-second live/post-exit windows. Normal refresh then reproduced
+matching avp 22418312/22418313: exit 5, 126 complete records, successful index
+replacement and old-text removal, unchanged original base, no shutdown span.
+The first event preceded requested shutdown by 299.5167 ms. The observation
+stopped, the executable disappeared, and postflight found no Core process.
+
+This is a failed AV candidate, not an accepted fix. The two experimental source
+edits were reverted to their exact pre-trial snapshots while earlier diagnostics
+and all 154 original dirty-file baselines remain preserved. Candidate /Zs checks
+and the 18 trace + 10 correlation + 8 postcondition data tests passed. Expanded
+candidate recovery assertions were syntax checked only and are archived with the
+trial, not counted as executed native tests. The original guarded transaction and
+cleanup remain in place. No protection, binary restoration, installation,
+publication or Actions change occurred; no retry followed the new alert.
+Full MCP, save/restore/discard and Linux/macOS runtime acceptance remain pending.
+See [Windows security](WindowsSecurity.md) and
+[the measured outcome](Benchmarks/recovery-cleanup-source-fix-20261109.json).
+
+## Two-case recovery comparison — control passes, refresh reproduces AV
+
+The owner's explicit approval resumed one normal Windows production rebuild and
+the prepared comparisons using the new lifecycle trace. The same exact binary
+passed index replacement while retaining all old payloads: exit 0, normal native
+shutdown spans, 20 seconds observed alive after the operation and 20 after exit,
+with no new AV event. Ordinary refresh then reproduced the detection after its
+own clean 20-second initial checkpoint observation: successful index replacement
+and old-text removal, native exit 5, avp 22418304/22418305 matching that sample.
+
+The first event preceded the host shutdown request by 774.2203 ms. The earlier
+harness postcondition defect did not recur. Both snapshots and the 184/124-record
+native traces agree with the intended retention/removal distinction; no trace
+is truncated or has an open/failed span. The campaign stopped at the new event,
+and later postflight found no Core process or executable. The original 154 local
+baselines and 252 native-source manifest entries are unchanged.
+
+This strengthens the old-text-removal candidate but does not identify the exact
+API/vendor rule or certify a false positive. One ordered comparison cannot remove
+timing/content/reputation effects. Actual runtime validation of the new lifecycle
+markers is now recorded for the passing control; broader Core/platform/AV
+acceptance remains unestablished. No protection, sample-copy, installation,
+publication or Actions change occurred. See [Windows security](WindowsSecurity.md)
+and [the comparison record](Benchmarks/recovery-operation-isolation-20261109.json).
+
+## Continued AV research — source/data only
+
+The new explicit-evidence correlator reanalysed the retained last incident without
+starting Core. It preserves Windows event fractions, rejects unrelated sample
+hashes and ambiguous fields, and keeps timestamp order separate from causality.
+Source review found no autonomous index-write loop in the tested path; the retained
+dirty checkpoint state should skip empty-session cleanup during normal shutdown.
+Native service/Engine/recovery-scan/store lifecycle spans were added to fill the
+older trace's shutdown-observation gap, without changing persistence decisions.
+
+All 28 data tests pass (18 trace-reader and 10 correlation), and the five touched
+C++ translation units pass MSVC /Zs without an object or binary. Correlation of
+actual retained evidence succeeds. Existing WER/Sysmon/vendor trace availability
+was checked read-only; the report DB denied ordinary reads. No capture, protection
+change, quarantine access, new Core build or native run occurred. The 154 original
+workspace baselines remain intact. Actual new-marker/runtime and other-platform
+acceptance remain unexecuted; the AV cause and a changed verdict are not established.
+See [Windows security](WindowsSecurity.md) and
+[the research record](Benchmarks/recovery-antivirus-research-20261109.json).
+
+## Corrected production Core retest — new detection, interrupted acceptance
+
+On the owner's explicit `retest`, the corrected Windows production CLI linked
+successfully. No new native test executable or compiler-option change was used.
+The first recovery-refresh case completed five native operations and recorded
+74 complete diagnostic records: successful index replacement and old-text removal,
+with the original base retained and no documents.save, MCP Runtime or project
+compiler. The native process nevertheless exited 5 and Kaspersky deleted the output;
+avp records 22418291/22418292 match its exact SHA-256.
+
+A harness postcondition incorrectly expected the document pathname to be absent,
+although documents.create creates an empty file. It requested immediate EOF after
+the second flush, before the AV event publication. The test's observation window
+was therefore shortened; the original evidence is retained, the data-only driver
+assertions are corrected and **no retry follows** the detection. This is not a
+passing native case or a proof of the precise offending Windows API.
+
+The remaining inactive-discard and checkpoint/save cases were not started.
+The 154 original local-change baselines remain byte-identical, no Core process
+remains, and the native hold is active again. No installation, publication,
+protection change or Actions run occurred. The atomic-save fixes are not a
+validated antivirus remedy. See [Windows security](WindowsSecurity.md) and
+[the sanitized retest](Benchmarks/recovery-antivirus-retest-20261109.json).
+
+## Recovery retirement instrumentation and atomic-save fixes — 2026-11-09
+
+Source review after the command-order experiment found two real shared-file-I/O
+defects: cleanup retained a consumed temporary name after successful replacement,
+and could delete the remaining replacement after Windows partial failure 1176/1177.
+The guard now distinguishes those ownership outcomes; close failures are checked.
+No recovery operation is disabled and no antivirus verdict change is established.
+
+An explicitly enabled CLI diagnostic trace separates the atomic writer, recovery
+index commit and individual text/base removals. It is OFF by default, stderr-only,
+bounded to 64 KiB and restricted to fixed labels/numeric metadata. A process-free
+reader analyses completed logs without starting Core or copying unrelated stderr.
+See [Windows security](WindowsSecurity.md#optional-bounded-native-trace) for usage
+and the next diagnostic cases using the existing recovery operations.
+
+Sixteen Python data tests pass for the trace reader, including interrupted/nested
+and interleaved spans, truncation, mismatches, rejected private/duplicate fields,
+input bounds and agreement with the native label catalogue. Windows MSVC `/Zs`
+checks the six modified/new C++ translation units without producing a binary.
+Source/data checks and whitespace verification pass. The original 154 local-change
+baselines are preserved. At that source-only stage native runtime/link and
+Linux/macOS acceptance were unexecuted; the later explicit retest and new
+detection are recorded above.
+
+## Native command-order isolation — four controls and one new detection
+
+The owner authorised one unchanged-source production rebuild plus six independent
+scenarios. On the same rebuilt sample, startup/idle, immediate save before tools,
+actual compiler analysis without document save, and explicit recovery checkpoint
+without save all exited 0 with no avp event through 20 seconds after exit.
+
+Checkpoint followed by save reproduced the detection (avp 22418285/22418286,
+native exit 5), about 24.7 ms after the save response. The checkpoint existed
+before save; its index/payload retirement had completed by response. That case
+used no MCP, CyToolsCore Runtime, MSBuild or compiler. The sixth scenario was not
+started. This is not complete acceptance or an identified vendor rule. No source
+fix or changed antivirus verdict is claimed. See [Windows security](WindowsSecurity.md)
+and [the command-order record](Benchmarks/command-order-antivirus-20261109.json).
+The binary was subsequently absent; native retries remain suspended.
+
+## Direct native CLI/MCP comparison — interrupted on the first case
+
+The owner's explicitly authorised diagnostic used the same existing production
+sample and an owned synthetic C++ workspace, with Kaspersky active. The direct
+native `--stdio` case completed fourteen operations, including actual MSBuild,
+two clean clangd observations, definition/references and explicit document save.
+No MCP server or CyToolsCore Runtime was running for this case.
+
+New avp records 22418283/22418284 match the exact sample. The first was recorded
+26.6 ms after the save response and 440.7 ms before the harness requested shutdown.
+The native exit was 5 and the binary was subsequently removed. All remaining
+cases stopped; socket/MCP comparison and overall acceptance are **not passing**.
+MCP is therefore not required to reproduce this incident. The precise cause and
+vendor rule remain unknown, and the earlier shutdown-only explanation is weakened.
+The 154 original local-change baselines remained byte-identical. See
+[Windows security](WindowsSecurity.md) and
+[the sanitized record](Benchmarks/cli-antivirus-comparison-20261109.json).
+No new native run, protection change, sample restoration or Actions run follows
+this new detection.
+
 ## Standalone installed Core/MCP — second antivirus interruption
 
 The owner lifted the earlier hold for this delivery. Production builds pass,

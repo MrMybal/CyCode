@@ -1,0 +1,207 @@
+{
+  "format": "cycode-recovery-boundary-preparation/1",
+  "recordedAt": "2026-11-09T22:00:30.648497+00:00",
+  "state": "source-checked-native-rebuild-blocked-pending-explicit-owner-answer",
+  "nativeBuildStarted": false,
+  "nativeCoreExecuted": false,
+  "autoReviewReason": "Continuing the investigation is not clear authorization for this precise rebuild/execution after detection; AGENTS requires explicit resumption.",
+  "experiment": {
+    "question": "Same-document committed index update versus subsequent obsolete text removal",
+    "cliOptIn": "--diagnostic-trace --diagnostic-recovery-pause",
+    "pauseSeconds": 15,
+    "pauseCountMaximumPerProcess": 1,
+    "pauseOffByDefault": true,
+    "pauseLocation": "After guarded refreshed index commit, before any old text/base cleanup",
+    "duringPauseRequiredEvidence": "One updated record, three payloads, both old payloads byte-identical, no removal span yet",
+    "afterPauseRequiredEvidence": "Normal cleanup still removes the old text; current text and original base remain",
+    "conditionalSecondCase": "Same binary and same-document refresh without pause, only if first case passes",
+    "stopOnAnyNewDetection": true,
+    "limit": "This separates old text cleanup, not the index replacement itself or earlier file writes. AV publication is later than the activity that caused it; timing alone cannot identify the private rule."
+  },
+  "vendorExports": {
+    "mechanism": "Installed Kaspersky 21.26.4.406 avp.com HELP REPORT and official REPORT command",
+    "commands": [
+      "REPORT SW2 /RA:<local-report>",
+      "REPORT HipsTask /RA:<local-report>"
+    ],
+    "settingsOrProtectionChanged": false,
+    "protectedDatabaseDirectlyRead": false,
+    "rawReportsPublished": false,
+    "selectedSystemWatcherEvents": [
+      {
+        "timeAsReported": "Aujourd'hui, 09/11/2026 22:17:24",
+        "eventAsReported": "Un objet malveillant a été détecté",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "pid": "118580",
+        "verdictAsReported": "Détecté : PDM:Trojan.Win32.Generic",
+        "threatAsReported": "PDM:Trojan.Win32.Generic",
+        "typeAsReported": "Cheval de Troie",
+        "methodAsReported": "Analyse comportementale"
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 09/11/2026 22:17:24",
+        "eventAsReported": "Le processus est terminé",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "pid": "118580",
+        "verdictAsReported": "Terminé : PDM:Trojan.Win32.Generic",
+        "threatAsReported": "PDM:Trojan.Win32.Generic",
+        "typeAsReported": "Cheval de Troie",
+        "methodAsReported": ""
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 09/11/2026 22:17:24",
+        "eventAsReported": "Une copie de sauvegarde de l'objet a été créée",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "pid": "118580",
+        "verdictAsReported": "Création de la copie de sauvegarde : PDM:Trojan.Win32.Generic",
+        "threatAsReported": "PDM:Trojan.Win32.Generic",
+        "typeAsReported": "Cheval de Troie",
+        "methodAsReported": ""
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 09/11/2026 22:17:48",
+        "eventAsReported": "Un objet a été supprimé",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "pid": "118580",
+        "verdictAsReported": "Supprimé : PDM:Trojan.Win32.Generic",
+        "threatAsReported": "PDM:Trojan.Win32.Generic",
+        "typeAsReported": "Cheval de Troie",
+        "methodAsReported": ""
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 09/11/2026 22:39:03",
+        "eventAsReported": "Un objet malveillant a été détecté",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "pid": "31324",
+        "verdictAsReported": "Détecté : PDM:Trojan.Win32.Generic",
+        "threatAsReported": "PDM:Trojan.Win32.Generic",
+        "typeAsReported": "Cheval de Troie",
+        "methodAsReported": "Analyse comportementale"
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 09/11/2026 22:39:03",
+        "eventAsReported": "Le processus est terminé",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "pid": "31324",
+        "verdictAsReported": "Terminé : PDM:Trojan.Win32.Generic",
+        "threatAsReported": "PDM:Trojan.Win32.Generic",
+        "typeAsReported": "Cheval de Troie",
+        "methodAsReported": ""
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 09/11/2026 22:39:03",
+        "eventAsReported": "Une copie de sauvegarde de l'objet a été créée",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "pid": "31324",
+        "verdictAsReported": "Création de la copie de sauvegarde : PDM:Trojan.Win32.Generic",
+        "threatAsReported": "PDM:Trojan.Win32.Generic",
+        "typeAsReported": "Cheval de Troie",
+        "methodAsReported": ""
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 09/11/2026 22:39:22",
+        "eventAsReported": "Un objet a été supprimé",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "pid": "31324",
+        "verdictAsReported": "Supprimé : PDM:Trojan.Win32.Generic",
+        "threatAsReported": "PDM:Trojan.Win32.Generic",
+        "typeAsReported": "Cheval de Troie",
+        "methodAsReported": ""
+      }
+    ],
+    "pidBindings": [
+      {
+        "processId": 118580,
+        "role": "Earlier failed ordinary refresh",
+        "sampleSha256": "6688d8d173bdee6bc0d6eec46e3b46f962fd8d2c5490df79ae64ed01e77846dc"
+      },
+      {
+        "processId": 31324,
+        "role": "Last failed DeleteFileW ordinary refresh",
+        "sampleSha256": "a711faea8b689975e5670de694c042ab4b2383f9691b1d819a88eb422006e483"
+      }
+    ],
+    "applicationControlObservation": "The passing controls PID 2328 and 71748 and earlier failing PID 94420 are all assigned the reported Faible restriction level with reason Impossible de déterminer le groupe de confiance. This grouping alone does not explain the difference.",
+    "applicationControlRawRowsInspected": 100559,
+    "limitation": "The official reports confirm behavioral detection and target PIDs; they do not expose an offending file-operation/kernel stack or proprietary rule."
+  },
+  "sourceChanges": [
+    {
+      "path": "common/include/cycode/NativeTrace.h",
+      "beforeSha256": "f48ebdadd88d71d30c07757f2b97881dcd824804096b89682af90ef6ec8469e1",
+      "currentSha256": "a6a2204bb7f03c8293239e694fff42c0b909eb5de8b3a39ae9d4866b84d4113b"
+    },
+    {
+      "path": "common/src/NativeTrace.cpp",
+      "beforeSha256": "c869409645fe16a00fcc48f116dcfffd68cf819023cbf2f082c92861a3d37c30",
+      "currentSha256": "12c3ba3ffa3d5d2074b354e98cce1334b2358961285ede50c17dcfe7a9348bf3"
+    },
+    {
+      "path": "app/src/Recovery.cpp",
+      "beforeSha256": "e9b1d4921861ecb3a67bc03f850b8ef7382677ebb5d16d4c2e96070e045ed76f",
+      "currentSha256": "a2ae732c9685614689c9e096365697d089ed2df553c8d6a0984a3bd43154efb2"
+    },
+    {
+      "path": "app/src/cli.cpp",
+      "beforeSha256": "e10a40a378725c95dda6fcac90e9849adf7b39f5ce71583b7c8d2a3ea6c9cdc4",
+      "currentSha256": "7705f7100f511e3de9deab4400c75614c6406b3bacc44ec11912dda543ca6efa"
+    },
+    {
+      "path": "app/scripts/analyse_native_trace.py",
+      "beforeSha256": "8a99210edaa6221f570bfd52be5673112c4ee19b8d73a734d7b3e3114eb6b09d",
+      "currentSha256": "75545c4ee1d746deea7d44a3b39022b92fd495faf3ba975251b22b07b77d5c7f"
+    },
+    {
+      "path": "app/tests/test_native_trace_analysis.py",
+      "beforeSha256": "12d98c438b57031cba6d086af59c98b04fc78c8461d704266dc49f7af50cd8a8",
+      "currentSha256": "b134afa8f7f48ceffdb6878e5c2f40234a57eb7488c722e36d4865d5d62c3ef1"
+    }
+  ],
+  "nativeSourceDigest": "07f0eaca833263f58f3031989a91c5531ab2826dbf06e61e270ad0241973c19a",
+  "checks": {
+    "msvcSyntaxOnly": {
+      "mode": "MSVC /Zs",
+      "nativeExecuted": false,
+      "objectProduced": false,
+      "linked": false,
+      "results": [
+        {
+          "source": "common/src/NativeTrace.cpp",
+          "sha256": "12c3ba3ffa3d5d2074b354e98cce1334b2358961285ede50c17dcfe7a9348bf3",
+          "exitCode": 0,
+          "output": "NativeTrace.cpp\n"
+        },
+        {
+          "source": "app/src/Recovery.cpp",
+          "sha256": "a2ae732c9685614689c9e096365697d089ed2df553c8d6a0984a3bd43154efb2",
+          "exitCode": 0,
+          "output": "Recovery.cpp\n"
+        },
+        {
+          "source": "app/src/cli.cpp",
+          "sha256": "7705f7100f511e3de9deab4400c75614c6406b3bacc44ec11912dda543ca6efa",
+          "exitCode": 0,
+          "output": "cli.cpp\n"
+        }
+      ]
+    },
+    "traceAnalysisDataTests": 20,
+    "antivirusCorrelationDataTests": 10,
+    "boundarySnapshotDataTests": 4,
+    "sourceVerification": "84 Python / 43 JSON before adding this record",
+    "originalWorkspaceFilesPreserved": 154
+  },
+  "coreRebuilt": false,
+  "binaryRestoredOrRelocated": false,
+  "installedOrPublished": false,
+  "uploaded": false,
+  "githubActionsUsed": false
+}

@@ -129,9 +129,10 @@ void publishNativeDescriptor(const std::filesystem::path &path,const std::string
         } else if(std::filesystem::exists(path))throw NativeError(ErrorCode::DiskConflict,"Native descriptor already exists");
     };
     check();
-    auto temporary=path;
-    // Independent randomness: the credential is never used in a file name.
-    temporary+=".cycode-endpoint-"+nativeEndpointSecret();
+    // Independent randomness: the credential is never used in a file name. The name is a
+    // sibling that does not extend the descriptor's own name: see writeTextFileAtomic
+    // (common/src/TextFile.cpp) for the antivirus behavioural detection this avoids.
+    const auto temporary=path.parent_path()/(".cycode-endpoint-"+nativeEndpointSecret()+".tmp");
     struct Cleanup {
         std::filesystem::path path;bool owned=false;
         ~Cleanup(){if(owned){std::error_code error;std::filesystem::remove(path,error);}}

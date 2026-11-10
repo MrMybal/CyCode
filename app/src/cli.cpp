@@ -1,4 +1,8 @@
 #include "cycode/Bridge.h"
+#ifdef CYCODE_PRIVATE_DIAGNOSTICS
+#include "RecoveryDiagnostic.h"
+#endif
+#include "cycode/NativeTrace.h"
 #include "cycode/Tools.h"
 #include "cycode/Updates.h"
 #include <iostream>
@@ -28,18 +32,52 @@ int main(int argc, char **argv) {
         for (int i = 0; i < argc; ++i)
             arguments.emplace_back(argv[i]);
 #endif
-        bool disablePlugins=false;
-        if(arguments.size()>1&&arguments[1]=="--disable-plugins") { disablePlugins=true;arguments.erase(arguments.begin()+1); }
+        bool disablePlugins=false, diagnosticTrace=false;
+#ifdef CYCODE_PRIVATE_DIAGNOSTICS
+        bool diagnosticRecoveryPause=false;
+#else
+        for (const auto &argument : arguments)
+            if (argument.starts_with("--diagnostic-") && argument != "--diagnostic-trace")
+                throw std::runtime_error("Private recovery diagnostics are not compiled into this distribution");
+#endif
+        while(arguments.size()>1) {
+            if(arguments[1]=="--disable-plugins") disablePlugins=true;
+            else if(arguments[1]=="--diagnostic-trace") diagnosticTrace=true;
+#ifdef CYCODE_PRIVATE_DIAGNOSTICS
+            else if(arguments[1]=="--diagnostic-recovery-pause") diagnosticRecoveryPause=true;
+#endif
+            else break;
+            arguments.erase(arguments.begin()+1);
+        }
         argc = static_cast<int>(arguments.size());
+#ifdef CYCODE_PRIVATE_DIAGNOSTICS
+        if (diagnosticRecoveryPause && !diagnosticTrace)
+            throw std::runtime_error("--diagnostic-recovery-pause requires --diagnostic-trace");
+#endif
         if (argc == 2 && arguments[1] == "--version") {
             std::cout << "CyCode " << CYCODE_VERSION << '\n';
             return 0;
         }
         if (argc < 3) {
-            std::cerr << "Usage: cycode_cli [--disable-plugins] WORKSPACE METHOD [PARAMETERS_JSON]\n       cycode_cli WORKSPACE "
+            std::cerr << "Usage: cycode_cli [--disable-plugins] [--diagnostic-trace] WORKSPACE METHOD [PARAMETERS_JSON]\n       cycode_cli WORKSPACE "
                          "--serve DESCRIPTOR\n       cycode_cli WORKSPACE --stdio\n";
             return 2;
         }
+        if(diagnosticTrace) cycode::enableNativeDiagnosticTrace();
+#ifdef CYCODE_PRIVATE_DIAGNOSTICS
+        if(diagnosticRecoveryPause) cycode::armNativeRecoveryCleanupPause();
+        if (arguments[2] == "--diagnostic-recovery-only" || arguments[2] == "--diagnostic-files-only") {
+            if (!diagnosticTrace || argc != 3)
+                throw std::runtime_error("Owned recovery diagnostics require --diagnostic-trace and exactly one workspace");
+            return cycode::runOwnedRecoveryDiagnostic(cycode::utf8Path(arguments[1]),
+                arguments[2] == "--diagnostic-files-only");
+        }
+        if (arguments[2] == "--diagnostic-file-operation") {
+            if (!diagnosticTrace || diagnosticRecoveryPause || argc != 4)
+                throw std::runtime_error("Owned operation diagnostic requires trace, workspace and one operation; no pause flag");
+            return cycode::runOwnedFileOperationDiagnostic(cycode::utf8Path(arguments[1]), arguments[3]);
+        }
+#endif
         const auto installation=cycode::installationRoot();
         const auto installationLease=installation.empty() ? nullptr : cycode::updates::installationUse(installation);
         cycode::Engine engine(cycode::utf8Path(arguments[1]), installation.empty() ? std::filesystem::path{} : installation / "data/settings/language-servers",

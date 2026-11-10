@@ -111,7 +111,7 @@
       "kind": "developer-reference",
       "target": "core-installation#distribution",
       "legacyId": "reference-app-docs-coreinstallation",
-      "sourceSha256": "efcaf676c9cc37e0e4f09c6ebab40462cae604bce2242811289ee256a31d0e8f"
+      "sourceSha256": "35221772ecacaf3c5878d82fede04b5758a58cd470ef9a6c70f5f07a57f86596"
     },
     {
       "source": "Docs/CppCounterparts.md",
@@ -629,7 +629,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "e3d6aa20b7bf91bae815f16c793784fe5e365003fd423992fc56671377c2f2ae"
+      "sourceSha256": "6aa4bcf5c504b61851f5d038f415b48ea7c6c349e120eafef4c0c220c165bdd1"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -643,7 +643,7 @@
       "kind": "developer-reference",
       "target": "native-core#antivirus",
       "legacyId": "reference-app-docs-windowssecurity",
-      "sourceSha256": "2a313ef9f01fcfec217ff509cad725dfbbc4d3a72c4357c5f5800ea8dbf348c6"
+      "sourceSha256": "330e7fe0920342dcdf2080a2a12b482708dd38d086fdc8647654f5b0cb0f846e"
     },
     {
       "source": "Docs/Workspace.md",

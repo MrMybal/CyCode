@@ -155,6 +155,14 @@ Local native runs and rebuild/retry are suspended; the final MCP acceptance is
 not marked passing. Disk sources stayed unchanged. Source/data/documentation
 checks continue; no protection bypass or automatic restart was introduced.
 
+**Current delivery:** independent sibling temporary names correct the observed
+save/publication pattern. The owner authorised the corrected production build.
+Real CyCodeIDE MCP search/navigation and twelve save/recovery cycles passed
+with Kaspersky active and no new alert observed. The investigations below
+record earlier incidents, holds and interrupted acceptance; they are not
+the current installation instructions. No vendor false-positive verdict is
+claimed. See [Core installation](core-installation#distribution).
+
 ## Windows antivirus investigation {#antivirus}
 
 The owner reported a PDM alert on the production CLI. Its exact detected behaviour

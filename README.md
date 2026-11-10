@@ -30,6 +30,15 @@ Core text profile for standalone documents and retains the shared graphical
 editor. The historical 0.2.3 [application releases](https://github.com/MrMybal/CyCode/releases)
 predate this separation; they are not a newly packaged Core or CyCodeIDE release.
 
+## Standalone Windows preview
+
+[CyCodeCore 0.1.1 Setup and portable ZIP](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1)
+provide the native CLI, private Python/CyToolsCore MCP runtime, ripgrep and agent
+skill. Setup offers CyCodeUpdater as a separate component, with optional sign-in
+checks and confirmed installation of newer GitHub Core releases. Compilers and
+language servers remain external prerequisites. Read the
+[installation and update guide](app/Docs/CoreInstallation.md).
+
 ## Build without graphics
 
 ```sh
@@ -92,7 +101,7 @@ profile. Exact CI links and tested limits are recorded in the integration guide.
 The owner separately authorised production-only Core/clangd tests on real
 UE 5.5.4: initial three-file rename, Apply/Undo, navigation cache invalidation and
 official MCP workflows now pass. See [the scoped results](app/Docs/Benchmarks/unreal55-fixes-20261109.json).
-GUI/native-fixture launches remain suspended; GitHub Actions remain paused.
+Desktop acceptance is separate from this headless delivery; GitHub Actions remain paused.
 
 The semantic baseline includes actual clangd requests against the real Core CMake
 project (121 translation units). Raw samples, corpus identity, memory scope,

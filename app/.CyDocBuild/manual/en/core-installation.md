@@ -5,15 +5,18 @@ description: Local Core packages, AI skill and project MCP registration.
 section: API and extensions
 parent: mcp
 order: 262
-revision: 2
+revision: 3
 ---
+
 
 ## Distribution {#distribution}
 
 CyCodeCore is a headless native service with the official CyToolsCore MCP bridge.
 It does not need the IDE, CyUI, SDL, OpenGL, a GPU model or a system Python.
-The standalone distribution version starts at 0.1.0 independently of the engine's
-historical 0.2.3 contract version. This first delivery is a development preview.
+The standalone distribution is version 0.1.1, independently of the engine's
+historical 0.2.3 contract version. This delivery is a development preview.
+The native --version response reports the engine contract; the package and
+CyCodeUpdater show the standalone distribution version.
 
 The Windows x64 portable package contains `cycode_cli.exe`, its MSVC runtime,
 verified ripgrep, isolated CPython/CyToolsCore/MCP, licences, exact method schemas
@@ -22,18 +25,14 @@ servers remain external prerequisites. Linking a Core does not install them.
 The separate per-user Setup uses the same payload and can register a selected
 project. No package is built by a GitHub workflow.
 
-**Current delivery limitation:** a controlled production build and installation
-were explicitly authorised after the first antivirus incident. The installed
-Core passed actual file/text search, MSBuild evaluation, compiler definition and
-references, and authored the IDE integration guide through MCP. Kaspersky System
-Watcher then deleted that installed CLI at 19:20 Europe/Paris on 2026-11-09.
-Its MD5 matches the built payload. MCP has been disabled, no process remains,
-and no automatic rebuild/restore/retry follows this second detection. A false
-positive has not been established. This is **not a passing full installed-MCP
-acceptance**, and binary publication is suspended. Only an explicitly labelled
-`agents-only.zip` is currently suitable for a draft: it contains the MCP runtime
-and instructions, **without native Core**. It cannot enable the server or be
-presented as a working Core installer. See [the evidence](WindowsSecurity.md).
+Version 0.1.1 uses independent sibling temporary names for atomic saves. The
+production CLI has passed real CyToolsCore MCP search and clangd navigation on
+CyCodeIDE, plus repeated synthetic document saves/checkpoints and revision guards
+with Kaspersky active. These scoped Windows observations are not an antivirus
+certification or exhaustive Unreal/platform acceptance. The packages are unsigned.
+
+Download the [Windows Setup or portable ZIP](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1).
+The Setup installs per-user and offers the separate CyCodeUpdater component.
 
 ## Register a project {#connect}
 
@@ -46,7 +45,7 @@ tools/python/python.exe -B app/scripts/install_core_agents.py --workspace <proje
 The script copies the skill to the user's Codex skills directory and registers
 `cycode_core` in the project's `.codex/config.toml`. Trust that project in the
 client and reload its MCP configuration. For another agent client, use the
-equivalent stdio command from [Agents](Agents.md#configuration).
+equivalent stdio command from [Agents](core-agents#configuration).
 
 Without `--enable`, the registration stays disabled; this is useful to prepare an
 agents-only installation. `--skill-only` installs only the instructions. `--status
@@ -70,7 +69,34 @@ Before removing an installation, disable/remove its managed project connection.
 
 A standalone agent host owns its own project buffers. To share the IDE's live
 unsaved documents, attach to its existing private SDK service as described in
-[Agents](Agents.md#connect), rather than assuming two hosts share state.
+[Agents](core-agents#connect), rather than assuming two hosts share state.
+
+## Optional update companion {#updates}
+
+CyCodeUpdater is a separate Windows application offered by Setup. Its Start menu
+shortcut checks the Core GitHub releases when opened, shows the installed version
+and release notes, and offers a verified Setup download followed by installation.
+The installer opens only after confirmation; close Core/MCP clients first.
+The update check does not start or silently replace the Core.
+
+Setup separately offers an initially unchecked option to check at Windows sign-in.
+That mode checks at most once per day, proposes the updater for a newer version,
+and exits when there is nothing to offer. There is no permanent Windows service.
+Installing Core without the companion remains supported.
+
+The companion accepts `--language fr`, `--check` (JSON-only manual check),
+and `--background` (daily notification). For a portable package, launch it with
+`tools/python/pythonw.exe -B apps/CyCodeUpdater/main.py`; portable ZIP replacement
+remains manual. The companion's installation offer uses the normal Windows Setup.
+
+Only `core-v` releases with the matching Windows Setup and SHA256SUMS.txt are used;
+legacy IDE releases, drafts and incomplete releases are ignored. Downloads are
+bounded and checked against SHA-256, the advertised size and GitHub's asset digest
+when available. Private repository access uses an existing noninteractive GitHub
+Git credential or the CYCODE_GITHUB_TOKEN / GH_TOKEN / GITHUB_TOKEN environment
+variable. No credential is shipped or saved by the updater. Network/authentication
+failures preserve the installed version. The preview channel includes preview
+Core releases; it does not certify their feature or platform completeness.
 
 ## Build packages locally {#package}
 

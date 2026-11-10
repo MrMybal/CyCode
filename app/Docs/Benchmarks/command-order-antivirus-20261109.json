@@ -1,0 +1,141 @@
+{
+  "format": "cycode-antivirus-command-order/1",
+  "sourceCommit": "34323ccbb042cb14d3596dd177da967a3049e6b7",
+  "nativeSourcesChanged": false,
+  "sampleSha256": "ebf200e85f47437e67c37df4d7c2996c320e850e3b8fd8da7fdb8858fdcd4832",
+  "priorDeletedSampleSha256": "609035c6cadb3d6dd667d55cb2d415092367910cbe1297647ef330e6eefcb1f7",
+  "sampleRelationship": "One rebuilt output from the unchanged native sources and existing compiler options. All five executed scenarios used this exact hash.",
+  "mcpServerStarted": false,
+  "cyToolsRuntimeStarted": false,
+  "nativePluginsEnabled": false,
+  "scenarios": [
+    {
+      "scenario": "idle",
+      "state": "completed-no-detection-observed",
+      "nativeExitCode": 0,
+      "completedOperations": 0,
+      "compilerCoverage": null,
+      "recoveryBeforeSave": null
+    },
+    {
+      "scenario": "save-immediately",
+      "state": "completed-no-detection-observed",
+      "nativeExitCode": 0,
+      "completedOperations": 3,
+      "compilerCoverage": null,
+      "recoveryBeforeSave": null
+    },
+    {
+      "scenario": "analysis-without-document-save",
+      "state": "completed-no-detection-observed",
+      "nativeExitCode": 0,
+      "completedOperations": 8,
+      "compilerCoverage": {
+        "commands": 0,
+        "diagnosticClean": 2,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 0,
+        "observed": 2,
+        "outOfScope": 0,
+        "remaining": 0,
+        "translationUnits": 0
+      },
+      "recoveryBeforeSave": null
+    },
+    {
+      "scenario": "checkpoint-without-save",
+      "state": "completed-no-detection-observed",
+      "nativeExitCode": 0,
+      "completedOperations": 4,
+      "compilerCoverage": null,
+      "recoveryBeforeSave": {
+        "bytes": 96,
+        "documents": 1,
+        "errors": [],
+        "intervalMs": 1000,
+        "lastCheckpoint": 1794254530765,
+        "maxBytes": 134217728,
+        "maxDocuments": 128,
+        "pending": 0,
+        "session": "session-94399c2ea3e6856eb6e53ab3c33ba6b5"
+      }
+    },
+    {
+      "scenario": "checkpoint-then-save",
+      "state": "interrupted",
+      "nativeExitCode": 5,
+      "completedOperations": 5,
+      "compilerCoverage": null,
+      "recoveryBeforeSave": {
+        "bytes": 96,
+        "documents": 1,
+        "errors": [],
+        "intervalMs": 1000,
+        "lastCheckpoint": 1794254562260,
+        "maxBytes": 134217728,
+        "maxDocuments": 128,
+        "pending": 0,
+        "session": "session-06274659fe9d02481e3a2ef03b89f264"
+      }
+    }
+  ],
+  "unexecuted": [
+    "save-before-analysis"
+  ],
+  "firstAvEventAt": "2026-11-09T20:02:42.399928+00:00",
+  "saveResponseAt": "2026-11-09T20:02:42.375243+00:00",
+  "millisecondsAfterSaveResponse": 24.685,
+  "millisecondsBeforeRequestedShutdown": 609.371,
+  "events": [
+    {
+      "provider": "avp",
+      "eventId": "4662",
+      "recordId": "22418285",
+      "utcTime": "2026-11-09T20:02:42.3999287Z",
+      "processSha256": "ebf200e85f47437e67c37df4d7c2996c320e850e3b8fd8da7fdb8858fdcd4832",
+      "databaseVersionAsReported": "2026.11.09 11:44:00:000",
+      "detectionNumber": "369941",
+      "opaqueName": "32d87a95",
+      "confidenceCodeUninterpreted": "00000000",
+      "rawContentIncluded": false
+    },
+    {
+      "provider": "avp",
+      "eventId": "4662",
+      "recordId": "22418286",
+      "utcTime": "2026-11-09T20:02:42.4335444Z",
+      "processSha256": "ebf200e85f47437e67c37df4d7c2996c320e850e3b8fd8da7fdb8858fdcd4832",
+      "databaseVersionAsReported": "2026.11.09 11:44:00:000",
+      "detectionNumber": "369941",
+      "opaqueName": "28808cb6",
+      "confidenceCodeUninterpreted": "00000006",
+      "rawContentIncluded": false
+    }
+  ],
+  "persistedRecoveryBuffersAfterSave": 0,
+  "remainingRecoveryPayloadFiles": 0,
+  "samplePresentAtPostflight": false,
+  "coreProcessesAtPostflight": [],
+  "originalWorkspaceFilesPreserved": 154,
+  "finding": "On the same rebuilt production sample, startup/exit, immediate save, actual compiler analysis without document save, and checkpoint without save had no observed detection. Saving an explicitly checkpointed document reproduced detection, with no compiler, MSBuild or MCP in that scenario.",
+  "nativeSourcePath": [
+    "Engine documents.save",
+    "Engine::retireRecovery",
+    "RecoveryStore::erase",
+    "RecoveryStore::State::commit (atomic session.json replacement)",
+    "removePayload (owned text/base checkpoint deletion)"
+  ],
+  "causalityLimit": "The discriminatory scenario is isolated, not the exact Windows call or proprietary rule. Case order/timing and reputation remain possible confounders; each control was a single run with 20 seconds post-exit observation. The save response proves native retirement finished before the recorded alert, not which action triggered it.",
+  "falsePositiveConfirmed": false,
+  "preciseRuleKnown": false,
+  "protectionChanged": false,
+  "sampleRestoredOrCopied": false,
+  "uploaded": false,
+  "githubActionsUsed": false,
+  "nativeHold": "active again after new detection; no automatic rebuild or scenario retry",
+  "date": "2026-11-09",
+  "overallAcceptance": "interrupted-after-fifth-scenario",
+  "syntheticProject": true,
+  "privatePathsIncluded": false,
+  "rawLogsIncluded": false
+}

@@ -1,0 +1,314 @@
+{
+  "format": "cycode-isolated-file-operation-campaign/1",
+  "recordedAt": "2026-11-10T14:21:48.085932+00:00",
+  "clientDate": "2026-11-10",
+  "state": "isolated-operations-pass-complete-sequence-reproduces-detection",
+  "finding": "On this sample, each host-preseeded isolated file operation passed, while the original complete files-only production reproducer triggered a matching alert. Thus the full process/file history reproduces the issue; no one isolated operation or private vendor rule is established as its cause.",
+  "sameExecutableSampleAcrossCases": true,
+  "nativeCaseCount": 4,
+  "productionRebuildCount": 1,
+  "nativeSourceDigest": "96d4580ed5b7d616f681e8af8c150e04c67f0db07e969cca2b8a4687bac24a0b",
+  "sourceCommit": "34323ccbb042cb14d3596dd177da967a3049e6b7",
+  "sourceIncludesUncommittedPrivateDiagnostics": true,
+  "productionBuilds": [
+    {
+      "sampleSha256": "d7e08f48392b84059f1f35da6b2a86d2bf93dcde156fa33a1971425f9bcd03eb",
+      "sourceDigest": "96d4580ed5b7d616f681e8af8c150e04c67f0db07e969cca2b8a4687bac24a0b",
+      "sourceFileCount": 254,
+      "buildExitCode": 0,
+      "sourcesStillUnchanged": true,
+      "compilerFlagsChanged": false,
+      "nativeTestExecutablesBuilt": false
+    }
+  ],
+  "cases": [
+    {
+      "format": "cycode-isolated-operation-result/1",
+      "recordedAt": "2026-11-10T14:14:43.399390+00:00",
+      "state": "completed-no-detection-observed",
+      "operation": "write",
+      "sampleSha256": "d7e08f48392b84059f1f35da6b2a86d2bf93dcde156fa33a1971425f9bcd03eb",
+      "nativePid": 62308,
+      "nativeExitCode": 0,
+      "operationRequested": true,
+      "entireFilePostconditionMatched": true,
+      "before": {
+        "base-buffer-1-1.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session.json": "34c68365d0872e4432080a6e3906f1ccd200a61e1feb3a0e748dca0f3fed551a",
+        "text-buffer-1-1.utf8": "fcc5a44d0b6ce506e6f993e7addd4dc9915221b150b9d58ae32bd928405881d4"
+      },
+      "after": {
+        "base-buffer-1-1.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session.json": "34c68365d0872e4432080a6e3906f1ccd200a61e1feb3a0e748dca0f3fed551a",
+        "text-buffer-1-1.utf8": "fcc5a44d0b6ce506e6f993e7addd4dc9915221b150b9d58ae32bd928405881d4",
+        "text-buffer-1-2.utf8": "a6fa67fb2a02a018484744292cc649e6a2f14740e6787beba30e724e091157e5"
+      },
+      "nativeRecordCount": 12,
+      "openSpans": [],
+      "failedSpans": [],
+      "traceTruncated": false,
+      "events": [],
+      "postflight": {
+        "protectionChanged": false,
+        "avpRunning": true,
+        "samplePresent": true,
+        "nativeProcesses": [],
+        "utc": "2026-11-10T14:14:43.1617173Z"
+      },
+      "sourceBaselinePreserved": true,
+      "originalDirtyFilesPreserved": 154,
+      "nativeSourceFilesPreserved": 254,
+      "falsePositiveOrRuleEstablished": false,
+      "protectionChanged": false,
+      "uploadedOrPublished": false
+    },
+    {
+      "format": "cycode-isolated-operation-result/1",
+      "recordedAt": "2026-11-10T14:17:27.615523+00:00",
+      "state": "completed-no-detection-observed",
+      "operation": "index",
+      "sampleSha256": "d7e08f48392b84059f1f35da6b2a86d2bf93dcde156fa33a1971425f9bcd03eb",
+      "nativePid": 56812,
+      "nativeExitCode": 0,
+      "operationRequested": true,
+      "entireFilePostconditionMatched": true,
+      "before": {
+        "base-buffer-1-1.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session.json": "34c68365d0872e4432080a6e3906f1ccd200a61e1feb3a0e748dca0f3fed551a",
+        "text-buffer-1-1.utf8": "fcc5a44d0b6ce506e6f993e7addd4dc9915221b150b9d58ae32bd928405881d4",
+        "text-buffer-1-2.utf8": "a6fa67fb2a02a018484744292cc649e6a2f14740e6787beba30e724e091157e5"
+      },
+      "after": {
+        "base-buffer-1-1.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session.json": "5cdc5b0735c147ffffe7e3a1daab1c9f4c581ace503d624de38cef9442f93096",
+        "text-buffer-1-1.utf8": "fcc5a44d0b6ce506e6f993e7addd4dc9915221b150b9d58ae32bd928405881d4",
+        "text-buffer-1-2.utf8": "a6fa67fb2a02a018484744292cc649e6a2f14740e6787beba30e724e091157e5"
+      },
+      "nativeRecordCount": 14,
+      "openSpans": [],
+      "failedSpans": [],
+      "traceTruncated": false,
+      "events": [],
+      "postflight": {
+        "utc": "2026-11-10T14:17:27.4186900Z",
+        "avpRunning": true,
+        "nativeProcesses": [],
+        "samplePresent": true,
+        "protectionChanged": false
+      },
+      "sourceBaselinePreserved": true,
+      "originalDirtyFilesPreserved": 154,
+      "nativeSourceFilesPreserved": 254,
+      "falsePositiveOrRuleEstablished": false,
+      "protectionChanged": false,
+      "uploadedOrPublished": false
+    },
+    {
+      "format": "cycode-isolated-operation-result/1",
+      "recordedAt": "2026-11-10T14:19:17.592856+00:00",
+      "state": "completed-no-detection-observed",
+      "operation": "remove",
+      "sampleSha256": "d7e08f48392b84059f1f35da6b2a86d2bf93dcde156fa33a1971425f9bcd03eb",
+      "nativePid": 24652,
+      "nativeExitCode": 0,
+      "operationRequested": true,
+      "entireFilePostconditionMatched": true,
+      "before": {
+        "base-buffer-1-1.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session.json": "5cdc5b0735c147ffffe7e3a1daab1c9f4c581ace503d624de38cef9442f93096",
+        "text-buffer-1-1.utf8": "fcc5a44d0b6ce506e6f993e7addd4dc9915221b150b9d58ae32bd928405881d4",
+        "text-buffer-1-2.utf8": "a6fa67fb2a02a018484744292cc649e6a2f14740e6787beba30e724e091157e5"
+      },
+      "after": {
+        "base-buffer-1-1.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session.json": "5cdc5b0735c147ffffe7e3a1daab1c9f4c581ace503d624de38cef9442f93096",
+        "text-buffer-1-2.utf8": "a6fa67fb2a02a018484744292cc649e6a2f14740e6787beba30e724e091157e5"
+      },
+      "nativeRecordCount": 2,
+      "openSpans": [],
+      "failedSpans": [],
+      "traceTruncated": false,
+      "events": [],
+      "postflight": {
+        "avpRunning": true,
+        "utc": "2026-11-10T14:19:17.3956655Z",
+        "samplePresent": true,
+        "nativeProcesses": [],
+        "protectionChanged": false
+      },
+      "sourceBaselinePreserved": true,
+      "originalDirtyFilesPreserved": 154,
+      "nativeSourceFilesPreserved": 254,
+      "falsePositiveOrRuleEstablished": false,
+      "protectionChanged": false,
+      "uploadedOrPublished": false
+    },
+    {
+      "format": "cycode-isolated-operation-result/1",
+      "recordedAt": "2026-11-10T14:21:24.029747+00:00",
+      "state": "interrupted",
+      "operation": "refresh",
+      "sampleSha256": "d7e08f48392b84059f1f35da6b2a86d2bf93dcde156fa33a1971425f9bcd03eb",
+      "nativePid": 45656,
+      "nativeExitCode": 5,
+      "operationRequested": true,
+      "entireFilePostconditionMatched": true,
+      "before": {
+        "base-buffer-1-1.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session.json": "34c68365d0872e4432080a6e3906f1ccd200a61e1feb3a0e748dca0f3fed551a",
+        "text-buffer-1-1.utf8": "fcc5a44d0b6ce506e6f993e7addd4dc9915221b150b9d58ae32bd928405881d4"
+      },
+      "after": {
+        "base-buffer-1-1.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session.json": "5cdc5b0735c147ffffe7e3a1daab1c9f4c581ace503d624de38cef9442f93096",
+        "text-buffer-1-2.utf8": "a6fa67fb2a02a018484744292cc649e6a2f14740e6787beba30e724e091157e5"
+      },
+      "nativeRecordCount": 64,
+      "openSpans": [],
+      "failedSpans": [],
+      "traceTruncated": false,
+      "events": [
+        {
+          "recordId": 22418621,
+          "processSha256": "d7e08f48392b84059f1f35da6b2a86d2bf93dcde156fa33a1971425f9bcd03eb",
+          "interpretation": "new avp event; stop conservatively",
+          "provider": "avp",
+          "rawContentIncluded": false,
+          "imageName": "cycode_cli.exe",
+          "eventId": 4662,
+          "utc": "2026-11-10T14:19:48.7476635Z"
+        },
+        {
+          "recordId": 22418622,
+          "processSha256": "d7e08f48392b84059f1f35da6b2a86d2bf93dcde156fa33a1971425f9bcd03eb",
+          "interpretation": "new avp event; stop conservatively",
+          "provider": "avp",
+          "rawContentIncluded": false,
+          "imageName": "cycode_cli.exe",
+          "eventId": 4662,
+          "utc": "2026-11-10T14:19:48.8219206Z"
+        }
+      ],
+      "postflight": {
+        "samplePresent": false,
+        "utc": "2026-11-10T14:21:23.8338062Z",
+        "protectionChanged": false,
+        "nativeProcesses": [],
+        "avpRunning": true
+      },
+      "sourceBaselinePreserved": true,
+      "originalDirtyFilesPreserved": 154,
+      "nativeSourceFilesPreserved": 254,
+      "falsePositiveOrRuleEstablished": false,
+      "protectionChanged": false,
+      "uploadedOrPublished": false
+    }
+  ],
+  "originalWorkspaceFilesPreserved": 154,
+  "nativeSourceFilesPreserved": 254,
+  "lastSampleStillPresent": false,
+  "caseSetup": "First three isolate an effect on exact host-preseeded cache files. The final authorised complete sequence uses the unchanged --diagnostic-files-only path, including its own initial publications, as the positive control.",
+  "controls": "20-second live pre-operation and post-operation observations, 20 seconds after normal exit plus passive event publication observation. Every process stops on a new alert; no automatic retry.",
+  "limits": [
+    "Bounded non-detection is not a clean verdict; matched event publication time is later than the activity that caused it.",
+    "Host-preseeded isolated fixtures differ in process/file history from the complete positive control; filename, filesystem state and sequence context are not individually excluded.",
+    "No vendor-internal rule, kernel/filesystem stack, vendor false-positive verdict, broader CLI/MCP/Unreal or Linux/macOS runtime acceptance.",
+    "Only private diagnostics changed in this campaign, not production recovery decisions. No antivirus fix is accepted."
+  ],
+  "sourceDataChecks": {
+    "operationPostconditionDataTests": 6,
+    "originalTraceAndCorrelationAndBoundaryDataTests": 34
+  },
+  "protectionChanged": false,
+  "binaryCopiedRenamedRelocatedOrRestored": false,
+  "installedPublishedOrUploaded": false,
+  "githubActionsUsed": false,
+  "maximumAuthorisedNativeCases": 4,
+  "maximumAuthorisedProductionRebuilds": 4,
+  "campaignScopeExhausted": true,
+  "vendorProcessBindings": {
+    "mechanism": "Installed Kaspersky official REPORT SW2 /RA export",
+    "selectedEvents": [
+      {
+        "timeAsReported": "Aujourd'hui, 10/11/2026 15:19:48",
+        "eventAsReported": "Un objet malveillant a été détecté",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "processId": 45656,
+        "threat": "PDM:Trojan.Win32.Generic",
+        "method": "Analyse comportementale"
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 10/11/2026 15:19:48",
+        "eventAsReported": "Le processus est terminé",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "processId": 45656,
+        "threat": "PDM:Trojan.Win32.Generic",
+        "method": ""
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 10/11/2026 15:19:49",
+        "eventAsReported": "Une copie de sauvegarde de l'objet a été créée",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "processId": 45656,
+        "threat": "PDM:Trojan.Win32.Generic",
+        "method": ""
+      },
+      {
+        "timeAsReported": "Aujourd'hui, 10/11/2026 15:20:25",
+        "eventAsReported": "Un objet a été supprimé",
+        "application": "CyCode native Core service",
+        "image": "cycode_cli.exe",
+        "processId": 45656,
+        "threat": "PDM:Trojan.Win32.Generic",
+        "method": ""
+      }
+    ],
+    "eventCodes": [
+      {
+        "event": "avp-22418621.xml",
+        "opaqueVendorCodesNotInterpreted": {
+          "Number": "369941",
+          "Name": "32d87a95",
+          "Confidence": "00000000",
+          "Bases": "2026.11.10 09:48:00:000"
+        }
+      },
+      {
+        "event": "avp-22418622.xml",
+        "opaqueVendorCodesNotInterpreted": {
+          "Number": "369941",
+          "Name": "28808cb6",
+          "Confidence": "00000006",
+          "Bases": "2026.11.10 09:48:00:000"
+        }
+      }
+    ],
+    "uploaded": false,
+    "rawReportIncluded": false
+  },
+  "fullSequenceCorrelation": {
+    "eventMinusLastNativeMilliseconds": 155.2395,
+    "hostShutdownRequests": [
+      {
+        "utcTime": "2026-11-10T14:19:49.769514+00:00",
+        "eventMinusShutdownMilliseconds": -1021.8505,
+        "avPublicationOrder": "before-request"
+      }
+    ],
+    "clockRegressionObserved": false,
+    "traceTruncated": false
+  },
+  "vendorProcedure": {
+    "officialReference": "https://support.kaspersky.com/kaspersky-for-windows/21.27/troubleshooting/other/1870",
+    "checkedOnClientDate": "2026-11-10",
+    "documentationVersion": "21.27; installed tested product is 21.26.4.406",
+    "pdmOnWindowsRequiresGsiReportPerVendor": true,
+    "gsiCollected": false,
+    "vendorTracesIfRequestedCollected": false,
+    "contactOrUploadPerformed": false,
+    "note": "Only the already installed console official report exports were used; no GSI/other collector downloaded or run."
+  }
+}

@@ -6,6 +6,7 @@
 #include "cycode/Solution.h"
 #include "cycode/Tools.h"
 #include <algorithm>
+#include <atomic>
 #include <fstream>
 #include <set>
 #include <regex>
@@ -14,6 +15,8 @@
 #include <system_error>
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 namespace cycode {
 using Json = nlohmann::json;
@@ -28,7 +31,15 @@ static std::string read(const fs::path &path, size_t limit = 4*1024*1024) {
 }
 static void atomic(const fs::path &path,const std::string &text) {
     if (fs::is_regular_file(path) && read(path,32*1024*1024) == text) return;
-    fs::create_directories(path.parent_path()); auto temporary = path; temporary += ".tmp-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    // A sibling name that does not extend the target's own name: see writeTextFileAtomic
+    // (common/src/TextFile.cpp) for the antivirus behavioural detection this avoids.
+    static std::atomic<unsigned> sequence{0};
+#ifdef _WIN32
+    const auto process = static_cast<unsigned long>(GetCurrentProcessId());
+#else
+    const auto process = static_cast<unsigned long>(::getpid());
+#endif
+    fs::create_directories(path.parent_path()); const auto temporary = path.parent_path()/(".cycode-msbuild-"+std::to_string(process)+"-"+std::to_string(++sequence)+".tmp");
     { std::ofstream out(temporary,std::ios::binary); out << text; out.flush(); if (!out) { fs::remove(temporary); throw std::runtime_error("Cannot save MSBuild metadata"); } }
 #ifdef _WIN32
     DWORD error = ERROR_SUCCESS;

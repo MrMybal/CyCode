@@ -1,0 +1,280 @@
+{
+  "format": "cycode-minimal-recovery-campaign/1",
+  "recordedAt": "2026-11-09T22:30:01.342550+00:00",
+  "state": "both-minimal-cases-reproduced-behavioural-detection",
+  "platformActuallyTested": "Windows x64; installed Kaspersky 21.26.4.406 active",
+  "sourceCommit": "34323ccbb042cb14d3596dd177da967a3049e6b7",
+  "nativeSourceDigest": "caa65ff3100896a3cd435787008e31599c1cafb412aeb0258888871611fbaa2e",
+  "sourceIncludesUncommittedDiagnosticChanges": true,
+  "nativeSourceFileCount": 254,
+  "ownerApprovedScope": {
+    "maximumProductionRebuilds": 2,
+    "maximumNativeCases": 2,
+    "resumeSecondCaseAfterFirstAlertAndEvidenceReviewExplicitlyApproved": true
+  },
+  "productionRebuilds": [
+    {
+      "startedAt": "2026-11-09T22:21:26.236451+00:00",
+      "finishedAt": "2026-11-09T22:21:34.156109+00:00",
+      "buildExitCode": 0,
+      "sampleSha256": "283f45d869c2416eb027c907e26b5b39031065db8334e058148d6c359f60b895",
+      "bytes": 4948480,
+      "sourceDigest": "caa65ff3100896a3cd435787008e31599c1cafb412aeb0258888871611fbaa2e",
+      "sourcesStillUnchanged": true,
+      "antivirusBaselineRecordId": 22418316,
+      "antivirusLastRecordAfterBuild": 22418316
+    },
+    {
+      "startedAt": "2026-11-09T22:26:13.848560+00:00",
+      "finishedAt": "2026-11-09T22:26:15.009376+00:00",
+      "buildExitCode": 0,
+      "sampleSha256": "ac4469a3d6c1cef29804b46bacb3743a7ec6a5f2b8a52c3252eac93343b55fb2",
+      "bytes": 4948480,
+      "sourceDigest": "caa65ff3100896a3cd435787008e31599c1cafb412aeb0258888871611fbaa2e",
+      "sourcesStillUnchanged": true,
+      "antivirusBaselineRecordId": 22418322,
+      "antivirusLastRecordAfterBuild": 22418322
+    }
+  ],
+  "cases": [
+    {
+      "format": "cycode-minimal-recovery-case-result/1",
+      "case": "recovery-only",
+      "state": "interrupted",
+      "sampleSha256": "283f45d869c2416eb027c907e26b5b39031065db8334e058148d6c359f60b895",
+      "nativeProcessId": 75716,
+      "nativeExitCode": 5,
+      "engineConstructed": false,
+      "workerStarted": false,
+      "coreServiceStarted": false,
+      "mcpStarted": false,
+      "recoveryStoreConstructed": true,
+      "initialCheckpointObservationSecondsCompleted": 20,
+      "actualSameDocumentRefreshVerified": true,
+      "oldTextRemoved": true,
+      "originalBaselineRetained": true,
+      "sourceBaselinePreserved": true,
+      "nativeTraceRecordCount": 70,
+      "closedSpanCount": 35,
+      "openFailedOrTruncatedSpans": false,
+      "originalWorkspaceFilesPreserved": 154,
+      "nativeSourceFilesPreserved": 254,
+      "events": [
+        {
+          "recordId": 22418321,
+          "imageName": "cycode_cli.exe",
+          "utc": "2026-11-09T22:24:32.8921599Z",
+          "provider": "avp",
+          "processSha256": "283f45d869c2416eb027c907e26b5b39031065db8334e058148d6c359f60b895",
+          "interpretation": "new avp event; stop conservatively",
+          "eventId": 4662,
+          "rawContentIncluded": false
+        },
+        {
+          "recordId": 22418322,
+          "imageName": "cycode_cli.exe",
+          "utc": "2026-11-09T22:24:32.9282788Z",
+          "provider": "avp",
+          "processSha256": "283f45d869c2416eb027c907e26b5b39031065db8334e058148d6c359f60b895",
+          "interpretation": "new avp event; stop conservatively",
+          "eventId": 4662,
+          "rawContentIncluded": false
+        }
+      ],
+      "postflight": {
+        "nativeProcesses": [],
+        "utc": "2026-11-09T22:26:04.2611044Z",
+        "samplePresent": false,
+        "avpRunning": true,
+        "protectionChanged": false
+      },
+      "protectionChanged": false,
+      "binaryRestoredOrRelocated": false,
+      "uploadedInstalledOrPublished": false,
+      "githubActionsUsed": false,
+      "limits": [
+        "Observation of an alert after cleanup does not identify the private vendor rule or certify a false positive.",
+        "One native case; no kernel/stack capture. A bounded non-detection is not a clean verdict.",
+        "Files-only uses synthetic session/timestamp metadata and does not construct the RecoveryStore lease."
+      ],
+      "firstEventMinusOldTextRemovalMilliseconds": 86.9839,
+      "firstEventMinusLastNativeMilliseconds": 86.9739,
+      "firstEventMinusRequestedShutdownMilliseconds": -296.8871,
+      "vendorProcessBinding": [
+        {
+          "case": "recovery-only",
+          "timeAsReported": "Aujourd'hui, 09/11/2026 23:24:32",
+          "eventAsReported": "Un objet malveillant a été détecté",
+          "application": "CyCode native Core service",
+          "image": "cycode_cli.exe",
+          "processId": 75716,
+          "threat": "PDM:Trojan.Win32.Generic",
+          "method": "Analyse comportementale"
+        },
+        {
+          "case": "recovery-only",
+          "timeAsReported": "Aujourd'hui, 09/11/2026 23:24:32",
+          "eventAsReported": "Le processus est terminé",
+          "application": "CyCode native Core service",
+          "image": "cycode_cli.exe",
+          "processId": 75716,
+          "threat": "PDM:Trojan.Win32.Generic",
+          "method": ""
+        },
+        {
+          "case": "recovery-only",
+          "timeAsReported": "Aujourd'hui, 09/11/2026 23:24:32",
+          "eventAsReported": "Une copie de sauvegarde de l'objet a été créée",
+          "application": "CyCode native Core service",
+          "image": "cycode_cli.exe",
+          "processId": 75716,
+          "threat": "PDM:Trojan.Win32.Generic",
+          "method": ""
+        },
+        {
+          "case": "recovery-only",
+          "timeAsReported": "Aujourd'hui, 09/11/2026 23:24:54",
+          "eventAsReported": "Un objet a été supprimé",
+          "application": "CyCode native Core service",
+          "image": "cycode_cli.exe",
+          "processId": 75716,
+          "threat": "PDM:Trojan.Win32.Generic",
+          "method": ""
+        }
+      ]
+    },
+    {
+      "format": "cycode-minimal-recovery-case-result/1",
+      "case": "files-only",
+      "state": "interrupted",
+      "sampleSha256": "ac4469a3d6c1cef29804b46bacb3743a7ec6a5f2b8a52c3252eac93343b55fb2",
+      "nativeProcessId": 113788,
+      "nativeExitCode": 5,
+      "engineConstructed": false,
+      "workerStarted": false,
+      "coreServiceStarted": false,
+      "mcpStarted": false,
+      "recoveryStoreConstructed": false,
+      "initialCheckpointObservationSecondsCompleted": 20,
+      "actualSameDocumentRefreshVerified": true,
+      "oldTextRemoved": true,
+      "originalBaselineRetained": true,
+      "sourceBaselinePreserved": true,
+      "nativeTraceRecordCount": 64,
+      "closedSpanCount": 32,
+      "openFailedOrTruncatedSpans": false,
+      "originalWorkspaceFilesPreserved": 154,
+      "nativeSourceFilesPreserved": 254,
+      "events": [
+        {
+          "provider": "avp",
+          "rawContentIncluded": false,
+          "processSha256": "ac4469a3d6c1cef29804b46bacb3743a7ec6a5f2b8a52c3252eac93343b55fb2",
+          "imageName": "cycode_cli.exe",
+          "interpretation": "new avp event; stop conservatively",
+          "recordId": 22418323,
+          "eventId": 4662,
+          "utc": "2026-11-09T22:26:45.6066623Z"
+        },
+        {
+          "provider": "avp",
+          "rawContentIncluded": false,
+          "processSha256": "ac4469a3d6c1cef29804b46bacb3743a7ec6a5f2b8a52c3252eac93343b55fb2",
+          "imageName": "cycode_cli.exe",
+          "interpretation": "new avp event; stop conservatively",
+          "recordId": 22418324,
+          "eventId": 4662,
+          "utc": "2026-11-09T22:26:45.6428105Z"
+        }
+      ],
+      "postflight": {
+        "utc": "2026-11-09T22:27:32.0702180Z",
+        "nativeProcesses": [],
+        "avpRunning": true,
+        "samplePresent": false,
+        "protectionChanged": false
+      },
+      "protectionChanged": false,
+      "binaryRestoredOrRelocated": false,
+      "uploadedInstalledOrPublished": false,
+      "githubActionsUsed": false,
+      "limits": [
+        "Observation of an alert after cleanup does not identify the private vendor rule or certify a false positive.",
+        "One native case; no kernel/stack capture. A bounded non-detection is not a clean verdict.",
+        "Files-only uses synthetic session/timestamp metadata and does not construct the RecoveryStore lease."
+      ],
+      "firstEventMinusOldTextRemovalMilliseconds": 52.2373,
+      "firstEventMinusLastNativeMilliseconds": 52.2373,
+      "firstEventMinusRequestedShutdownMilliseconds": -331.7307,
+      "vendorProcessBinding": [
+        {
+          "case": "files-only",
+          "timeAsReported": "Aujourd'hui, 09/11/2026 23:26:45",
+          "eventAsReported": "Un objet malveillant a été détecté",
+          "application": "CyCode native Core service",
+          "image": "cycode_cli.exe",
+          "processId": 113788,
+          "threat": "PDM:Trojan.Win32.Generic",
+          "method": "Analyse comportementale"
+        },
+        {
+          "case": "files-only",
+          "timeAsReported": "Aujourd'hui, 09/11/2026 23:26:45",
+          "eventAsReported": "Le processus est terminé",
+          "application": "CyCode native Core service",
+          "image": "cycode_cli.exe",
+          "processId": 113788,
+          "threat": "PDM:Trojan.Win32.Generic",
+          "method": ""
+        },
+        {
+          "case": "files-only",
+          "timeAsReported": "Aujourd'hui, 09/11/2026 23:26:45",
+          "eventAsReported": "Une copie de sauvegarde de l'objet a été créée",
+          "application": "CyCode native Core service",
+          "image": "cycode_cli.exe",
+          "processId": 113788,
+          "threat": "PDM:Trojan.Win32.Generic",
+          "method": ""
+        },
+        {
+          "case": "files-only",
+          "timeAsReported": "Aujourd'hui, 09/11/2026 23:27:05",
+          "eventAsReported": "Un objet a été supprimé",
+          "application": "CyCode native Core service",
+          "image": "cycode_cli.exe",
+          "processId": 113788,
+          "threat": "PDM:Trojan.Win32.Generic",
+          "method": ""
+        }
+      ]
+    }
+  ],
+  "finding": "In the original production CLI, two real checkpoints reproduce the alert without Engine, workers, CoreService, SDK or MCP. The reduced file-only path also reproduces it without a RecoveryStore instance or lease: production atomic writes/publication, index replacement, then obsolete owned-text removal. This identifies a small sufficient code path in this executable, not a single offending call or private vendor rule.",
+  "crossSampleLimit": "Kaspersky removed the first sample. The owner-approved second relink uses identical source and compiler flags but a different executable SHA-256. This is not a same-sample A/B comparison and does not exclude executable identity/reputation effects.",
+  "cleanupBoundaryEvidence": {
+    "result": "Same-document index refresh plus a measured 15000.832 ms pause completed without an observed alert while old payloads stayed intact. Matching alert followed actual old-text removal by 88.6655 ms.",
+    "record": "recovery-cleanup-boundary-20261109.json"
+  },
+  "checks": {
+    "traceDataTests": 20,
+    "correlationDataTests": 10,
+    "boundarySnapshotDataTests": 4,
+    "nativeTestExecutablesBuiltOrRun": false,
+    "minimalCppFrontEndChecksPassed": true,
+    "originalWorkspaceFilesPreserved": 154,
+    "nativeSourceFilesPreservedAcrossBothRuns": 254
+  },
+  "remaining": [
+    "No accepted antivirus fix or vendor false-positive verdict.",
+    "No proof that a specific filesystem API alone causes classification; event publication follows the triggering activity.",
+    "No standalone small diagnostic executable, Windows kernel/stack trace, vendor-internal trace or vendor submission.",
+    "Normal CLI/MCP, real Unreal acceptance and Linux/macOS runtime were not revalidated.",
+    "This finite campaign is exhausted; no third build/case was performed."
+  ],
+  "protectionChanged": false,
+  "quarantineRestored": false,
+  "binaryCopiedOrRelocated": false,
+  "installedPublishedOrUploaded": false,
+  "githubActionsUsed": false
+}

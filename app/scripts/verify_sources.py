@@ -10,15 +10,20 @@ APP = Path(__file__).resolve().parents[1]
 def main():
     counts = {'.py': 0, '.json': 0}
     failures = []
-    for path in sorted(APP.rglob('*')):
+    paths = list(APP.rglob('*'))
+    companion = APP.parent / 'apps/CyCodeUpdater'
+    if companion.is_dir():
+        paths.extend(companion.rglob('*'))
+    for path in sorted(paths):
         if path.suffix not in counts or not path.is_file():
             continue
         if path.is_relative_to(APP / 'help') or path.is_relative_to(APP / 'Documentation'):
             continue
+        base = APP if path.is_relative_to(APP) else companion
         if any(part in {'__pycache__', '.git', 'runtime', 'node_modules', '.cache', 'packages', '.venv', 'venv'}
-               for part in path.relative_to(APP).parts):
+               for part in path.relative_to(base).parts):
             continue
-        if not path.resolve().is_relative_to(APP):
+        if not path.resolve().is_relative_to(base):
             failures.append(f'{path}: source file resolves outside app/')
             continue
         try:
@@ -29,7 +34,7 @@ def main():
                 json.loads(source)
             counts[path.suffix] += 1
         except (OSError, UnicodeError, SyntaxError, ValueError) as error:
-            failures.append(f'{path.relative_to(APP)}: {error}')
+            failures.append(f'{path.relative_to(base)}: {error}')
     if failures:
         print('\n'.join(failures), file=sys.stderr)
         return 1

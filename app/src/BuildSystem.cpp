@@ -5,6 +5,7 @@
 #include "cycode/CMakePresets.h"
 #include "cycode/Tools.h"
 #include <algorithm>
+#include <atomic>
 #include <cstdlib>
 #include <fstream>
 #include <memory>
@@ -98,8 +99,16 @@ static void writeAtomic(const fs::path &path, const std::string &text) {
     if (fs::exists(path) && read(path) == text)
         return;
     fs::create_directories(path.parent_path());
-    auto temporary = path;
-    temporary += ".tmp-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    // A sibling name that does not extend the target's own name: see writeTextFileAtomic
+    // (common/src/TextFile.cpp) for the antivirus behavioural detection this avoids.
+    static std::atomic<unsigned> sequence{0};
+#ifdef _WIN32
+    const auto process = static_cast<unsigned long>(GetCurrentProcessId());
+#else
+    const auto process = static_cast<unsigned long>(::getpid());
+#endif
+    const auto temporary = path.parent_path() / (".cycode-build-" + std::to_string(process) + "-" +
+                                                 std::to_string(++sequence) + ".tmp");
     {
         std::ofstream out(temporary, std::ios::binary);
         out << text;

@@ -1,0 +1,215 @@
+{
+  "format": "cycode-recovery-operation-isolation-assessment/1",
+  "createdAt": "2026-11-09T21:20:39.894810+00:00",
+  "sourceCommit": "34323ccbb042cb14d3596dd177da967a3049e6b7",
+  "nativeSourceDigest": "cbf1271f11398f5d6c339e44d64ccceb9876ba9e147053b8b669cacaed4d6ab6",
+  "sourceIncludesUncommittedDiagnosticChanges": true,
+  "sampleSha256": "6688d8d173bdee6bc0d6eec46e3b46f962fd8d2c5490df79ae64ed01e77846dc",
+  "sameSampleForBothCases": true,
+  "buildExitCode": 0,
+  "state": "interrupted-on-new-detection",
+  "cases": [
+    {
+      "scenario": "index-replacement-without-payload-removal",
+      "state": "completed-no-detection-observed",
+      "nativeExitCode": 0,
+      "completedMethods": [
+        "documents.create",
+        "documents.replace",
+        "recovery.flush",
+        "documents.create",
+        "documents.replace",
+        "recovery.flush"
+      ],
+      "initialCheckpointObservationSecondsAlive": 20,
+      "discriminatingObservationCompleted": true,
+      "postExitObservationSecondsCompleted": 20,
+      "traceRecords": 184,
+      "closedSpans": 92,
+      "indexReplacements": [
+        {
+          "span": 68,
+          "parent": 63,
+          "event": "file.replace.existing",
+          "outcome": "success",
+          "systemError": 0,
+          "startSeq": 131,
+          "endSeq": 132,
+          "durationMicros": 1409
+        }
+      ],
+      "oldTextRemovals": [],
+      "oldBaselineRemovals": [],
+      "nativeShutdownSpans": [
+        {
+          "span": 89,
+          "parent": 0,
+          "event": "service.drain",
+          "outcome": "returned",
+          "systemError": 0,
+          "startSeq": 177,
+          "endSeq": 178,
+          "durationMicros": 68
+        },
+        {
+          "span": 90,
+          "parent": 0,
+          "event": "engine.shutdown",
+          "outcome": "returned",
+          "systemError": 0,
+          "startSeq": 179,
+          "endSeq": 182,
+          "durationMicros": 14583
+        },
+        {
+          "span": 92,
+          "parent": 0,
+          "event": "recovery.store.shutdown",
+          "outcome": "skipped",
+          "systemError": 0,
+          "startSeq": 183,
+          "endSeq": 184,
+          "durationMicros": 10
+        }
+      ],
+      "lastNativeRecord": {
+        "format": "cycode-native-trace/1",
+        "seq": 184,
+        "utcMicros": 1794259000493549,
+        "span": 92,
+        "parent": 0,
+        "event": "recovery.store.shutdown",
+        "phase": "end",
+        "outcome": "skipped",
+        "systemError": 0
+      },
+      "oldPayloadCount": 2,
+      "newPayloadCount": 4,
+      "persistedCheckpointCount": 2,
+      "lastResponseUtc": "2026-11-09T21:16:20.413368+00:00",
+      "shutdownRequestedUtc": "2026-11-09T21:16:40.477613+00:00",
+      "firstAvMillisecondsAfterResponse": null,
+      "firstAvMillisecondsBeforeRequestedShutdown": null
+    },
+    {
+      "scenario": "ordinary-refresh-with-old-text-removal",
+      "state": "interrupted",
+      "nativeExitCode": 5,
+      "completedMethods": [
+        "documents.create",
+        "documents.replace",
+        "recovery.flush",
+        "documents.replace",
+        "recovery.flush"
+      ],
+      "initialCheckpointObservationSecondsAlive": 20,
+      "discriminatingObservationCompleted": false,
+      "postExitObservationSecondsCompleted": 0,
+      "traceRecords": 124,
+      "closedSpans": 62,
+      "indexReplacements": [
+        {
+          "span": 61,
+          "parent": 56,
+          "event": "file.replace.existing",
+          "outcome": "success",
+          "systemError": 0,
+          "startSeq": 117,
+          "endSeq": 118,
+          "durationMicros": 1237
+        }
+      ],
+      "oldTextRemovals": [
+        {
+          "span": 62,
+          "parent": 48,
+          "event": "recovery.payload.text.remove",
+          "outcome": "success",
+          "systemError": 0,
+          "startSeq": 121,
+          "endSeq": 122,
+          "durationMicros": 150
+        }
+      ],
+      "oldBaselineRemovals": [],
+      "nativeShutdownSpans": [],
+      "lastNativeRecord": {
+        "format": "cycode-native-trace/1",
+        "seq": 124,
+        "utcMicros": 1794259044114130,
+        "span": 47,
+        "parent": 0,
+        "event": "recovery.scan",
+        "phase": "end",
+        "outcome": "returned",
+        "systemError": 0
+      },
+      "oldPayloadCount": 2,
+      "newPayloadCount": 2,
+      "persistedCheckpointCount": 1,
+      "lastResponseUtc": "2026-11-09T21:17:24.167441+00:00",
+      "shutdownRequestedUtc": "2026-11-09T21:17:24.965414+00:00",
+      "firstAvMillisecondsAfterResponse": 23.7527,
+      "firstAvMillisecondsBeforeRequestedShutdown": 774.2203
+    }
+  ],
+  "events": [
+    {
+      "provider": "avp",
+      "eventId": "4662",
+      "recordId": "22418304",
+      "utcTime": "2026-11-09T21:17:24.1911937Z",
+      "processSha256": "6688d8d173bdee6bc0d6eec46e3b46f962fd8d2c5490df79ae64ed01e77846dc",
+      "databaseVersionAsReported": "2026.11.09 15:19:00:000",
+      "detectionNumber": "369941",
+      "opaqueName": "32d87a95",
+      "confidenceCodeUninterpreted": "00000000",
+      "rawContentIncluded": false
+    },
+    {
+      "provider": "avp",
+      "eventId": "4662",
+      "recordId": "22418305",
+      "utcTime": "2026-11-09T21:17:24.2283223Z",
+      "processSha256": "6688d8d173bdee6bc0d6eec46e3b46f962fd8d2c5490df79ae64ed01e77846dc",
+      "databaseVersionAsReported": "2026.11.09 15:19:00:000",
+      "detectionNumber": "369941",
+      "opaqueName": "28808cb6",
+      "confidenceCodeUninterpreted": "00000006",
+      "rawContentIncluded": false
+    }
+  ],
+  "mcpServerStarted": false,
+  "cyToolsRuntimeStarted": false,
+  "projectCompilerStartedDuringScenarios": false,
+  "diagnosticTraceEnabled": true,
+  "finding": "With one exact production sample, replacement of the existing recovery index while retaining all old payloads completed with exit 0 and no AV event through 20 seconds after exit. Ordinary refresh of one checkpoint, including old-text removal, reproduced detection after a separate clean 20-second initial-checkpoint observation and before requested shutdown.",
+  "strongestCandidate": "Ordinary old-text checkpoint removal in combination with preceding recovery writes",
+  "whatIsNotProven": "The exact triggering Windows call or vendor rule. One ordered comparison does not remove case-order, reputation, payload/content and timing differences, trace I/O or delayed classification. No false-positive or corrected antivirus verdict is established.",
+  "acceptance": "Overall diagnostic interrupted; the first case is a bounded non-detection observation, not a safety certification. No further native run follows the alert.",
+  "samplePresentAtPostflight": false,
+  "coreProcessesAtPostflight": [],
+  "originalWorkspaceFilesPreserved": 154,
+  "originalWorkspaceChangedPaths": [],
+  "nativeSourcesChangedDuringComparison": [],
+  "protectionChanged": false,
+  "sampleCopiedOrRestored": false,
+  "uploaded": false,
+  "installationOrPublication": false,
+  "githubActionsUsed": false,
+  "nativeHold": "active again following avp 22418304/22418305",
+  "standardLibraryRemovalSourceObservation": {
+    "compilerVersion": "19.40.33821.0",
+    "compilerId": "MSVC",
+    "toolsetVersion": "14.40.33807",
+    "standardLibrarySourceSha256": "d6120ebd60fea3311c5089daedb2735f34998621cabaa1ce9098d040cb64c752",
+    "removeImplementationCallsSetFileInformationByHandle": true,
+    "sourceFlagsPresent": [
+      "FILE_DISPOSITION_FLAG_DELETE",
+      "FILE_DISPOSITION_FLAG_POSIX_SEMANTICS",
+      "FILE_DISPOSITION_FLAG_IGNORE_READONLY_ATTRIBUTE"
+    ],
+    "classification": "static toolset source observation; actual loaded CRT branch and exact AV rule are not observed",
+    "coreExecuted": false
+  }
+}

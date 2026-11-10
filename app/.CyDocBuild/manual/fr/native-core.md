@@ -171,6 +171,15 @@ relances sont suspendues ; la validation MCP finale n’est pas déclarée réus
 Les sources disque sont intactes. Les contrôles de source, données et documentation
 continuent, sans contournement de protection ni redémarrage automatique.
 
+**Livraison actuelle :** les noms temporaires indépendants corrigent le
+motif de sauvegarde/publication observé. Le propriétaire a autorisé la
+compilation de production corrigée. Recherches et navigation MCP CyCodeIDE
+et douze cycles de sauvegarde/récupération passent avec Kaspersky actif,
+sans nouvelle alerte observée. Les paragraphes d’enquête ci-dessous sont
+historiques : incidents, suspensions et validations interrompues. Ils ne
+décrivent pas la procédure actuelle. Aucun verdict de faux positif de
+l’éditeur n’est revendiqué. Voir [l’installation](core-installation#distribution).
+
 ## Enquête antivirus Windows {#antivirus}
 
 Le propriétaire a signalé une alerte PDM sur le CLI de production. Le comportement

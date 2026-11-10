@@ -2,6 +2,7 @@
 #include <string_view>
 #include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
+#include "cycode/NativeTrace.h"
 #include "cycode/CompilerLocation.h"
 #include "cycode/Solution.h"
 #include "cycode/TextEdits.h"
@@ -117,6 +118,7 @@ Engine::Engine(std::filesystem::path root, std::filesystem::path languagePrefere
     });
 }
 Engine::~Engine() {
+    NativeTraceScope trace(NativeTraceEvent::EngineShutdown);
     shuttingDown_=true;
     fileIndex_.stop();
     debugger_.requestShutdown();
@@ -878,6 +880,7 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         guard.unlock();retireRecovery(key);return result;
     }
     if (method == "documents.replace" || method == "documents.save") {
+        NativeTraceScope trace(method=="documents.save" ? NativeTraceEvent::DocumentSave : NativeTraceEvent::DocumentReplace);
         auto path = params.at("path").get<std::string>();
         auto &doc = openLocked(path);
         auto key = documentKey(path);

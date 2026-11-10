@@ -1,7 +1,9 @@
 #include "cycode/Engine.h"
+#include "cycode/NativeTrace.h"
 #include "cycode/TextFile.h"
 namespace cycode {
 void Engine::checkpointRecovery() {
+    NativeTraceScope trace(NativeTraceEvent::RecoveryScan);
     std::lock_guard serial(recoveryMutex_);
     Json errors = Json::array();
     std::vector<RecoveryStore::Snapshot> snapshots;
@@ -39,6 +41,7 @@ void Engine::checkpointRecovery() {
     recoveryErrors_ = std::move(errors);
 }
 void Engine::retireRecovery(const std::string &path) {
+    NativeTraceScope trace(NativeTraceEvent::RecoveryRetire);
     std::lock_guard serial(recoveryMutex_);
     {
         std::lock_guard lock(mutex_);

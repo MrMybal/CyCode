@@ -14,6 +14,7 @@ AppVersion={#AppVersion}
 AppPublisher=Cyberalien
 AppPublisherURL=https://github.com/MrMybal/CyCode
 AppSupportURL=https://github.com/MrMybal/CyCode/issues
+AppUpdatesURL=https://github.com/MrMybal/CyCode/releases
 DefaultDirName={localappdata}\Programs\CyCodeCore
 DefaultGroupName=CyCodeCore
 PrivilegesRequired=lowest
@@ -34,9 +35,26 @@ DisableProgramGroupPage=yes
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
+[Components]
+Name: "core"; Description: "CyCodeCore"; Types: full compact custom; Flags: fixed
+Name: "updater"; Description: "{cm:UpdaterComponent}"; Types: full
+[Tasks]
+Name: "updaterstartup"; Description: "{cm:UpdaterStartup}"; Components: updater; Flags: unchecked
 [Files]
-Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "apps\CyCodeUpdater\*"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceDir}\apps\CyCodeUpdater\*"; DestDir: "{app}\apps\CyCodeUpdater"; Components: updater; Flags: ignoreversion recursesubdirs createallsubdirs
+[Icons]
+Name: "{group}\CyCodeUpdater"; Filename: "{app}\tools\python\pythonw.exe"; Parameters: "-B ""{app}\apps\CyCodeUpdater\main.py"" --language {cm:UpdaterLanguage}"; WorkingDir: "{app}"; IconFilename: "{app}\icons\CyCode.ico"; Components: updater
+[Registry]
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "CyCodeCoreUpdater"; Flags: deletevalue
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CyCodeCoreUpdater"; ValueData: """{app}\tools\python\pythonw.exe"" -B ""{app}\apps\CyCodeUpdater\main.py"" --background --language {cm:UpdaterLanguage}"; Flags: uninsdeletevalue; Components: updater; Tasks: updaterstartup
 [CustomMessages]
+english.UpdaterComponent=CyCodeUpdater - GitHub updates
+french.UpdaterComponent=CyCodeUpdater - mises à jour GitHub
+english.UpdaterStartup=Check for updates when I sign in to Windows
+french.UpdaterStartup=Vérifier les mises à jour à l'ouverture de Windows
+english.UpdaterLanguage=en
+french.UpdaterLanguage=fr
 english.AgentProject=Connect an AI agent
 french.AgentProject=Connecter un agent IA
 english.AgentDescription=Choose an existing project for the local Codex MCP connection, or leave empty to install only the skill.

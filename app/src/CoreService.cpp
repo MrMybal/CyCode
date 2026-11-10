@@ -1,4 +1,5 @@
 #include "cycode/CoreService.h"
+#include "cycode/NativeTrace.h"
 #include <random>
 #include <sstream>
 
@@ -36,6 +37,7 @@ Json CoreService::respond(const Json &input) noexcept {
     });
 }
 void CoreService::beginShutdown() noexcept {
+    NativeTraceScope trace(NativeTraceEvent::ServiceDrain);
     if (draining_.exchange(true)) return;
     for (const auto *method : {"build.cancel","tests.cancel","project.cancel","analysis.cancel"})
         try { engine_.dispatch(method); } catch (...) {}
