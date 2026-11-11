@@ -34,7 +34,11 @@ def collect(root, bundle, *, agents_only=False, executable=None, build=None, out
              'app/MCPMethods.json', 'app/requirements.txt', 'app/LICENSE-CyToolsCore.txt',
              'app/THIRD_PARTY_NOTICES.md', 'app/mcp-runtime.lock.json',
              'app/scripts/install_core_agents.py', 'apps/CyCodeUpdater/main.py', 'app/Docs/Agents.md',
-             'app/Docs/CoreInstallation.md', 'app/Docs/WindowsSecurity.md']
+             'app/Docs/CoreInstallation.md', 'app/Docs/WindowsSecurity.md',
+             'app/Docs/LargeProjects.md', 'app/Docs/AnalysisProgress.md',
+             'app/Docs/CoreExtraction.md', 'app/Docs/AdvancedDebugging.md', 'app/Docs/CoreQuality.md',
+             'app/Docs/Benchmarks/core-capacity-20261111.json',
+             'app/Docs/Benchmarks/core-delivery-20261111.json']
     for name in names:
         entries[name] = read_file(root / name)
     skills = root / 'app/skills/cycode-core'
