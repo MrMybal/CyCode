@@ -13,7 +13,7 @@
       "kind": "developer-reference",
       "target": "core-agents#connect",
       "legacyId": "reference-app-docs-agents",
-      "sourceSha256": "4e1d2e6d57aa5f444c99b03f12819e20e7c9539d7f641874b452c0c86253150b"
+      "sourceSha256": "72f0eb7369f24ed319a1454c4c2be44cebc304d33fdf09516b670b244e2a7151"
     },
     {
       "source": "Docs/Architecture.md",
@@ -62,7 +62,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-capabilitycoverage",
-      "sourceSha256": "be87cf310e39a5af103a4971b1e276b56143af12d7309aa8f32366b78a0bd30a"
+      "sourceSha256": "169b15f58915c6c38ea01198c240bccc33bcfbcf1364a613b06472cf902d754b"
     },
     {
       "source": "Docs/CargoBuilds.md",
@@ -629,7 +629,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "41082cbba949a2755dc976c632c7fd23f52106759ed72feb82ad8e8a1ef6e6f9"
+      "sourceSha256": "41fb0abb071e828f48cdbe67a355f2a809347b679c89e19fcfd7c7e4b69d41f5"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -678,7 +678,7 @@
       "kind": "developer-reference",
       "target": "large-projects#storage",
       "legacyId": "reference-app-docs-largeprojects",
-      "sourceSha256": "d197f31fafc9095254c0914f486b741ce7fa62d47a8bf7975775f6b00e128764"
+      "sourceSha256": "b7416912c87a24295adbbd24df40e68c927bbe3e1669a80910ba7e8f33b70b35"
     }
   ]
 }

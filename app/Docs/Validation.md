@@ -4565,3 +4565,29 @@ actual Unreal AActor read-only navigation and native detached/two-instance lifec
 passed after the completion transaction fix. The current root executable also opened
 CyTrace_Plugin.sln read-only: 57 projects, 20 configurations and four existing missing
 project references; no build or project-source modification was performed.
+
+
+## Native shared history and atomic receipts — 2026-11-11
+
+The canonical catalogue now exposes 252 operations. Source/data contracts cover
+required live history/document guards, noncancellable native preflight, write
+permissions, complete commit receipts and nullable history heads/retention.
+The production Windows x64 Release Core and TextBridge static libraries compile
+with BUILD_TESTING=OFF, CLI/providers/updater/private diagnostics disabled. No
+application or native fixture/test executable is built or run by this validation.
+Kaspersky remained active; no new detection was observed during that build.
+
+The existing optional cycode_tests suite gains ordinary/paged two-step Undo/Redo,
+causal legacy Undo, stable receipts, abandoned/stale replay refusal, disk conflicts,
+preview-cache retention, history bounds and close/reopen identity invalidation.
+Those new native scenarios are not executed here. Neither schema tests nor library
+compilation prove their runtime outcomes. New Windows GUI, SDK/native history
+execution, Linux/macOS and concurrent-agent acceptance remain pending. GitHub
+Actions stays disabled. See [the native contract](LargeProjects.md#history).
+
+The source/data checker passed 107 Python and 53 JSON files; all 50 contract
+unittests passed. The complete offline CyDoc export passed with 664 localized
+pages, 6,779 links/routes, 97 reviewed guide mappings, 27 native help topics and
+one explicit IDE help route. DOM checks passed routing, search, EN/FR, six themes,
+media/Escape and accessible controls. These are source/data/documentation checks,
+not native history or desktop runtime acceptance.

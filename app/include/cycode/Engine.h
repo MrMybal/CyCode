@@ -203,6 +203,9 @@ class Engine {
     std::map<std::string, NavigationContext> navigationContexts_;
     Json changeOperation(const std::string &, const Json &);
     Json changeDescription(const std::string &) const;
+    Json changeHistoryOperation(const std::string &, const Json &);
+    bool retainedChange(const std::string &) const;
+    void pruneChangeHistory(); // mutex_ held; closed/rebound documents invalidate history
     Json sourceOperation(const std::string &, const Json &);
     Json sourceLocationLocked(const std::string &, const Json &, bool);
     std::pair<Document *, std::filesystem::path> semanticDocumentLocked(const std::string &);
@@ -222,7 +225,7 @@ class Engine {
     struct FileChange {
         std::string path, before, after, disk;
         Json edits;
-        std::uint64_t revision = 0, appliedRevision = 0;
+        std::uint64_t revision = 0, appliedRevision = 0, identity = 0;
         struct Stored {
             StoredBlob before, after, disk;
         };
@@ -236,6 +239,9 @@ class Engine {
         uint64_t scopeGeneration = 0, scopeWorkspaceRevision = 0, scopeEpoch = 0;
         std::string scopeBackend;
         std::string title, state = "preview";
+        std::string historySource, historyDirection;
+        uint64_t historyRevision = 0;
+        Json lastCommit;
         std::vector<FileChange> files;
         std::chrono::steady_clock::time_point created = std::chrono::steady_clock::now();
     };
@@ -283,6 +289,9 @@ class Engine {
     size_t nextCompletion_ = 1;
     std::map<std::string, ChangePlan> changes_;
     size_t nextChange_ = 1;
+    static constexpr size_t changeHistoryLimit_ = 256;
+    std::vector<std::string> changeUndo_, changeRedo_;
+    uint64_t changeHistoryRevision_ = 1, changeHistoryDropped_ = 0;
     struct ExternalSource {
         std::filesystem::path path;
         Document document;

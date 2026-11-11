@@ -5,7 +5,7 @@ description: Atomic publication, compiler inspections, guarded C++ transformatio
 section: Start here
 parent: native-core
 order: 264
-revision: 2
+revision: 3
 ---
 
 
@@ -124,6 +124,18 @@ No generated test executable or graphical IDE is launched by these checks.
 The Unreal regression uses the existing real UBT database, inventories the scope,
 continues a small batch and exercises DateTime/HTTP rename/Apply/Undo without saving
 engine sources. Exact counts and timings belong to the recorded benchmark evidence.
+
+## Use the IDE view {#ide}
+
+In **View → Analysis and inspections → C++ inspections**, select a saved C++ source,
+its real compilation database and one of the five native profiles. The configured
+database can be copied from the existing project build configuration. An empty
+tool field uses Core discovery; missing tools are reported. Run and cancel the
+inspection explicitly. Results show stale/truncated state, diagnostics and native
+output. Locations use one-based UTF-8 byte columns; they are not zero-based LSP
+UTF-16 positions. Inspection does not apply fixes or save the source.
+
+Production compilation with offline help passed on Windows; desktop interaction acceptance is still pending.
 
 ## Remaining scope {#limits}
 

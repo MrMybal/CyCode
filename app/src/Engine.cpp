@@ -1121,7 +1121,10 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         return resolveSymbol(params);
     if (method == "language.rename" || method == "language.format")
         return prepareChange(method, params);
-    if (method == "changes.preview" || method == "changes.apply" || method == "changes.undo")
+    if (method == "changes.historyStatus" || method == "changes.historyPrepare")
+        return changeHistoryOperation(method, params);
+    if (method == "changes.preview" || method == "changes.apply" || method == "changes.undo" ||
+        method == "changes.status")
         return changeOperation(method, params);
     if (method == "sources.read" || method == "sources.close")
         return sourceOperation(method, params);

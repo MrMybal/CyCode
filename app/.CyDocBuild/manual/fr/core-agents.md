@@ -5,7 +5,7 @@ description: Core persistant, contrats MCP complets et modifications protégées
 section: API et extensions
 parent: mcp
 order: 261
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 ## Se connecter {#connect}
@@ -13,7 +13,7 @@ sourceRevision: 4
 Installez la distribution autonome et le skill IA avec [le guide d’installation](core-installation#distribution).
 
 CyCode Core expose le même Engine natif persistant aux applications et aux IA.
-Les 243 opérations métier deviennent des outils `op_<operationId>` grâce au
+Les 252 opérations métier deviennent des outils `op_<operationId>` grâce au
 véritable adaptateur MCP de CyToolsCore. Le SDK ajoute ses contrôles de tâches,
 de découverte et d’identités. Une opération déclarée ne prouve pas l’installation
 d’un moteur de langage, compilateur, débogueur, fournisseur VCS ou plugin.
@@ -104,7 +104,7 @@ généré `app/MCPMethods.json` contient chaque nom MCP, méthode native, schém
 complet d’entrée/sortie, permission, groupe exclusif et capacité de progression
 ou d’annulation, directement issus du contrat exécutable. Régénérez-le avec
 `python app/scripts/generate_mcp_reference.py` ; `--check` le vérifie sans écrire.
-La référence HTML bilingue regroupe ces mêmes 243 contrats par domaine. Elle
+La référence HTML bilingue regroupe ces mêmes 252 contrats par domaine. Elle
 ne décrit pas les fonctions C++ internes et n’expose pas les contrôles natifs
 privés d’arrêt ou d’annulation de l’hôte.
 
@@ -281,3 +281,15 @@ Linux/macOS, les nouveaux installateurs et l’acceptation graphique demandent
 des contrôles distincts. GitHub Actions reste suspendu par le propriétaire.
 
 [Texte paginé et grosses transactions natives](doc:large-projects#agents).
+
+
+## Historique natif commun {#history}
+
+Utilisez `changes_history_status`, `changes_history_prepare`, puis examinez et
+appliquez le plan pour un Undo/Redo successif sur le même Engine. Gardez les
+identités/révisions de tous les documents et la tête/révision de l’historique.
+`changes_apply` / `changes_undo` donnent les métadonnées réellement commitées dans
+`commit` ; un échec de notification reste distinct d’une édition refusée.
+Rapprochez une réponse RPC perdue via `changes_status` avant toute répétition.
+Cet historique natif borné reste local au processus, sans second propriétaire
+de texte ni récupération persistante. Voir [le contrat complet](doc:large-projects#history).

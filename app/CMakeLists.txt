@@ -74,6 +74,7 @@ if(WIN32)
 endif()
 endif()
 add_library(cycode_core STATIC src/PagedDocuments.cpp src/Commands.cpp src/TextEdits.cpp src/Semantic.cpp src/SemanticPreparation.cpp src/NavigationReconciliation.cpp src/Engine.cpp src/Plugins.cpp src/Bridge.cpp src/CoreService.cpp src/LanguageClient.cpp src/LanguageService.cpp src/BuildSystem.cpp src/Solution.cpp src/UnrealProject.cpp)
+target_sources(cycode_core PRIVATE src/ChangeHistory.cpp)
 
 # Only the native core's completion adapter uses these static libraries. Keep
 # their tools, JIT, test executables and unused character widths out of the build.
@@ -397,7 +398,7 @@ if(BUILD_TESTING)
   target_link_libraries(cycode_language_lifecycle_tests PRIVATE cycode_core)
   add_test(NAME language_lifecycle COMMAND cycode_language_lifecycle_tests)
   set_tests_properties(language_lifecycle PROPERTIES TIMEOUT 25)
-  add_executable(cycode_tests tests/core_tests.cpp tests/core_service_tests.cpp tests/native_document_tests.cpp tests/local_endpoint_tests.cpp tests/shared_snippet_tests.cpp tests/related_files_tests.cpp tests/workspace_session_tests.cpp tests/draft_document_tests.cpp tests/hierarchy_tests.cpp tests/semantic_token_tests.cpp tests/annotation_tests.cpp tests/update_tests.cpp)
+  add_executable(cycode_tests tests/core_tests.cpp tests/core_service_tests.cpp tests/native_document_tests.cpp tests/local_endpoint_tests.cpp tests/shared_snippet_tests.cpp tests/related_files_tests.cpp tests/workspace_session_tests.cpp tests/draft_document_tests.cpp tests/hierarchy_tests.cpp tests/semantic_token_tests.cpp tests/annotation_tests.cpp tests/update_tests.cpp tests/change_history_tests.cpp)
   target_sources(cycode_tests PRIVATE tests/update_recovery_tests.cpp tests/update_storage_tests.cpp tests/update_download_tests.cpp tests/update_install_tests.cpp tests/update_history_tests.cpp)
   target_link_libraries(cycode_tests PRIVATE cycode_core cycode_updates CyCode::TextSession)
   add_dependencies(cycode_tests cycode_sample)

@@ -43,7 +43,7 @@ de l’interface de bureau appartient à CyCodeIDE, et celui de l’éditeur de 
 autonome à CyCodeReader. Les anciens téléchargements CyCode 0.2.x correspondent
 à l’application de bureau précédente. Les sources ajoutent `CyCode::PagedText`,
 lecture protégée par lignes/UTF-16, Enregistrer sous exclusif et récupération
-paginée explicite après crash. Le catalogue canonique expose 249 opérations
+paginée explicite après crash. Le catalogue canonique expose 252 opérations
 publiques. Voir [les grands textes et projets](app/Docs/LargeProjects.md),
 [l’analyse persistante](app/Docs/AnalysisProgress.md) et
 [l’intégration native](app/Docs/CoreExtraction.md). Ces changements de sources

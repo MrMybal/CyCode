@@ -131,6 +131,55 @@ need RAM, and large transaction validation can hold the Engine mutex. Disk space
 protocol frames, backend limits and allocation failures remain real constraints.
 No hardware-unlimited or filesystem-race/power-loss guarantee is claimed.
 
+## Shared native Undo/Redo and commit receipts {#history}
+
+The Engine owns one process-local history for ordinary and paged `changes.apply`
+transactions. Views retain issued IDs and intentions, never a second LargeText,
+text copy or Undo stack. This history does not include direct document replacement,
+resource operations, settings, VCS or edits from a separate Engine process.
+
+1. Read `changes_history_status`. Its `undo` and `redo` heads contain the original
+   transaction ID, title and affected paths. Use the returned history `revision`.
+2. Collect current identity/revision metadata for **every** affected document from
+   the same Engine. Prepare `changes_history_prepare` with `id`, `direction`
+   (`undo` or `redo`), `expectedHistoryRevision` and `documents` containing
+   `path`, `expectedDocumentId` and `expectedRevision` for each file.
+3. Preview the issued replay with bounded `changes_preview` pages. It restores
+   immutable native snapshots; an empty textual `edits` array is expected. Apply
+   its new issued ID with `changes_apply`. Redo retains required confirmations,
+   scoped to this new plan. Preparation itself never mutates a buffer or saves.
+
+The current history head, live identities/revisions, exact source snapshots or
+content, disk baselines and target payloads are checked again before the first
+buffer swap. A stale plan rejects the complete transaction. A new applied edit
+clears the Redo branch. Legacy `changes_undo` remains available with its strict
+live guards; native causal restoration permits consecutive legacy undos.
+
+The history pins up to **256 original transactions** beyond the ordinary
+8-preview/20-minute eviction policy. `retentionLimit` and `dropped` expose this
+bound and entries discarded by retention or document close/path rebinding.
+Closing/reopening creates a different identity; stale history cannot target it.
+History is not a durable recovery checkpoint; use the explicit recovery workflow
+above for restart. Spool payloads still require disk space; native preflight may
+hold the Engine mutex, and history preparation/commit are noncancellable.
+
+Apply/Undo return `commit` with the actual committed transaction, action and
+history revision, plus `{path,id,revision,dirty,bytes,storage}` for every modified
+document. The receipt is staged before mutation under the same mutex. In-process
+callers acknowledge this revision directly; a later agent edit may already have
+advanced the live document. Do not substitute a post-commit read for the receipt.
+A post-commit notification failure sets `notificationsComplete: false`; the edit
+has succeeded and may require a separate view refresh. For an in-process call,
+a preflight exception means no commit. RPC transport/serialization loss remains
+ambiguous: query `changes_status` using the issued plan ID, inspect its state and
+latest receipt, and reconcile before another mutation. Unknown/evicted IDs are
+not permission to retry blindly. No action implicitly saves the source.
+
+Native regressions for ordinary/paged multi-step Undo/Redo, receipts, stale plans,
+disk conflicts, preview eviction, retention and close/reopen are added to the
+existing native suite. They require an explicit native test run; source/schema
+checks and a production library build do not prove these runtime scenarios.
+
 ## Reproduce and interpret evidence {#validation}
 
 ```text

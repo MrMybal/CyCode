@@ -135,3 +135,15 @@ No hardware-unlimited or exhaustive Unreal claim follows.
 
 Validation evidence is recorded separately; an implemented path is not evidence that
 every platform or all repository configurations have been tested.
+
+## Shared native transaction history (2026-11-11)
+
+`changes.historyStatus`, `changes.historyPrepare` and `changes.status` expose the
+same Engine transaction owner to native hosts, the SDK/MCP and permission-checked
+ABI2 plugin calls. Apply/Undo return staged exact commit metadata; notification
+failure is separate from mutation failure. Ordered Undo/Redo supports both native
+buffer profiles, retains 256 original transactions, and requires current history
+and per-document identity/revision guards. No independent UI history, persistent
+Undo, resource history or LSP overlay is supplied. Windows production Core/TextBridge
+libraries compile; native history regressions and desktop acceptance are not run
+in this change. See [the complete transaction contract](LargeProjects.md#history).

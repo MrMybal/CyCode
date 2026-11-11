@@ -5,7 +5,7 @@ description: Persist native compiler traversal, distinguish historical evidence 
 section: Start here
 parent: native-core
 order: 265
-revision: 2
+revision: 3
 ---
 
 
@@ -112,6 +112,29 @@ On a small MSBuild navigation fixture, 16 concurrent SDK/MCP requests retained
 or equivalence to Rider/CLion. Eight actual clangd transformations separately pass
 preview/Apply/Undo, including two-file function-body moves. Actions not offered by
 the tested backend are recorded explicitly.
+
+## Use the IDE view {#ide}
+
+In CyCodeIDE, open **View → Analysis and inspections → Analysis progress**. The
+panel separates service availability, each language backend, the file inventory,
+active-document diagnostics and source traversal. Choose the active C++ file or
+the actual compilation database, set a bounded batch and explicitly prepare it.
+**Pause analysis** cancels the operation issued by this view; **Resume next batch**
+requests the next portion. Opening the panel does not start a compilation campaign.
+The stopped Unreal campaign is not resumed automatically.
+
+Opt into a durable traversal checkpoint for a compilation-database scope. Discover
+existing checkpoints and restore one without compiling (batch zero), then request
+the next batch explicitly. Result pages retain per-file errors and timings.
+Historical and current-pass observations remain separate; old rows cannot
+authorize edits. Source traversal percentages do not measure complete compiler
+index coverage.
+
+The References panel's **Refresh at caret** requests `refresh: true` for the selected
+navigation operation. Use it when index progress leaves a cached initial result.
+Automatic cache invalidation from background index progress remains unverified.
+
+Production compilation with offline help passed on Windows; desktop interaction acceptance is still pending.
 
 ## Limits {#limits}
 

@@ -8,6 +8,7 @@
 #include <cctype>
 #include <cstdlib>
 #include <fstream>
+#include <limits>
 #include <set>
 #include <sstream>
 
@@ -662,20 +663,28 @@ void Engine::spillChangeFile(FileChange &file) {
     std::string().swap(file.disk);
 }
 Json Engine::storeChange(ChangePlan plan) {
-    for (auto &file : plan.files)
+    pruneChangeHistory();
+    for (auto &file : plan.files) {
+        file.identity = file.paged ? pagedDocuments_.at(file.path).identity
+                                   : documents_.at(file.path).identity;
         spillChangeFile(file);
+    }
     for (auto i = changes_.begin(); i != changes_.end();) {
-        if (std::chrono::steady_clock::now() - i->second.created > std::chrono::minutes(20))
+        if (!retainedChange(i->first) &&
+            std::chrono::steady_clock::now() - i->second.created > std::chrono::minutes(20))
             i = changes_.erase(i);
         else
             ++i;
     }
-    if (changes_.size() >= 8) {
-        auto oldest = std::min_element(changes_.begin(), changes_.end(), [](const auto &a, const auto &b) {
-            return a.second.created < b.second.created;
-        });
-        changes_.erase(oldest);
+    std::vector<decltype(changes_)::iterator> previews;
+    for (auto it = changes_.begin(); it != changes_.end(); ++it) {
+        if (retainedChange(it->first)) continue;
+        previews.push_back(it);
     }
+    std::sort(previews.begin(), previews.end(), [](const auto &a, const auto &b) {
+        return a->second.created < b->second.created;
+    });
+    for (size_t i = 0; i + 8 <= previews.size(); ++i) changes_.erase(previews[i]);
     const auto id = "change-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) +
                     "-" + std::to_string(nextChange_++);
     std::map<std::string, std::string> annotationIds;
@@ -706,6 +715,10 @@ Json Engine::changeDescription(const std::string &id) const {
                    {"files", files}, {"editCount", edits},  {"annotations", plan.annotations}};
     if (!plan.coverage.is_null())
         result["coverage"] = plan.coverage;
+    if (!plan.historySource.empty())
+        result["history"] = {{"source", plan.historySource}, {"direction", plan.historyDirection},
+                             {"expectedHistoryRevision", plan.historyRevision}};
+    if (!plan.lastCommit.is_null()) result["commit"] = plan.lastCommit;
     return result;
 }
 Json Engine::changeOperation(const std::string &method, const Json &params) {
@@ -715,11 +728,13 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
     if (found == changes_.end())
         throw std::runtime_error("Refactoring preview has expired; prepare it again");
     auto &plan = found->second;
+    if (method == "changes.status") return changeDescription(id);
     if (method == "changes.preview") {
         const auto path = params.at("path").get<std::string>();
         for (const auto &file : plan.files)
             if (file.path == path) {
-                const auto annotations = usedChangeAnnotations(plan.annotations, Json{{path, file.edits}});
+                const auto annotations = plan.historySource.empty()
+                    ? usedChangeAnnotations(plan.annotations, Json{{path, file.edits}}) : plan.annotations;
                 const auto beforeBytes = file.paged ? file.pagedBefore->bytes : file.stored->before->bytes;
                 const auto afterBytes = file.paged ? file.pagedAfter->bytes : file.stored->after->bytes;
                 const bool paged = params.contains("offset") || params.contains("length") ||
@@ -777,6 +792,20 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
         throw NativeError(ErrorCode::InvalidParams, "Document is not part of this refactoring");
     }
     const bool undo = method == "changes.undo";
+    pruneChangeHistory();
+    ChangePlan *historySource = nullptr;
+    if (!plan.historySource.empty()) {
+        if (undo)
+            throw NativeError(ErrorCode::InvalidParams, "Use native history to undo or redo a history action");
+        const bool historyUndo = plan.historyDirection == "undo";
+        const auto &stack = historyUndo ? changeUndo_ : changeRedo_;
+        const auto source = changes_.find(plan.historySource);
+        if (plan.historyRevision != changeHistoryRevision_ || stack.empty() ||
+            stack.back() != plan.historySource || source == changes_.end() ||
+            source->second.state != (historyUndo ? "applied" : "undone"))
+            throw NativeError(ErrorCode::RevisionConflict, "Native transaction history changed; prepare it again");
+        historySource = &source->second;
+    }
     if (plan.state != (undo ? "applied" : "preview"))
         throw std::runtime_error("Refactoring is not in the expected state");
     if (!undo && plan.scopeGeneration &&
@@ -795,6 +824,7 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
         if (file.paged) {
             const auto doc = pagedDocuments_.find(file.path);
             if (doc == pagedDocuments_.end() || doc->second.busy || doc->second.text != file.paged ||
+                doc->second.identity != file.identity ||
                 doc->second.revision != (undo ? file.appliedRevision : file.revision) ||
                 file.paged->snapshot() != (undo ? file.pagedAfter : file.pagedBefore))
                 throw NativeError(ErrorCode::RevisionConflict,
@@ -805,7 +835,7 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
             prepared.emplace_back();
         } else {
             const auto doc = documents_.find(file.path);
-            if (doc == documents_.end() ||
+            if (doc == documents_.end() || doc->second.identity != file.identity ||
                 doc->second.revision != (undo ? file.appliedRevision : file.revision) ||
                 doc->second.text != (undo ? file.stored->after : file.stored->before)->load())
                 throw NativeError(ErrorCode::RevisionConflict, "Refactoring source changed: " + file.path);
@@ -813,6 +843,78 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
                 throw NativeError(ErrorCode::DiskConflict,
                                   "Refactoring source changed outside CyCode: " + file.path);
             prepared.push_back((undo ? file.stored->before : file.stored->after)->load());
+        }
+    }
+    if (nextRevision_ > std::numeric_limits<uint64_t>::max() - plan.files.size() ||
+        changeHistoryRevision_ == std::numeric_limits<uint64_t>::max())
+        throw NativeError(ErrorCode::CapacityExceeded, "Native transaction revision space exhausted");
+
+    // Stage the complete native history and receipt before the first buffer swap.
+    // No second document model or snapshot store is involved.
+    auto nextUndo = changeUndo_, nextRedo = changeRedo_;
+    auto dropped = changeHistoryDropped_;
+    std::string nextState = undo ? "undone" : "applied";
+    std::string sourceState = plan.historyDirection == "undo" ? "undone" : "applied";
+    const std::string action = undo ? "undo" : historySource ? plan.historyDirection : "apply";
+    if (historySource) {
+        auto &from = action == "undo" ? nextUndo : nextRedo;
+        auto &to = action == "undo" ? nextRedo : nextUndo;
+        from.pop_back();
+        to.push_back(plan.historySource);
+    } else if (undo) {
+        std::erase(nextUndo, id);
+        nextRedo.push_back(id);
+    } else {
+        nextRedo.clear();
+        nextUndo.push_back(id);
+    }
+    while (nextUndo.size() + nextRedo.size() > changeHistoryLimit_) {
+        auto &stack = nextUndo.empty() ? nextRedo : nextUndo;
+        stack.erase(stack.begin());
+        ++dropped;
+    }
+    const auto nextHistoryRevision = changeHistoryRevision_ + 1;
+    Json documents = Json::array();
+    for (size_t i = 0; i < plan.files.size(); ++i) {
+        const auto &file = plan.files[i];
+        const auto target = file.paged ? (undo ? file.pagedBefore : file.pagedAfter) : LargeTextSnapshot{};
+        const bool dirty = file.paged ? file.paged->dirty(target)
+                                     : prepared[i] != documents_.at(file.path).saved;
+        documents.push_back({{"path", file.path}, {"id", file.identity},
+            {"revision", nextRevision_ + i}, {"dirty", dirty},
+            {"bytes", file.paged ? target->bytes : uint64_t(prepared[i].size())},
+            {"storage", file.paged ? "paged" : "buffer"}});
+    }
+    Json receipt = {{"transaction", id}, {"action", action},
+                    {"historyRevision", nextHistoryRevision},
+                    {"documents", std::move(documents)}, {"notificationsComplete", true}};
+    Json sourceReceipt = historySource ? receipt : Json();
+    Json response = changeDescription(id);
+    response["state"] = nextState;
+    response["commit"] = receipt;
+
+    // A legacy undo may now restore the exact preimage of the preceding native
+    // transaction. Rebase only through that recorded causal revision/snapshot.
+    std::vector<std::pair<FileChange *, uint64_t>> rebased;
+    if (action == "undo") {
+        for (const auto &candidateId : nextUndo) {
+            auto &candidate = changes_.at(candidateId);
+            for (auto &previous : candidate.files) {
+                for (size_t i = 0; i < plan.files.size(); ++i) {
+                    const auto &file = plan.files[i];
+                    const auto &original = historySource ? historySource->files[i] : file;
+                    if (previous.path != file.path || previous.identity != file.identity ||
+                        previous.appliedRevision != original.revision) continue;
+                    const auto target = file.paged ? (undo ? file.pagedBefore : file.pagedAfter)
+                                                   : LargeTextSnapshot{};
+                    const auto blob = file.paged ? StoredBlob{} : (undo ? file.stored->before : file.stored->after);
+                    const bool same = file.paged
+                        ? previous.paged == file.paged && previous.pagedAfter == target
+                        : !previous.paged && previous.stored->after->bytes == blob->bytes &&
+                          previous.stored->after->digest == blob->digest;
+                    if (same) rebased.emplace_back(&previous, nextRevision_ + i);
+                }
+            }
         }
     }
     for (size_t i = 0; i < plan.files.size(); ++i) {
@@ -833,27 +935,60 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
                 file.appliedRevision = doc.revision;
         }
     }
-    plan.state = undo ? "undone" : "applied";
-    for (const auto &file : plan.files) {
-        if (file.paged) {
-            const auto &doc = pagedDocuments_.at(file.path);
-            events_.publish("document.changed", {{"path", file.path},
-                                                 {"id", doc.identity},
-                                                 {"revision", doc.revision},
-                                                 {"dirty", doc.knownDirty},
-                                                 {"transaction", id}});
-        } else {
-            auto &doc = documents_.at(file.path);
-            try {
-                language_.sync(file.path, doc.text, doc.revision, doc.identity, true);
-            } catch (const std::exception &error) {
-                events_.publish("language.syncFailed", {{"path", file.path}, {"message", error.what()}});
+    plan.state.swap(nextState);
+    plan.lastCommit.swap(receipt);
+    if (historySource) {
+        historySource->state.swap(sourceState);
+        historySource->lastCommit.swap(sourceReceipt);
+        if (action == "redo") {
+            for (size_t i = 0; i < plan.files.size(); ++i) {
+                historySource->files[i].revision = plan.files[i].revision;
+                historySource->files[i].appliedRevision = plan.files[i].appliedRevision;
             }
-            documentEvent("document.changed", file.path, doc, id);
         }
     }
-    events_.publish("transaction.committed",
-                    {{"id", id}, {"action", undo ? "undo" : "apply"}, {"documents", plan.files.size()}});
-    return changeDescription(id);
+    for (const auto &[file, revision] : rebased) file->appliedRevision = revision;
+    changeUndo_.swap(nextUndo);
+    changeRedo_.swap(nextRedo);
+    changeHistoryRevision_ = nextHistoryRevision;
+    changeHistoryDropped_ = dropped;
+
+    // In-process callers must never mistake a failed post-commit notification
+    // for a rejected edit. The immutable receipt is already committed/staged.
+    auto notificationFailed = [&] {
+        response.at("commit").at("notificationsComplete") = false;
+        plan.lastCommit.at("notificationsComplete") = false;
+        if (historySource) historySource->lastCommit.at("notificationsComplete") = false;
+    };
+    for (const auto &file : plan.files) {
+        try {
+            if (file.paged) {
+                const auto &doc = pagedDocuments_.at(file.path);
+                events_.publish("document.changed", {{"path", file.path},
+                                                     {"id", doc.identity},
+                                                     {"revision", doc.revision},
+                                                     {"dirty", doc.knownDirty},
+                                                     {"transaction", id}});
+            } else {
+                auto &doc = documents_.at(file.path);
+                try {
+                    language_.sync(file.path, doc.text, doc.revision, doc.identity, true);
+                } catch (const std::exception &error) {
+                    notificationFailed();
+                    events_.publish("language.syncFailed", {{"path", file.path}, {"message", error.what()}});
+                }
+                documentEvent("document.changed", file.path, doc, id);
+            }
+        } catch (...) {
+            notificationFailed();
+        }
+    }
+    try {
+        events_.publish("transaction.committed",
+                        {{"id", id}, {"action", action}, {"documents", plan.files.size()}});
+    } catch (...) {
+        notificationFailed();
+    }
+    return response;
 }
 } // namespace cycode

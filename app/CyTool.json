@@ -67888,6 +67888,106 @@
               "additionalProperties": false
             }
           },
+          "commit": {
+            "type": "object",
+            "properties": {
+              "transaction": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "apply",
+                  "undo",
+                  "redo"
+                ]
+              },
+              "historyRevision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "dirty": {
+                      "type": "boolean"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "storage": {
+                      "type": "string",
+                      "enum": [
+                        "buffer",
+                        "paged"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "id",
+                    "revision",
+                    "dirty",
+                    "bytes",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "notificationsComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "transaction",
+              "action",
+              "historyRevision",
+              "documents",
+              "notificationsComplete"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "undo",
+                  "redo"
+                ]
+              },
+              "expectedHistoryRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "direction",
+              "expectedHistoryRevision"
+            ],
+            "additionalProperties": false
+          },
           "coverage": {
             "type": "object",
             "properties": {
@@ -68106,6 +68206,106 @@
               "additionalProperties": false
             }
           },
+          "commit": {
+            "type": "object",
+            "properties": {
+              "transaction": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "apply",
+                  "undo",
+                  "redo"
+                ]
+              },
+              "historyRevision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "dirty": {
+                      "type": "boolean"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "storage": {
+                      "type": "string",
+                      "enum": [
+                        "buffer",
+                        "paged"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "id",
+                    "revision",
+                    "dirty",
+                    "bytes",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "notificationsComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "transaction",
+              "action",
+              "historyRevision",
+              "documents",
+              "notificationsComplete"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "undo",
+                  "redo"
+                ]
+              },
+              "expectedHistoryRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "direction",
+              "expectedHistoryRevision"
+            ],
+            "additionalProperties": false
+          },
           "coverage": {
             "type": "object",
             "properties": {
@@ -68318,9 +68518,679 @@
       "supportsProgress": false
     },
     {
+      "id": "changes_status",
+      "name": "Changes Status",
+      "description": "Read one native-issued plan and its latest immutable commit receipt without reading live text. Use the receipt to reconcile a lost RPC reply; its revisions describe that commit, not necessarily the current documents. Unknown or evicted IDs refuse; never blindly retry an ambiguous mutation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "preview",
+              "applied",
+              "undone"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                },
+                "expectedRevision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "editCount": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "path",
+                "expectedRevision",
+                "editCount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "editCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "annotations": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "needsConfirmation": {
+                  "type": "boolean"
+                },
+                "files": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "description",
+                "needsConfirmation",
+                "files"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "commit": {
+            "type": "object",
+            "properties": {
+              "transaction": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "apply",
+                  "undo",
+                  "redo"
+                ]
+              },
+              "historyRevision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "dirty": {
+                      "type": "boolean"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "storage": {
+                      "type": "string",
+                      "enum": [
+                        "buffer",
+                        "paged"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "id",
+                    "revision",
+                    "dirty",
+                    "bytes",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "notificationsComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "transaction",
+              "action",
+              "historyRevision",
+              "documents",
+              "notificationsComplete"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "undo",
+                  "redo"
+                ]
+              },
+              "expectedHistoryRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "direction",
+              "expectedHistoryRevision"
+            ],
+            "additionalProperties": false
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "preparedFiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wholeProjectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "strategy",
+              "preparedFiles",
+              "wholeProjectIndexCompleteness",
+              "limitations"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "state",
+          "files",
+          "editCount"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "changes_history_status",
+      "name": "Changes History Status",
+      "description": "Read the shared Engine Undo/Redo heads, live history revision and counts. Native history retains at most 256 original transactions independently of the eight-plan preview cache. Closing or rebinding an affected document invalidates its transaction. dropped reports invalidated/retention-evicted entries. This is process-local history of changes.apply/undo, not persistence or a second document model.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "undoCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "redoCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "undo": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "files"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redo": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "files"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retentionLimit": {
+            "const": 256
+          },
+          "dropped": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "revision",
+          "undoCount",
+          "redoCount",
+          "undo",
+          "redo",
+          "retentionLimit",
+          "dropped"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false
+    },
+    {
+      "id": "changes_history_prepare",
+      "name": "Changes History Prepare",
+      "description": "Prepare a native Undo or Redo of the issued history head. Supply its current history revision and exact live identity/revision guards for every affected document. Native snapshots, content, disk baselines and target payloads are verified before issuing the replay plan. Review with changes_preview, then explicitly changes_apply; no mutation or save occurs during preparation. Snapshot restoration has an empty textual edit list; page before/after payloads. Redo requires any scoped confirmations from its new plan. A changed history head or live document refuses at apply. Preparation is noncancellable while holding the transaction mutex.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "undo",
+              "redo"
+            ]
+          },
+          "expectedHistoryRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+                  "maxLength": 8192,
+                  "not": {
+                    "pattern": "\u0000"
+                  }
+                },
+                "expectedDocumentId": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "expectedRevision": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "path",
+                "expectedDocumentId",
+                "expectedRevision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "direction",
+          "expectedHistoryRevision",
+          "documents"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "preview",
+              "applied",
+              "undone"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                },
+                "expectedRevision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "editCount": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "path",
+                "expectedRevision",
+                "editCount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "editCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "annotations": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "needsConfirmation": {
+                  "type": "boolean"
+                },
+                "files": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "description",
+                "needsConfirmation",
+                "files"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "commit": {
+            "type": "object",
+            "properties": {
+              "transaction": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "apply",
+                  "undo",
+                  "redo"
+                ]
+              },
+              "historyRevision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "dirty": {
+                      "type": "boolean"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "storage": {
+                      "type": "string",
+                      "enum": [
+                        "buffer",
+                        "paged"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "id",
+                    "revision",
+                    "dirty",
+                    "bytes",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "notificationsComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "transaction",
+              "action",
+              "historyRevision",
+              "documents",
+              "notificationsComplete"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "undo",
+                  "redo"
+                ]
+              },
+              "expectedHistoryRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "direction",
+              "expectedHistoryRevision"
+            ],
+            "additionalProperties": false
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "preparedFiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wholeProjectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "strategy",
+              "preparedFiles",
+              "wholeProjectIndexCompleteness",
+              "limitations"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "state",
+          "files",
+          "editCount"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false
+    },
+    {
       "id": "changes_apply",
       "name": "Changes Apply",
-      "description": "Apply a prepared change to live workspace buffers only. Inspect annotations in the plan/preview; explicitly pass every needsConfirmation ID in confirmedAnnotations. IDs belong to that issued plan and cannot be reused from another. Unknown/duplicate/missing confirmations fail before any edit. Every affected revision and disk baseline is validated before any buffer changes. Does not save to disk.",
+      "description": "Apply a prepared change to live workspace buffers only. Inspect annotations in the plan/preview; explicitly pass every needsConfirmation ID in confirmedAnnotations. IDs belong to that issued plan and cannot be reused from another. Unknown/duplicate/missing confirmations fail before any edit. Every affected identity, revision and disk baseline is validated before any buffer changes. Returns an atomic commit receipt with actual document identity/revision/dirty/bytes/storage and native history revision. Post-commit notification failure sets notificationsComplete false without rejecting the successful commit. RPC transport loss remains ambiguous: reconcile with changes_status. Does not save to disk.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -68434,6 +69304,106 @@
               "additionalProperties": false
             }
           },
+          "commit": {
+            "type": "object",
+            "properties": {
+              "transaction": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "apply",
+                  "undo",
+                  "redo"
+                ]
+              },
+              "historyRevision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "dirty": {
+                      "type": "boolean"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "storage": {
+                      "type": "string",
+                      "enum": [
+                        "buffer",
+                        "paged"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "id",
+                    "revision",
+                    "dirty",
+                    "bytes",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "notificationsComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "transaction",
+              "action",
+              "historyRevision",
+              "documents",
+              "notificationsComplete"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "undo",
+                  "redo"
+                ]
+              },
+              "expectedHistoryRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "direction",
+              "expectedHistoryRevision"
+            ],
+            "additionalProperties": false
+          },
           "coverage": {
             "type": "object",
             "properties": {
@@ -68489,7 +69459,7 @@
     {
       "id": "changes_undo",
       "name": "Changes Undo",
-      "description": "Undo a previously applied refactoring across its live buffers. Refuses changed/closed buffers and external disk conflicts. Does not save to disk.",
+      "description": "Legacy guarded Undo of a previously applied original transaction. Refuses changed/closed buffers and external disk conflicts. Returns the atomic commit receipt and updates shared native history. For ordered multi-step Undo/Redo use changes_history_status and changes_history_prepare followed by changes_apply. Does not save to disk.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -68592,6 +69562,106 @@
               ],
               "additionalProperties": false
             }
+          },
+          "commit": {
+            "type": "object",
+            "properties": {
+              "transaction": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "apply",
+                  "undo",
+                  "redo"
+                ]
+              },
+              "historyRevision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "dirty": {
+                      "type": "boolean"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "storage": {
+                      "type": "string",
+                      "enum": [
+                        "buffer",
+                        "paged"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "id",
+                    "revision",
+                    "dirty",
+                    "bytes",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "notificationsComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "transaction",
+              "action",
+              "historyRevision",
+              "documents",
+              "notificationsComplete"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "undo",
+                  "redo"
+                ]
+              },
+              "expectedHistoryRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "direction",
+              "expectedHistoryRevision"
+            ],
+            "additionalProperties": false
           },
           "coverage": {
             "type": "object",
@@ -73932,6 +75002,106 @@
               "additionalProperties": false
             }
           },
+          "commit": {
+            "type": "object",
+            "properties": {
+              "transaction": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "apply",
+                  "undo",
+                  "redo"
+                ]
+              },
+              "historyRevision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "dirty": {
+                      "type": "boolean"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "storage": {
+                      "type": "string",
+                      "enum": [
+                        "buffer",
+                        "paged"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "id",
+                    "revision",
+                    "dirty",
+                    "bytes",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "notificationsComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "transaction",
+              "action",
+              "historyRevision",
+              "documents",
+              "notificationsComplete"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "undo",
+                  "redo"
+                ]
+              },
+              "expectedHistoryRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "direction",
+              "expectedHistoryRevision"
+            ],
+            "additionalProperties": false
+          },
           "coverage": {
             "type": "object",
             "properties": {
@@ -74367,6 +75537,106 @@
               ],
               "additionalProperties": false
             }
+          },
+          "commit": {
+            "type": "object",
+            "properties": {
+              "transaction": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "apply",
+                  "undo",
+                  "redo"
+                ]
+              },
+              "historyRevision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "dirty": {
+                      "type": "boolean"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "storage": {
+                      "type": "string",
+                      "enum": [
+                        "buffer",
+                        "paged"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "id",
+                    "revision",
+                    "dirty",
+                    "bytes",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "notificationsComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "transaction",
+              "action",
+              "historyRevision",
+              "documents",
+              "notificationsComplete"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "undo",
+                  "redo"
+                ]
+              },
+              "expectedHistoryRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "direction",
+              "expectedHistoryRevision"
+            ],
+            "additionalProperties": false
           },
           "coverage": {
             "type": "object",
@@ -83965,6 +85235,106 @@
                   "additionalProperties": false
                 }
               },
+              "commit": {
+                "type": "object",
+                "properties": {
+                  "transaction": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "apply",
+                      "undo",
+                      "redo"
+                    ]
+                  },
+                  "historyRevision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "documents": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                        },
+                        "id": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "dirty": {
+                          "type": "boolean"
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "storage": {
+                          "type": "string",
+                          "enum": [
+                            "buffer",
+                            "paged"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "id",
+                        "revision",
+                        "dirty",
+                        "bytes",
+                        "storage"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "notificationsComplete": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "transaction",
+                  "action",
+                  "historyRevision",
+                  "documents",
+                  "notificationsComplete"
+                ],
+                "additionalProperties": false
+              },
+              "history": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string"
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "undo",
+                      "redo"
+                    ]
+                  },
+                  "expectedHistoryRevision": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "source",
+                  "direction",
+                  "expectedHistoryRevision"
+                ],
+                "additionalProperties": false
+              },
               "coverage": {
                 "type": "object",
                 "properties": {
@@ -84402,6 +85772,106 @@
               ],
               "additionalProperties": false
             }
+          },
+          "commit": {
+            "type": "object",
+            "properties": {
+              "transaction": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "apply",
+                  "undo",
+                  "redo"
+                ]
+              },
+              "historyRevision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "dirty": {
+                      "type": "boolean"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "storage": {
+                      "type": "string",
+                      "enum": [
+                        "buffer",
+                        "paged"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "id",
+                    "revision",
+                    "dirty",
+                    "bytes",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "notificationsComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "transaction",
+              "action",
+              "historyRevision",
+              "documents",
+              "notificationsComplete"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "undo",
+                  "redo"
+                ]
+              },
+              "expectedHistoryRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "direction",
+              "expectedHistoryRevision"
+            ],
+            "additionalProperties": false
           },
           "coverage": {
             "type": "object",

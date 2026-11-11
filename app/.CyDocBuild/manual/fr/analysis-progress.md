@@ -5,7 +5,7 @@ description: Reprendre le parcours natif, distinguer les preuves historiques et 
 section: Pour commencer
 parent: native-core
 order: 265
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 
@@ -116,6 +116,30 @@ d’environ 72 à 37 ms. Ces mesures locales ne démontrent pas une supériorit�
 face à Rider/CLion. Huit transformations réellement proposées par clangd passent
 aussi aperçu/Apply/Undo, dont les déplacements de corps de fonction sur deux
 fichiers. Les actions absentes du backend sont signalées séparément.
+
+## Utiliser la vue de l’IDE {#ide}
+
+Dans CyCodeIDE, ouvrez **Affichage → Analyse et inspections → Progression de
+l’analyse**. Le panneau distingue disponibilité du service, serveurs de langage,
+inventaire des fichiers, diagnostics du document actif et parcours des sources.
+Choisissez le fichier C++ actif ou la véritable base de compilation, fixez un lot
+borné puis demandez sa préparation. **Mettre l’analyse en pause** annule l’opération
+émise par cette vue ; **Reprendre le lot suivant** demande la portion suivante.
+Ouvrir le panneau ne lance aucune campagne de compilation. La campagne Unreal
+arrêtée n’est pas reprise automatiquement.
+
+Pour la base de compilation, activez explicitement un point de reprise durable.
+Retrouvez les points existants et restaurez-en un sans compilation (lot zéro),
+puis demandez le lot suivant. Les pages de résultats gardent erreurs et durées
+par fichier. Observations historiques et courantes restent distinctes ; une
+ancienne ligne n’autorise pas de modification. Le pourcentage du parcours ne
+mesure pas la couverture complète de l’index du compilateur.
+
+Dans Références, **Actualiser au curseur** demande `refresh: true` pour la navigation
+choisie. Utilisez-le quand la progression de l’index conserve un résultat initial
+en cache. L’invalidation automatique liée à cette progression reste non validée.
+
+La compilation de production avec l’aide locale a réussi sous Windows ; l’acceptation des interactions graphiques reste à réaliser.
 
 ## Limites {#limits}
 

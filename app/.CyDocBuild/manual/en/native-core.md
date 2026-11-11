@@ -5,17 +5,23 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 15
+revision: 16
 ---
 
 ## Current delivery status {#current-status}
 
 The corrected standalone 0.1.1 is installed and its MCP connection works. This
-source tree prepares local 0.1.2 with 249 public operations, paged recovery and
+source tree prepares local 0.1.2 with 252 public operations, paged recovery and
 the independent PagedText component. Actual Windows production evidence is in
 the maintained Core validation guides. Antivirus holds and disabled MCP states
 in the dated narrative below describe earlier attempts, not the current delivery.
 GitHub Actions remains paused; no new release publication is implied.
+
+
+Shared native transaction history and atomic commit receipts are now exposed to
+embeddings/SDK clients. See [Undo/Redo ownership and guards](doc:large-projects#history).
+The production libraries compile on Windows; the newly added runtime history
+regressions and desktop interaction checks remain pending.
 
 ## Optional paged storage component {#paged-text}
 

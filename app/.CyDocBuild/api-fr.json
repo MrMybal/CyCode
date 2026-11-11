@@ -247,5 +247,8 @@
   "documents_checkpoint_paged": "Persister explicitement un instantané paginé privé et son manifeste atomique, sans sauvegarder le fichier source.",
   "documents_paged_checkpoints": "Découvrir les checkpoints paginés persistants par leurs métadonnées, sans supprimer de données ni présenter les anciennes révisions comme des droits d’édition courants.",
   "documents_preview_paged_checkpoint": "Vérifier l’empreinte du contenu d’un checkpoint paginé et consulter une page UTF-8 bornée avec l’état de la référence disque d’origine.",
-  "documents_restore_paged_checkpoint": "Préparer la restauration d’un checkpoint paginé dans le tampon vivant avec sa révision actuelle, puis réutiliser aperçu, Apply et Undo sans sauvegarde implicite."
+  "documents_restore_paged_checkpoint": "Préparer la restauration d’un checkpoint paginé dans le tampon vivant avec sa révision actuelle, puis réutiliser aperçu, Apply et Undo sans sauvegarde implicite.",
+  "changes_status": "Lire un plan natif émis et son dernier reçu de commit pour rapprocher une réponse perdue, sans relire le texte courant.",
+  "changes_history_status": "Consulter les têtes Undo/Redo partagées, leur révision et les limites de rétention du Core.",
+  "changes_history_prepare": "Préparer l’annulation ou le rétablissement natif avec les identités et révisions courantes de tous les documents ; examiner puis appliquer explicitement le plan."
 }

@@ -19,6 +19,7 @@ class LargeText {
     void commit(LargeTextSnapshot state) noexcept { state_.swap(state); }
     uint64_t bytes() const { return state_->bytes; }
     bool dirty() const { return state_ != saved_; }
+    bool dirty(const LargeTextSnapshot &state) const noexcept { return state != saved_; }
     bool matchesDisk() const;
     std::string read(uint64_t, size_t, LargeTextSnapshot = {}) const;
     LargeTextSnapshot edited(uint64_t, uint64_t, const std::string &);

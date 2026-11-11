@@ -34,7 +34,7 @@ class NativeClient:
             # Bundled VCS providers may validate identity/mapping, inspect local
             # changes and then run a separate bounded network operation.
             wait_seconds = 86460 if method.startswith('packages.') else 1200 if method.startswith('vcs.replay.') else 600 if method == 'vcs.providerAction' or method.startswith('vcs.merge.') or method.startswith('vcs.checkout.') or method.startswith('vcs.conflict.') or method.startswith('vcs.worktree.') or method.startswith('vcs.submodule') else 200
-            if analysis_operation or method in PAGED_METHODS or method in ('changes.apply','changes.undo'):
+            if analysis_operation or method in PAGED_METHODS or method in ('changes.apply','changes.undo','changes.historyPrepare'):
                 wait_seconds=86460
             if build_operation or project_operation:
                 timeout = parameters.get('timeoutSeconds', 150 if method in ('msbuild.build','msbuild.rebuild','msbuild.clean','msbuild.restore') else 180)
@@ -142,7 +142,7 @@ def create_runtime(data_dir, **options):
             def report_progress(state):
                 context.progress(state['progress'],currentStep=state['phase'],currentStepIndex=state['completed'],stepCount=max(1,state['total']))
             return client.call(native_method, native_parameters(native_method, parameters),
-                               None if native_method in PAGED_METHODS or native_method in ('changes.apply','changes.undo') or native_method.startswith('packages.') or native_method.startswith('vcs.replay.') or native_method.startswith('vcs.merge.') or native_method.startswith('vcs.checkout.') or native_method.startswith('vcs.conflict.') or native_method.startswith('vcs.worktree.') or native_method.startswith('vcs.submodule') or native_method in DEBUG_MUTATIONS or native_method in DEBUG_EXECUTIONS or native_method in ('documents.createUntitled','documents.saveAs','documents.close','debug.dataBreakpoints','debug.runToCursor','debug.restoreRunToCursor','debug.instructionBreakpoints') else context.cancellation,
+                               None if native_method in PAGED_METHODS or native_method in ('changes.apply','changes.undo','changes.historyPrepare') or native_method.startswith('packages.') or native_method.startswith('vcs.replay.') or native_method.startswith('vcs.merge.') or native_method.startswith('vcs.checkout.') or native_method.startswith('vcs.conflict.') or native_method.startswith('vcs.worktree.') or native_method.startswith('vcs.submodule') or native_method in DEBUG_MUTATIONS or native_method in DEBUG_EXECUTIONS or native_method in ('documents.createUntitled','documents.saveAs','documents.close','debug.dataBreakpoints','debug.runToCursor','debug.restoreRunToCursor','debug.instructionBreakpoints') else context.cancellation,
                                report_progress if native_method in ('analysis.prepare','language.rename') else None)
         runtime.register(operation_id, handler)
     return runtime

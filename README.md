@@ -42,7 +42,7 @@ development belongs to CyCodeIDE, and the standalone text editor belongs to
 CyCodeReader. The old CyCode 0.2.x downloads belong to the earlier desktop application.
 The source snapshot adds shared `CyCode::PagedText`, guarded line/UTF-16 reads,
 exclusive Save as and explicit paged crash recovery. Its canonical catalogue has
-249 public operations. See [large text and projects](app/Docs/LargeProjects.md),
+252 public operations. See [large text and projects](app/Docs/LargeProjects.md),
 [persistent analysis](app/Docs/AnalysisProgress.md) and
 [native integration](app/Docs/CoreExtraction.md). These source updates do not
 replace the separately published 0.1.1 Windows package.

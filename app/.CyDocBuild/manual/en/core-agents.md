@@ -5,7 +5,7 @@ description: Persistent Core, complete MCP contracts and guarded code changes.
 section: API and extensions
 parent: mcp
 order: 261
-revision: 4
+revision: 5
 ---
 
 ## Connect {#connect}
@@ -13,7 +13,7 @@ revision: 4
 Install the standalone distribution and agent skill through [Core installation](core-installation#distribution).
 
 CyCode Core exposes the same persistent native Engine to applications and AI
-clients. There are 243 domain operations, each exposed as `op_<operationId>` by
+clients. There are 252 domain operations, each exposed as `op_<operationId>` by
 the official CyToolsCore MCP adapter. The SDK adds its own job, discovery, task
 and identity controls. A listed operation is a contract, not proof that a
 language server, debugger, compiler, VCS provider or plugin is installed.
@@ -99,7 +99,7 @@ before assuming availability or permissions. The generated `app/MCPMethods.json`
 contains every MCP name, native method, full input/output schema, permission,
 exclusive group and progress/cancellation flag from the executable contract.
 Regenerate it with `python app/scripts/generate_mcp_reference.py`; verify without
-writing with `--check`. The bilingual HTML API reference contains the same 243
+writing with `--check`. The bilingual HTML API reference contains the same 252
 operation contracts, grouped by domain. It is not a listing of internal C++
 functions and does not expose trusted native shutdown/cancellation controls.
 
@@ -274,3 +274,15 @@ Linux/macOS execution, new installers and GUI acceptance require separate checks
 GitHub Actions remain paused by the owner.
 
 [Paged native text and large transaction workflow](doc:large-projects#agents).
+
+
+## Shared native history {#history}
+
+Use `changes_history_status` and `changes_history_prepare`, then review/apply the
+issued replay for guarded multi-step Undo/Redo on the same Engine. Require all
+affected live identities/revisions and the current history head/revision.
+`changes_apply` / `changes_undo` return the exact committed document metadata in
+`commit`; post-commit notification failure is distinct from a rejected edit.
+Reconcile a lost RPC response with `changes_status` before retrying. This is
+process-local, bounded native transaction history, not another text owner or
+durable recovery. See [the complete contract](doc:large-projects#history).

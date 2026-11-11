@@ -5,7 +5,7 @@ description: Données natives progressives, documents paginés pour les agents e
 section: Pour commencer
 parent: native-core
 order: 266
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 ## Stockage et propriétaire {#storage}
@@ -139,6 +139,58 @@ complète. Les tampons classiques et résultats préparés consomment encore de 
 une grosse validation peut conserver le verrou Engine. Espace disque, trames,
 backends et allocations restent des contraintes réelles. Aucune garantie sans
 limite matérielle, contre toute course de fichiers ou panne électrique n’est faite.
+
+## Undo/Redo natif commun et reçus de commit {#history}
+
+L’Engine possède un seul historique en mémoire pour les transactions ordinaires
+et paginées de `changes.apply`. Les vues gardent identifiants émis et intentions,
+sans second LargeText, copie du texte ni pile Undo. Cet historique n’inclut pas
+les remplacements directs de document, ressources, paramètres, VCS ni les éditions
+d’un autre processus Engine.
+
+1. Consultez `changes_history_status` : les têtes `undo` et `redo` indiquent
+   l’identifiant original, le titre et les chemins affectés. Gardez sa `revision`.
+2. Récupérez les métadonnées vivantes d’identité/révision de **tous** ces documents
+   sur le même Engine. Appelez `changes_history_prepare` avec `id`, `direction`
+   (`undo` ou `redo`), `expectedHistoryRevision` et un tableau `documents` donnant
+   `path`, `expectedDocumentId` et `expectedRevision` pour chaque fichier.
+3. Examinez le nouveau plan par pages bornées `changes_preview`. Il restaure des
+   instantanés natifs immuables : une liste textuelle `edits` vide est normale.
+   Appliquez son nouvel ID via `changes_apply`. Redo conserve les confirmations
+   nécessaires avec les identifiants du nouveau plan. Préparer ne modifie rien.
+
+Avant le premier échange de tampon, le Core revérifie la tête d’historique,
+identités/révisions vivantes, instantanés ou contenus exacts, références disque
+et contenus cibles. Un plan périmé refuse la transaction entière. Une nouvelle
+édition appliquée supprime la branche Redo. L’ancien `changes_undo` conserve ses
+gardes strictes ; une restauration native causale permet plusieurs annulations.
+
+Au plus **256 transactions originales** restent retenues au-delà du cache normal
+de 8 aperçus/20 minutes. `retentionLimit` et `dropped` exposent cette borne et les
+entrées retirées par rétention, fermeture ou changement de chemin. Fermer/rouvrir
+crée une nouvelle identité inaccessible à l’ancien historique. Celui-ci ne survit
+pas au redémarrage : utilisez la récupération explicite décrite plus haut.
+Les contenus privés demandent de l’espace disque ; la préparation peut garder
+le verrou Engine. Préparation d’historique et commit ne sont pas annulables.
+
+Apply/Undo renvoient `commit` avec transaction réellement appliquée, action,
+révision d’historique et `{path,id,revision,dirty,bytes,storage}` pour chaque
+document. Le reçu est préparé avant mutation sous le même verrou. Le client
+natif acquitte directement cette révision : un agent peut déjà avoir modifié le
+document après ce commit. Ne remplacez pas le reçu par une relecture ultérieure.
+Une notification après commit échouée donne `notificationsComplete: false` :
+l’édition a réussi, un rafraîchissement distinct peut être nécessaire. Pour
+l’appel natif direct, une exception de préparation signifie aucun commit.
+Une perte de transport/sérialisation RPC reste ambiguë : interrogez `changes_status`
+avec l’ID émis, examinez état et dernier reçu puis rapprochez l’état avant une
+nouvelle mutation. Un ID inconnu/évincé n’autorise pas une répétition aveugle.
+Aucune action n’enregistre implicitement la source.
+
+Des régressions ordinaires/paginées sont ajoutées à la suite native existante :
+Undo/Redo successifs, reçus, plans périmés, conflits disque, éviction des aperçus,
+rétention et fermeture/réouverture. Elles nécessitent un lancement natif explicite ;
+contrôles sources/schémas et compilation des bibliothèques ne valident pas ces
+scénarios à l’exécution.
 
 ## Reproduire et interpréter les preuves {#validation}
 

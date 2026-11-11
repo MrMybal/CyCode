@@ -5,7 +5,7 @@ description: Écritures communes, inspections du compilateur, transformations C+
 section: Pour commencer
 parent: native-core
 order: 264
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Publication atomique commune {#atomic}
@@ -110,6 +110,19 @@ arrête le Core de production, expose pile, mémoire et désassemblage, refuse u
 arrêt puis termine normalement. La régression Unreal utilise la vraie base UBT,
 l’inventaire, une reprise de lot et le renommage DateTime/HTTP sans sauvegarder les
 sources. Les nombres et mesures exacts sont conservés dans les rapports de validation.
+
+## Utiliser la vue de l’IDE {#ide}
+
+Dans **Affichage → Analyse et inspections → Inspections C++**, choisissez une source
+C++ enregistrée, sa véritable base de compilation et un des cinq profils natifs.
+La base configurée peut être reprise de la compilation du projet. Un champ d’outil
+vide utilise la détection Core ; les outils manquants sont signalés. Lancez et
+annulez explicitement l’inspection. Le résultat montre son état périmé/tronqué,
+les diagnostics et la sortie native. Les colonnes sont des octets UTF-8 depuis un,
+distincts des positions LSP UTF-16 depuis zéro. L’inspection n’applique aucun
+correctif et n’enregistre pas la source.
+
+La compilation de production avec l’aide locale a réussi sous Windows ; l’acceptation des interactions graphiques reste à réaliser.
 
 ## Portée restante {#limits}
 
