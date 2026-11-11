@@ -8,7 +8,8 @@ From the repository root, with Python 3.11+, Node.js 22+, npm and Git:
 
 ```text
 python app/.CyDocBuild/build.py
-python app/.CyDocBuild/verify.py app/Documentation
+python app/.CyDocBuild/verify.py --sources-only
+python app/.CyDocBuild/verify.py app/Documentation --ide-root PATH_TO_CYCODEIDE
 node app/.CyDocBuild/verify_dom.mjs app/Documentation
 ```
 
@@ -52,6 +53,11 @@ files require an explicit coverage entry. The verifier also reads `src/HelpTopic
 and checks all built-in panel destinations and anchors in English and French.
 Native Context help and panel buttons use that one catalogue; document windows
 route to editing and contributed panels to extension help.
+The build checks coverage before preparing Node/CyDoc. After reviewing changed
+guides against both manual editions, update only their `sourceSha256` entries;
+never refresh all hashes automatically. `--sources-only` runs this same gate
+without an export. The full verifier also checks explicit literal
+`app_help::open` addresses in the supplied IDE sources, including inspection help.
 
 Both CyDoc `build` and `check` write output. Our wrapper calls `check` in a fresh
 private staging application, verifies the result and copies only owned files to

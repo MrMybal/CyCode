@@ -234,7 +234,9 @@ try {
     'debug-breakpoints':['data','instructions'],
     'update-storage':['downloads','storage','history'],
     'custom-vcs':['provider','routing'],
-    'reader':['open','navigate','media']
+    'reader':['open','navigate','media'],
+    'analysis-progress':['persistence'],
+    'core-quality':['inspections']
   };
   for(const locale of ['en','fr']) {
     for(const [page,anchors] of Object.entries(chapters)) {
@@ -257,7 +259,8 @@ try {
   }
   const native=await readFile(`${work}/../src/HelpTopics.h`,'utf8');
   const help=[...native.matchAll(/\{"([a-zA-Z]+)", "([a-z0-9-]+)", "([a-z0-9-]+)"\}/g)];
-  assert.equal(help.length,26);
+  assert.equal(help.length,27);
+  assert.ok(help.some(([,panel,page,anchor])=>panel==='analysis' && page==='analysis-progress' && anchor==='persistence'));
   for(const locale of ['en','fr'])for(const [,panel,page,anchor] of help) {
     const route=docs.resolve(page,locale);assert.equal(route.fallback,false,panel);
     assert.ok(route.page.headings.some(heading=>heading.id===anchor),panel);

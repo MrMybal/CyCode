@@ -12,6 +12,7 @@ struct Topic {
 inline constexpr Topic topics[] = {
     {"search", "search", "find"},
     {"problems", "diagnostics", "problems"},
+    {"analysis", "analysis-progress", "persistence"},
     {"references", "symbols", "references"},
     {"information", "languages", "services"},
     {"structure", "symbols", "structure"},

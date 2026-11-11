@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from prepare import prepare
 from api import generate
-from verify import verify
+from verify import verify, verify_source_coverage
 
 WORK = Path(__file__).resolve().parent
 APP = WORK.parent
@@ -58,6 +58,8 @@ def publish(source, destination):
 
 
 def build(outputs=(), ide_root=None):
+    # Fail before toolchain preparation/generation when source review is stale.
+    verify_source_coverage()
     subprocess.run([sys.executable,'-B',str(APP/'scripts/generate_mcp_reference.py'),'--check'],check=True)
     node, package = prepare()
     settings = json.loads((WORK / 'cydoc.config.json').read_text('utf-8'))

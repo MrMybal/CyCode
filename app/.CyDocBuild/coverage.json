@@ -62,7 +62,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-capabilitycoverage",
-      "sourceSha256": "0fbb15b336486740deb7cf566a16d63296361934f593a17b0d0d78c67fb301fe"
+      "sourceSha256": "be87cf310e39a5af103a4971b1e276b56143af12d7309aa8f32366b78a0bd30a"
     },
     {
       "source": "Docs/CargoBuilds.md",
@@ -104,7 +104,7 @@
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-coreextraction",
-      "sourceSha256": "f613a4f21f5ffde5e2b8c7e2bf69cf7e46fc53fe668b1f428d44a750dfcf7e5f"
+      "sourceSha256": "a724dd822dba189477261613e572f5b300a040e611fa57e2c2d766ab55d9eb34"
     },
     {
       "source": "Docs/CoreInstallation.md",
@@ -629,7 +629,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "dff56867bb8148f4368dfab148775ea759fbd7e6fc6c69d93220d586e667a7f7"
+      "sourceSha256": "41082cbba949a2755dc976c632c7fd23f52106759ed72feb82ad8e8a1ef6e6f9"
     },
     {
       "source": "Docs/VersionControl.md",
