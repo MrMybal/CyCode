@@ -1,213 +1,200 @@
 <table width="100%">
   <tr>
     <td width="300" align="left" valign="top">
-      <a href="https://mrmybal.github.io/CyCode/?lang=fr">Présentation</a><br>
-      <a href="https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview">Documentation</a><br>
+      <a href="https://github.com/MrMybal/CyCode/tree/codex/core-intelligence">Sources du Core natif</a><br>
+      <a href="https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview">Documentation · manuel HTML</a><br>
       <a href="https://github.com/MrMybal/CyCode">GitHub</a><br><br>
-      <sub>README</sub><br>
       <a href="README.md">English</a> · <a href="README.fr.md">Français</a>
     </td>
     <td width="400" align="center" valign="middle">
-      <a href="https://mrmybal.github.io/CyCode/?lang=fr"><img src="icons/CyCode.png" alt="CyCode" width="128"></a>
+      <img src="icons/CyCode.png" alt="CyCode Core" width="128">
     </td>
     <td width="300" align="right" valign="top">
-      <p><sub>Licence de l’application</sub><br><a href="LICENSE"><strong>GPL-3.0-only</strong></a></p>
-      <p><sub>Version</sub><br><a href="VERSION.fr.md"><strong>0.2.3</strong></a><br><strong>ALPHA</strong></p>
-      <p><a href="https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64-setup.exe"><strong>Installer CyCode</strong></a><br><sub>Windows x64</sub><br><a href="https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64.zip">ZIP portable</a></p>
+      <p><sub>Licence du projet</sub><br><a href="LICENSE"><strong>GPL-3.0-only</strong></a></p>
+      <p><sub>Paquet Core publié</sub><br><a href="https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1"><strong>0.1.1</strong></a><br><strong>PRÉVERSION DE DÉVELOPPEMENT</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.1/CyCodeCore-0.1.1-windows-x64-setup.exe"><strong>Installer CyCodeCore</strong></a><br><sub>Windows x64</sub><br><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.1/CyCodeCore-0.1.1-windows-x64.zip">ZIP portable</a></p>
     </td>
   </tr>
 </table>
 
-<h1 align="center">CyCode</h1>
+<h1 align="center">CyCode Core</h1>
 
-Un IDE natif pour les développeurs qui travaillent en C/C++, sur Unreal Engine
-et sur d’autres types de projets. Modifiez le code, parcourez une solution,
-compilez avec vos outils, déboguez et examinez les changements dans un espace
-de travail construit avec CyUI.
+Un moteur de code natif C++20 pour les **agents IA, outils de développement et
+éditeurs**. Les mêmes services de documents, de projets et de langage sont
+accessibles par bibliothèque C++, service en ligne de commande persistant ou
+pont SDK/MCP officiel CyToolsCore.
 
-> **ALPHA · 0.2.3**
+> **PRÉVERSION DE DÉVELOPPEMENT · Paquet Core 0.1.1**
 >
-> Une version expérimentale destinée aux essais et aux retours. Certaines fonctions
-> restent incomplètes ou dépendent d’outils externes. La version 0.2.3 ajoute l’installateur Windows
-> et un paquet commun pour la version portable et les mises à jour. Consultez les
-> [notes de version et limites connues](VERSION.fr.md).
+> L’installateur et le ZIP Windows publiés concernent le Core autonome.
+> Le candidat 0.1.2 est en validation locale et n’est pas encore publié.
+> Consulter les [notes de version et limites connues](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1).
 
-[![CyCode avec l’éditeur C++, l’arbre du projet et le panneau MCP intégré](website/assets/workspace.png)](website/assets/workspace.png)
+## Un Core, des applications distinctes
 
-*Capture réelle d’une version de développement sur un projet d’exemple.
-La disposition et les outils disponibles peuvent différer du paquet téléchargeable.*
+| Projet | Rôle |
+| --- | --- |
+| **CyCode Core · ce dépôt** | Documents natifs, services de projets, analyse par les outils du compilateur, modifications protégées et automatisation sans interface. |
+| [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE) | IDE de bureau : fenêtres, panneaux, commandes et parcours d’édition graphique. |
+| [CyCodeReader](https://github.com/MrMybal/CyCodeReader) | Éditeur autonome de texte/code utilisant le profil texte natif léger. |
 
-## À propos de CyCode
+**Transition des sources :** `main` contient encore l’arborescence historique de
+l’application de bureau. Les sources publiées du Core natif sont sur
+[`codex/core-intelligence`](https://github.com/MrMybal/CyCode/tree/codex/core-intelligence) ; utiliser cette branche pour la compilation
+du Core ci-dessous. Les anciens téléchargements CyCode 0.2.x correspondent à
+l’application de bureau précédente.
 
-Ouvrez une solution Visual Studio, un espace de travail CMake ou un projet
-Unreal, puis gardez ensemble l’éditeur, l’arbre du projet, la sortie de compilation,
-le terminal et les outils de contrôle de versions. Les panneaux détachables sont
-de véritables fenêtres déplaçables sur un autre écran ; des instances distinctes
-de l’application peuvent ouvrir différents projets.
+Le Core fonctionne sans CyUI, SDL, ImGui, OpenGL ni fenêtre d’IDE. Les applications
+choisissent les services nécessaires ; le profil texte autonome ne démarre pas
+les services de projet ou de langage.
 
-La coloration et les services sémantiques sont distincts. Complétion, navigation
-des symboles, diagnostics, formatage et refactorisations utilisent un serveur
-de langage compatible installé. Les tâches de compilation invoquent les vrais
-outils du projet ; le débogage utilise un adaptateur DAP compatible. CyCode ne
-revendique pas une parité complète avec Rider, Visual Studio ou VS Code.
+## Ce que permet le Core
 
-[![CyCode examinant un conflit Git d’exemple avec la base et les versions locale et entrante](website/assets/git-conflicts.png)](website/assets/git-conflicts.png)
+- **Explorer le code** : rechercher des fichiers et du texte, puis interroger
+  définitions, références, symboles et diagnostics via un serveur de langage configuré.
+- **Travailler sur de vrais projets** : utiliser les adaptateurs CMake,
+  MSBuild/solutions Visual Studio et Unreal avec la véritable chaîne d’outils et
+  le contexte de compilation du projet.
+- **Examiner les changements avant application** : préparer des modifications
+  protégées par révision, prévisualiser les transactions multifichiers,
+  appliquer/annuler puis enregistrer explicitement. La récupération et les
+  contrôles de conflit disque préservent la gestion des documents actifs.
+- **Automatiser les services de développement** : exposer compilation, débogage
+  DAP, contrôle de versions et plugins natifs à une application ou à un agent
+  autorisé. Les capacités dépendent des outils installés et du fournisseur choisi.
+- **Intégrer les composants utiles** : `CyCode::Core` pour les projets,
+  `CyCode::TextSession` / `TextBridge` pour le texte autonome, ou les composants
+  natifs `Files`, `Snippets`, `Process`, `Transport` et `Protocol`.
 
-## Fonctionnalités
-
-- **Code et navigation** : syntaxes, repli du code, thèmes, recherche dans le document
-  ou le projet, recherche de fichiers et recherche universelle. Les profils de
-  raccourcis Rider, Visual Studio et VS Code sont sélectionnables.
-- **Projets et compilation** : `.sln`, `.slnx`, CMake et Unreal, avec choix de
-  configuration/cible et sortie de compilation. Cargo, npm, Java, Maven et Gradle
-  disposent de tâches propres à leur type de projet.
-- **Services de langage** : C/C++, C#/.NET, Rust, Java, web et autres serveurs
-  configurés, selon les capacités de chacun. La compilation HLSL/GLSL utilise
-  DXC/glslang installés ; la prévisualisation GPU des shaders reste un chantier distinct.
-- **Contrôle de versions** : Git intégré avec différences, préparation des commits,
-  branches, historique et examen des conflits. Les fournisseurs natifs peuvent
-  sélectionner Perforce, SVN, Mercurial ou Diversion par chemin de projet ; leurs
-  propres clients/services sont nécessaires.
-- **Exécution et inspection** : terminaux interactifs et débogage DAP, avec points
-  d’arrêt, pile d’appels, variables et outils d’inspection selon l’adaptateur.
-- **Extensions et automatisation** : les plugins natifs ABI2 peuvent ajouter
-  commandes, panneaux, services de langage, outils de projet et contrôle de versions.
-  L’intégration SDK/MCP CyToolsCore, optionnelle, partage les services natifs de
-  l’IDE. Les plugins natifs s’exécutent comme du code de confiance dans l’application.
-- **Espace de travail et aide** : fenêtres multiples, sessions, aperçus d’images en
-  lecture seule, interface anglais/français et manuel CyDoc avec recherche et
-  ressources locales.
-
-Le développement local approfondit la navigation entre en-têtes/sources C++ et
-les catalogues d’extraits. Ces ajouts ne sont pas livrés dans la version 0.2.3 et
-restent séparés de cet instantané publié des sources. Le [guide développeur](app/README.md)
-et l’[historique des changements](CHANGELOG.md) décrivent l’implémentation publiée
-et ses limites.
+Compilateurs, clangd/autres serveurs de langage, adaptateurs de débogage et clients
+de contrôle de versions restent des prérequis externes. Les plugins natifs
+exécutent du code de confiance. La couverture sémantique dépend des véritables
+commandes de compilation et des en-têtes générés ; la couverture exhaustive
+d’Unreal et l’équivalence avec Rider/CLion ne sont pas établies. Le travail sur
+les grands projets et la campagne complète sur Unreal sont en cours.
 
 ---
 
 ## Installation
 
-1. [Télécharger l’installateur Windows](https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64-setup.exe), exécuter Setup pour l’utilisateur courant, puis ouvrir CyCode depuis le menu Démarrer.
-2. Pour une copie portable, [télécharger le ZIP complet](https://github.com/MrMybal/CyCode/releases/download/v0.2.3/CyCode-0.2.3-windows-x64.zip), l’extraire dans un dossier accessible en écriture et lancer `CyCode.exe`.
+1. [Télécharger l’installateur CyCodeCore pour Windows x64](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.1/CyCodeCore-0.1.1-windows-x64-setup.exe) et installer
+   pour l’utilisateur actuel. Aucun compte administrateur ni Python système n’est nécessaire.
+2. Sélectionner **CyCodeUpdater** si souhaité. Cette application vérifie les
+   versions du Core à son ouverture et propose le téléchargement vérifié de
+   l’installateur, puis son installation avec confirmation. La vérification à
+   l’ouverture de Windows est une option séparée, décochée par défaut.
+3. Pour une installation portable, [extraire le ZIP complet](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.1/CyCodeCore-0.1.1-windows-x64.zip).
+   Conserver le runtime, `app/`, les outils, notices et documentation à côté du moteur.
 
-Windows 10/11 x64 et un pilote OpenGL 3.3 sont requis. Le runtime MSVC est fourni.
-L’installateur utilise normalement `%LOCALAPPDATA%/Programs/CyCode` ; `data/` et
-l’éventuel `runtime/` restent dans cette installation et sont conservés à la désinstallation.
+Le paquet complet inclut le CLI natif, le runtime MSVC local, l’environnement
+isolé CPython/CyToolsCore/MCP, ripgrep, le skill `cycode-core` pour les agents et
+le lecteur CyDoc hors ligne anglais/français. Les paquets ne sont pas signés.
+La distribution publiée cible Windows x64 ; le packaging Linux/macOS et les
+derniers changements demandent une validation séparée. Voir le
+[guide d’installation et de mise à jour](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreInstallation.md).
 
-CyCode vérifie GitHub Releases au démarrage par défaut, propose les nouvelles
-versions, puis télécharge et vérifie l’installateur pour les copies installées ou le ZIP pour les copies portables, avant installation et redémarrage explicites. Aucun téléchargement `-update.zip` séparé n’est nécessaire.
-Les préférences existantes sont conservées ; activez **Vérifier les mises à jour au
-démarrage** dans le panneau de mise à jour si cette option était désactivée.
-Les versions jusqu’à 0.2.2 nécessitent une première installation ou extraction
-manuelle pour adopter le paquet partagé. Les versions suivantes utilisent le parcours intégré.
+### Connecter un agent IA
 
-Les paquets Linux/macOS, l’exécution de l’installateur et le parcours complet de
-mise à jour en ligne restent à valider. Voir les [notes de version](VERSION.fr.md).
+L’installateur peut enregistrer un projet existant. Pour le faire manuellement,
+lancer cette commande depuis le dossier de l’installation complète en remplaçant
+le chemin d’exemple par celui du projet :
 
-## Sources, compilation et bibliothèques nécessaires
+```powershell
+.\tools\python\python.exe -B app/scripts/install_core_agents.py --workspace "C:/Projects/MyProject" --access edit --enable
+```
+
+Cette commande installe le skill et configure la connexion MCP Codex du projet.
+`--access edit` autorise les modifications de sources et l’exécution de processus ;
+les écritures du contrôle de versions, des plugins et des paramètres restent
+séparées. Recharger la connexion MCP du client après l’enregistrement. Les autres
+clients MCP peuvent utiliser la commande stdio documentée. Le
+[guide des agents](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/Agents.md) décrit la découverte, les jobs,
+permissions et la connexion au service partagé des documents actifs de l’IDE.
+
+## Sources, compilation et intégration
 
 <details>
-<summary>Compiler CyCode depuis les sources</summary>
+<summary>Compiler le Core natif sans dépendances graphiques</summary>
 
-### Prérequis
-
-- Python 3.11+, Git, CMake 3.24+ et un compilateur C++20.
-- Windows : Visual Studio 2022 avec les outils C++. Les compilations depuis les
-  sources sous Linux/macOS nécessitent aussi Ninja et les bibliothèques de
-  développement SDL3 de la plateforme ; leur validation graphique reste à effectuer.
-- Les sources de l’[éditeur partagé CyCodeReader](https://github.com/MrMybal/CyCodeReader)
-  et de [CyUI](https://github.com/MrMybal/CyUI), résolues aux révisions exactes
-  indiquées par les fichiers de verrouillage. Seuls les modules UI sélectionnés
-  sont compilés.
-- Node.js 22+ et npm pour régénérer le manuel CyDoc embarqué. Ils ne sont pas
-  nécessaires pour lire la documentation exportée.
-
-### Récupérer les sources
+Prérequis : Git, Python 3.11+, CMake 3.24+ et un compilateur C++20. Les projets
+Windows demandent les outils Visual Studio/MSBuild correspondants. Les
+dépendances des sources sont épinglées ; les chaînes d’outils de langage ont
+leurs propres prérequis.
 
 ```sh
-git clone https://github.com/MrMybal/CyCode.git
+git clone --branch codex/core-intelligence https://github.com/MrMybal/CyCode.git
 cd CyCode
+python app/scripts/fetch_dependencies.py --core-only
+cmake -S . -B runtime/core -DBUILD_TESTING=OFF
+cmake --build runtime/core --config Release --target cycode_cli
 ```
 
-### Compiler et lancer
-
-```sh
-python app/scripts/fetch_dependencies.py
-python app/scripts/build.py
-```
-
-Sous Windows, la compilation ordinaire copie `CyCode.exe` à la racine du dépôt.
-Elle utilise les dépendances verrouillées et ne lance pas les tests natifs.
-Le [guide développeur](app/README.md) détaille les compilations du noyau seul,
-les sources de développement explicites, les prérequis par plateforme et les outils
-optionnels.
-
-Le pont MCP optionnel nécessite le wheel CyToolsCore fourni séparément et son
-environnement Python privé. L’application de bureau fonctionne sans Python.
-Les compilateurs et adaptateurs de langage/débogage ont leurs propres prérequis.
-
-Pour régénérer la documentation ou la vitrine :
-
-```sh
-python app/scripts/build_documentation.py
-python website/build.py
-python website/verify.py runtime/showcase
-```
+Utiliser le tag `core-v0.1.1` pour reproduire les sources de la préversion publiée.
+Les builds ordinaires ne lancent ni tests natifs ni application. GitHub Actions
+reste désactivé. Le [guide d’intégration native](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreExtraction.md)
+décrit les composants, l’intégration et le service persistant stdio/loopback.
+L’API source ne constitue pas une ABI binaire C++ stable.
 
 </details>
+
+## Documentation
+
+Le [manuel HTML français](https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview)
+conserve le lecteur CyDoc, la recherche, les images et le choix de langue. Le
+manuel des applications hébergé contient des éléments de l’ancien IDE ; utiliser
+les guides actuels d’[installation du Core](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreInstallation.md),
+d’[intégration native](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreExtraction.md) et le
+[catalogue des méthodes](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/MCPMethods.json) pour le moteur publié.
+Le lecteur du paquet complet s’ouvre aussi localement par `file://`, sans serveur.
 
 ---
 
 ## Licence
 
-**Les sources, la documentation et les exemples originaux de CyCode utilisent
-la [GNU GPL v3 uniquement](LICENSE) (`GPL-3.0-only`).** Copyright © 2026 Cyberalien ;
-voir [COPYRIGHT](COPYRIGHT). Les composants tiers conservent leurs propres licences.
+**Les sources originales, la documentation et les exemples de CyCode utilisent
+la [GNU GPL v3 uniquement](LICENSE) (`GPL-3.0-only`).** Voir [COPYRIGHT](COPYRIGHT).
+Les dépendances conservent leurs propres conditions.
 
-### Bibliothèques tierces
+### Core natif et SDK/runtime optionnels
 
 | Bibliothèque · sources | Licence · texte | Utilisation / périmètre |
 | --- | --- | --- |
-| [CyUI](https://github.com/MrMybal/CyUI) | [MIT](app/licenses/CyUI.txt) | Interface native modulaire, code, différences, commandes, images et widgets communs. |
-| [Éditeur CyCodeReader](https://github.com/MrMybal/CyCodeReader) | [GPL-3.0-only](https://github.com/MrMybal/CyCodeReader/blob/31ee97949620d62ede0c603e71094483c5c21531/LICENSE) | Sources verrouillées de l’éditeur commun ; CyCodeReader reste une application distincte. |
-| [Dear ImGui](https://github.com/ocornut/imgui) · [TextEditor](https://github.com/goossens/ImGuiColorTextEdit) | [MIT](app/licenses/DearImGui.txt) · [MIT](app/licenses/TextEditor.txt) | Widgets natifs et intégration de l’éditeur par les bibliothèques communes. |
-| [SDL3](https://github.com/libsdl-org/SDL) | [zlib](app/licenses/SDL3.txt) | Fenêtres natives, saisie et intégration du rendu. |
-| [nlohmann/json](https://github.com/nlohmann/json) | [MIT](app/licenses/nlohmann-json.txt) | Modèles et protocoles JSON natifs. |
-| [TinyXML2](https://github.com/leethomason/tinyxml2) | [zlib](app/licenses/TinyXML2.txt) | Données XML des projets et fournisseurs. |
-| [libvterm](https://www.leonerd.org.uk/code/libvterm/) | [MIT](app/licenses/libvterm.txt) | Modèle d’écran du terminal. |
-| [Monocypher](https://monocypher.org/) | [BSD-2-Clause OR CC0-1.0](app/licenses/Monocypher.txt) | Signatures des paquets de plugins natifs. |
-| [Lexilla / Scintilla](https://github.com/ScintillaOrg/lexilla) · [SciTE](https://www.scintilla.org/SciTE.html) | [Lexilla](app/licenses/Lexilla.txt), [Scintilla](app/licenses/Scintilla.txt) et [notices permissives SciTE](app/licenses/SciTE-Properties.txt) | Lexers et propriétés de langage partagés. |
-| [Tree-sitter et grammaires](https://github.com/tree-sitter) | [MIT et notices des grammaires](app/licenses/tree-sitter.txt) | Analyse syntaxique commune ; conserver aussi les notices de chaque grammaire. |
-| [stb_image](https://github.com/nothings/stb) | [MIT OR Unlicense](app/licenses/stb.txt) | Décodage d’images. |
-| [libwebp](https://github.com/webmproject/libwebp) | [Type BSD](app/licenses/libwebp-COPYING.txt) · [concession de brevets](app/licenses/libwebp-PATENTS.txt) | Décodeur WebP. |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | [MIT OR Unlicense](https://github.com/BurntSushi/ripgrep/blob/15.2.0/COPYING) | Exécutable de recherche ; ses notices accompagnent l’archive Windows. |
-| [PCRE2](https://github.com/PCRE2Project/pcre2) | [BSD-3-Clause WITH PCRE2-exception](https://github.com/PCRE2Project/pcre2/blob/6f9d7c1373262c541324a16a358785b33ef116cf/LICENCE.md) | Transformations d’extraits locales, hors application et sources publiées. |
-| [utf8proc](https://github.com/JuliaStrings/utf8proc) | [MIT et conditions des données Unicode](https://github.com/JuliaStrings/utf8proc/blob/79cdd5ab40c79afa559f689ffc13b76812dee1ac/LICENSE.md) | Changement de casse Unicode des extraits en développement local. |
-| SDK CyToolsCore — distribution privée | [MIT](app/licenses/CyToolsCore.txt) | Runtime SDK/MCP local optionnel, fourni séparément. |
-| [SDK Python MCP](https://github.com/modelcontextprotocol/python-sdk) | [MIT](app/licenses/MCP-Python.txt) | Transport dans l’environnement Python MCP optionnel. |
-| [CyDoc](https://github.com/MrMybal/CyDoc) | [MIT](https://github.com/MrMybal/CyDoc/blob/6ddf9a582defb2f11fbb3f992afef6f98dcadc93/LICENSE) | Lecteur embarqué avec les modules image/gallery, sans runtime Three.js. |
-| [marked](https://github.com/markedjs/marked) · [PrismJS](https://github.com/PrismJS/prism) · [esbuild](https://github.com/evanw/esbuild) | [MIT](https://github.com/markedjs/marked/blob/v17.0.6/LICENSE.md) · [MIT](https://github.com/PrismJS/prism/blob/v1.30.0/LICENSE) · [MIT](https://github.com/evanw/esbuild/blob/v0.25.12/LICENSE.md) | Compilation et coloration de la documentation lors de la génération. |
+| [nlohmann/json](https://github.com/nlohmann/json) | [MIT](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/nlohmann-json.txt) | Modèles et protocoles JSON natifs. |
+| [TinyXML2](https://github.com/leethomason/tinyxml2) | [zlib](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/TinyXML2.txt) | Projets et données de fournisseurs XML. |
+| [Monocypher](https://monocypher.org/) | [BSD-2-Clause OR CC0-1.0](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/Monocypher.txt) | Primitives cryptographiques et vérification des paquets de plugins natifs. |
+| [PCRE2](https://github.com/PCRE2Project/pcre2) | [BSD-3-Clause WITH PCRE2-exception](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/PCRE2.txt) | Transformations de snippets par expressions régulières dans le profil projet. |
+| [utf8proc](https://github.com/JuliaStrings/utf8proc) | [MIT + conditions des données Unicode](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/utf8proc.txt) | Conversion de casse Unicode des snippets. |
+| [libvterm](https://www.leonerd.org.uk/code/libvterm/) | [MIT](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/libvterm.txt) | Modèle de terminal dans le profil projet. |
+| CyToolsCore SDK · distribution privée | [MIT](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/CyToolsCore.txt) | Runtime SDK/MCP, jobs, identités et permissions ; fourni dans le paquet Windows complet. |
+| [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) | [MIT](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/MCP-Python.txt) | Transport MCP dans le runtime Python privé. |
 
-Les serveurs de langage, outils .NET/Java/Rust et débogueurs sont des composants
-externes optionnels avec leurs propres conditions, notamment MIT, Apache-2.0 avec
-exceptions LLVM, EPL-2.0, GPL et les notices de leurs composants. Leurs périmètres
-et textes conservés sont répertoriés dans les [notices tierces](app/THIRD_PARTY_NOTICES.md).
-Ces tableaux ne remplacent pas les notices complètes livrées avec chaque distribution.
+Le paquet Windows complet conserve aussi les notices PSF et des composants de
+CPython ainsi que les [conditions MIT OR Unlicense de ripgrep](https://github.com/BurntSushi/ripgrep/blob/15.2.0/COPYING).
+Les serveurs de langage et adaptateurs optionnels ont leurs propres licences.
+Le lecteur [CyDoc](https://github.com/MrMybal/CyDoc) embarqué utilise MIT ; ses
+outils de génération et notices des médias sont indexés dans les
+[notices tierces](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/THIRD_PARTY_NOTICES.md).
 
-## Références et liens
+[CyUI](https://github.com/MrMybal/CyUI) conserve sa [licence MIT](app/licenses/CyUI.txt).
+Les dépendances graphiques comme CyUI, Dear ImGui et SDL concernent les
+applications de bureau et l’arborescence historique ; elles ne sont pas
+nécessaires à la compilation du Core natif. Le tableau est un index des
+composants et ne remplace pas les notices complètes.
 
-- [Documentation](https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview) · [Présentation](https://mrmybal.github.io/CyCode/?lang=fr).
-- [Notes de version](VERSION.fr.md) · [Historique des changements](CHANGELOG.md) · [Téléchargements](https://github.com/MrMybal/CyCode/releases).
-- [Dépôt des sources](https://github.com/MrMybal/CyCode) · [Suivi des problèmes](https://github.com/MrMybal/CyCode/issues).
-- [CyCodeReader](https://github.com/MrMybal/CyCodeReader) — l’éditeur de code/texte indépendant qui partage la bibliothèque d’édition.
+## Références
+
+- [Version publiée du Core et empreintes](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1) · [Toutes les versions](https://github.com/MrMybal/CyCode/releases).
+- [Sources du Core natif](https://github.com/MrMybal/CyCode/tree/codex/core-intelligence) · [Suivi des problèmes](https://github.com/MrMybal/CyCode/issues).
+- [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE) · [CyCodeReader](https://github.com/MrMybal/CyCodeReader).
+- [Manuel français](https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview) · [English manual](https://mrmybal.github.io/CyCode/Documentation.html#/en/overview).
 
 <details>
 <summary><strong>AI Usage</strong></summary>
 
-- [Commencer ici : instructions du projet](https://github.com/MrMybal/CyCode/blob/main/app/AGENTS.md) — architecture, services natifs et consignes du dépôt.
-- [Compiler cette application](app/README.md) — prérequis, commandes de compilation et installation locale.
-- [API des plugins](https://github.com/MrMybal/CyCode/blob/main/app/Docs/Plugins.md) · [Intégration SDK/MCP](https://github.com/MrMybal/CyCode/blob/main/app/Docs/MCP.md) — contrats d’extension et services communs.
-- [Génération documentaire](https://github.com/MrMybal/CyCode/blob/main/app/.CyDocBuild/README.md) · [Génération de la vitrine](https://github.com/MrMybal/CyCode/blob/main/website/README.md) — régénérer le lecteur local et la présentation statique.
+- [Commencer ici : instructions du projet Core](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/AGENTS.md) — responsabilités et conventions du dépôt.
+- [Guide des agents](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/Agents.md) — démarrage persistant, contexte du compilateur, jobs MCP et changements protégés.
+- [Installer et mettre à jour](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreInstallation.md) — paquets, skills et enregistrement des projets.
+- [Intégrer la bibliothèque native](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreExtraction.md) — composants, API source et périmètre des validations.
+- [Schémas des opérations](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/MCPMethods.json) — opérations prises en charge et leurs véritables contrats.
 
 </details>
