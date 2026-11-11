@@ -143,6 +143,7 @@
     "reference-app-docs-windowssecurity": "native-core#antivirus",
     "reference-app-docs-coreinstallation": "core-installation#distribution",
     "reference-app-docs-corequality": "core-quality#validation",
-    "reference-app-docs-analysisprogress": "analysis-progress#validation"
+    "reference-app-docs-analysisprogress": "analysis-progress#validation",
+    "reference-app-docs-largeprojects": "large-projects#storage"
   }
 }

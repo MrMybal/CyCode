@@ -1,5 +1,13 @@
 # Capability coverage
 
+The progressive-capacity stage adds [paged native text and storage](LargeProjects.md):
+streamed compiler database digests/commands, incremental format-2 checkpoint pages,
+immutable transaction payloads on private disk and four guarded paged-document
+SDK operations. Ordinary GUI/LSP buffers retain their compatibility policy; the
+paged profile is explicit, uses UTF-8 byte cursors and has no GUI/LSP/crash-recovery
+adapter yet. No hardware-unlimited or exhaustive Unreal claim follows.
+
+
 | Capability | Native UI | CyTools/MCP | State |
 |---|---|---|---|
 | Persistent compiler traversal | New view integration pending | analysis_prepare/checkpoints/results/status through the same native owner and official SDK | Opt-in 32 MiB checkpoints, OS lease, compiler digest, historical-proof invalidation, per-file errors/timing and explicit pending budgets. Windows real 162-unit and scoped Unreal runs; full-engine/current-proof, GUI and new Linux/macOS execution unverified. See [Progress](AnalysisProgress.md). |

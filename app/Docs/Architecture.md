@@ -1,5 +1,13 @@
 # Native Core architecture
 
+The progressive-capacity stage adds [paged native text and storage](LargeProjects.md):
+streamed compiler database digests/commands, incremental format-2 checkpoint pages,
+immutable transaction payloads on private disk and four guarded paged-document
+SDK operations. Ordinary GUI/LSP buffers retain their compatibility policy; the
+paged profile is explicit, uses UTF-8 byte cursors and has no GUI/LSP/crash-recovery
+adapter yet. No hardware-unlimited or exhaustive Unreal claim follows.
+
+
 The native semantic-preparation owner also maintains opt-in traversal metadata
 under `.cycode/analysis-progress`. OS leases and shared atomic publication protect
 its writer; restoring rebinds the current pass and downgrades historical compiler

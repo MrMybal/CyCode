@@ -5,7 +5,7 @@ description: Connectez-vous à l’IDE actif avec une identité de lecture ou d�
 section: Travailler dans CyCode
 order: 260
 parent: plugins
-sourceRevision: 5
+sourceRevision: 6
 ---
 
 ## Se connecter {#connection}
@@ -24,4 +24,4 @@ Les lectures et écritures utilisent les mêmes documents natifs que l’éditeu
 
 ## Core sans interface {#headless}
 
-Le [guide d’intégration IA](doc:core-agents#connect) décrit le démarrage du Core autonome, les 239 contrats, les permissions, tâches, préparations d’analyse, navigations et modifications protégées.
+Le [guide d’intégration IA](doc:core-agents#connect) décrit le démarrage du Core autonome, les 243 contrats, les permissions, tâches, préparations d’analyse, navigations et modifications protégées.

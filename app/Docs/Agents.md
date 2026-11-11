@@ -5,7 +5,7 @@
 For the standalone package, local installer and agent skill, read [Core installation](CoreInstallation.md).
 
 CyCode Core exposes the same persistent native Engine to applications and AI
-clients. There are 239 domain operations, each exposed as `op_<operationId>` by
+clients. There are 243 domain operations, each exposed as `op_<operationId>` by
 the official CyToolsCore MCP adapter. The SDK adds its own job, discovery, task
 and identity controls. A listed operation is a contract, not proof that a
 language server, debugger, compiler, VCS provider or plugin is installed.
@@ -91,7 +91,7 @@ before assuming availability or permissions. The generated `app/MCPMethods.json`
 contains every MCP name, native method, full input/output schema, permission,
 exclusive group and progress/cancellation flag from the executable contract.
 Regenerate it with `python app/scripts/generate_mcp_reference.py`; verify without
-writing with `--check`. The bilingual HTML API reference contains the same 239
+writing with `--check`. The bilingual HTML API reference contains the same 243
 operation contracts, grouped by domain. It is not a listing of internal C++
 functions and does not expose trusted native shutdown/cancellation controls.
 
@@ -230,8 +230,8 @@ or text-based symbol substitution is used.
    built-in clangd launch supplies `--rename-file-limit=0` unless explicitly
    overridden. Incomplete/ambiguous compiler identity, missing or errorful current
    diagnostics, unsupported edits and provider failures refuse the whole preview.
-   The 16 MiB transaction byte budget remains; `CapacityExceeded` never issues a
-   partial plan. Macro token-pasting, serialized Blueprint/reflection names,
+   Native snapshots now spool to private disk; no aggregate 16 MiB transaction
+   cutoff remains. Per-operation capacity failures never issue a partial plan. Macro token-pasting, serialized Blueprint/reflection names,
    inactive platform/configuration branches, external projects and unreported
    semantic references remain limitations.
 4. Apply the issued plan with `changes_apply`, passing every required
@@ -264,3 +264,5 @@ feature listed by an extension descriptor is executable. Current changes are
 validated locally on Windows with the production Core/clangd and real Unreal;
 Linux/macOS execution, new installers and GUI acceptance require separate checks.
 GitHub Actions remain paused by the owner.
+
+See [large-project agent workflows](LargeProjects.md) for paged documents, byte cursors, streamed databases and disk-backed transactions.

@@ -1,16 +1,17 @@
+#include "cycode/AtomicFile.h"
 #include "cycode/Engine.h"
 #include "cycode/Error.h"
+#include "cycode/StreamingData.h"
 #include "cycode/TextEdits.h"
-#include "cycode/AtomicFile.h"
-#include <monocypher.h>
-#include <array>
-#include <random>
-#include <cwchar>
-#include <string_view>
 #include <algorithm>
+#include <array>
 #include <cctype>
+#include <cwchar>
 #include <fstream>
+#include <monocypher.h>
+#include <random>
 #include <set>
+#include <string_view>
 
 namespace cycode {
 namespace {
@@ -43,9 +44,7 @@ Json sourcePosition(const std::string &text, size_t at) {
     return {{"line", std::count(text.begin(), text.begin() + at, '\n')},
             {"character", LanguageClient::utf16Length(text.substr(start, at - start))}};
 }
-bool identifierByte(unsigned char c) {
-    return c >= 128 || std::isalnum(c) || c == '_';
-}
+bool identifierByte(unsigned char c) { return c >= 128 || std::isalnum(c) || c == '_'; }
 
 constexpr size_t analysisCacheLimit = 32 * 1024 * 1024;
 std::string analysisBytes(const std::filesystem::path &file, size_t maximum) {
@@ -110,12 +109,76 @@ std::filesystem::path analysisDirectory(const std::filesystem::path &root, bool 
     }
     return directory;
 }
-Json analysisSaved(const std::filesystem::path &file) {
-    return Json::parse(analysisBytes(file, analysisCacheLimit), [](int depth, Json::parse_event_t, Json &) {
+Json analysisSavedBytes(const std::string &bytes) {
+    return Json::parse(bytes, [](int depth, Json::parse_event_t, Json &) {
         if (depth > 12)
             throw NativeError(ErrorCode::InvalidParams, "Analysis checkpoint nesting exceeds its bound");
         return true;
     });
+}
+
+Json analysisSaved(const std::filesystem::path &file) {
+    return analysisSavedBytes(analysisBytes(file, analysisCacheLimit));
+}
+
+std::filesystem::path analysisParts(const std::filesystem::path &manifest, bool create) {
+    const auto directory = manifest.parent_path() / (pathUtf8(manifest.stem()) + ".parts");
+    const auto canonical = std::filesystem::weakly_canonical(directory);
+#ifdef _WIN32
+    const bool same = _wcsicmp(canonical.c_str(), directory.c_str()) == 0;
+#else
+    const bool same = canonical == directory;
+#endif
+    if (!same || std::filesystem::is_symlink(directory) ||
+        (std::filesystem::exists(directory) && !std::filesystem::is_directory(directory)))
+        throw NativeError(ErrorCode::FileSystemError, "Redirected analysis pages refused");
+    if (create)
+        std::filesystem::create_directory(directory);
+    return directory;
+}
+bool analysisHash(const std::string &hash) {
+    return hash.size() == 64 && std::all_of(hash.begin(), hash.end(), [](char c) {
+               return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+           });
+}
+void visitAnalysisArray(const Json &manifest, const std::filesystem::path &file, const std::string &kind,
+                        const std::function<void(const Json &)> &visit) {
+    if (manifest.at("format") == 1) {
+        const auto &values = manifest.at(kind);
+        if (!values.is_array())
+            throw NativeError(ErrorCode::InvalidParams, "Invalid legacy analysis array");
+        for (const auto &value : values)
+            visit(value);
+        return;
+    }
+    if (manifest.at("format") != 2)
+        throw NativeError(ErrorCode::InvalidParams, "Unsupported analysis format");
+    const auto count = manifest.at(kind == "paths" ? "total" : "observed").get<size_t>();
+    const auto &pages = manifest.at(kind == "paths" ? "pathPages" : "recordPages");
+    if (!pages.is_array() || pages.size() != (count / 256 + (count % 256 != 0)))
+        throw NativeError(ErrorCode::InvalidParams, "Invalid analysis page count");
+    const auto directory = analysisParts(file, false);
+    size_t seen = 0;
+    for (const auto &item : pages) {
+        const auto hash = item.get<std::string>();
+        if (!analysisHash(hash))
+            throw NativeError(ErrorCode::InvalidParams, "Invalid analysis page identity");
+        const auto bytes = analysisBytes(directory / (kind + "-" + hash + ".json"), 16 * 1024 * 1024);
+        if (analysisDigest(bytes) != hash)
+            throw NativeError(ErrorCode::RevisionConflict, "Analysis page bytes changed");
+        const auto values = Json::parse(bytes, [](int depth, Json::parse_event_t, Json &) {
+            if (depth > 12)
+                throw NativeError(ErrorCode::InvalidParams, "Analysis page nesting exceeds its bound");
+            return true;
+        });
+        const auto expected = std::min<size_t>(256, count - seen);
+        if (!values.is_array() || values.size() != expected)
+            throw NativeError(ErrorCode::InvalidParams, "Invalid analysis page extent");
+        for (const auto &value : values) {
+            visit(value);
+            ++seen;
+        }
+    }
 }
 
 } // namespace
@@ -155,14 +218,19 @@ Json Engine::analysisOperation(const std::string &method, const Json &params) {
                     continue;
                 try {
                     const auto value = analysisSaved(entry.path());
-                    if (value.at("format") != 1 || value.at("workspace") != pathUtf8(root_) ||
-                        value.at("checkpoint") != id || value.at("scope") != "compilation-database" ||
-                        !value.at("paths").is_array() || !value.at("records").is_array() ||
-                        value.at("records").size() > value.at("paths").size())
+                    const auto format = value.at("format").get<int>();
+                    if ((format != 1 && format != 2) || value.at("workspace") != pathUtf8(root_) ||
+                        value.at("checkpoint") != id || value.at("scope") != "compilation-database")
                         throw NativeError(ErrorCode::InvalidParams, "Invalid analysis checkpoint");
+                    const auto total =
+                        format == 1 ? value.at("paths").size() : value.at("total").get<size_t>();
+                    const auto observed =
+                        format == 1 ? value.at("records").size() : value.at("observed").get<size_t>();
+                    if (observed > total)
+                        throw NativeError(ErrorCode::InvalidParams, "Invalid analysis counts");
                     entries.push_back({{"checkpoint", id},
-                                       {"total", value.at("paths").size()},
-                                       {"observed", value.at("records").size()},
+                                       {"total", total},
+                                       {"observed", observed},
                                        {"scope", value.at("scope")},
                                        {"proofReused", false}});
                     if (entries.size() == 128) {
@@ -224,8 +292,8 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
     const auto cancellation = std::make_shared<std::atomic<bool>>(false);
     AnalysisSession work;
     Json collected = Json::object();
-    std::map<std::string, std::string> baselines;
-    size_t renameBytes = 0;
+    std::map<std::string, StoredBlob> baselines;
+    std::shared_ptr<SpoolStore> renameStore;
     std::string temporary;
     uint64_t temporaryId = 0, temporaryRevision = 0;
     {
@@ -282,8 +350,7 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
         if (!work.checkpoint.empty() && work.discoveryComplete) {
             const auto directory = analysisDirectory(root_, true),
                        file = directory / (work.checkpoint + ".json");
-            if (work.compilerDigest !=
-                analysisDigest(analysisBytes(compilerDatabase(language_, root_), 64 * 1024 * 1024)))
+            if (work.compilerDigest != digestFileStreaming(compilerDatabase(language_, root_)))
                 throw NativeError(ErrorCode::RevisionConflict,
                                   "Compiler database bytes changed; preserve the previous checkpoint");
             const bool exists = std::filesystem::exists(file);
@@ -293,19 +360,55 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                   analysisDigest(analysisBytes(file, analysisCacheLimit)) != work.checkpointRevision)))
                 throw NativeError(ErrorCode::RevisionConflict,
                                   "Saved analysis progress changed; preserve it and inspect checkpoints");
-            const Json value = {{"format", 1},
+            const auto parts = analysisParts(file, true);
+            auto writePages = [&](const std::string &kind, size_t count,
+                                  const std::function<Json(size_t)> &at, Json &pages, size_t start) {
+                for (size_t index = start; index * 256 < count; ++index) {
+                    if (work.records.size() == work.historicalObserved)
+                        checked();
+                    Json page = Json::array();
+                    for (size_t i = index * 256; i < std::min(count, (index + 1) * 256); ++i)
+                        page.push_back(at(i));
+                    const auto text = page.dump();
+                    if (text.size() > 16 * 1024 * 1024)
+                        throw NativeError(ErrorCode::CapacityExceeded,
+                                          "An analysis page exceeds its 16 MiB working budget");
+                    const auto hash = analysisDigest(text);
+                    const auto target = parts / (kind + "-" + hash + ".json");
+                    if (std::filesystem::exists(target)) {
+                        if (analysisDigest(analysisBytes(target, 16 * 1024 * 1024)) != hash)
+                            throw NativeError(ErrorCode::RevisionConflict, "Stored analysis page changed");
+                    } else
+                        writeMetadataFileAtomic(target, text);
+                    if (index < pages.size())
+                        pages[index] = hash;
+                    else
+                        pages.push_back(hash);
+                }
+            };
+            writePages(
+                "paths", work.paths.size(), [&](size_t i) { return Json(work.paths.at(i)); }, work.pathPages,
+                work.pathPages.size());
+            writePages(
+                "records", work.records.size(), [&](size_t i) { return work.records.at(i); },
+                work.recordPages, work.savedRecords / 256);
+            const Json value = {{"format", 2},
                                 {"workspace", pathUtf8(root_)},
                                 {"checkpoint", work.checkpoint},
                                 {"scope", work.scope},
                                 {"compilerContext", work.compilerContext},
                                 {"compilerDigest", work.compilerDigest},
-                                {"paths", work.paths},
-                                {"records", work.records},
+                                {"total", work.paths.size()},
+                                {"observed", work.records.size()},
+                                {"pathPages", work.pathPages},
+                                {"recordPages", work.recordPages},
                                 {"summary", work.summary}};
             const auto bytes = value.dump();
             if (bytes.size() > analysisCacheLimit)
-                throw NativeError(ErrorCode::CapacityExceeded, "Analysis checkpoint exceeds 32 MiB");
+                throw NativeError(ErrorCode::CapacityExceeded,
+                                  "Analysis manifest exceeds its working budget");
             writeMetadataFileAtomic(file, bytes);
+            work.savedRecords = work.records.size();
             work.checkpointRevision = analysisDigest(bytes);
             std::lock_guard lock(analysisStateMutex_);
             analysisState_["checkpointRevision"] = work.checkpointRevision;
@@ -363,34 +466,40 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                 throw NativeError(ErrorCode::BackendUnavailable,
                                   "Analysis checkpoint is in use by another Core");
             const auto bytes = analysisBytes(file, analysisCacheLimit);
-            const auto value = analysisSaved(file);
-            if (value.at("format") != 1 || value.at("workspace") != pathUtf8(root_) ||
-                value.at("checkpoint") != restore || value.at("scope") != "compilation-database" ||
-                !value.at("paths").is_array() || !value.at("records").is_array() ||
-                value.at("paths").size() > 1000000 || value.at("records").size() > value.at("paths").size())
+            const auto value = analysisSavedBytes(bytes);
+            const auto format = value.at("format").get<int>();
+            if ((format != 1 && format != 2) || value.at("workspace") != pathUtf8(root_) ||
+                value.at("checkpoint") != restore || value.at("scope") != "compilation-database")
                 throw NativeError(ErrorCode::InvalidParams, "Invalid saved analysis inventory");
             work.compilerContext = value.at("compilerContext");
             work.compilerDigest = value.at("compilerDigest");
             if (work.compilerContext != analysisCompilerContext() ||
                 work.compilerDigest !=
-                    analysisDigest(analysisBytes(compilerDatabase(language_, root_), 64 * 1024 * 1024)))
+                    digestFileStreaming(compilerDatabase(language_, root_), cancellation.get()))
                 throw NativeError(
                     ErrorCode::RevisionConflict,
                     "Compilation context changed since the checkpoint; start a fresh inventory");
             std::set<std::string> unique;
-            for (const auto &entry : value.at("paths")) {
+            visitAnalysisArray(value, file, "paths", [&](const Json &entry) {
+                checked();
                 const auto name = entry.get<std::string>();
                 const auto relative = utf8Path(name);
                 if (name.empty() || name.size() > 32768 || relative.has_root_path() ||
                     name.find_first_of("\\:\r\n") != std::string::npos ||
+                    name.find('\0') != std::string::npos ||
                     std::any_of(relative.begin(), relative.end(),
                                 [](const auto &part) { return part == ".." || part == "."; }) ||
                     !LanguageService::supportsCpp(name) || !unique.insert(name).second)
                     throw NativeError(ErrorCode::InvalidParams, "Invalid path in analysis checkpoint");
                 work.paths.push_back(name);
-            }
-            for (size_t i = 0; i < value.at("records").size(); ++i) {
-                auto row = value.at("records").at(i);
+            });
+            size_t recordIndex = 0;
+            visitAnalysisArray(value, file, "records", [&](const Json &saved) {
+                checked();
+                auto row = saved;
+                const auto i = recordIndex++;
+                if (i >= work.paths.size())
+                    throw NativeError(ErrorCode::InvalidParams, "Too many analysis observations");
                 if (row.at("path") != work.paths.at(i) || !row.at("revision").is_number_unsigned() ||
                     !row.at("errors").is_number_unsigned() || !row.at("diagnostics").is_string())
                     throw NativeError(ErrorCode::InvalidParams, "Invalid historical analysis record");
@@ -425,7 +534,11 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                 row["errors"] = 0;
                 row["evidence"] = "historical-checkpoint";
                 work.records.push_back(std::move(row));
-            }
+            });
+            if (format == 2)
+                work.pathPages = value.at("pathPages");
+            // Historical diagnostics were explicitly downgraded: publish new
+            // immutable record pages once; never modify the prior generation.
             work.id = "analysis-" + std::to_string(nextAnalysisSession_++);
             work.scope = "compilation-database";
             work.historicalObserved = work.records.size();
@@ -485,10 +598,6 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                     throw NativeError(ErrorCode::InvalidParams,
                                       "Compilation-database scope does not accept paths");
                 const auto file = compilerDatabase(language_, root_);
-                std::ifstream input(file);
-                if (!input)
-                    throw NativeError(ErrorCode::BackendUnavailable,
-                                      "No readable active C++ compilation database");
                 const auto prefix = params.value("pathPrefix", std::string{});
                 const auto folder = prefix.empty() ? root_ : resolve(prefix);
                 if (!std::filesystem::is_directory(folder))
@@ -498,11 +607,10 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                 std::set<std::string> allUnits;
                 // Consume one command object at a time. Do not retain 37,000
                 // expanded compiler argument lists merely to enumerate sources.
-                const auto parsed =
-                    Json::parse(input, [&](int depth, Json::parse_event_t event, Json &value) {
+                visitCompilationDatabase(
+                    file,
+                    [&](const Json &value) {
                         checked();
-                        if (depth != 1 || event != Json::parse_event_t::object_end)
-                            return true;
                         if (!value.is_object() || !value.value("file", Json()).is_string() ||
                             !value.value("directory", Json()).is_string())
                             throw NativeError(ErrorCode::InvalidParams, "Invalid compilation command entry");
@@ -513,16 +621,14 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                         path = std::filesystem::weakly_canonical(path);
                         if (!containsPath(root_, path) || !LanguageService::supportsCpp(pathUtf8(path))) {
                             ++outside;
-                            return false;
+                            return;
                         }
                         const auto key = pathUtf8(resolve(pathUtf8(path)).lexically_relative(root_));
                         allUnits.insert(key);
                         if (containsPath(folder, path))
                             paths.insert(key);
-                        return false;
-                    });
-                if (!parsed.is_array())
-                    throw NativeError(ErrorCode::InvalidParams, "Compilation database must be an array");
+                    },
+                    cancellation.get());
                 work.summary["commands"] = commands;
                 work.summary["translationUnits"] = allUnits.size();
                 work.summary["outOfScope"] = allUnits.size() - paths.size() + outside;
@@ -622,7 +728,7 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                 if (!work.checkpointLease->acquired())
                     throw NativeError(ErrorCode::BackendUnavailable, "Cannot acquire analysis checkpoint");
                 work.compilerDigest =
-                    analysisDigest(analysisBytes(compilerDatabase(language_, root_), 64 * 1024 * 1024));
+                    digestFileStreaming(compilerDatabase(language_, root_), cancellation.get());
             }
         }
         if (analysisCompilerContext() != work.compilerContext)
@@ -658,9 +764,10 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                     std::lock_guard lock(mutex_);
                     guard();
                     const bool owned = !documents_.contains(path);
-                    const auto revisionBeforeOpen=nextRevision_;
+                    const auto revisionBeforeOpen = nextRevision_;
                     auto &doc = openLocked(path, false);
-                    if(owned)analysisRevisionSlots_+=nextRevision_-revisionBeforeOpen;
+                    if (owned)
+                        analysisRevisionSlots_ += nextRevision_ - revisionBeforeOpen;
                     work.generation = documentGenerationLocked();
                     revision = doc.revision;
                     identity = doc.identity;
@@ -772,12 +879,10 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                                 throw NativeError(ErrorCode::UnsupportedOperation,
                                                   "Annotated C++ rename requires adapter support");
                         (void)applyTextEdits(text, own, symbol);
-                        renameBytes += text.size() * 2 + own.dump().size();
-                        if (renameBytes > 16 * 1024 * 1024)
-                            throw NativeError(ErrorCode::CapacityExceeded,
-                                              "Rename transaction exceeds 16 MiB; no partial preview issued");
                         collected[uri] = own;
-                        baselines[path] = text;
+                        if (!renameStore)
+                            renameStore = std::make_shared<SpoolStore>(root_);
+                        baselines[path] = renameStore->put(text);
                         break;
                     }
                 }
@@ -847,7 +952,7 @@ Json Engine::prepareAnalysis(const Json &params, const std::string &symbol, cons
                 for (const auto &[path, before] : baselines) {
                     auto &doc = openLocked(path);
                     work.generation = documentGenerationLocked();
-                    if (doc.text != before)
+                    if (doc.text != before->load())
                         throw NativeError(ErrorCode::RevisionConflict,
                                           "A prepared rename file changed before preview");
                     if (!doc.diskConflict.empty())

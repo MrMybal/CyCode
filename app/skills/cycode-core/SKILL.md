@@ -49,6 +49,25 @@ Do not put workspace sources into the SDK's temporary task-file lifecycle.
 - Distinguish a compiler result, a partial index and a textual candidate in the
   answer. A completed preparation does not certify exhaustive Unreal coverage.
 
+## Large text and previews
+
+When an ordinary read exceeds its buffer policy, discover `documents_read_page`
+and use its native paged profile. Continue with `nextOffset` and the current
+revision. Offsets are UTF-8 bytes, not the UTF-16 positions of ordinary LSP calls.
+Save or close paged edits before compiler queries: there is no LSP overlay.
+`analysis_inspect` can use a clean paged C/C++ revision and a real compiler command
+without loading the whole source into RAM. A file cannot be open in both profiles; never discard an existing dirty buffer
+merely to switch storage. Paged text currently has no LSP or crash recovery.
+
+Prepare a bounded byte edit with `documents_prepare_byte_edit`, then use the same
+`changes_preview/apply/undo` owner. Large previews need independent before/after
+byte cursors and bounded pages; follow the returned next cursors. Neither Apply
+nor Undo saves a source. Explicit publication uses `documents_save_paged` and
+current revision; close uses `documents_close_paged`. Inspect canCancel: initial
+import/save and transaction commit are currently noncancellable. Keep source
+paths outside the SDK temporary task lifecycle. Read the maintained
+`app/Docs/LargeProjects.md` for storage/backend constraints.
+
 ## Change code
 
 Prefer a compiler-backed rename/code action when supported. Prepare and inspect

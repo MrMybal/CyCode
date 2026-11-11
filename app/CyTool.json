@@ -78,7 +78,7 @@
     {
       "id": "analysis_inspect",
       "name": "Analysis Inspect",
-      "description": "Inspect one saved C++ translation unit using installed clang-tidy and exactly one actual workspace compilation command. Profiles include Clang Static Analyzer checks for recommended/security. Source and database guards mark changed results stale. Returns compiler byte columns, bounded actual diagnostics and output; no fixes or source writes. Cancel through build_cancel with the issued operationId. No fallback flags or claim of whole-project completeness.",
+      "description": "Inspect one saved C++ translation unit using installed clang-tidy and exactly one actual workspace compilation command. Profiles include Clang Static Analyzer checks for recommended/security. Ordinary and clean paged source revisions are supported; paged baselines use streamed digests instead of whole text copies. Save/reconcile dirty paged buffers before disk inspection. Source and database guards mark changed results stale. Returns compiler byte columns, bounded actual diagnostics and output; no fixes or source writes. Cancel through build_cancel with the issued operationId. No fallback flags or claim of whole-project completeness.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -65804,7 +65804,7 @@
     {
       "id": "changes_preview",
       "name": "Changes Preview",
-      "description": "Read before/after text and concrete UTF-16 edits for one file in a prepared change. Preview IDs belong to the running IDE and expire; they are not filesystem paths.",
+      "description": "Read before/after text and concrete UTF-16 edits for one file in a prepared change. Preview IDs belong to the running Core and expire; they are not filesystem paths. Large previews require bounded length plus independent beforeOffset/afterOffset byte cursors (offset initializes both); use returned nextBeforeOffset/nextAfterOffset. Full small previews remain compatible. Paged documents report byte edits; ordinary edits remain UTF-16.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -65815,6 +65815,26 @@
             "type": "string",
             "minLength": 1,
             "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "beforeOffset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "afterOffset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "length": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 262144
           }
         },
         "required": [
@@ -65888,6 +65908,43 @@
               ],
               "additionalProperties": false
             }
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "beforeOffset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "afterOffset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "nextBeforeOffset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextAfterOffset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "beforeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "afterBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "positionEncoding": {
+            "type": "string"
           }
         },
         "required": [
@@ -66071,7 +66128,7 @@
         "workspace.write"
       ],
       "canRunAsync": true,
-      "canCancel": true,
+      "canCancel": false,
       "supportsProgress": false,
       "exclusiveGroups": [
         "workspace-mutations"
@@ -66230,7 +66287,7 @@
         "workspace.write"
       ],
       "canRunAsync": true,
-      "canCancel": true,
+      "canCancel": false,
       "supportsProgress": false,
       "exclusiveGroups": [
         "workspace-mutations"
@@ -70324,7 +70381,7 @@
     {
       "id": "search_text",
       "name": "Search Text",
-      "description": "Search project text. Unsaved buffers override disk for literal and regex searches. Regex uses private bounded temporary snapshots (128 buffers / 64 MiB) with native ripgrep cancellation; project files stay untouched.",
+      "description": "Search project text. Unsaved buffers override disk for literal and regex searches. Regex uses private bounded temporary snapshots (128 ordinary buffers / 64 MiB) with native ripgrep cancellation; dirty paged UTF-8 buffers are streamed separately to private snapshots with disk-headroom and current-revision guards. Literal/regex searches supersede their stale disk matches without loading complete paged text into RAM. Project files stay untouched.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -71014,6 +71071,442 @@
       "canRunAsync": true,
       "canCancel": true,
       "supportsProgress": false
+    },
+    {
+      "id": "documents_read_page",
+      "name": "Documents Read Page",
+      "description": "Open native paged UTF-8 text and read at most 256 KiB at a time. The Engine owns one piece-based live buffer with immutable private disk backing, independent of total source size. Source bytes are not saved. Cannot overlap an ordinary live buffer. Offsets/lengths are UTF-8 BYTES, not UTF-16 or line numbers; continuation requires the current expectedRevision. Returns nextOffset without splitting a code point. First open imports and validates the source; long import is currently noncancellable. This mode does not start LSP or provide crash recovery.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "length": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 262144
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDocumentId": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "dirty": {
+            "type": "boolean"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "storage": {
+            "const": "paged"
+          },
+          "positionEncoding": {
+            "const": "utf8-bytes"
+          },
+          "text": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextOffset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "id",
+          "revision",
+          "dirty",
+          "bytes",
+          "storage",
+          "positionEncoding",
+          "text",
+          "offset",
+          "nextOffset",
+          "hasMore"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false
+    },
+    {
+      "id": "documents_prepare_byte_edit",
+      "name": "Documents Prepare Byte Edit",
+      "description": "Prepare one edit of an already-open paged document using UTF-8 byte boundaries and expectedRevision. Keeps inserted text and immutable piece snapshots in private native storage; changes_apply/undo operate on the live piece buffer and never save the project file. Review the issued change with paged changes_preview. Original BOM/line-ending bytes are retained; no implicit normalization, LSP or resource operation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "length": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 262144
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDocumentId": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "path",
+          "offset",
+          "length",
+          "text",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "preview",
+              "applied",
+              "undone"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                },
+                "expectedRevision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "editCount": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "path",
+                "expectedRevision",
+                "editCount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "editCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "annotations": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "needsConfirmation": {
+                  "type": "boolean"
+                },
+                "files": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "description",
+                "needsConfirmation",
+                "files"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "preparedFiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wholeProjectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "strategy",
+              "preparedFiles",
+              "wholeProjectIndexCompleteness",
+              "limitations"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "state",
+          "files",
+          "editCount"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false
+    },
+    {
+      "id": "documents_save_paged",
+      "name": "Documents Save Paged",
+      "description": "Explicitly stream an already-open paged document to its original workspace file using the shared atomic writer. Requires its current revision; validates private pieces, read-only status and the saved source digest before publication. No source overwrite on a known disk conflict. Noncancellable publication; no save-as, cross-process recovery or hard byte maximum is implied.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDocumentId": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "dirty": {
+            "type": "boolean"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "storage": {
+            "const": "paged"
+          },
+          "positionEncoding": {
+            "const": "utf8-bytes"
+          }
+        },
+        "required": [
+          "path",
+          "id",
+          "revision",
+          "dirty",
+          "bytes",
+          "storage",
+          "positionEncoding"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "workspace.write"
+      ],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
+    {
+      "id": "documents_close_paged",
+      "name": "Documents Close Paged",
+      "description": "Close a native paged live document with its expected revision. Dirty buffers require explicit discard=true. Does not save or delete the project source; immutable payloads can remain leased by live change previews until expiry/shutdown.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "discard": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "closed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "closed"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "workspace.write"
+      ],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
     },
     {
       "id": "documents_read",

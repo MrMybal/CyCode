@@ -208,13 +208,13 @@
   "terminal_clear": "Effacer la sortie conservée pour une session de terminal.",
   "terminal_close": "Fermer une session de terminal et arrêter son processus.",
   "sources_read": "Lire une source autorisée par le service de documents.",
-  "changes_preview": "Préparer un ensemble de changements et examiner les fichiers concernés.",
+  "changes_preview": "Lire un aperçu immuable avant/après. Les gros aperçus exigent des pages avec beforeOffset/afterOffset en octets indépendants et length ; suivre nextBeforeOffset/nextAfterOffset. Les éditions ordinaires restent UTF-16 ; celles des documents paginés utilisent les octets UTF-8.",
   "changes_apply": "Appliquer un ensemble de changements préparé après validation des révisions.",
   "changes_undo": "Annuler un ensemble de changements appliqué et encore annulable.",
   "workspace_describe": "Décrire l’espace de travail natif et les services disponibles.",
   "workspace_files": "Lister les fichiers indexés par pages bornées. Chaque page contient indexRevision et une generation positive obligatoire : comparer les deux avant de combiner des pages, rejeter les paires mélangées puis recommencer. Une reconstruction manuelle avance la génération même sans changement de révision du système de fichiers. Ces compteurs sont locaux au processus, pas un identifiant de cliché figé.",
   "workspace_poll": "Actualiser les informations natives de l’espace de travail.",
-  "search_text": "Rechercher du texte dans les fichiers de l’espace de travail.",
+  "search_text": "Rechercher le texte du projet avec les tampons non sauvegardés prioritaires. Les documents paginés modifiés sont copiés progressivement dans des instantanés privés pour la recherche littérale ou regex, puis leur révision est revérifiée. Aucun chargement complet paginé en RAM ni sauvegarde source ; budgets de sortie/temps et annulation ripgrep conservés.",
   "recovery_status": "Consulter l’état du service de récupération des documents.",
   "recovery_list": "Lister les instantanés de documents récupérables.",
   "recovery_preview": "Prévisualiser un instantané de récupération sans modifier le document.",
@@ -236,6 +236,10 @@
   "analysis_status": "Consulter la progression native, le fichier courant et son temps de traitement sans démarrer une nouvelle analyse.",
   "analysis_prepare": "Analyser progressivement les sources ou les unités C++, enregistrer explicitement la progression et reprendre un instantané ; les preuves historiques sont invalidées, les erreurs isolées signalées et la couverture reste explicite.",
   "analysis_results": "Consulter une page des observations sémantiques de la session native, sans assimiler ces résultats à une couverture exhaustive.",
-  "analysis_inspect": "Inspecter une unité C++ enregistrée avec clang-tidy et sa vraie commande de compilation, sans modifier les sources ; résultats protégés et annulation du processus.",
-  "analysis_checkpoints": "Lister les progressions d’analyse enregistrées dans cet espace de travail, sans lancer d’analyse ni réutiliser les diagnostics historiques comme preuve actuelle."
+  "analysis_inspect": "Inspecter une unité C++ sauvegardée avec clang-tidy et sa vraie commande de compilation. Les profils classiques et paginés propres sont acceptés avec leur révision ; les gros fichiers utilisent des empreintes progressives sans copie intégrale du texte. Refuser les tampons paginés modifiés/occupés ; signaler les résultats périmés, tronqués ou interrompus, sans correction ou écriture source.",
+  "analysis_checkpoints": "Lister les progressions d’analyse enregistrées dans cet espace de travail, sans lancer d’analyse ni réutiliser les diagnostics historiques comme preuve actuelle.",
+  "documents_read_page": "Ouvrir un document UTF-8 paginé natif et lire des plages de 4 à 262 144 octets sans charger tout le fichier en mémoire. La suite exige la révision vivante. Ni coordonnées UTF-16, ni LSP, ni sauvegarde implicite ; import initial non annulable.",
+  "documents_prepare_byte_edit": "Préparer une modification en octets UTF-8 du document paginé vivant, avec sa révision. Les morceaux immuables utilisent le stockage privé natif ; examiner puis appliquer/annuler avec les transactions communes, sans sauvegarde source.",
+  "documents_save_paged": "Sauvegarder explicitement la révision du document paginé par écriture atomique progressive. Vérifier l’empreinte disque, les morceaux privés et la lecture seule ; publication non annulable, sans Enregistrer sous ni récupération après crash.",
+  "documents_close_paged": "Fermer le document paginé avec sa révision. Les modifications non sauvegardées exigent discard=true ; aucune sauvegarde ou suppression de la source. Les aperçus vivants peuvent conserver leurs morceaux privés."
 }

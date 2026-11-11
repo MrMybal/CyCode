@@ -93,7 +93,7 @@ Paquets autonomes et skill IA réutilisable : [installation du Core](app/Docs/Co
 
 Le [guide des agents en français](app/.CyDocBuild/manual/fr/core-agents.md) décrit le démarrage sans interface,
 la préparation sémantique, les jobs et les transactions protégées. Le
-[catalogue MCP](app/MCPMethods.json) contient les 239 opérations natives avec
+[catalogue MCP](app/MCPMethods.json) contient les 243 opérations natives avec
 leurs schémas complets. CyToolsCore possède le MCP et les permissions.
 
 ## Vérifications et limites

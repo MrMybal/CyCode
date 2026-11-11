@@ -5,7 +5,7 @@ description: Connect to the running IDE with a read or editing identity.
 section: Work in CyCode
 order: 260
 parent: plugins
-revision: 5
+revision: 6
 ---
 
 ## Connect {#connection}
@@ -24,4 +24,4 @@ Reads and writes use the same native documents as the editor. Read a fresh revis
 
 ## Headless Core {#headless}
 
-The [AI integration guide](doc:core-agents#connect) documents standalone Core startup, all 239 operation contracts, permissions, jobs, analysis preparation, navigation and guarded refactorings.
+The [AI integration guide](doc:core-agents#connect) documents standalone Core startup, all 243 operation contracts, permissions, jobs, analysis preparation, navigation and guarded refactorings.

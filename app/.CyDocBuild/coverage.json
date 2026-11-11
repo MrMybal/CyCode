@@ -13,14 +13,14 @@
       "kind": "developer-reference",
       "target": "core-agents#connect",
       "legacyId": "reference-app-docs-agents",
-      "sourceSha256": "9c94fa775c3b0591197f8081c1a15236059794dedffef45829e20f4d42aeec00"
+      "sourceSha256": "4e1d2e6d57aa5f444c99b03f12819e20e7c9539d7f641874b452c0c86253150b"
     },
     {
       "source": "Docs/Architecture.md",
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-architecture",
-      "sourceSha256": "33e659ee4eaa231ee91a8e3c4b43c92d9516ed7b24ed47f3506d57283666539a"
+      "sourceSha256": "a5e59266098bf988062d145ceae22fa369dcd3e897fb408cf988175ab4e1e2b2"
     },
     {
       "source": "Docs/Branding.md",
@@ -62,7 +62,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-capabilitycoverage",
-      "sourceSha256": "6a665c0bca96016aeaa204d98f8504c35313718245e4e5387a02f52cac5bb4be"
+      "sourceSha256": "91892a7f0371a3ead73d20be0dc95817ccc4a6edb1f944ac94ed7e7552cadac9"
     },
     {
       "source": "Docs/CargoBuilds.md",
@@ -321,7 +321,7 @@
       "kind": "user-workflow",
       "target": "mcp#connection",
       "legacyId": "reference-app-docs-mcp",
-      "sourceSha256": "c35ee3ae7d9612b34aa7615481a1aab9f3eec678194b814b6e2235e68e8f0277"
+      "sourceSha256": "e018508bae87b00fe47f57ecbcb627eba39f4da196c212ce7eb0237c3736ab4c"
     },
     {
       "source": "Docs/MSBuild.md",
@@ -440,7 +440,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-roadmap",
-      "sourceSha256": "3856df318886386d755a8c2656df4b4946bc861beabb174533d3eee7f28494b1"
+      "sourceSha256": "97c2c1d69dadfa9bc8ea8b31a6e2cbf91b9ac12b09f98c0aab1d9939a96db6a5"
     },
     {
       "source": "Docs/RunToCursor.md",
@@ -531,7 +531,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-testing",
-      "sourceSha256": "2a2dcc405dfd4096a2f70cdf853a7b7ddb4b2c6fe50142f250447f73b3264658"
+      "sourceSha256": "53013daf9fbd3c804b582c5c2957484d1194fdbd226e273dd0121357dc69a2b2"
     },
     {
       "source": "Docs/ToolchainReliability.md",
@@ -629,7 +629,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "1fcd87df3b4ab065ceee64131c1fad9b372314913c5c4cb89735641effee76b2"
+      "sourceSha256": "0d02b368c1d783b947cf49570f18147b05083c0f4f3babc76b1343c0ba9e560b"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -671,7 +671,14 @@
       "kind": "developer-reference",
       "target": "analysis-progress#validation",
       "legacyId": "reference-app-docs-analysisprogress",
-      "sourceSha256": "148ca6cc69f1de89f7998cbf49bac140db160df3fbc1af525e97d506e82d5f15"
+      "sourceSha256": "aaa6b687cfd4bec2237514babc9d16a1f479659d3d1da0b577234a6c31f41f56"
+    },
+    {
+      "source": "Docs/LargeProjects.md",
+      "kind": "developer-reference",
+      "target": "large-projects#storage",
+      "legacyId": "reference-app-docs-largeprojects",
+      "sourceSha256": "27b662c827159227d60ee01a7f33f03ba82c9901051d76c7d9552f8b797ad93c"
     }
   ]
 }

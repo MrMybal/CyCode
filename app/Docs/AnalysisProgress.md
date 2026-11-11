@@ -39,7 +39,9 @@ rebasing observations rather than silently reusing stale results.
 The compilation database bytes use BLAKE2b-256; its configuration/path and metadata
 must also match. Changes require a new inventory. An OS lease protects one writer,
 paths remain workspace-relative, redirected cache paths are refused, and cache
-files are bounded to 32 MiB. Saved progress contains no source text. Atomic metadata
+format 2 uses immutable pages (up to 256 entries / 16 MiB each) and an atomic
+32 MiB manifest. Aggregate progress can exceed 32 MiB; format 1 remains readable.
+Only new/changed record pages are published. Saved progress contains no source text. Atomic metadata
 publication reuses `CyCode::Files`. Cancellation preserves the completed prefix.
 Ordinary restart persistence does not establish power-loss recovery or compiler
 index persistence. Cache IDs are not access credentials or independent SDK jobs.

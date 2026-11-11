@@ -5,7 +5,7 @@ description: Core persistant, contrats MCP complets et modifications protégées
 section: API et extensions
 parent: mcp
 order: 261
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 ## Se connecter {#connect}
@@ -13,7 +13,7 @@ sourceRevision: 3
 Installez la distribution autonome et le skill IA avec [le guide d’installation](core-installation#distribution).
 
 CyCode Core expose le même Engine natif persistant aux applications et aux IA.
-Les 239 opérations métier deviennent des outils `op_<operationId>` grâce au
+Les 243 opérations métier deviennent des outils `op_<operationId>` grâce au
 véritable adaptateur MCP de CyToolsCore. Le SDK ajoute ses contrôles de tâches,
 de découverte et d’identités. Une opération déclarée ne prouve pas l’installation
 d’un moteur de langage, compilateur, débogueur, fournisseur VCS ou plugin.
@@ -104,7 +104,7 @@ généré `app/MCPMethods.json` contient chaque nom MCP, méthode native, schém
 complet d’entrée/sortie, permission, groupe exclusif et capacité de progression
 ou d’annulation, directement issus du contrat exécutable. Régénérez-le avec
 `python app/scripts/generate_mcp_reference.py` ; `--check` le vérifie sans écrire.
-La référence HTML bilingue regroupe ces mêmes 239 contrats par domaine. Elle
+La référence HTML bilingue regroupe ces mêmes 243 contrats par domaine. Elle
 ne décrit pas les fonctions C++ internes et n’expose pas les contrôles natifs
 privés d’arrêt ou d’annulation de l’hôte.
 
@@ -245,8 +245,8 @@ Aucun analyseur parallèle ni remplacement textuel de symbole n’est utilisé.
    supprimés. Le lancement clangd intégré fournit `--rename-file-limit=0`, sauf
    option explicite contraire. Une identité ambiguë, des diagnostics actuels
    absents ou contenant des erreurs et une réponse non prise en charge refusent
-   tout aperçu. Le budget mémoire de transaction reste à 16 Mio ; un dépassement
-   ne produit jamais un plan partiel. Collage de tokens, noms sérialisés
+   tout aperçu. Les contenus natifs passent sur disque ; le plafond global de 16 Mio est retiré.
+   Un échec de capacité par opération ne produit jamais un plan partiel. Collage de tokens, noms sérialisés
    Blueprint/réflexion, branches de plateformes/configurations inactives,
    projets externes et références non signalées restent des limites.
 4. Appliquez le plan émis avec `changes_apply` et tous les ids requis dans
@@ -279,3 +279,5 @@ automatiquement une fonction exécutable. Ces changements sont vérifiés locale
 sous Windows avec le Core/clangd de production et Unreal réel. L’exécution
 Linux/macOS, les nouveaux installateurs et l’acceptation graphique demandent
 des contrôles distincts. GitHub Actions reste suspendu par le propriétaire.
+
+[Texte paginé et grosses transactions natives](doc:large-projects#agents).

@@ -1,45 +1,44 @@
 #pragma once
-#include "cycode/NativeFileLease.h"
-#include "cycode/CompletionSelection.h"
-#include "cycode/text/DocumentState.h"
-#include "cycode/BuildSystem.h"
 #include "cycode/BuildOperations.h"
+#include "cycode/BuildSystem.h"
+#include "cycode/CompletionSelection.h"
+#include "cycode/Debugger.h"
+#include "cycode/DocumentReference.h"
 #include "cycode/Events.h"
-#include "cycode/LanguageService.h"
+#include "cycode/GitRepositories.h"
 #include "cycode/LanguagePreferences.h"
-#include "cycode/UserSnippets.h"
+#include "cycode/LanguageService.h"
+#include "cycode/LargeText.h"
+#include "cycode/MsBuild.h"
+#include "cycode/NativeFileLease.h"
 #include "cycode/Plugins.h"
 #include "cycode/Process.h"
-#include "cycode/Terminal.h"
-#include "cycode/Debugger.h"
-#include "cycode/UnrealProject.h"
-#include "cycode/MsBuild.h"
 #include "cycode/ProjectTasks.h"
 #include "cycode/ProjectTemplates.h"
-#include "cycode/WorkspaceMonitor.h"
-#include "cycode/WorkspaceFileIndex.h"
 #include "cycode/Recovery.h"
 #include "cycode/RelatedFiles.h"
-#include "cycode/DocumentReference.h"
-#include "cycode/GitRepositories.h"
 #include "cycode/Resources.h"
+#include "cycode/Terminal.h"
 #include "cycode/TestRunner.h"
+#include "cycode/UnrealProject.h"
+#include "cycode/UserSnippets.h"
+#include "cycode/WorkspaceFileIndex.h"
+#include "cycode/WorkspaceMonitor.h"
+#include "cycode/text/DocumentState.h"
 #include <condition_variable>
-#include <thread>
 #include <map>
 #include <mutex>
-#include <set>
 #include <nlohmann/json.hpp>
+#include <set>
 #include <string>
+#include <thread>
 namespace cycode {
 using Json = nlohmann::json;
 class Engine {
   public:
     explicit Engine(std::filesystem::path workspace, std::filesystem::path languagePreferencesDirectory = {},
                     std::filesystem::path userSnippetsDirectory = {});
-    uint64_t userSnippetGeneration() const {
-        return userSnippets_.generation();
-    }
+    uint64_t userSnippetGeneration() const { return userSnippets_.generation(); }
     ~Engine();
     Json dispatch(const std::string &method, const Json &params = Json::object());
     Json userSnippetDraft(const Json &);
@@ -55,18 +54,10 @@ class Engine {
         return !isUntitledDocument(path) && language_.accepts(path);
     }
     std::filesystem::path resolve(const std::string &relative) const;
-    const std::filesystem::path &workspace() const {
-        return root_;
-    }
-    Plugins &plugins() {
-        return plugins_;
-    }
-    Terminals &terminals() {
-        return terminals_;
-    }
-    Debugger &debugger() {
-        return debugger_;
-    }
+    const std::filesystem::path &workspace() const { return root_; }
+    Plugins &plugins() { return plugins_; }
+    Terminals &terminals() { return terminals_; }
+    Debugger &debugger() { return debugger_; }
     Json navigationSource(const std::filesystem::path &, const Json &range);
 
   private:
@@ -165,13 +156,23 @@ class Engine {
     Json reconcileNavigationTargets(Json, const Json &, uint64_t, uint64_t);
     Json prepareAnalysis(const Json &, const std::string &symbol = {}, const std::string &source = {},
                          uint64_t *generation = nullptr, Json *renameEdits = nullptr);
+    // Immutable rows keep session copies cheap; progress publication never
+    // duplicates every diagnostic object on each batch.
+    struct AnalysisRows {
+        std::vector<std::shared_ptr<const Json>> rows;
+        size_t size() const { return rows.size(); }
+        const Json &at(size_t index) const { return *rows.at(index); }
+        void push_back(Json value) { rows.push_back(std::make_shared<const Json>(std::move(value))); }
+    };
     struct AnalysisSession {
         std::string id, scope, compilerContext, compilerDigest, checkpoint, checkpointRevision;
         size_t historicalObserved = 0;
         std::shared_ptr<NativeFileLease> checkpointLease;
         bool discoveryComplete = false;
         std::vector<std::string> paths;
-        Json records = Json::array(), summary = Json::object();
+        AnalysisRows records;
+        Json summary = Json::object(), pathPages = Json::array(), recordPages = Json::array();
+        size_t savedRecords = 0;
         uint64_t generation = 0, workspaceRevision = 0;
         std::map<std::string, uint64_t> epochs;
     };
@@ -206,11 +207,29 @@ class Engine {
     Json sourceLocationLocked(const std::string &, const Json &, bool);
     std::pair<Document *, std::filesystem::path> semanticDocumentLocked(const std::string &);
     void addSdkRoots(const Json &unreal);
+    struct PagedDocument {
+        std::shared_ptr<LargeText> text;
+        uint64_t identity = 0, revision = 0;
+        bool busy = false, knownDirty = false;
+    };
+    std::map<std::string, PagedDocument> pagedDocuments_;
+    std::set<std::string> pendingPagedDocuments_;
+    std::shared_ptr<SpoolStore> workingStore_;
+    std::shared_ptr<SpoolStore> workingStoreLocked();
+    Json pagedDocumentOperation(const std::string &, const Json &);
+    Json pagedDocumentDescription(const std::string &, const PagedDocument &) const;
     struct FileChange {
         std::string path, before, after, disk;
         Json edits;
         std::uint64_t revision = 0, appliedRevision = 0;
+        struct Stored {
+            StoredBlob before, after, disk;
+        };
+        std::shared_ptr<const Stored> stored;
+        std::shared_ptr<LargeText> paged;
+        LargeTextSnapshot pagedBefore, pagedAfter;
     };
+    void spillChangeFile(FileChange &);
     struct ChangePlan {
         Json annotations = Json::array(), coverage;
         uint64_t scopeGeneration = 0, scopeWorkspaceRevision = 0, scopeEpoch = 0;
@@ -285,9 +304,7 @@ class Engine {
     // does not change existing documents or invalidate their semantic snapshots.
     // Both counters and this accessor are protected by mutex_.
     std::uint64_t analysisRevisionSlots_ = 0;
-    std::uint64_t documentGenerationLocked() const noexcept {
-        return nextRevision_ - analysisRevisionSlots_;
-    }
+    std::uint64_t documentGenerationLocked() const noexcept { return nextRevision_ - analysisRevisionSlots_; }
     mutable std::mutex mutex_;
     std::recursive_mutex vcsMutex_;
     Plugins plugins_;

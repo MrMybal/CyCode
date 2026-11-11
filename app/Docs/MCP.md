@@ -2,7 +2,7 @@
 
 ## Current native Core agent integration
 
-The current source contract exposes **239 native operations** through the real
+The current source contract exposes **243 native operations** through the real
 CyToolsCore SDK/MCP adapter. Three additions provide service status and semantic
 preparation/status; job ownership and cancellation remain SDK controls.
 `app/core_host.py` can own one persistent production CLI without the IDE.
@@ -68,7 +68,7 @@ runtime packaging is not implemented by the Windows authoring script.
 ## Development milestone record
 
 The notes below retain earlier contracts and their historical operation counts.
-The current generated API reference/manifest has 239 operations; the capability
+The current generated API reference/manifest has 243 operations; the capability
 ledger and individual feature guides supersede old pending-status statements.
 
 

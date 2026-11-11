@@ -1,5 +1,28 @@
 # Validation — 2026-11-08
 
+## Progressive capacity evidence
+
+The [recorded Windows evidence](Benchmarks/core-capacity-20261111.json) passes
+96 MiB native paged UTF-8 read/edit/search/Apply/Save/Undo, clean paged 5 MiB C++
+inspection, a real-command 70 MiB database, 35 MiB aggregate seeded unknown cache
+metadata and a real nine-file/20 MiB compiler transaction. Read-only, external
+conflict, stale plan, invalid numeric offsets, tampered pages and nested manifests
+are refused. Earlier real regressions and continued Unreal traversal retain
+separate binary hashes; the actual UE inventory now has 180 visited units,
+176 historical/unknown plus four fresh clean observations in the last run.
+37,377 remain unvisited; no whole-engine completeness is inferred. The new source
+profile, backend guards and remaining UI/LSP/recovery limits are documented in
+[Large projects](LargeProjects.md). Production checks used Kaspersky actively,
+with no new observed detection, no generated native test executable or GUI.
+
+The progressive-capacity stage adds [paged native text and storage](LargeProjects.md):
+streamed compiler database digests/commands, incremental format-2 checkpoint pages,
+immutable transaction payloads on private disk and four guarded paged-document
+SDK operations. Ordinary GUI/LSP buffers retain their compatibility policy; the
+paged profile is explicit, uses UTF-8 byte cursors and has no GUI/LSP/crash-recovery
+adapter yet. No hardware-unlimited or exhaustive Unreal claim follows.
+
+
 ## 2026-11-11 — measured traversal, navigation and transformations
 
 The [scale evidence](Benchmarks/core-scale-20261111.json) distinguishes every

@@ -60,7 +60,10 @@ async def configure(s,database):
 
 async def main():
     async with host('first') as s:
-        tools=await s.list_tools();assert len(tools.tools)==260;mark('actualMcpDiscovery',len(tools.tools))
+        tools=await s.list_tools()
+        expected={'op_'+row['id'] for row in json.loads((A.core/'app/CyTool.json').read_text('utf-8'))['operations']}
+        assert expected <= {tool.name for tool in tools.tools}
+        mark('actualMcpDiscovery',len(tools.tools))
         model=await call(s,'msbuild_prepare',{'entry':'Campaign.vcxproj','configuration':'Release','platform':'x64','tool':'msbuild'})
         assert model['exitCode']==0,model
         database=WORK/model['project']['compilationDatabase']['path'];rawdb=database.read_bytes();dbstat=database.stat()
@@ -73,7 +76,7 @@ async def main():
         assert all(row['revision']==0 and row['error'] for row in result['documents'][:2])
         mark('isolatedUnreadableAndOversizedSources',result['coverage'])
         result=await call(s,'analysis_prepare',{'continuation':result['continuation'],'batchSize':2})
-        assert result['completed']==7 and len(json.loads(checkpointfile.read_text('utf-8'))['records'])==7
+        assert result['completed']==7 and json.loads(checkpointfile.read_text('utf-8')).get('observed',-1)==7
         mark('progressPersistedBeforeShutdown',7)
     async with host('second') as s:
         await configure(s,database)
@@ -95,7 +98,7 @@ async def main():
         await wait(s,job,expect='Cancelled')
         state=await call(s,'analysis_status',{});assert state['state']=='cancelled',state
         after_cancel=json.loads(checkpointfile.read_text('utf-8'))
-        assert len(after_cancel['records'])==state['completed'] and state['completed']>9
+        assert after_cancel.get('observed',-1)==state['completed'] and state['completed']>9
         mark('actualCancellationSavedProgress',state['completed'])
     async with host('third') as s:
         await configure(s,database)
@@ -135,7 +138,15 @@ async def main():
         assert 'Compilation context changed' in json.dumps(failure),failure
         mark('sameSizeTimestampCompilerChangeRefused')
         database.write_bytes(rawdb);os.utime(database,ns=(dbstat.st_atime_ns,dbstat.st_mtime_ns))
-        damaged=json.loads(checkpointbytes);damaged['paths'][0]='../outside.cpp';checkpointfile.write_text(json.dumps(damaged),encoding='utf-8')
+        damaged=json.loads(checkpointbytes)
+        if damaged['format']==2:
+            parts=checkpointfile.parent/(checkpoint+'.parts')
+            oldhash=damaged['pathPages'][0]
+            paths=json.loads((parts/('paths-'+oldhash+'.json')).read_text('utf-8'));paths[0]='../outside.cpp'
+            raw=json.dumps(paths,separators=(',',':')).encode('utf-8');newhash=hashlib.blake2b(raw,digest_size=32).hexdigest()
+            (parts/('paths-'+newhash+'.json')).write_bytes(raw);damaged['pathPages'][0]=newhash
+        else:damaged['paths'][0]='../outside.cpp'
+        checkpointfile.write_text(json.dumps(damaged),encoding='utf-8')
         failure=await call(s,'analysis_prepare',{'checkpoint':checkpoint,'batchSize':0},expect='Failed')
         assert 'Invalid path' in json.dumps(failure),failure
         mark('malformedCheckpointPathRefused')

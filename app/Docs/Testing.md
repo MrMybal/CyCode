@@ -1,5 +1,13 @@
 # Local verification and native tests
 
+The progressive-capacity stage adds [paged native text and storage](LargeProjects.md):
+streamed compiler database digests/commands, incremental format-2 checkpoint pages,
+immutable transaction payloads on private disk and four guarded paged-document
+SDK operations. Ordinary GUI/LSP buffers retain their compatibility policy; the
+paged profile is explicit, uses UTF-8 byte cursors and has no GUI/LSP/crash-recovery
+adapter yet. No hardware-unlimited or exhaustive Unreal claim follows.
+
+
 ## Opt-in analysis campaigns — 2026-11-11
 
 [Persistent analysis progress](AnalysisProgress.md) documents the explicit
@@ -860,3 +868,11 @@ fixtures are retired; failures retain them. --ci refuses ordinary local invocati
 The graphical/installer scripts and this CI mode have a data-only CLI guard test
 that mocks all process creation and proves refusal occurs before any native spawn.
 These guard tests do not substitute for the actual remote keyboard results.
+
+
+## Native byte-offset representation
+
+`verify_native_byte_ranges.py --run-native --core . --executable <Core> --output <new-directory>`
+uses the production CLI's documented ready event and stdio protocol. It checks
+invalid/huge/fractional offsets before conversion, valid integral JSON floats,
+paged previews and explicit Apply/Save/Undo/Save. Only source data is generated.

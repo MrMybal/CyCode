@@ -73,7 +73,7 @@ if(WIN32)
   target_link_libraries(cycode_updates PRIVATE winhttp bcrypt)
 endif()
 endif()
-add_library(cycode_core STATIC src/Commands.cpp src/TextEdits.cpp src/Semantic.cpp src/SemanticPreparation.cpp src/NavigationReconciliation.cpp src/Engine.cpp src/Plugins.cpp src/Bridge.cpp src/CoreService.cpp src/LanguageClient.cpp src/LanguageService.cpp src/BuildSystem.cpp src/Solution.cpp src/UnrealProject.cpp)
+add_library(cycode_core STATIC src/StreamingData.cpp src/SpoolStore.cpp src/LargeText.cpp src/PagedDocuments.cpp src/Commands.cpp src/TextEdits.cpp src/Semantic.cpp src/SemanticPreparation.cpp src/NavigationReconciliation.cpp src/Engine.cpp src/Plugins.cpp src/Bridge.cpp src/CoreService.cpp src/LanguageClient.cpp src/LanguageService.cpp src/BuildSystem.cpp src/Solution.cpp src/UnrealProject.cpp)
 
 # Only the native core's completion adapter uses these static libraries. Keep
 # their tools, JIT, test executables and unused character widths out of the build.

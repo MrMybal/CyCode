@@ -11,9 +11,9 @@
 #include <thread>
 #include <vector>
 #ifdef _WIN32
-#include <windows.h>
 #include <aclapi.h>
 #include <sddl.h>
+#include <windows.h>
 #else
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -67,9 +67,7 @@ class DescriptorSecurity {
         memory_.value = descriptor;
         attributes_ = {sizeof(SECURITY_ATTRIBUTES), descriptor, FALSE};
     }
-    SECURITY_ATTRIBUTES *get() {
-        return &attributes_;
-    }
+    SECURITY_ATTRIBUTES *get() { return &attributes_; }
     void verify(HANDLE file) const {
         PSECURITY_DESCRIPTOR actual = nullptr;
         PACL acl = nullptr;
@@ -130,6 +128,10 @@ std::string metadataBytes(const std::filesystem::path &path) {
 } // namespace
 void writeFileAtomic(const std::filesystem::path &path, std::string_view bytes,
                      const AtomicFileOptions &options, const std::function<void()> &validate) {
+    writeFileAtomicStream(path, [&](const AtomicByteSink &sink) { sink(bytes); }, options, validate);
+}
+void writeFileAtomicStream(const std::filesystem::path &path, const AtomicByteProducer &produce,
+                           const AtomicFileOptions &options, const std::function<void()> &validate) {
     NativeTraceScope trace(NativeTraceEvent::AtomicWrite);
     if (validate)
         validate();
@@ -196,22 +198,30 @@ void writeFileAtomic(const std::filesystem::path &path, std::string_view bytes,
             throw;
         }
     }
-    size_t done = 0;
     bool okay = true;
     {
         NativeTraceScope phase(NativeTraceEvent::TemporaryWrite);
         DWORD error = 0;
-        while (done < bytes.size()) {
-            DWORD written = 0;
-            const bool wrote = WriteFile(handle, bytes.data() + done,
-                                         static_cast<DWORD>(std::min<size_t>(bytes.size() - done, 65536)),
-                                         &written, nullptr) != 0;
-            if (!wrote || !written) {
-                error = wrote ? ERROR_WRITE_FAULT : GetLastError();
-                okay = false;
-                break;
-            }
-            done += written;
+        try {
+            produce([&](std::string_view bytes) {
+                size_t done = 0;
+                while (done < bytes.size()) {
+                    DWORD written = 0;
+                    const bool wrote =
+                        WriteFile(handle, bytes.data() + done,
+                                  static_cast<DWORD>(std::min<size_t>(bytes.size() - done, 65536)), &written,
+                                  nullptr) != 0;
+                    if (!wrote || !written) {
+                        error = wrote ? ERROR_WRITE_FAULT : GetLastError();
+                        okay = false;
+                        throw std::runtime_error("Cannot write atomic stream chunk");
+                    }
+                    done += written;
+                }
+            });
+        } catch (...) {
+            CloseHandle(handle);
+            throw;
         }
         phase.finish(okay ? NativeTraceResult::Success : NativeTraceResult::Failure, error);
     }
@@ -294,22 +304,29 @@ void writeFileAtomic(const std::filesystem::path &path, std::string_view bytes,
             throw std::runtime_error("Cannot enforce private atomic file permissions");
         }
     }
-    size_t done = 0;
     bool okay = true;
     {
         NativeTraceScope phase(NativeTraceEvent::TemporaryWrite);
         int error = 0;
-        while (done < bytes.size()) {
-            const auto count =
-                ::write(handle, bytes.data() + done, std::min<size_t>(bytes.size() - done, 65536));
-            if (count < 0 && errno == EINTR)
-                continue;
-            if (count <= 0) {
-                error = count < 0 ? errno : EIO;
-                okay = false;
-                break;
-            }
-            done += static_cast<size_t>(count);
+        try {
+            produce([&](std::string_view bytes) {
+                size_t done = 0;
+                while (done < bytes.size()) {
+                    const auto count =
+                        ::write(handle, bytes.data() + done, std::min<size_t>(bytes.size() - done, 65536));
+                    if (count < 0 && errno == EINTR)
+                        continue;
+                    if (count <= 0) {
+                        error = count < 0 ? errno : EIO;
+                        okay = false;
+                        throw std::runtime_error("Cannot write atomic stream chunk");
+                    }
+                    done += static_cast<size_t>(count);
+                }
+            });
+        } catch (...) {
+            ::close(handle);
+            throw;
         }
         phase.finish(okay ? NativeTraceResult::Success : NativeTraceResult::Failure, error);
     }

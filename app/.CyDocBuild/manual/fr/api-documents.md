@@ -16,6 +16,10 @@ Ces contrats décrivent le service natif exposé par l’intégration SDK/MCP of
 
 - [`documents_reload`](doc:operation-documents-reload-documents-reload) — Recharger un document depuis le disque en vérifiant les changements locaux.
 - [`documents_list`](doc:operation-documents-list-documents-list) — Lister les documents ouverts et leurs révisions.
+- [`documents_read_page`](doc:operation-documents-read-page-documents-read-page) — Ouvrir un document UTF-8 paginé natif et lire des plages de 4 à 262 144 octets sans charger tout le fichier en mémoire. La suite exige la révision vivante. Ni coordonnées UTF-16, ni LSP, ni sauvegarde implicite ; import initial non annulable.
+- [`documents_prepare_byte_edit`](doc:operation-documents-prepare-byte-edit-documents-prepare-byte-edit) — Préparer une modification en octets UTF-8 du document paginé vivant, avec sa révision. Les morceaux immuables utilisent le stockage privé natif ; examiner puis appliquer/annuler avec les transactions communes, sans sauvegarde source.
+- [`documents_save_paged`](doc:operation-documents-save-paged-documents-save-paged) — Sauvegarder explicitement la révision du document paginé par écriture atomique progressive. Vérifier l’empreinte disque, les morceaux privés et la lecture seule ; publication non annulable, sans Enregistrer sous ni récupération après crash.
+- [`documents_close_paged`](doc:operation-documents-close-paged-documents-close-paged) — Fermer le document paginé avec sa révision. Les modifications non sauvegardées exigent discard=true ; aucune sauvegarde ou suppression de la source. Les aperçus vivants peuvent conserver leurs morceaux privés.
 - [`documents_read`](doc:operation-documents-read-documents-read) — Lire le contenu courant d’un document natif ouvert.
 - [`documents_create`](doc:operation-documents-create-documents-create) — Créer un document de projet avec le contenu fourni.
 - [`documents_create_untitled`](doc:operation-documents-create-untitled-documents-create-untitled) — Créer un document sans fichier dans la session native.

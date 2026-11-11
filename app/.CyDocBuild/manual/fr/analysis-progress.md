@@ -5,7 +5,7 @@ description: Reprendre le parcours natif, distinguer les preuves historiques et 
 section: Pour commencer
 parent: native-core
 order: 265
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 
@@ -49,7 +49,10 @@ modification de document, applique également cette invalidation explicite.
 La base de compilation est protégée par BLAKE2b-256 ; configuration, chemin et
 métadonnées doivent aussi correspondre. Sinon, un nouvel inventaire est requis.
 Un verrou système réserve l’écriture. Les chemins restent relatifs au projet,
-les redirections de stockage sont refusées et chaque fichier est borné à 32 Mio.
+les redirections sont refusées. Le format 2 publie des pages immuables de 256
+entrées au plus (16 Mio par page) et un manifeste atomique de 32 Mio. L’ensemble
+peut dépasser 32 Mio ; seules les pages nouvelles/modifiées sont écrites. Le
+format 1 reste lisible.
 Les instantanés ne stockent aucun texte source. Leur publication atomique utilise
 `CyCode::Files`. Une annulation conserve le préfixe terminé. La persistance après
 fermeture normale ne prouve ni la récupération après coupure électrique ni la
