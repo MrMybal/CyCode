@@ -5,7 +5,7 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 14
+sourceRevision: 15
 ---
 
 ## État actuel de la livraison {#current-status}
@@ -36,6 +36,15 @@ Le Core natif ne reçoit aucune dépendance graphique ni overlay LSP pour les
 modifications paginées.
 
 ## Propriété des services {#ownership}
+
+Les vues intégrées lisent le service déjà possédé par leur bridge avec
+l’accesseur const `cycode::Bridge::serviceStatus()` (`cycode/Bridge.h`,
+`CyCode::Core`). Le profil texte utilise
+`cycode::text::SessionBridge::serviceStatus()` (`cycode/text/SessionBridge.h`,
+`CyCode::TextBridge`). L’endpoint et l’accesseur natif partagent le même calcul
+d’état : contexte et durée restent ceux du service réel, et le profil texte
+n’annonce aucune analyse de projet. Gardez le bridge vivant pendant les appels.
+Aucun second Engine, appel réseau, serveur de langage ou opération SDK n’est créé.
 
 CyCode fournit le moteur C++20 et son CLI/service. CyCodeIDE possède l’interface
 SDL/OpenGL/CyUI. CyCodeReader utilise la session de texte autonome du Core :

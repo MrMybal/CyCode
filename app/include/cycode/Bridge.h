@@ -11,6 +11,9 @@ class Bridge {
     Bridge(const Bridge &)=delete;
     Bridge &operator=(const Bridge &)=delete;
     const std::filesystem::path &descriptor() const {return descriptor_;}
+    // Read the same service instance exposed by this bridge's endpoint.
+    // The owner must keep the bridge alive for the duration of the call.
+    Json serviceStatus() const;
   private:
     CoreService service_;
     std::filesystem::path descriptor_;

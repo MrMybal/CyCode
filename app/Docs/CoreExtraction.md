@@ -157,6 +157,29 @@ drains the host without saving buffers. Socket shutdown remains parent stdin/EOF
 these controls are not additional SDK/MCP operations. CyToolsCore still owns MCP,
 jobs, identities, permissions and scheduling. One-shot CLI JSON remains legacy.
 
+### Embedded C++ service status
+
+An embedded host can inspect its existing bridge without using a socket client:
+
+```cpp
+// bridge is the application's existing cycode::Bridge.
+const auto status = bridge.serviceStatus();
+```
+
+Include `cycode/Bridge.h` and link `CyCode::Core`. The const accessor delegates
+to this bridge's own `CoreService::status()`: engine context, uptime and lifecycle
+are those advertised by its endpoint's `service.status`. It performs no socket
+I/O and starts no Engine, service or language worker. Keep the bridge alive until
+all callers have returned. A service being ready is still not semantic readiness.
+
+Standalone text hosts have the matching const accessor
+`cycode::text::SessionBridge::serviceStatus()` in `cycode/text/SessionBridge.h`,
+provided by `CyCode::TextBridge`. Its native `service.status` response uses the
+same implementation and retains `profile: text` / `analysis.supported: false`.
+These are additive C++ source APIs, not new SDK methods or C ABI fields. No
+complete descriptor-based C++ RPC client is introduced. Do not construct another
+`CoreService` only for display: it would issue a different context and uptime.
+
 ## Analysis and compilation context
 
 service.status separates the service lifecycle from its Engine context.

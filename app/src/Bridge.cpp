@@ -9,4 +9,5 @@ Bridge::Bridge(Engine &engine,const std::filesystem::path &path):service_(engine
     endpoint_=std::make_unique<LocalEndpoint>(descriptor_,std::move(options));
 }
 Bridge::~Bridge(){service_.beginShutdown();if(endpoint_)endpoint_->stop();}
+Json Bridge::serviceStatus() const {return service_.status();}
 } // namespace cycode

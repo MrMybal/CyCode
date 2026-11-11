@@ -5,7 +5,7 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 14
+revision: 15
 ---
 
 ## Current delivery status {#current-status}
@@ -34,6 +34,15 @@ This does not add a graphical dependency to the native Core or an LSP overlay
 for paged edits.
 
 ## Ownership {#ownership}
+
+Embedded views can read the service already owned by their bridge through the
+const `cycode::Bridge::serviceStatus()` accessor (`cycode/Bridge.h`,
+`CyCode::Core`). Standalone text hosts use
+`cycode::text::SessionBridge::serviceStatus()` (`cycode/text/SessionBridge.h`,
+`CyCode::TextBridge`). The endpoint and native accessor share their status owner;
+the project context/uptime stay those of the actual service and the text profile
+continues to report no project analysis. Keep the bridge alive during each call.
+No second Engine, socket call, language worker or SDK operation is introduced.
 
 CyCode provides the native C++20 Engine and CLI/service. CyCodeIDE owns the
 SDL/OpenGL/CyUI interface. CyCodeReader consumes the Core's standalone text

@@ -1,5 +1,20 @@
 # Validation — 2026-11-08
 
+## 2026-11-11 — embedded service lifecycle access
+
+`Bridge::serviceStatus() const` now exposes the existing project service's
+status, retaining its actual context, uptime and lifecycle. The standalone text
+`SessionBridge` exposes the same accessor and shares it with its native endpoint.
+Neither accessor creates a service, worker or network connection. The 249-operation
+SDK catalogue and native wire formats are unchanged.
+
+A clean Windows x64 Release build of `Core;TextBridge` succeeds with native tests,
+CLI, providers and update executables disabled. Source checks pass for 105 Python
+and 53 JSON files, and 41 process-free contract cases pass. No project application,
+native test program or desktop GUI was launched. This validates compilation and
+source/data contracts, not live endpoint equivalence or new Linux/macOS execution.
+See [embedded C++ status](CoreExtraction.md#embedded-c-service-status).
+
 ## 2026-11-11 — local 0.1.2 candidate
 
 [Delivery evidence](Benchmarks/core-delivery-20261111.json) binds each production

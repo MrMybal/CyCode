@@ -11,6 +11,9 @@ class SessionBridge {
     SessionBridge(const SessionBridge &)=delete;
     SessionBridge &operator=(const SessionBridge &)=delete;
     const std::filesystem::path &descriptor() const{return descriptor_;}
+    // Same status as service.status on this endpoint; no project worker starts.
+    // The owner must keep the bridge alive for the duration of the call.
+    Json serviceStatus() const;
   private:
     DocumentSession &session_;
     std::filesystem::path descriptor_;
