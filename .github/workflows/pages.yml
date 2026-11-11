@@ -1,21 +1,7 @@
 name: CyCode website
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'website/**'
-      - 'app/.CyDocBuild/**'
-      - 'app/Docs/**'
-      - 'app/include/cycode/PluginAPI.h'
-      - 'app/contracts.py'
-      - 'app/CyTool.json'
-      - 'app/README.md'
-      - 'app/THIRD_PARTY_NOTICES.md'
-      - 'README.md'
-      - 'LISEZ-MOI.md'
-      - 'LICENSE'
-      - '.github/workflows/pages.yml'
+  # Owner pause: manual-only definition; GitHub workflow remains disabled.
   workflow_dispatch:
 
 permissions:

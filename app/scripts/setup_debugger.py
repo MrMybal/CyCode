@@ -1,6 +1,7 @@
 """Install checksum-pinned CodeLLDB and NetCoreDbg adapters under CyCode only."""
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import platform
 import sys
@@ -19,7 +20,7 @@ def ensure_codelldb():
     stamp = destination/'installed.json'
     binary = destination/'extension/adapter'/('codelldb.exe' if sys.platform=='win32' else 'codelldb')
     expected = lock['platforms'][target]
-    if stamp.exists() and binary.exists():
+    if stamp.exists() and binary.is_file() and (sys.platform=='win32' or os.access(binary,os.X_OK)):
         installed = json.loads(stamp.read_text('utf-8'))
         if installed.get('sha256') == expected and installed.get('binarySha256') == hashlib.sha256(binary.read_bytes()).hexdigest(): return
     archive = ROOT/f'runtime/tools/codelldb-{target}.vsix'
@@ -53,7 +54,7 @@ def ensure_netcoredbg():
     destination = ROOT/'runtime/tools/netcoredbg'
     binary = destination/'netcoredbg'/('netcoredbg.exe' if sys.platform=='win32' else 'netcoredbg')
     stamp = destination/'installed.json'
-    if stamp.exists() and binary.exists():
+    if stamp.exists() and binary.is_file() and (sys.platform=='win32' or os.access(binary,os.X_OK)):
         installed = json.loads(stamp.read_text('utf-8'))
         if installed.get('sha256') == expected['sha256'] and installed.get('binarySha256') == hashlib.sha256(binary.read_bytes()).hexdigest():
             return
@@ -71,10 +72,18 @@ def ensure_netcoredbg():
                 if '\\' in entry.filename or not (destination/entry.filename).resolve().is_relative_to(destination.resolve()):
                     raise RuntimeError('Unsafe NetCoreDbg archive path')
             package.extractall(destination)
+            if sys.platform!='win32':
+                for entry in package.infolist():
+                    if entry.external_attr >> 16 & 0o111 and not entry.is_dir():
+                        (destination/entry.filename).chmod(0o755)
     else:
         with tarfile.open(archive) as package:
             package.extractall(destination,filter='data')
-    if not binary.exists(): raise RuntimeError('NetCoreDbg executable is missing')
+    if not binary.is_file(): raise RuntimeError('NetCoreDbg executable is missing')
+    if sys.platform!='win32' and not os.access(binary,os.X_OK):
+        # Some ZIP authors omit Unix mode metadata. This is the exact executable
+        # from the verified official archive, never an installed system tool.
+        binary.chmod(binary.stat().st_mode | 0o111)
     stamp.write_text(json.dumps({'version':lock['version'],'sha256':expected['sha256'],'binarySha256':hashlib.sha256(binary.read_bytes()).hexdigest()},indent=2)+'\n','utf-8')
     print(f'Installed NetCoreDbg {lock["version"]}',flush=True)
 

@@ -1,6 +1,6 @@
 #include "cycode/UpdateStorage.h"
-#include "UpdateFiles.h"
-#include "UpdateManifest.h"
+#include "cycode/update/detail/UpdateFiles.h"
+#include "cycode/update/detail/UpdateManifest.h"
 #include "cycode/Paths.h"
 #include "cycode/TextFile.h"
 #include <algorithm>

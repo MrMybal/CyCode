@@ -7,6 +7,8 @@ corresponding runtime package, as detailed below.
 
 | Component | License | Source |
 |---|---|---|
+| PCRE2 10.49 | BSD-3-Clause WITH PCRE2-exception, [local notice](licenses/PCRE2.txt) | https://github.com/PCRE2Project/pcre2, commit 6f9d7c1373262c541324a16a358785b33ef116cf; app/dependencies.lock.json; static UTF-8 snippet matching, JIT/tools/tests disabled |
+| utf8proc 2.12.0 | MIT and included Unicode data terms, [local notice](licenses/utf8proc.txt) | https://github.com/JuliaStrings/utf8proc, commit 79cdd5ab40c79afa559f689ffc13b76812dee1ac; app/dependencies.lock.json; Unicode snippet casing |
 | Monocypher 4.0.3 | BSD-2-Clause or CC0-1.0, [local notice](licenses/Monocypher.txt) | https://monocypher.org ; release archive and SHA-256 pinned in app/dependencies.lock.json; Ed25519 and SHA-512 for plugin packages |
 | TinyXML2 | zlib, [local notice](licenses/TinyXML2.txt) | https://github.com/leethomason/tinyxml2, commit 9148bdf719e997d1f474be6bcc7943881046dba1; app/dependencies.lock.json |
 | CyUI | [MIT license](https://github.com/MrMybal/CyUI/blob/ff023e646c6a3038b3dfbfd53f6d2b4a2f5955e3/LICENSE) ([local copy](licenses/CyUI.txt)) | [Official repository](https://github.com/MrMybal/CyUI), pinned by app/cyui-source.lock.json |
@@ -119,3 +121,69 @@ Windows packages include app-local Microsoft Visual C++ runtime DLLs from the
 Visual Studio toolchain. These Microsoft redistributables retain their separate
 Microsoft terms and are not covered by CyCode’s GPL license. The update helper
 stages verified copies of the same runtime.
+
+## Portable interface resources
+
+Roboto (Google, Apache 2.0) and JetBrains Mono (JetBrains, SIL OFL 1.1) are
+distributed as offline fallback fonts in `app/resources/fonts`, with the original
+license texts. Exact upstream revisions and file hashes are recorded there in
+`font-resources.json`.
+
+CyCode Controls is adapted from Microsoft Codicons 0.0.36 (Microsoft Corporation,
+CC BY 4.0, https://github.com/microsoft/vscode-codicons). Its glyphs are subset,
+mapped to CyUI's public icon codepoints and the family renamed. Codicons' original
+license is retained in `app/resources/fonts/Codicons-LICENSE.txt`. This resource
+does not redistribute Microsoft's Windows Segoe fonts. CyUI itself is unchanged.
+
+## Bundled MCP environment (new Windows packages)
+
+The official CPython 3.13.17 embedded distribution is pinned from python.org in
+mcp-runtime.lock.json. Its complete LICENSE.txt ships in tools/python, covering
+Python/PSF and the original bundled component notices. No system Python is copied.
+CyToolsCore 0.10.1 is MIT at published commit
+05352e1d2f58f423fa2ad57b8eec48d2609f2626. Its 53 package files match that source;
+source checkout line endings are normalized. Original SDK/dependency license files
+remain in Lib/site-packages/<distribution>.dist-info/licenses or the upstream
+license paths. Generated RECORD files describe the actual installed locations.
+
+The exact wheel hashes/URLs, source pin and installed-payload hash are recorded
+in app/mcp-runtime.lock.json and tools/python/cycode-runtime.json. Only dependency
+CLI entrypoint scripts and pywin32's unrelated GUI/service launchers, plus the
+upstream SDK manual, are omitted; the application's own CyDoc help remains bundled.
+Authoring setuptools/wheel and downloaded wheel archives are not distributed.
+The separate licenses below remain applicable; CyCode's GPL does not replace them.
+
+| Distribution | Version | Upstream declared license |
+|---|---|---|
+| annotated-types | 0.8.0 | MIT |
+| anyio | 4.16.0 | MIT |
+| attrs | 26.1.0 | MIT |
+| certifi | 2026.10.23 | MPL-2.0 |
+| cffi | 2.1.1 | MIT-0 |
+| click | 8.5.1 | BSD-3-Clause |
+| cryptography | 50.0.2 | Apache-2.0 OR BSD-3-Clause |
+| cytools-core | 0.10.1 | MIT |
+| h11 | 0.16.0 | MIT |
+| httpcore | 1.0.9 | BSD-3-Clause |
+| httpx | 0.28.1 | BSD-3-Clause |
+| httpx-sse | 0.4.3 | MIT |
+| idna | 3.20 | BSD-3-Clause |
+| jsonschema | 4.26.0 | MIT |
+| jsonschema-specifications | 2025.9.1 | MIT |
+| mcp | 1.30.0 | MIT |
+| psutil | 7.2.2 | BSD-3-Clause |
+| pycparser | 3.12 | BSD-3-Clause |
+| pydantic | 2.14.3 | MIT |
+| pydantic_core | 2.50.4 | MIT |
+| pydantic-settings | 2.16.2 | MIT |
+| PyJWT | 2.15.1 | MIT |
+| python-dotenv | 1.2.4 | BSD-3-Clause |
+| python-multipart | 0.0.33 | Apache-2.0 |
+| pywin32 | 312 | PSF |
+| referencing | 0.37.0 | MIT |
+| rpds-py | 2026.9.1 | MIT |
+| sse-starlette | 3.7.0 | BSD-3-Clause |
+| starlette | 1.10.0 | BSD-3-Clause |
+| typing_extensions | 4.16.0 | PSF-2.0 |
+| typing-inspection | 0.4.5 | MIT |
+| uvicorn | 0.54.0 | BSD-3-Clause |

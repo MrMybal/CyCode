@@ -23,6 +23,9 @@ under this workspace with `npm ci` and the committed dependency lock. CyDoc is
 not installed from an npm-registry package.
 Initial preparation needs repository/npm access; an installed cache works offline.
 The lock pins `6ddf9a582defb2f11fbb3f992afef6f98dcadc93`. No upstream checkout is edited.
+The integration/API/authoring guides were also compared with upstream revision
+`e038c474577e1f305df3eba421f2b9c03b0f1d8d`: the reader, compiler and native route
+helper are unchanged, so this migration retains its reproducible runtime pin.
 
 `cydoc.config.json` selects the image and gallery modules only. The gallery uses
 image children. Static flow diagrams compile to SVG without graph or Three.js.
@@ -40,6 +43,15 @@ summaries from `api-fr.json`. `generate_api.mjs` calls the public `cydoc/api-imp
 adapter to produce private Markdown inputs. No implementation/source tree is
 indexed or distributed. Plugin C ABI examples are checked against
 `app/include/cycode/PluginAPI.h`.
+
+`coverage.json` maps every retained `app/Docs` guide to a stable user task or
+reference section and its legacy address. The recorded source hashes identify the
+reviewed inputs; they are not automatically equated with translation quality.
+Developer/build/validation histories remain outside the human manual. New guide
+files require an explicit coverage entry. The verifier also reads `src/HelpTopics.h`
+and checks all built-in panel destinations and anchors in English and French.
+Native Context help and panel buttons use that one catalogue; document windows
+route to editing and contributed panels to extension help.
 
 Both CyDoc `build` and `check` write output. Our wrapper calls `check` in a fresh
 private staging application, verifies the result and copies only owned files to

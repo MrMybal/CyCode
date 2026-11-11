@@ -14,6 +14,6 @@ Ces contrats décrivent le service natif exposé par l’intégration SDK/MCP of
 
 ## Opérations {#operations}
 
-- [`changes_preview`](doc:operation-changes-preview-changes-preview) — Préparer un ensemble de changements et examiner les fichiers concernés.
+- [`changes_preview`](doc:operation-changes-preview-changes-preview) — Lire un aperçu immuable avant/après. Les gros aperçus exigent des pages avec beforeOffset/afterOffset en octets indépendants et length ; suivre nextBeforeOffset/nextAfterOffset. Les éditions ordinaires restent UTF-16 ; celles des documents paginés utilisent les octets UTF-8.
 - [`changes_apply`](doc:operation-changes-apply-changes-apply) — Appliquer un ensemble de changements préparé après validation des révisions.
 - [`changes_undo`](doc:operation-changes-undo-changes-undo) — Annuler un ensemble de changements appliqué et encore annulable.

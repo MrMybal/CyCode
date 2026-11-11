@@ -1,0 +1,75 @@
+{
+  "format": "cycode-file-operation-diagnostic-preparation/1",
+  "state": "source-and-data-checked-not-executed",
+  "clientDate": "2026-11-10",
+  "sourceCommit": "34323ccbb042cb14d3596dd177da967a3049e6b7",
+  "nativeSourceDigest": "96d4580ed5b7d616f681e8af8c150e04c67f0db07e969cca2b8a4687bac24a0b",
+  "nativeSourceFileCount": 254,
+  "productionCliPathUnchanged": true,
+  "newNativeTargetAdded": false,
+  "compilerFlagsChanged": false,
+  "cases": [
+    {
+      "operation": "write",
+      "nativeEffect": "Publish new owned text only; index and old payload stay unchanged"
+    },
+    {
+      "operation": "index",
+      "nativeEffect": "Replace index only; both preseeded text generations stay unchanged"
+    },
+    {
+      "operation": "remove",
+      "nativeEffect": "Remove obsolete owned text only; preseeded current index/text/base unchanged"
+    },
+    {
+      "operation": "refresh",
+      "nativeEffect": "Publish text, replace index, remove obsolete text in production order"
+    }
+  ],
+  "fixtureSetup": "Host prepares exact synthetic fixtures before launch; Core performs read-only validation, then waits for explicit execute",
+  "controls": "20 seconds observed alive before/after the operation, 20 seconds post-exit, passive AV observation, stop each process on new alert; no automatic retry",
+  "interpretationLimit": "Host-preseeded fixtures intentionally remove Core initial-publication history. A passing refresh would mean this prior history/context still matters, not that production is clean. Relinked samples may have different hashes after removal.",
+  "cppSyntaxOnly": {
+    "mode": "MSVC /Zs",
+    "nativeExecuted": false,
+    "objectProduced": false,
+    "linked": false,
+    "results": [
+      {
+        "source": "app/src/RecoveryDiagnostic.cpp",
+        "sha256": "5b0c6e2e7b7a32c63f09d94eb9e8ffafee78d837bbbb8c7d69f815d1187041a4",
+        "exitCode": 0,
+        "output": "RecoveryDiagnostic.cpp\n"
+      },
+      {
+        "source": "app/src/cli.cpp",
+        "sha256": "0217af8ff43e1931f30f468e83d156063c92ec2351120fc706c7d8701142253e",
+        "exitCode": 0,
+        "output": "cli.cpp\n"
+      }
+    ]
+  },
+  "postconditionDataTests": 6,
+  "originalDirtyFilesPreserved": 154,
+  "sourceOnly": true,
+  "coreRebuiltOrExecuted": false,
+  "antivirusFixAccepted": false,
+  "authorisation": {
+    "state": "pending-explicit-operation-campaign-resumption",
+    "executionOrder": [
+      "write",
+      "index",
+      "remove",
+      "refresh"
+    ],
+    "maximumNativeCases": 4,
+    "maximumProductionRebuilds": 4,
+    "resumeAfterEvidenceReviewApproved": false,
+    "stopEachProcessOnNewDetection": true,
+    "newOwnerAnswerRequired": true,
+    "nativeBuildOrRunAuthorised": false,
+    "noRestoreRelocationExclusionInstallationUploadPublicationOrActions": true
+  },
+  "protectionChanged": false,
+  "uploadedInstalledPublishedOrActions": false
+}

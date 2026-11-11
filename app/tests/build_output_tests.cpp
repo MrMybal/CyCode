@@ -1,3 +1,7 @@
+#include "cycode/ProcessText.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "cycode/BuildOperations.h"
 #include "cycode/TaskOutputText.h"
 #include <future>
@@ -19,6 +23,34 @@ template <class F> void rejected(F f) {
 }
 } // namespace
 void buildOutputContracts() {
+    const std::string unicode = "été \xf0\x9f\x98\x80\n";
+    require(processOutputText(unicode) == unicode && processOutputText(unicode, true) == unicode,
+            "Valid UTF-8 process output was transcoded");
+    const std::string zero("a\0b", 3);
+    require(processOutputText(zero) == zero, "Display conversion changed protocol/control bytes in its input copy");
+    const std::string malformed("bad-\x82-\xc0\xaf-\xed\xa0\x80-\xf0\x9f", 15);
+    const auto retained = malformed;
+    const auto repaired = processOutputText(malformed);
+    require(malformed == retained && repaired.find("\xef\xbf\xbd") != std::string::npos,
+            "Malformed display output lost its replacement marker or changed raw bytes");
+    require(Json::parse(Json(repaired).dump()).get<std::string>() == repaired,
+            "Repaired process display output cannot cross JSON");
+#ifdef _WIN32
+    BOOL substituted = FALSE;
+    const auto codepage = GetOEMCP();
+    const wchar_t source[] = L"été\n";
+    auto defaults = codepage == CP_UTF8 ? nullptr : &substituted;
+    const auto count = WideCharToMultiByte(codepage, 0, source, 4, nullptr, 0, nullptr, defaults);
+    require(count > 0, "Cannot prepare Windows console encoding fixture");
+    std::string oem(size_t(count), '\0');
+    require(WideCharToMultiByte(codepage, 0, source, 4, oem.data(), count, nullptr, defaults) == count,
+            "Cannot encode Windows console fixture");
+    if (!substituted) {
+        require(processOutputText(oem, true) == "été\n", "Legacy console path lost accented characters");
+        require(processOutputText(unicode + oem, true) == unicode + "été\n",
+                "Legacy console line corrupted an adjacent UTF-8 line");
+    }
+#endif
     TaskOutput journal;
     const auto stream =
         journal.begin("project.build", "reused", {{"system", "cargo"}, {"directory", "rust"}});
@@ -95,7 +127,13 @@ void buildOutputContracts() {
                 "Output retention is unbounded or miscounted");
         observer(std::string("\0\x1b\xff", 3));
         const auto repaired = builds.output().at("output").get<std::string>();
+        require(repaired.substr(repaired.find_last_of('x')+1).starts_with("??"),
+                "Process display control bytes are not repaired");
+        require(Json::parse(Json(repaired).dump()).get<std::string>()==repaired,
+                "Malformed process output cannot cross the JSON display boundary");
+#ifndef _WIN32
         require(repaired.ends_with("??\xef\xbf\xbd"), "Display output is not repaired");
+#endif
         require(builds.cancel({{"operationId", "reused"}}).at("requested"), "Cancellation failed");
         const auto cancelling = builds.output();
         require(cancelling.at("running") && cancelling.at("cancelling"), "Tail lost live cancellation");

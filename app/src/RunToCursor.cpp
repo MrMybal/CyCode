@@ -8,7 +8,11 @@ namespace cycode {
 namespace {
 using Json = nlohmann::json;
 void positive(const Json &value, uint64_t maximum = UINT64_MAX) {
-    if (!value.is_number_integer() || value < 1 || value > maximum)
+    if (!value.is_number_integer() ||
+        (!value.is_number_unsigned() && value.get<int64_t>() < 1))
+        throw std::runtime_error("Invalid run-to-cursor reference");
+    const auto reference = value.get<uint64_t>();
+    if (reference < 1 || reference > maximum)
         throw std::runtime_error("Invalid run-to-cursor reference");
 }
 void text(const Json &value, size_t maximum, bool empty = false) {

@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
 #include "cycode/TextEdits.h"
@@ -83,7 +84,12 @@ fs::path reference(const std::string &text, const fs::path &base, bool marker) {
         value.find('\0') != std::string::npos)
         throw std::runtime_error("Invalid worktree metadata reference");
     auto path = utf8Path(value);
-    return (path.is_absolute() ? path : base / path).lexically_normal();
+    path = (path.is_absolute() ? path : base / path).lexically_normal();
+    // ../.. is a directory reference and can retain a trailing empty component.
+    // Strip that spelling difference without resolving links or changing roots.
+    while (path.filename().empty() && path.parent_path() != path)
+        path = path.parent_path();
+    return path;
 }
 } // namespace
 Json gitWorktreeMaintenanceRequest(const Json &parameters) {
@@ -338,7 +344,7 @@ Json Engine::gitWorktreeMaintenance(const std::string &method, const Json &param
     const auto result = runProcess(args, selected.directory, std::chrono::seconds(180), 2 * 1024 * 1024,
                                    nullptr, {{"GIT_ALLOW_PROTOCOL", ":"}, {"GIT_TERMINAL_PROMPT", "0"}});
     Json output = {{"exitCode", result.exitCode},
-                   {"output", result.output},
+                   {"output", processOutputText(result.output, true)},
                    {"timedOut", result.timedOut},
                    {"truncated", result.truncated}};
     try {

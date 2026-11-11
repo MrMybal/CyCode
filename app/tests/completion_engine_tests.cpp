@@ -27,7 +27,7 @@ static int fake() {
             const auto item=query.at("params").at("capabilities").at("textDocument").at("completion").at("completionItem");
             require(item.at("insertReplaceSupport")==true && item.at("resolveSupport").at("properties").dump().find("additionalTextEdits")!=std::string::npos,"Missing resolve client capabilities");
             result={{"capabilities",{{"completionProvider",{{"resolveProvider",true}}}}}};
-        } else if (method=="textDocument/completion") result=Json::array({{{"label","greet"},{"insertText","greet(${1:🛠}, $1, ${2|one,two|})$0"},{"insertTextFormat",2},{"data",{{"id",1}}}}});
+        } else if (method=="textDocument/completion") result=Json::array({{{"label","greet"},{"insertText",R"(greet(${1:🛠}, $1, ${2|one,two|}) /* $TM_FILENAME ${TM_FILENAME/(.*)\.cpp$/${1:/upcase}/} */$0)"},{"insertTextFormat",2},{"data",{{"id",1}}}}});
         else if (method=="completionItem/resolve") {
             result=query.at("params");require(!result.contains("cycodeLanguage"),"Internal route leaked to server");
             result["documentation"]="A resolved symbol";result["additionalTextEdits"]=Json::array({{{"range",{{"start",pos(0,0)},{"end",pos(0,0)}}},{"newText","// import greet\n"}}});
@@ -77,6 +77,8 @@ int main(int argc,char **argv) {
             const auto preview=engine.dispatch("changes.preview",{{"id",id},{"path",path}});
             if (!actual) {
                 const auto &snippet=prepared.at("snippet");require(snippet.at("fields").size()==2,"Native snippet fields missing");
+                require(preview.at("after").get<std::string>().find("/* main.cpp MAIN */")!=std::string::npos,
+                        "Issued completion did not transform the owning document's filename");
                 const auto after=preview.at("after").get<std::string>();
                 for (const auto &range : snippet.at("fields")[0].at("ranges")) require(after.substr(range.at("start"),range.at("end").get<size_t>()-range.at("start").get<size_t>())=="🛠","Import shifted snippet field offsets");
             }

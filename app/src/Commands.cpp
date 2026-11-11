@@ -37,6 +37,14 @@ const std::vector<Command> &commands() {
         {"edit.allOccurrences", "Select all occurrences", "Edit", CommandContext::editor},
         {"edit.upper", "Selection to uppercase", "Edit", CommandContext::editor}, {"edit.lower", "Selection to lowercase", "Edit", CommandContext::editor},
         {"edit.trim", "Remove trailing whitespace", "Edit", CommandContext::editor},
+        {"edit.snippet", "Insert snippet...", "Edit", CommandContext::editor},
+        {"edit.surroundSnippet", "Surround with snippet...", "Edit", CommandContext::editor},
+        {"edit.snippetCatalogue", "Edit project snippets...", "Edit"},
+        {"edit.userSnippets", "Edit user snippets...", "Edit"},
+        {"edit.captureSnippet", "Create user snippet from selection...", "Edit", CommandContext::editor},
+        {"navigate.counterpart", "Switch header/source", "Navigate", CommandContext::document},
+        {"navigate.include", "Open included file", "Navigate", CommandContext::document},
+        {"navigate.relatedFiles", "Find related C/C++ files...", "Navigate", CommandContext::document},
         {"search.document", "Find in file", "Search", CommandContext::document},
         {"search.replace", "Replace in file", "Search", CommandContext::document},
         {"search.next", "Find next", "Search", CommandContext::document},
@@ -198,6 +206,9 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
     add("edit.indent", {"Ctrl+RightBracket"}); add("edit.unindent", {"Ctrl+LeftBracket"});
     if(profile!="rider") {add("problem.next",{"F8"});add("problem.previous",{"Shift+F8"});}
     if (profile == "rider") {
+        add("navigate.counterpart", {"Alt+O"});
+        add("edit.snippet", {"Ctrl+J"});
+        add("edit.surroundSnippet", {"Ctrl+Alt+J"});
         add("problem.nextInFile",{"F2"});add("problem.previousInFile",{"Shift+F2"});
         add("problem.next",{"Alt+F2"});add("problem.previous",{"Alt+Shift+F2"});
         add("debug.runToCursor", {"Alt+F9"});
@@ -226,6 +237,8 @@ void Keymap::load(const std::string &profile, const Json &overrides) {
         add("build.run", {"Ctrl+F9"}); add("view.project", {"Alt+1"}); add("view.build", {"Alt+0"});
         add("view.vcs", {"Alt+9"}); add("view.fold", {"Ctrl+Minus"}); add("view.unfold", {"Ctrl+Equal"});
     } else if (profile == "visualstudio") {
+        add("navigate.counterpart", {"Ctrl+K, Ctrl+O"});
+        add("edit.snippet", {"Ctrl+K, Ctrl+X"});
         add("debug.runToCursor", {"Ctrl+F10"});
         add("code.actions", {"Ctrl+Period", "Alt+Enter"});
         add("code.documentation", {"Ctrl+K, Ctrl+I"}); add("code.parameters", {"Ctrl+Shift+Space"});
@@ -306,7 +319,15 @@ std::string Keymap::pending(double time) const {
     auto comma = result.find(',');
     return result.substr(0, comma) + ", ...";
 }
-Keymap::Result Keymap::press(const std::string &stroke, double time, bool editor, bool document) {
+Keymap::Result Keymap::press(const std::string &input, double time, bool editor, bool document) {
+    // Hosts may send either the canonical event spelling or the displayed shortcut.
+    // One call is one stroke; a complete chord still needs its individual events.
+    std::string stroke;
+    try {
+        const auto parsed = parse(input == "DoubleShift" ? "Double Shift" : input);
+        if (parsed.size() != 1) { cancel(); return {}; }
+        stroke = parsed.front();
+    } catch (const std::exception &) { cancel(); return {}; }
     if (time > until_) cancel();
     if (stroke == "escape" && !candidates_.empty()) { cancel(); return {{}, true}; }
     auto allowed = [&](const KeyBinding &b) {

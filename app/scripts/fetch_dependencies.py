@@ -7,8 +7,6 @@ import tarfile
 import urllib.request
 import subprocess
 import sys
-from editor_dependency import ensure_editor
-from cyui_dependency import resolve as resolve_cyui
 
 ROOT = Path(__file__).resolve().parents[2]
 DEPS = ROOT / 'runtime' / 'deps'
@@ -20,21 +18,17 @@ def download(url, destination):
         destination.write_bytes(response.read())
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--core-only', action='store_true')
-    parser.add_argument('--editor-root', type=Path, help='Development checkout of CyCodeReader (default: pinned dependency)')
-    parser.add_argument('--cyui', type=Path, help='Clean CyUI checkout matching the app source lock')
-    options = parser.parse_args()
-    editor=ensure_editor(options.editor_root)
+    parser.add_argument('--components',nargs='+',choices=['Core','Files','Snippets','Protocol','Documents','TextSession','TextBridge','Process','Transport','PagedText'],help='Fetch only sources required by the selected native components')
+    options = parser.parse_args(argv)
     DEPS.mkdir(parents=True, exist_ok=True)
     lock_path = ROOT / 'app' / 'dependencies.lock.json'
-    # Consume the provider's archive lock, not its application fetch entry point:
-    # that would also resolve Reader's older standalone CyUI lock unnecessarily.
-    lock = {**json.loads((editor/'dependencies.lock.json').read_text('utf-8')),
-            **json.loads(lock_path.read_text('utf-8'))}
+    lock = json.loads(lock_path.read_text('utf-8'))
     for key, item in lock.items():
-        if options.core_only and key not in ('json', 'vterm', 'tinyxml2', 'monocypher'):
+        required=(('json','monocypher') if 'PagedText' in options.components else ('json',)) if options.components and 'Core' not in options.components else ('json','vterm','tinyxml2','monocypher','pcre2','utf8proc')
+        if key not in required:
             continue
         target = DEPS / key
         if (target / '.cycode-dependency').exists():
@@ -58,8 +52,6 @@ def main():
                 package.extract(member, target, filter='data')
         (target / '.cycode-dependency').write_text(digest, encoding='utf-8')
         print(f'{key}: {item["revision"]} sha256={digest}', flush=True)
-    if not options.core_only:
-        print(f'CyUI: {resolve_cyui(DEPS/"cyui-ff023e6", options.cyui)}', flush=True)
 
 
 if __name__ == '__main__':

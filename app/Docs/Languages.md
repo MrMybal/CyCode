@@ -1,5 +1,12 @@
 # Language support
 
+Verse files (`.verse`, including `.digest.verse`) now use CyUI's shared native
+syntax mode. Keywords, primitive types, attributes, effect/access specifiers,
+numbers, call names, strings/interpolations and nested/indented comments are
+colored without a new dependency. Verse is not routed to the C++/clangd backend,
+including inside Unreal projects. A Verse compiler, UEFN connection and a bundled
+Verse language server are not supplied. The EN/FR user manual describes this scope.
+
 Java launch/attach debugging now uses JDT LS with the separately installed Microsoft
 java-debug bundle and shared DAP services. Project tasks provides explicit actual
 main/runtime-classpath launch profiles, while JDWP attach uses independent saved
@@ -107,11 +114,25 @@ UTF-16. The UI resolves every byte boundary in one document pass, then tracks
 only affected glyph coordinates from actual widget transactions while typing.
 Inputs are limited to 8 KiB, expanded text to 64 KiB, nesting to 16, fields to
 128, occurrences to 256 (128 per field), indexes to 65535 and choices to 64.
-Variables, transforms, recursive fields and coincident empty mirrors are refused.
+CyCode substitutes fourteen document/workspace/position variables and explicit
+defaults before shared numbered-field parsing. Substituted values remain literal;
+GUI previews and native preparation use the same helper. Variable regex transforms
+add bounded PCRE2 matching, capture/conditional formats and seven Unicode case
+methods during native preparation. Their popup entries show the server label
+without evaluating regex on the GUI thread. The adapter has its own
+8 KiB escaped-output bound. Unknown bare variables, interactive field transforms, recursive fields
+and coincident empty mirrors are refused. See [Completion variables](CompletionVariables.md).
 Reader includes the shared editor correction preserving the absence/presence of
 the final newline; it does not have a snippet insertion catalogue or LSP host.
 
-Variables/transforms, commit-character acceptance, a user snippet catalogue and
+The saved [project insertion catalogue](SnippetCatalogue.md) uses the same guarded
+completion plans and fields without a language-server request. It is opened
+explicitly from Edit / Find Action; it is not merged into automatic suggestions.
+An explicit single selection can be wrapped through TM_SELECTED_TEXT, including
+multiple lines, with a guarded exact replacement and literal layout. Rider
+Ctrl+Alt+J opens Surround with snippet; other profiles expose the command without
+a default binding. Server completions do not supply selection context.
+Further variable families, interactive field transforms, commit-character acceptance, global user catalogues and
 full code actions remain pending. Passive editor hints and Java selection/ranking
 notifications are ignored; no completion commands are executed. Other commands
 are refused. clangd retains --header-insertion=never: C++/Unreal automatic includes

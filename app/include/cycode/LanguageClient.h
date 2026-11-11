@@ -15,7 +15,10 @@ using Json = nlohmann::json;
 // Single-owner LSP transport. Callbacks run on the thread calling poll().
 class LanguageClient {
   public:
-    LanguageClient();
+    // Optional coalescible wake signal, invoked on the transport reader thread.
+    // It may only signal the owner: no client calls or semantic callbacks here.
+    // Captured state must outlive this client (stop/destruction joins the reader).
+    explicit LanguageClient(std::function<void()> wake = {});
     ~LanguageClient();
     bool start(const std::filesystem::path &root, const std::string &executable,
                const std::filesystem::path &compilationDatabase = {}, Json configuration = Json::object());
@@ -52,6 +55,7 @@ class LanguageClient {
         return diagnosticGeneration_;
     }
     const Json &capabilities() const { return capabilities_; }
+    bool supportsForcedDiagnostics() const { return serverName_=="clangd"; }
     size_t semanticGeneration() const { return semanticGeneration_; }
     size_t semanticRefreshGeneration() const { return semanticRefreshGeneration_; }
     void invalidateSemantic() { ++semanticGeneration_; }
@@ -73,11 +77,18 @@ class LanguageClient {
     std::unique_ptr<Child> child_;
     std::unique_ptr<LoopbackStream> socket_;
     bool enqueue(Json);
+    void signalWake() noexcept;
+    const std::function<void()> wakeHandler_;
     void readLoop();
     void writeLoop();
     std::thread reader_, writer_;
     std::atomic<bool> running_{false};
     bool initialized_ = false;
+    // clangd transformations are calculated into a preview only. applyEdit is
+    // always refused; one captured WorkspaceEdit goes through Engine guards.
+    int previewRequest_ = 0;
+    bool previewUncertain_ = false;
+    Json previewEdit_;
     bool raw_ = false;
     size_t incomingBytes_ = 0;
     int nextId_ = 1;
@@ -90,6 +101,6 @@ class LanguageClient {
     Json diagnostics_ = Json::object();
     Json diagnosticVersions_=Json::object();
     size_t diagnosticGeneration_ = 0;
-    std::string error_,logs_;
+    std::string error_,logs_,serverName_;
 };
 } // namespace cycode

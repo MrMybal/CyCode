@@ -1,0 +1,584 @@
+{
+  "format": "cycode-core-capacity-evidence/1",
+  "date": "2026-11-11",
+  "platform": "Windows x64",
+  "productionBinarySha256": "2872c972b1ddf6fe1906d42db4a141a754276d1b964e8e4925486ec2fd03dcdd",
+  "capacity": {
+    "state": "passed",
+    "nativeSha256": "2872c972b1ddf6fe1906d42db4a141a754276d1b964e8e4925486ec2fd03dcdd",
+    "checks": {
+      "actualMcpDiscovery": 264,
+      "largePagedText": {
+        "sourceBytes": 100663793,
+        "memorySamplingAvailable": true,
+        "nativeRssBeforeBytes": 10506240,
+        "nativeRssPeakBytes": 11337728,
+        "samples": 149,
+        "scope": "Sampled production Core RSS only; no LSP running; may miss peaks",
+        "applyUndoSaveAndConflicts": true,
+        "bomCrlfUnicodePreserved": true,
+        "readOnlySaveRefused": true,
+        "unsavedLiteralRegexGlobalSearch": true,
+        "originalSourceRestored": true
+      },
+      "largeCppDiskInspection": {
+        "sourceBytes": 5242925,
+        "status": "complete",
+        "unsavedPagedCompilerQueriesRefused": true,
+        "originalSourceRestored": true
+      },
+      "actualCompilerDatabaseAbove64MiB": {
+        "bytes": 73413667,
+        "realMsbuildCommands": 9,
+        "inventory": 9,
+        "inspectionStatus": "complete"
+      },
+      "checkpointAggregateAbove32MiB": {
+        "seededDataBytes": 36754134,
+        "rows": 17000,
+        "compilerEvidence": false,
+        "allRestoredUnknown": true,
+        "lastPageAccessible": true,
+        "tamperedPageRefused": true,
+        "deepManifestRefused": true
+      },
+      "actualCompilerTransactionAbove16MiB": {
+        "beforeAfterBytes": 20972676,
+        "files": 9,
+        "previewApplyUndo": true,
+        "stalePlanRefusedBeforeAnyMutation": true
+      }
+    },
+    "originalSourcesPreserved": true,
+    "hostDrained": true
+  },
+  "numericStdio": {
+    "state": "passed",
+    "nativeSha256": "2872c972b1ddf6fe1906d42db4a141a754276d1b964e8e4925486ec2fd03dcdd",
+    "checks": [
+      "huge-negative-fractional-offsets-refused",
+      "integral-json-floats-supported",
+      "paged-preview-apply-save-undo-save"
+    ],
+    "originalSourcePreserved": true,
+    "hostDrained": true
+  },
+  "inspectionBounds": {
+    "state": "passed",
+    "nativeSha256": "2872c972b1ddf6fe1906d42db4a141a754276d1b964e8e4925486ec2fd03dcdd",
+    "checks": {
+      "realFlowAndLifetimeDiagnostics": [
+        "clang-analyzer-core.NullDereference",
+        "clang-analyzer-core.StackAddressEscape",
+        "clang-analyzer-cplusplus.NewDelete"
+      ],
+      "diagnosticCapProcessObservation": {
+        "diagnostics": 2000,
+        "status": "truncated",
+        "exitCode": -1,
+        "truncated": true,
+        "outputBytes": 487835
+      },
+      "diagnosticCapReportedExplicitly": true,
+      "missingCompilerCommandRefused": true,
+      "emptyArgumentsCannotUseCommandFallback": true,
+      "sourcePreservedAndHostDrained": true
+    }
+  },
+  "sourceData": {
+    "tests": 38,
+    "suites": 7,
+    "nativeOptInGuards": 12,
+    "githubActionsLaunched": false
+  },
+  "regressions": {
+    "state": "passed",
+    "binarySha256": "281004f39df41196adbcdf68c31665d404dd44be255b8f970a217fd612578a9b",
+    "checks": [
+      {
+        "name": "persistence",
+        "exitCode": 0
+      },
+      {
+        "name": "quality",
+        "exitCode": 0
+      },
+      {
+        "name": "transformations",
+        "exitCode": 0
+      },
+      {
+        "name": "inspection",
+        "exitCode": 0
+      },
+      {
+        "name": "navigation",
+        "exitCode": 0
+      },
+      {
+        "name": "unreal-scoped",
+        "exitCode": 0
+      },
+      {
+        "name": "unreal-resume",
+        "exitCode": 0
+      }
+    ],
+    "quality": {
+      "state": "passed",
+      "checks": {
+        "officialSdkDiscovery": 264,
+        "realMsBuildCommands": 2,
+        "analysisCoverage": {
+          "commands": 0,
+          "diagnosticClean": 3,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 0,
+          "observed": 3,
+          "outOfScope": 0,
+          "remaining": 0,
+          "translationUnits": 0
+        },
+        "compilerDefinition": true,
+        "compilerReferences": 3,
+        "mcpWarmNavigation": {
+          "samplesMilliseconds": [
+            43.282700004056096,
+            41.02199999761069,
+            43.13670000556158,
+            40.36009999981616,
+            42.7373999991687,
+            43.04749999573687,
+            41.17889999906765,
+            39.27310000290163,
+            40.88879999471828,
+            36.31630000018049,
+            44.527199999720324,
+            40.357199999562
+          ],
+          "medianMilliseconds": 41.10044999833917,
+          "p95Milliseconds": 44.527199999720324,
+          "scope": "SDK/MCP round trip; OS caches not controlled"
+        },
+        "threeFileRenameApplyUndo": true,
+        "clangdExtractionPreviewApplyUndo": "Extract subexpression to variable",
+        "functionPreviewApplyUndo": "Extract to function",
+        "macroPreviewApplyUndo": "Expand macro 'DOUBLE_VALUE'",
+        "headerEditInvalidatesNavigation": true,
+        "actualDebugToReleaseContext": {
+          "entries": 2,
+          "macro": "QUALITY_MODE=2",
+          "diagnosticErrors": 0
+        },
+        "realStaticAnalyzer": {
+          "diagnostics": 3,
+          "codes": [
+            "",
+            "clang-analyzer-core.uninitialized.UndefReturn"
+          ]
+        },
+        "staleInspectionRevisionRejected": true,
+        "sharedAtomicSaves": 8,
+        "readOnlySavePreservedDisk": true,
+        "diskConflictPreservedExternalContent": true,
+        "originalSourcesPreserved": true,
+        "hostDrained": true
+      },
+      "sourceSha256": {
+        "model.hpp": "ff5253ce4880d737ed1dd551a759e3fdd6af4c2d046cc09ac18a0d7aab47e7e8",
+        "main.cpp": "ec68c06c7baa062330ff2fbacf8705c5d36698a755db6b1edd6be85e10886b1e",
+        "caller.cpp": "6cc3adadf99044774c376c504ee8d54490b3506803e13c76edc4b42b9a664ae2"
+      },
+      "nativeSha256": "281004f39df41196adbcdf68c31665d404dd44be255b8f970a217fd612578a9b"
+    },
+    "transformations": {
+      "state": "passed",
+      "nativeSha256": "281004f39df41196adbcdf68c31665d404dd44be255b8f970a217fd612578a9b",
+      "transformations": [
+        {
+          "id": "InlineVariable",
+          "offered": [],
+          "state": "not-offered"
+        },
+        {
+          "id": "ExpandDeducedType",
+          "offered": [
+            "Replace with deduced type"
+          ],
+          "state": "preview-apply-undo-passed",
+          "title": "Replace with deduced type",
+          "files": 1
+        },
+        {
+          "id": "DefineInline",
+          "offered": [
+            "Move function body to declaration"
+          ],
+          "state": "preview-apply-undo-passed",
+          "title": "Move function body to declaration",
+          "files": 2
+        },
+        {
+          "id": "DefineOutline",
+          "offered": [
+            "Move function body to out-of-line"
+          ],
+          "state": "preview-apply-undo-passed",
+          "title": "Move function body to out-of-line",
+          "files": 2
+        },
+        {
+          "id": "RemoveUsingNamespace",
+          "offered": [
+            "Remove using namespace, re-qualify names instead"
+          ],
+          "state": "preview-apply-undo-passed",
+          "title": "Remove using namespace, re-qualify names instead",
+          "files": 1
+        },
+        {
+          "id": "ScopifyEnum",
+          "offered": [
+            "Convert to scoped enum"
+          ],
+          "state": "preview-apply-undo-passed",
+          "title": "Convert to scoped enum",
+          "files": 1
+        },
+        {
+          "id": "SwapIfBranches",
+          "offered": [],
+          "state": "not-offered"
+        },
+        {
+          "id": "ExtractVariable",
+          "offered": [
+            "Extract subexpression to variable"
+          ],
+          "state": "preview-apply-undo-passed",
+          "title": "Extract subexpression to variable",
+          "files": 1
+        },
+        {
+          "id": "ExtractFunction",
+          "offered": [
+            "Extract to function"
+          ],
+          "state": "preview-apply-undo-passed",
+          "title": "Extract to function",
+          "files": 1
+        },
+        {
+          "id": "ExpandMacro",
+          "offered": [
+            "Expand macro 'DOUBLE_VALUE'",
+            "Extract subexpression to variable"
+          ],
+          "state": "preview-apply-undo-passed",
+          "title": "Expand macro 'DOUBLE_VALUE'",
+          "files": 1
+        }
+      ],
+      "originalSourcesPreserved": true,
+      "hostDrained": true,
+      "validated": 8
+    },
+    "navigation": {
+      "state": "passed",
+      "nativeSha256": "281004f39df41196adbcdf68c31665d404dd44be255b8f970a217fd612578a9b",
+      "baseline": false,
+      "checks": {
+        "compilerCachePrimed": true,
+        "cacheSurvivesReadOnlyTraversal": true,
+        "actualConcurrentNavigation": [
+          {
+            "state": "Completed",
+            "milliseconds": 45.6659999981639,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 43.4880000029807,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 49.36110000562621,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 49.36989999987418,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 45.61969999485882,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 47.87650000071153,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 49.64810000092257,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 52.237500000046566,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 44.56189999473281,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 49.76639999949839,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 46.22460000246065,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 48.70220000157133,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 54.66859999432927,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 47.475999999733176,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 45.27760000200942,
+            "cacheHit": true,
+            "errorCode": null
+          },
+          {
+            "state": "Completed",
+            "milliseconds": 49.690599997120444,
+            "cacheHit": true,
+            "errorCode": null
+          }
+        ],
+        "actualEditStillInvalidatesCache": true
+      },
+      "originalSourcesPreserved": true,
+      "hostDrained": true
+    }
+  },
+  "persistence": {
+    "state": "passed",
+    "nativeSha256": "39db13c0f4e079f0ac6bafd3e8c58ca652996427b5bed194486cf9c1c49ddd5e",
+    "checks": {
+      "actualMcpDiscovery": 264,
+      "actualMsbuildCommands": 162,
+      "isolatedUnreadableAndOversizedSources": {
+        "commands": 162,
+        "diagnosticClean": 3,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 2,
+        "observed": 5,
+        "outOfScope": 0,
+        "remaining": 157,
+        "translationUnits": 162
+      },
+      "progressPersistedBeforeShutdown": 7,
+      "discoveredAfterProcessRestart": true,
+      "noHistoricalCompilerProofReused": {
+        "commands": 162,
+        "diagnosticClean": 2,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 7,
+        "observed": 9,
+        "outOfScope": 0,
+        "remaining": 153,
+        "translationUnits": 162
+      },
+      "actualCancellationSavedProgress": 10,
+      "all162TraversedAndLastPageAccessible": {
+        "commands": 162,
+        "diagnosticClean": 152,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 10,
+        "observed": 162,
+        "outOfScope": 0,
+        "remaining": 0,
+        "translationUnits": 162
+      },
+      "liveEditInvalidatesPassWithoutSourceSave": true,
+      "sameProcessSnapshotRebaseRetainsNoFreshProof": true,
+      "concurrentCheckpointOwnerRefused": true,
+      "sameSizeTimestampCompilerChangeRefused": true,
+      "malformedCheckpointPathRefused": true,
+      "originalSourceBytesPreserved": true,
+      "allHostsDrained": true
+    },
+    "sourceFiles": 162
+  },
+  "unreal": {
+    "runs": [
+      {
+        "format": "cycode-unreal-campaign/1",
+        "state": "pending",
+        "nativeSha256": "281004f39df41196adbcdf68c31665d404dd44be255b8f970a217fd612578a9b",
+        "compilationDatabaseSha256": "4265231242954cf12734235d3659ca0c0afd7dbe8378762d3dd8e21364d7b041",
+        "limits": [
+          "Current-process compiler observations and historical traversal are separate.",
+          "Budget exhaustion is pending progress, not a completed whole-project analysis.",
+          "Observed process-tree RSS can miss peaks and count shared pages repeatedly."
+        ],
+        "total": 37557,
+        "startObserved": 168,
+        "historicalObserved": 168,
+        "initialCoverage": {
+          "commands": 37679,
+          "diagnosticClean": 0,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 168,
+          "observed": 168,
+          "outOfScope": 0,
+          "remaining": 37389,
+          "translationUnits": 37557
+        },
+        "finalObserved": 176,
+        "addedThisRun": 8,
+        "finalCoverage": {
+          "commands": 37679,
+          "diagnosticClean": 8,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 168,
+          "observed": 176,
+          "outOfScope": 0,
+          "remaining": 37381,
+          "translationUnits": 37557
+        },
+        "traversalComplete": false,
+        "wholeProjectIndexCompleteness": "unknown",
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 2909278208,
+          "samples": 730,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        },
+        "unitTimingMilliseconds": {
+          "samples": 8,
+          "median": 5832.07895,
+          "p95": 11399.7775,
+          "maximum": 11399.7775
+        },
+        "checkedSourceHashes": 8,
+        "selectedSourcesAndDatabasePreserved": true,
+        "secondsBeforeShutdown": 85.57252639999933,
+        "hostDrained": true,
+        "totalSeconds": 86.25645390000136
+      },
+      {
+        "format": "cycode-unreal-campaign/1",
+        "state": "pending",
+        "nativeSha256": "39db13c0f4e079f0ac6bafd3e8c58ca652996427b5bed194486cf9c1c49ddd5e",
+        "compilationDatabaseSha256": "4265231242954cf12734235d3659ca0c0afd7dbe8378762d3dd8e21364d7b041",
+        "limits": [
+          "Current-process compiler observations and historical traversal are separate.",
+          "Budget exhaustion is pending progress, not a completed whole-project analysis.",
+          "Observed process-tree RSS can miss peaks and count shared pages repeatedly."
+        ],
+        "total": 37557,
+        "startObserved": 176,
+        "historicalObserved": 176,
+        "initialCoverage": {
+          "commands": 37679,
+          "diagnosticClean": 0,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 176,
+          "observed": 176,
+          "outOfScope": 0,
+          "remaining": 37381,
+          "translationUnits": 37557
+        },
+        "finalObserved": 180,
+        "addedThisRun": 4,
+        "finalCoverage": {
+          "commands": 37679,
+          "diagnosticClean": 4,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 176,
+          "observed": 180,
+          "outOfScope": 0,
+          "remaining": 37377,
+          "translationUnits": 37557
+        },
+        "traversalComplete": false,
+        "wholeProjectIndexCompleteness": "unknown",
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 2769195008,
+          "samples": 460,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        },
+        "unitTimingMilliseconds": {
+          "samples": 4,
+          "median": 6345.672549999999,
+          "p95": 9337.3664,
+          "maximum": 9337.3664
+        },
+        "checkedSourceHashes": 4,
+        "selectedSourcesAndDatabasePreserved": true,
+        "secondsBeforeShutdown": 55.85034749999613,
+        "hostDrained": true,
+        "totalSeconds": 56.55151990000013
+      }
+    ],
+    "finalVisited": 180,
+    "remaining": 37377,
+    "freshCleanInLastRun": 4,
+    "historicalUnknownInLastRun": 176,
+    "wholeProjectIndexCompleteness": "unknown"
+  },
+  "antivirus": {
+    "active": true,
+    "newDetectionObserved": false,
+    "scope": "Owned production builds/runs plus passive post-run observation; not an antivirus certification"
+  },
+  "limits": [
+    "Capacity/large C++/inspection/stdio checks identify the final production binary; earlier regression and real Unreal runs retain their own distinct binary hashes.",
+    "The 96 MiB fixture is UTF-8 text. Memory samples cover the production Core alone before language servers start, not whole-project clangd memory or missed peaks.",
+    "The 70 MiB compiler database contains nine actual MSBuild commands padded with legal JSON whitespace; it does not establish semantics for millions of unique compiler contexts.",
+    "The >32 MiB checkpoint case contains seeded unknown metadata for storage validation, not actual compiler observations. No historical compiler proof is reused.",
+    "Ordinary GUI/LSP buffers retain their 4 MiB profile. New paged text uses byte positions, disk headroom and explicit APIs; no GUI, LSP overlay, Save as or crash recovery is provided by that profile.",
+    "Compiler queries require paged edits to be saved/closed; clean paged C++ supports real disk-based clang-tidy inspection.",
+    "Ordinary transaction preflight still stages resulting buffers in RAM; project path/observation indices grow with inventory. Disk, per-request/page/command, backend and hardware limits remain.",
+    "Unreferenced checkpoint pages and interrupted working data are retained. No automatic destructive garbage collection is introduced.",
+    "No new Linux/macOS, GUI, full-engine/Blueprint semantics or power-loss acceptance is claimed.",
+    "No installation, push, release or GitHub Actions run occurred."
+  ]
+}

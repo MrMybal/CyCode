@@ -5,9 +5,32 @@ static void require(bool value, const char *message) { if (!value) throw std::ru
 int main() {
     try {
         Keymap map;
+        require(findCommand("edit.snippet")!=nullptr,"Snippet command missing");
+        require(findCommand("edit.surroundSnippet")!=nullptr,"Surround snippet command missing");
+        require(findCommand("edit.snippetCatalogue")!=nullptr,"Snippet editing command missing");
+        require(findCommand("edit.userSnippets")!=nullptr,"Personal snippet editing command missing");
+        require(findCommand("edit.captureSnippet")!=nullptr,"Selection capture command missing");
+        require(findCommand("navigate.include")!=nullptr,"Include navigation command missing");
+        require(findCommand("navigate.relatedFiles")!=nullptr,"Related-file inspector command missing");
+        map.load("rider");
+        require(map.press("F2",0,true,true).command=="problem.nextInFile","Display-form Rider diagnostic shortcut");
+        require(map.press("Alt+Shift+F2",0,true,true).command=="problem.previous","Display modifier order");
+        require(map.press("DoubleShift",0,true,true).command=="search.everywhere","Canonical double shift");
+        require(map.press("Double Shift",0,true,true).command=="search.everywhere","Displayed double shift");
+        require(map.press("Ctrl+K, Ctrl+C",0,true,true).command.empty(),"A complete chord is not a stroke");
+        require(map.press("unknown key",0,true,true).command.empty(),"Invalid host event must not dispatch");
+        require(map.press("ctrl+j",.001,true,true).command=="edit.snippet","Rider snippet shortcut");
+        require(map.press("ctrl+alt+j",.0015,true,true).command=="edit.surroundSnippet","Rider surround snippet shortcut");
+        require(map.press("alt+o",.0016,true,true).command=="navigate.counterpart","Rider header/source binding missing");
+        map.load("visualstudio");
+        map.press("ctrl+k",.002,true,true);
+        require(map.press("ctrl+x",.003,true,true).command=="edit.snippet","Visual Studio snippet chord");
+        map.press("ctrl+k",.004,true,true);
+        require(map.press("ctrl+o",.005,true,true).command=="navigate.counterpart","Visual Studio header/source chord missing");
         for (const auto &profile : {"rider", "visualstudio", "vscode"}) {
             map.load(profile);
             const bool rider=std::string(profile)=="rider";
+            require(map.press("shift+f1",.009,true,true).command=="help.context","Context help binding missing");
             require(map.press(rider ? "ctrl+alt+b" : "ctrl+f12",.01,true,true).command=="navigate.implementation","Implementation binding missing");
             if (rider) {
                 require(map.press("ctrl+shift+f7",.005,true,true).command=="code.occurrences","Rider occurrence shortcut missing");

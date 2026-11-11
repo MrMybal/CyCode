@@ -2,11 +2,13 @@
 #include "cycode/GitMerge.h"
 #include "cycode/GitReplay.h"
 #include <fstream>
+#include <iostream>
+#include <source_location>
 namespace cycode {
 void gitReplayContracts(const std::filesystem::path &root) {
-    auto require = [](bool value, const char *message) {
+    auto require = [](bool value, const char *message, const std::source_location location=std::source_location::current()) {
         if (!value)
-            throw std::runtime_error(message);
+            throw std::runtime_error(std::string(message)+" at replay line "+std::to_string(location.line()));
     };
     auto rejects = [&](const std::function<void()> &call) {
         bool rejected = false;
@@ -25,6 +27,7 @@ void gitReplayContracts(const std::filesystem::path &root) {
     rejects([&] { gitReplayRequest({{"action", "continue"}, {"commit", oid}}); });
     rejects([&] { gitReplayRequest({{"action", "abort"}}); });
     for (const auto *scenario : {"clean", "continue", "quit"}) {
+        std::cout<<"Replay scenario: "<<scenario<<'\n'<<std::flush;
         const auto folder = root / (std::string("replay-") + scenario);
         std::filesystem::create_directories(folder);
         auto git = [&](std::vector<std::string> args) {
@@ -43,6 +46,7 @@ void gitReplayContracts(const std::filesystem::path &root) {
             return std::string(std::istreambuf_iterator<char>(file), {});
         };
         git({"init", "-b", "main"});
+        git({"config", "core.autocrlf", "false"});
         git({"config", "user.name", "CyCode fixture"});
         git({"config", "user.email", "fixture@example.invalid"});
         write("file.cpp", "base\n");
@@ -100,7 +104,7 @@ void gitReplayContracts(const std::filesystem::path &root) {
         if (std::string(scenario) == "clean") {
             require(result.at("exitCode") == 0 && !result.contains("inspectionError") &&
                         read("file.cpp") == "incoming\n",
-                    "Cherry-pick succeeds with hooks suppressed");
+                    (std::string("Cherry-pick succeeds with hooks suppressed: ") + result.dump()).c_str());
             state = engine.dispatch("vcs.replay.state");
             params = request("revert", result.at("newCommit"));
             plan = engine.dispatch("vcs.replay.plan", params);
@@ -125,7 +129,7 @@ void gitReplayContracts(const std::filesystem::path &root) {
                 const auto continued = engine.dispatch("vcs.replay.apply", params);
                 require(continued.at("exitCode") == 0 && !continued.contains("inspectionError") &&
                             read("file.cpp") == "resolved\n",
-                        "Resolved continuation commits exactly reviewed stage tree");
+                        ("Resolved continuation commits exactly reviewed stage tree: "+continued.dump()).c_str());
             } else {
                 doc = engine.dispatch("documents.read", {{"path", "file.cpp"}});
                 doc = engine.dispatch(
@@ -137,11 +141,14 @@ void gitReplayContracts(const std::filesystem::path &root) {
                 plan = engine.dispatch("vcs.replay.plan", params);
                 params["expectedPlanRevision"] = plan.at("revision");
                 const auto quitted = engine.dispatch("vcs.replay.apply", params);
+                const auto afterDocument=engine.dispatch("documents.read", {{"path", "file.cpp"}});
+                const auto indexUnchanged=git({"ls-files", "--stage", "-z"}) == index;
+                const auto diskUnchanged=read("file.cpp") == disk;
+                const auto detail=Json{{"result",quitted},{"indexUnchanged",indexUnchanged},
+                    {"diskUnchanged",diskUnchanged},{"documentBefore",doc},{"documentAfter",afterDocument}};
                 require(quitted.at("exitCode") == 0 && !quitted.contains("inspectionError") &&
-                            quitted.at("state").at("kind") == "none" &&
-                            git({"ls-files", "--stage", "-z"}) == index && read("file.cpp") == disk &&
-                            engine.dispatch("documents.read", {{"path", "file.cpp"}}) == doc,
-                        "Quit preserves unresolved index, working file and dirty source buffer");
+                            quitted.at("state").at("kind") == "none" && indexUnchanged && diskUnchanged && afterDocument==doc,
+                        ("Quit preserves unresolved index, working file and dirty source buffer: "+detail.dump()).c_str());
             }
         }
     }

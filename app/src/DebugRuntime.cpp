@@ -80,6 +80,35 @@ static std::string dotnet(const fs::path &program,const Json &profile) {
     }
     throw std::runtime_error("Required .NET runtime is unavailable in the detected hosts: "+frameworks.dump()+". Install it or select a compatible .NET host.");
 }
+std::string netCoreDebugArgument(const std::string &text, bool windows) {
+    if (text.empty()) throw std::runtime_error("NetCoreDbg cannot preserve empty launch arguments; use Run without debugging for this argument list");
+    size_t trailing = 0;
+    while (trailing < text.size() && text[text.size()-trailing-1] == '\\') ++trailing;
+    if (trailing && text.find(' ') == std::string::npos) {
+        if (text.find_first_of("\"\t\r\n") != std::string::npos)
+            throw std::runtime_error("NetCoreDbg cannot preserve this trailing-backslash argument");
+        return text;
+    }
+    if (!windows) {
+        // PAL removes only the slash immediately before a quote, whereas CRT
+        // counts runs of slashes. NetCoreDbg drops spaced trailing slashes on PAL.
+        if (trailing) throw std::runtime_error("NetCoreDbg cannot preserve a spaced argument ending with a backslash on this platform; use Run without debugging");
+        std::string escaped;
+        for (const auto c : text) { if (c == '"') escaped += '\\'; escaped += c; }
+        return escaped;
+    }
+    std::string escaped;
+    size_t slashes = 0;
+    for (size_t i=0;i<text.size()-trailing;++i) {
+        const auto c = text[i];
+        if (c == '\\') { ++slashes; continue; }
+        escaped.append(c == '"' ? slashes*2+1 : slashes,'\\');
+        slashes = 0; escaped += c;
+    }
+    // For a spaced trailing backslash, NetCoreDbg adds one itself on Windows.
+    if (trailing) escaped.append(trailing*2-1,'\\');
+    return escaped;
+}
 DebugProgram debugProgram(const fs::path &root,const Json &profile) {
     auto program = utf8Path(profile.value("program","")); if (program.empty()) throw std::runtime_error("Select a compiled program or .NET assembly in the debug profile");
     if (program.is_relative()) program = root/program;

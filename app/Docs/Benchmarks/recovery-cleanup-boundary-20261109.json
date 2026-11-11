@@ -1,0 +1,115 @@
+{
+  "format": "cycode-recovery-cleanup-boundary-result/1",
+  "recordedAt": "2026-11-09T22:20:52.272199+00:00",
+  "state": "paused-refresh-reproduced-detection-after-cleanup",
+  "sampleSha256": "4a24799ba323dd8b9e9dde20f3c15d8392f98ef0974b194c6a28636541313101",
+  "buildExitCode": 0,
+  "sourceCommit": "34323ccbb042cb14d3596dd177da967a3049e6b7",
+  "nativeSourceDigest": "07f0eaca833263f58f3031989a91c5531ab2826dbf06e61e270ad0241973c19a",
+  "sourceIncludesUncommittedDiagnosticChanges": true,
+  "nativeProcessId": 39100,
+  "case": "same-document-refresh-paused-before-cleanup",
+  "nativeExitCode": 5,
+  "pauseStartUtcMicros": 1794261826415876,
+  "pauseEndUtcMicros": 1794261841416708,
+  "pauseDurationMilliseconds": 15000.832,
+  "initialCheckpointObservationSecondsCompleted": 20,
+  "duringPause": {
+    "indexRevisionAdvanced": true,
+    "oldPayloadsUnchanged": true,
+    "payloadCount": 3,
+    "textRemovalSpansBeforePauseEnd": 0,
+    "newAntivirusEventObservedDuringPause": false
+  },
+  "afterPause": {
+    "actualOldTextRemoved": true,
+    "baselineRetained": true,
+    "payloadCount": 2
+  },
+  "traceRecordCount": 130,
+  "closedSpanCount": 65,
+  "traceTruncated": false,
+  "openOrFailedSpans": [],
+  "firstEventMinusLastNativeMilliseconds": 88.6145,
+  "firstEventMinusOldTextRemovalMilliseconds": 88.66550000000001,
+  "firstEventMinusRequestedShutdownMilliseconds": -428.7155,
+  "events": [
+    {
+      "recordId": 22418315,
+      "processSha256": "4a24799ba323dd8b9e9dde20f3c15d8392f98ef0974b194c6a28636541313101",
+      "imageName": "cycode_cli.exe",
+      "rawContentIncluded": false,
+      "eventId": 4662,
+      "provider": "avp",
+      "interpretation": "new avp event; stop conservatively",
+      "utc": "2026-11-09T22:04:01.5059045Z"
+    },
+    {
+      "recordId": 22418316,
+      "processSha256": "4a24799ba323dd8b9e9dde20f3c15d8392f98ef0974b194c6a28636541313101",
+      "imageName": "cycode_cli.exe",
+      "rawContentIncluded": false,
+      "eventId": 4662,
+      "provider": "avp",
+      "interpretation": "new avp event; stop conservatively",
+      "utc": "2026-11-09T22:04:01.5490542Z"
+    }
+  ],
+  "vendorProcessBinding": [
+    {
+      "timeAsReported": "Aujourd'hui, 09/11/2026 23:04:01",
+      "eventAsReported": "Un objet malveillant a été détecté",
+      "application": "CyCode native Core service",
+      "image": "cycode_cli.exe",
+      "processId": 39100,
+      "threat": "PDM:Trojan.Win32.Generic",
+      "method": "Analyse comportementale"
+    },
+    {
+      "timeAsReported": "Aujourd'hui, 09/11/2026 23:04:01",
+      "eventAsReported": "Le processus est terminé",
+      "application": "CyCode native Core service",
+      "image": "cycode_cli.exe",
+      "processId": 39100,
+      "threat": "PDM:Trojan.Win32.Generic",
+      "method": ""
+    },
+    {
+      "timeAsReported": "Aujourd'hui, 09/11/2026 23:04:01",
+      "eventAsReported": "Une copie de sauvegarde de l'objet a été créée",
+      "application": "CyCode native Core service",
+      "image": "cycode_cli.exe",
+      "processId": 39100,
+      "threat": "PDM:Trojan.Win32.Generic",
+      "method": ""
+    },
+    {
+      "timeAsReported": "Aujourd'hui, 09/11/2026 23:04:26",
+      "eventAsReported": "Un objet a été supprimé",
+      "application": "CyCode native Core service",
+      "image": "cycode_cli.exe",
+      "processId": 39100,
+      "threat": "PDM:Trojan.Win32.Generic",
+      "method": ""
+    }
+  ],
+  "remainingUnpausedCaseStarted": false,
+  "nativeRunsAfterAlert": 0,
+  "samplePresentAtLaterPostflight": false,
+  "coreProcessesAtPostflight": [],
+  "originalWorkspaceFilesPreserved": 154,
+  "finding": "The same-document index refresh and a fully observed 15-second pause did not reproduce the alert while both old payloads remained unchanged. Old-text cleanup then succeeded, followed by the new matching event. This strengthens cleanup-in-context as the discriminating stage, without identifying the private vendor rule or certifying a false positive.",
+  "limits": [
+    "One exact rebuilt sample and one paused native case.",
+    "Event publication time is later than the activity which caused classification.",
+    "No filesystem/kernel stack or vendor-internal decision trace was captured.",
+    "A diagnostic delay is not a production fix; ordinary recovery behavior is unchanged by default.",
+    "Minimal modes were added and run later; see the separate two-case result."
+  ],
+  "protectionChanged": false,
+  "binaryRestoredOrRelocated": false,
+  "installedOrPublished": false,
+  "uploaded": false,
+  "githubActionsUsed": false,
+  "laterMinimalCampaign": "recovery-minimal-20261109.json"
+}

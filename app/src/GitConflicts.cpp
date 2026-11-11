@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/GitConflicts.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
@@ -163,7 +164,7 @@ Json Engine::gitConflicts(const std::string &method, const Json &params) {
         catalogue().at("revision") != before.at("revision"))
         throw std::runtime_error("Git repository/index changed before conflict resolution");
     const auto process = git(plan.at("arguments").get<std::vector<std::string>>());
-    Json result = {{"exitCode", process.exitCode},  {"output", process.output},
+    Json result = {{"exitCode", process.exitCode},  {"output", processOutputText(process.output, true)},
                    {"timedOut", process.timedOut},  {"truncated", process.truncated},
                    {"preservesWorkingFiles", true}, {"preservesBuffers", true},
                    {"changes", plan.at("changes")}};

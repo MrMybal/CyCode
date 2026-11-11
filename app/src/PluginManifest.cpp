@@ -102,7 +102,7 @@ Json pluginHostInfo() {
         {"os", os},
         {"architecture", architecture},
         {"platform", os + "-" + architecture},
-        {"features", {"activationNotifications", "workspaceEvents", "eventSubscriptions", "debugAdapters"}}};
+        {"features", {"activationNotifications", "workspaceEvents", "eventSubscriptions", "debugAdapters", "snippetCatalogues"}}};
 }
 
 Json pluginCompatibility(const Json &manifest) {

@@ -1,4 +1,6 @@
 #include "cycode/Recovery.h"
+#include "cycode/NativeTrace.h"
+#include <string_view>
 #include "cycode/DocumentReference.h"
 #include "cycode/Paths.h"
 #include "cycode/TextFile.h"
@@ -158,8 +160,11 @@ Json summary(const Json &record, const std::string &session, bool active) {
 void removePayload(const fs::path &folder, const Json &record) {
     for (const auto &[field, kind] : {std::pair{"textFile", "text"}, std::pair{"baselineFile", "base"}}) {
         const auto file = payload(folder, record.at(field), record.at("id"), kind);
+        NativeTraceScope trace(std::string_view(kind)=="text" ? NativeTraceEvent::RecoveryRemoveText : NativeTraceEvent::RecoveryRemoveBaseline);
         std::error_code ec;
-        fs::remove(file, ec);
+        const bool removed=fs::remove(file, ec);
+        trace.finish(ec ? NativeTraceResult::Failure : removed ? NativeTraceResult::Success : NativeTraceResult::Missing,
+                     static_cast<std::uint64_t>(ec.value()));
     }
 }
 } // namespace
@@ -215,6 +220,7 @@ struct RecoveryStore::State {
         return directory;
     }
     void commit(const Json &next) {
+        NativeTraceScope trace(NativeTraceEvent::RecoveryIndexCommit);
         const auto file = folder() / "session.json";
         ordinary(file);
         const auto bytes = next.dump() + "\n";
@@ -225,6 +231,7 @@ struct RecoveryStore::State {
         index = next;
     }
     ~State() {
+        NativeTraceScope trace(NativeTraceEvent::RecoveryStoreShutdown);
         if (lease && index.at("buffers").empty()) {
             try {
                 const auto directory = folder();
@@ -237,6 +244,9 @@ struct RecoveryStore::State {
                 fs::remove(directory, ec);
             } catch (...) {
             }
+        } else {
+            // Observe the existing no-cleanup branch; dirty checkpoints stay owned.
+            trace.finish(NativeTraceResult::Skipped);
         }
     }
 };
@@ -261,6 +271,7 @@ uint64_t RecoveryStore::savedRevision(const std::string &path) const {
     return 0;
 }
 void RecoveryStore::checkpoint(const Snapshot &snapshot) {
+    NativeTraceScope trace(NativeTraceEvent::RecoveryCheckpoint);
     std::lock_guard lock(state_->mutex);
     state_->path(snapshot.path);
     if (isUntitledDocument(snapshot.path) && (snapshot.existed || !snapshot.disk.empty()))
@@ -333,13 +344,26 @@ void RecoveryStore::checkpoint(const Snapshot &snapshot) {
         throw;
     }
     if (!old.is_null()) {
+        // Diagnostic one-shot boundary; normal execution returns immediately.
+        // The new checkpoint is committed, and all old payloads still exist here.
+        pauseNativeRecoveryCleanupForDiagnosis();
         std::error_code ec;
-        fs::remove(payload(directory, old.at("textFile"), id, "text"), ec);
-        if (!reuse)
-            fs::remove(payload(directory, old.at("baselineFile"), id, "base"), ec);
+        {
+            NativeTraceScope trace(NativeTraceEvent::RecoveryRemoveText);
+            const bool removed=fs::remove(payload(directory, old.at("textFile"), id, "text"), ec);
+            trace.finish(ec ? NativeTraceResult::Failure : removed ? NativeTraceResult::Success : NativeTraceResult::Missing,
+                         static_cast<std::uint64_t>(ec.value()));
+        }
+        if (!reuse) {
+            NativeTraceScope trace(NativeTraceEvent::RecoveryRemoveBaseline);
+            const bool removed=fs::remove(payload(directory, old.at("baselineFile"), id, "base"), ec);
+            trace.finish(ec ? NativeTraceResult::Failure : removed ? NativeTraceResult::Success : NativeTraceResult::Missing,
+                         static_cast<std::uint64_t>(ec.value()));
+        }
     }
 }
 void RecoveryStore::erase(const std::string &path) {
+    NativeTraceScope trace(NativeTraceEvent::RecoveryErase);
     std::lock_guard lock(state_->mutex);
     auto next = state_->index;
     auto &buffers = next.at("buffers");
@@ -365,6 +389,7 @@ void RecoveryStore::retain(const std::set<std::string> &paths) {
     }
     if (removed.empty())
         return;
+    NativeTraceScope trace(NativeTraceEvent::RecoveryRetain);
     state_->commit(next);
     for (const auto &record : removed)
         removePayload(state_->folder(), record);
@@ -478,7 +503,10 @@ RecoveryStore::Json RecoveryStore::inspect(const std::string &session, const std
                 try {
                     index.at("buffers").erase(it);
                     ordinary(directory / "session.json");
-                    writeTextFileAtomic(directory / "session.json", index.dump() + "\n", baseline);
+                    {
+                        NativeTraceScope trace(NativeTraceEvent::RecoveryIndexCommit);
+                        writeTextFileAtomic(directory / "session.json", index.dump() + "\n", baseline);
+                    }
                     removePayload(directory, record);
                     result["sourceRetained"] = false;
                 } catch (const std::exception &e) {
@@ -509,7 +537,10 @@ RecoveryStore::Json RecoveryStore::discard(const std::string &session, const std
                 throw std::runtime_error("RevisionConflict: recovery checkpoint changed");
             state_->path(record.at("path"));
             index.at("buffers").erase(it);
-            writeTextFileAtomic(directory / "session.json", index.dump() + "\n", baseline);
+            {
+                NativeTraceScope trace(NativeTraceEvent::RecoveryIndexCommit);
+                writeTextFileAtomic(directory / "session.json", index.dump() + "\n", baseline);
+            }
             removePayload(directory, record);
             return {{"discarded", true}, {"sourceRetained", false}};
         }

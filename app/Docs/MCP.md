@@ -1,5 +1,128 @@
 # Integrated MCP
 
+## Current native Core agent integration
+
+The current source contract exposes **243 native operations** through the real
+CyToolsCore SDK/MCP adapter. Three additions provide service status and semantic
+preparation/status; job ownership and cancellation remain SDK controls.
+`app/core_host.py` can own one persistent production CLI without the IDE.
+Read [Agents.md](Agents.md) for startup, workflow and safety semantics;
+[the generated catalogue](../MCPMethods.json) contains every exact method and
+complete schema. Regenerate with `python app/scripts/generate_mcp_reference.py`
+and verify with `--check`. Earlier package evidence below retains its original
+revision/count and does not validate a new installer.
+
+
+Actual Windows package acceptance at ab82791 starts the bundled interpreter and
+SDK, initializes two official MCP clients on shared Core, and passes Unicode live
+edits, permissions/private jobs and stale revision checks. Its next plugins_list
+job exposes a missing snippetCatalogues output-schema property. This additive
+metadata is now typed without opening the surrounding schema. Full corrected
+plugin/shutdown/runtime-integrity/uninstall acceptance remains pending; this
+partial result is not a complete installed-MCP pass. See Finalization.md.
+
+
+## Current source acceptance — 2026-11-09
+
+The production Core/real Unreal acceptance passed all 236 domain-tool names,
+21 official SDK controls, read-only denial, current language-status output,
+progress and cancellation through native stop, three-file rename/Apply/Undo,
+structured RevisionConflict and CapacityExceeded refusal without a partial plan.
+Two official clients on one SDK service passed Unicode live-buffer sharing,
+private-job read/cancel denial and normal native exit. Disk sources were unchanged.
+See Benchmarks/unreal55-fixes-20261109.json. These Windows source/runtime checks
+do not establish a new installed package, GUI acceptance or Linux/macOS execution.
+
+## Bundled Windows runtime and shared service
+
+Windows distributions built from this revision contain CPython 3.13.17,
+CyToolsCore 0.10.1 and the official MCP Python SDK 1.30.0 under tools/python.
+The fixed _pth file isolates imports to the bundled standard library, installed
+packages and this application's app directory. Startup and copied MCP commands
+use -B -X utf8: no managed bytecode cache, ambient Python or first-use download.
+Native editing remains independent of the companion. Source/development and
+Linux/macOS builds retain the existing private-runtime fallback.
+
+The desktop starts one real SDK service for its own native bridge. Read/edit
+MCP connections use distinct identities on that shared scheduler. A standalone
+MCP process has a separate Runtime; it does not automatically share jobs. Native
+documents/revisions and resource/process owners remain common to GUI/CLI/SDK.
+
+The runtime lock pins all 32 wheels, published SDK commit and 53 package hashes,
+the official Python archive and the exact installed payload. Wheel .data records
+are installed at their proper locations; licenses remain beside distributions.
+SDK upstream manuals and unused dependency GUI/service launchers are excluded.
+See Build.md for generation and THIRD_PARTY_NOTICES.md for attribution.
+
+The new Windows runner check uses the actual installed interpreter/CLI and two
+official MCP clients against one shared Core. It must verify all 233 operation
+names, Unicode live editing, read-only denial, private-job isolation, stale
+revision refusal, bundled plugin loading, unchanged disk bytes and normal
+native/Core shutdown. Preparation/hash checks do not establish these runtime
+results; see Finalization.md for their status. Local native runs remain suspended.
+
+Public binaries through 0.2.3 do not yet contain this environment. Source builds
+can still use setup_runtime.py with a real SDK wheel. Automatic Linux/macOS
+runtime packaging is not implemented by the Windows authoring script.
+
+## Development milestone record
+
+The notes below retain earlier contracts and their historical operation counts.
+The current generated API reference/manifest has 243 operations; the capability
+ledger and individual feature guides supersede old pending-status statements.
+
+
+workspace_include / workspace.include follows bounded literal logical C/C++
+directives with inline comments and immediate backslash-newline continuations.
+Requested caret and actual physical inner-header UTF-16 range are separate.
+workspace_files now requires a positive cache generation in every page; clients
+must compare it together with indexRevision before combining pages, including
+after manual rebuilds. The native API remains 233 operations with unchanged ABI2
+dispatch. See [Includes](CppIncludes.md) and [Workspace](Workspace.md).
+
+workspace_counterparts / workspace.counterparts adds guarded local C/C++
+header/source discovery (233 public operations). It returns bounded metadata only;
+no process, recursive scan, source edit/save or UI opening occurs through SDK/ABI2.
+See [C++ companions](CppCounterparts.md).
+
+snippets_user_draft / snippets.userDraft provides read-only selected-code capture.
+It returns the original
+personal snapshot plus a literal JSON draft, never a source edit or implicit save.
+Persist separately with snippets_user_save and settings.write; see
+[Selection capture](SnippetCapture.md).
+
+snippets_user_read / snippets.userRead and snippets_user_save / snippets.userSave
+provide personal persistence. The trusted embedding configures one
+fixed personal store; no path argument, project-selected storage or temporary task
+artifact is used. Save is noncancellable with settings.write and the user-settings
+group, not workspace.write. Revisions are opaque lowercase-hex content guards or
+absent; native preflight, lease and atomic write preserve competing writers and
+report unconfirmed postflight. Read-only plugin callbacks cannot save. See
+[Personal snippets](UserSnippets.md).
+
+snippets_complete merges project, personal and active ABI2 plugin catalogues
+without separate provider operations. Items retain cycodeSnippetSource;
+result.cycodePluginRevision binds the captured registry. Native issuance and
+preparation recheck registry changes in addition to document/catalogue/disk state.
+No client-supplied plugin path or callback is used. Already returned concrete plans
+retain their usual guarded apply semantics; query/preparation stays read-only.
+
+snippets_complete / snippets.complete adds saved workspace insertion catalogues
+without a language-server request (228 operations). An already-open saved workspace
+document, expectedRevision and UTF-16 position yield an issued completion session.
+Optional selection supplies ordered UTF-16 start/end coordinates with the caret
+at either endpoint and at most 8 KiB of source text. The issued byte range owns
+TM_SELECTED_TEXT; unavailable bodies carry cycodeSnippetAvailable/cycodeSnippetReason metadata.
+Preparation requires actual variable use and exact replacement bounds, allowing
+multiline local wrapping with literal layout. Coordinates reject fractional,
+negative, out-of-document and surrogate-splitting values. SDK count stays 228.
+language_completion_prepare accepts the index/session, rechecks catalogue/source/
+workspace/disk guards and returns the existing plan/byte-field metadata. Applying
+still requires workspace.write; querying/preparing is read-only. Regex/rendering
+work releases the main Engine mutex and revalidates before storing a plan. No
+Python editor model, process or catalogue-file write is introduced. See
+[Project snippets](SnippetCatalogue.md).
+
 language_document_highlights / language.documentHighlights adds the shared
 permission-free in-document read (227 operations). Current document identity,
 revision and backend epoch are checked before and after the provider reply. Output

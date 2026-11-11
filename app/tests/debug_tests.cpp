@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
         auto target = terminals.create(root,{argv[1],"--loop"});
         debugger.execute("debug.attach",{{"pid",target.at("pid")}});
         debugger.execute("debug.stop",Json::object());
-        require(terminals.snapshot(target.at("id"),0,0).running,"Stopping an attached session killed its target instead of detaching");
+        require(terminals.snapshot(target.at("id"),0,0).running,"Attached target is no longer reported live after detach: "+terminals.list().dump()+" debug: "+debugger.status().dump());
         terminals.close(target.at("id"));
         const auto adapter=toolPath("codelldb").empty()?toolPath("lldb-dap"):toolPath("codelldb");
         const Json extension={{"id","fixture.debug.adapter"},{"plugin","fixture.debug"},{"title","Contributed LLDB"},

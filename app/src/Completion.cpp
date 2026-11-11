@@ -1,13 +1,92 @@
 #include "cycode/Completion.h"
 #include "cycode/Snippet.h"
+#include "cycode/CompletionVariables.h"
+#include "cycode/CompletionTransforms.h"
 #include <cctype>
 #include <map>
 #include "cycode/TextEdits.h"
 #include "cycode/TextFile.h"
 #include <algorithm>
 namespace cycode {
-std::optional<std::string> plainSnippet(const std::string &source) {
-    const auto snippet=expandSnippet(source);return snippet ? std::optional<std::string>(snippet->text) : std::nullopt;
+namespace {
+std::optional<Snippet> contextualSnippet(const std::string &source, const CompletionSnippetContext &context,
+                                       bool *deferredTransforms = nullptr, bool *selectedTextUsed = nullptr) {
+    const auto selected=selectedSnippetText(context.text,context.byteOffset,context.selection);
+    if (!selected) return {};
+    std::string value;
+    std::optional<size_t> lineIndex;
+    auto lookup = [&](std::string_view name) -> std::optional<std::string_view> {
+        if (name == "TM_SELECTED_TEXT") {
+            if (selectedTextUsed) *selectedTextUsed=true;
+            return *selected;
+        }
+        auto pathValue = [&](const std::filesystem::path &path) -> std::string_view {
+            value = pathUtf8(path); return value;
+        };
+        if (name == "TM_FILENAME") return pathValue(context.file.filename());
+        if (name == "TM_FILENAME_BASE") return pathValue(context.file.stem());
+        if (name == "TM_DIRECTORY") return pathValue(context.file.parent_path());
+        if (name == "TM_FILEPATH") return pathValue(context.file);
+        if (name == "WORKSPACE_NAME") return pathValue(context.workspace.filename());
+        if (name == "WORKSPACE_FOLDER") return pathValue(context.workspace);
+        if (name == "RELATIVE_FILEPATH")
+            return pathValue(context.file.empty() || context.workspace.empty()
+                                 ? std::filesystem::path{} : context.file.lexically_relative(context.workspace));
+        if (name == "CURSOR_INDEX") return "0";
+        if (name == "CURSOR_NUMBER") return "1";
+        const auto text = context.text;
+        const auto at = context.byteOffset;
+        if (at > text.size()) return {};
+        if (name == "TM_LINE_INDEX" || name == "TM_LINE_NUMBER") {
+            if (!lineIndex) lineIndex=std::count(text.begin(), text.begin() + at, '\n');
+            value = std::to_string(*lineIndex + (name == "TM_LINE_NUMBER" ? 1 : 0)); return value;
+        }
+        if (name == "TM_CURRENT_LINE") {
+            const auto newline = at ? text.rfind('\n', at - 1) : std::string_view::npos;
+            const auto start = newline == std::string_view::npos ? 0 : newline + 1;
+            auto end = text.find('\n', at);
+            if (end == std::string_view::npos) end = text.size();
+            if (end > start && text[end - 1] == '\r') --end;
+            return text.substr(start, end - start);
+        }
+        if (name == "TM_CURRENT_WORD") {
+            auto word = [](unsigned char c) {
+                return c >= 128 || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                       (c >= '0' && c <= '9') || c == '_' || c == '$';
+            };
+            auto start = at, end = at;
+            while (start && word(static_cast<unsigned char>(text[start - 1]))) --start;
+            while (end < text.size() && word(static_cast<unsigned char>(text[end]))) ++end;
+            return text.substr(start, end - start);
+        }
+        return {}; // No clipboard, environment or clock reads.
+    };
+    completion_detail::TransformBudget budget;
+    auto transform = [&](std::string_view input, std::string_view pattern, std::string_view format,
+                         std::string_view options, bool emit) -> std::optional<completion_detail::PreparedSnippet> {
+        if (pattern.size() > completion_detail::TransformLimits::patternBytes ||
+            !completion_detail::transformOptions(options) || !completion_detail::validTransformFormat(format)) return {};
+        if (!emit) return completion_detail::PreparedSnippet{};
+        if (deferredTransforms) {
+            *deferredTransforms = true;
+            completion_detail::PreparedSnippet unchanged;
+            if (!unchanged.append(input, true)) return {};
+            return unchanged;
+        }
+        return completion_detail::transformSnippetVariable(input, pattern, format, options, budget);
+    };
+    const auto prepared = completion_detail::prepareSnippetVariables(source, lookup, transform);
+    return prepared ? expandSnippet(std::string(prepared->text())) : std::nullopt;
+}
+}
+std::optional<std::string> plainSnippet(const std::string &source, const CompletionSnippetContext &context,
+                                      bool *deferredTransforms, bool *selectedTextUsed) {
+    if (deferredTransforms) *deferredTransforms = false;
+    if (selectedTextUsed) *selectedTextUsed = false;
+    try {
+        const auto snippet = contextualSnippet(source, context, deferredTransforms, selectedTextUsed);
+        return snippet ? std::optional<std::string>(snippet->text) : std::nullopt;
+    } catch (const std::exception &) { return {}; }
 }
 using Json=nlohmann::json;
 Json completionItems(const Json &result,bool *truncated) {
@@ -48,8 +127,12 @@ static Json completionPosition(const std::string &text,size_t offset) {
     const auto start=lineStart==std::string::npos ? 0 : lineStart+1;
     return {{"line",std::count(text.begin(),text.begin()+offset,'\n')},{"character",LanguageClient::utf16Length(text.substr(start,offset-start))}};
 }
-CompletionEdit completionEdit(const std::string &before,const Json &item,const Json &position,bool replace) {
+CompletionEdit completionEdit(const std::string &before,const Json &item,const Json &position,bool replace,
+                              const CompletionSnippetContext &context) {
     const auto at=utf16Offset(before,position);
+    const auto selected=selectedSnippetText(before,at,context.selection);
+    if (!selected) throw std::runtime_error("Invalid or oversized snippet selection");
+    const bool wrapping=!selected->empty();
     size_t begin=at,end=at;
     auto word=[](unsigned char c) { return c>=128 || std::isalnum(c) || c=='_' || c=='$'; };
     while (begin && word(static_cast<unsigned char>(before[begin-1]))) --begin;
@@ -68,14 +151,24 @@ CompletionEdit completionEdit(const std::string &before,const Json &item,const J
         }
     }
     begin=utf16Offset(before,range.at("start"));end=utf16Offset(before,range.at("end"));
-    if (begin>at || end<at || range.at("start").at("line")!=position.at("line") || range.at("end").at("line")!=position.at("line")) throw std::runtime_error("Completion range does not contain the request position");
+    if (wrapping) {
+        if (begin!=context.selection->start || end!=context.selection->end)
+            throw std::runtime_error("Snippet range differs from its issued selection");
+    } else if (begin>at || end<at || range.at("start").at("line")!=position.at("line") || range.at("end").at("line")!=position.at("line")) throw std::runtime_error("Completion range does not contain the request position");
     const auto mode=item.value("insertTextMode",1);
     if (mode!=1 && mode!=2) throw std::runtime_error("Invalid completion indentation mode");
     std::optional<Snippet> snippet;
-    if (item.value("insertTextFormat",1)==2) { snippet=expandSnippet(text);if (!snippet) throw std::runtime_error("Unsupported completion snippet");text=snippet->text; }
+    bool selectionUsed=false;
+    if (item.value("insertTextFormat",1)==2) {
+        auto actualContext = context; actualContext.text = before; actualContext.byteOffset = at;
+        snippet = contextualSnippet(text, actualContext, nullptr, &selectionUsed);
+        if (!snippet) throw std::runtime_error("Unsupported or oversized completion snippet");
+        text = snippet->text;
+    }
     else if (item.value("insertTextFormat",1)!=1) throw std::runtime_error("Invalid completion insert format");
+    if (wrapping && !selectionUsed) throw std::runtime_error("This snippet does not use TM_SELECTED_TEXT.");
     text=normalizeEditorText(text);if (text.size()>65536) throw std::runtime_error("Completion insertion exceeds 64 KiB");
-    if (mode==2 && text.find('\n')!=std::string::npos) {
+    if (!wrapping && mode==2 && text.find('\n')!=std::string::npos) {
         const auto newline=at ? before.rfind('\n',at-1) : std::string::npos;const auto lineStart=newline==std::string::npos ? 0 : newline+1;
         auto prefixEnd=lineStart;while (prefixEnd<at && (before[prefixEnd]==' ' || before[prefixEnd]=='\t')) ++prefixEnd;
         auto adjusted=snippet.value_or(Snippet{text,{},text.size()});indentSnippet(adjusted,before.substr(lineStart,prefixEnd-lineStart));

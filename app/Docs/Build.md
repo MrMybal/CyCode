@@ -1,5 +1,52 @@
 # C/C++ toolchains and CMake
 
+RelatedFiles.cpp joins cycode_core; its fixture joins the existing opt-in core test
+target. NavigationUI reuses existing Core/Commands. No executable target, external
+dependency or CyUI module is added; ordinary builds keep BUILD_TESTING=OFF.
+
+Selection capture reuses the existing CompletionEngine, UserSnippets, catalogue
+escaping and personal JSON UI sources; no build dependency, source target or
+CyUI module is added. See [Capture](SnippetCapture.md).
+
+UserSnippets.cpp joins the native core and UserSnippetsUI.cpp joins the UI. They
+reuse existing Monocypher, NativeFileLease, shared text-file code and CyUI CodeEditor;
+no external dependency, module or executable target is added. The new fixture
+joins the existing opt-in completion target, excluded by BUILD_TESTING=OFF. Regenerate
+manifest/locales with the commands below. Personal data is not redistributed.
+See [Personal snippets](UserSnippets.md).
+
+Plugin snippets extend existing core/UI/provider sources and add
+plugins/unreal/CodeSnippets.h. No dependency, CyUI module, executable or test target
+is added. Reconfigure to copy the Unreal 1.6.0 manifest, then build the ordinary
+production targets with BUILD_TESTING=OFF. Existing ABI2 size/feature checks allow
+the provider to omit its optional catalogue on an older host. Shared Reader/CyUI
+pins and numeric snippet ownership are unchanged.
+
+Selection wrapping extends existing sources with CompletionSelection.h and one
+fixture source in the existing opt-in completion target. It adds no library,
+module, executable or test target. BUILD_TESTING=OFF keeps native fixtures excluded.
+Regenerate schemas/locales with the same commands below.
+
+SnippetCatalogue.cpp joins cycode_core and SnippetsUI.cpp joins cycode_ui. Existing
+CyUI Commands/Core and native JSON/completion/ChangePlan services suffice. The new
+regression source joins the opt-in completion target, excluded by BUILD_TESTING=OFF;
+no new executable target, third-party library, module or notice is added. Regenerate
+app/CyTool.json with `python app/contracts.py` and app/locales/ui.json with
+`python app/scripts/write_locales.py`. See [Project snippets](SnippetCatalogue.md).
+
+Completion variable transforms add source-pinned PCRE2 10.49 and utf8proc 2.12.0
+to app/dependencies.lock.json. `python app/scripts/fetch_dependencies.py --core-only`
+fetches and verifies their exact archives as part of the usual native dependency
+set. CMake builds only pcre2-8-static and utf8proc for the core's private links;
+PCRE2 tools, JIT, 16/32-bit libraries, chartable regeneration and both upstream
+test suites are disabled. Their excluded, unlinked targets are not built.
+BUILD_TESTING=OFF remains required for production. The new regression source joins
+the existing completion target only; no native test executable is produced by a
+normal build. There is no extra runtime DLL, CyUI module or GUI dependency.
+The standalone updater retains its files/lease/updates-only boundary. The Windows
+packager includes licenses/PCRE2.txt and licenses/utf8proc.txt through its existing
+license-directory copy. See [Completion variables](CompletionVariables.md).
+
 UpdateHistory.cpp joins cycode_updates and UpdateHistoryUI.cpp joins cycode_ui;
 UpdateHistory/UpdateHistoryPolicy are their native model/policy. The fixture source
 joins the existing opt-in core target only, with BUILD_TESTING=OFF in production.
@@ -292,3 +339,60 @@ or published payload. Production tests stay OFF; see [Recovery](UpdateRecovery.m
 GUI builds also generate the bundled offline manual with Node.js 22+ / npm and
 the pinned CyDoc package. See [Documentation](../.CyDocBuild/README.md) for cache,
 checkout, regeneration and validation options. Core-only builds do not need Node.
+
+## Offline interface fonts
+
+The UI target uses CyUI Core's fallback-folder contract with the checked-in
+`app/resources/fonts` resources. Ordinary builds require no font package manager,
+network request or new native library. CMake installation and Windows packaging
+copy the same allow-listed fonts, inventory and license notices. The UI-free
+core/CLI do not load them. Windows can retain its system Segoe faces and glyphs.
+
+`python app/scripts/prepare_fonts.py` verifies the shipped bytes. Resource authors
+can explicitly install `fonttools==4.60.1` in their private Python environment and
+run `python app/scripts/prepare_fonts.py --regenerate`. That command downloads only
+the exact, digest-checked upstream resources, rebuilds the 104-glyph subset and
+checks all outputs before replacement. It does not run during build or startup.
+The codepoint/semantic mapping and sources are in `font-resources.json`.
+
+CyUI's pinned public `iconsAvailable()` state currently describes its own Windows
+font loader. The application merges an open glyph font through the existing
+ImGui host contract, so common icon buttons and host resource rows can render
+without copying CyUI widgets. Some optional CyUI decorations still consult that
+Windows-only state and remain omitted outside Windows. Do not represent that
+library limit as complete cross-platform icon parity.
+
+## Redistributable MCP runtime
+
+The Windows release packager requires a verified app-owned runtime under
+runtime/mcp-bundles/<lock fingerprint>. It never copies an existing venv or
+user settings. Prepare it without executing the embedded interpreter:
+
+```sh
+python app/scripts/prepare_mcp_runtime.py --core-wheel /path/to/cytools_core-0.10.1-py3-none-any.whl
+python app/scripts/package_windows.py --build runtime/build-vs
+```
+
+Alternatively provide --core-source /path/to/CyToolsCore containing published
+commit 05352e1d2f58f423fa2ad57b8eec48d2609f2626. Its exact Git archive is exported
+to an owned authoring directory and built with setuptools==84.0.0 / wheel==0.45.1.
+No modified source checkout or development environment is executed/copied.
+SDK package contents and the resulting installed bytes must match the reviewed
+lock even if the wheel ZIP timestamps or checkout line endings differ.
+The source-rebuilt and provided-wheel paths were verified to produce identical
+1,567-file / 60,974,548-byte payloads without launching that runtime locally.
+
+All other wheels and CPython's official embedded archive are downloaded once
+with exact size/hash/origin verification. Corrupt cached files are retained with
+an error; no automatic replacement or executable retry occurs. --cache selects
+an explicit authoring cache; --output must stay beneath this checkout runtime.
+Preparation creates a new owned directory and preserves failed staging evidence.
+The final packager rechecks every pinned file and refuses extra/changed files.
+No pip, downloaded SDK wheel archives, build tree, credentials or user data ship.
+
+Windows production CI rebuilds the SDK at that commit, composes Setup/portable
+packages and uses only the runner to execute the installed MCP acceptance after
+repair and before uninstall. The actual SDK scheduler/official MCP clients are
+used, without a replacement Python document model. Reports exclude endpoint
+tokens and private job databases. This check does not prove Windows GUI rendering
+or complete online updating. POSIX builds keep their existing runtime setup.

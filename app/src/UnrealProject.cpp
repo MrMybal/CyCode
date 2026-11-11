@@ -1,3 +1,5 @@
+#include "cycode/ProcessText.h"
+#include "cycode/FileTime.h"
 #include "cycode/UnrealProject.h"
 #include "cycode/BuildLimits.h"
 #include "cycode/BuildOperations.h"
@@ -351,7 +353,7 @@ Json UnrealProject::runLocked(const std::string &method, const Json &params,
     checkBuildCancellation(cancellation);
     auto result = runProcess(command, cwd, timeout, 8 * 1024 * 1024, cancellation,
                              {}, processOutputObserver(cancellation));
-    Json response = {{"exitCode", result.exitCode},   {"output", result.output},
+    Json response = {{"exitCode", result.exitCode},   {"output", processOutputText(result.output, true)},
                      {"timedOut", result.timedOut},   {"truncated", result.truncated},
                      {"cancelled", result.cancelled}, {"project", {{"available", false}}}};
     try {
@@ -386,7 +388,7 @@ Json UnrealProject::prepare(const Json &params, const std::atomic<bool> *cancell
     auto addRule = [&](const fs::path &path) {
         if (file(path))
             inputs.push_back(pathUtf8(path) + ':' +
-                             std::to_string(fs::last_write_time(path).time_since_epoch().count()));
+                             fileTimeToken(fs::last_write_time(path)));
     };
     addRule(resolve_(profile.at("project")));
     for (const auto *section : {"targets", "modules", "plugins"})

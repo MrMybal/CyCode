@@ -1,4 +1,4 @@
-#include "../src/UpdateInstall.h"
+#include "cycode/update/detail/UpdateInstall.h"
 #include "cycode/Paths.h"
 #include "cycode/Updates.h"
 #include <fstream>

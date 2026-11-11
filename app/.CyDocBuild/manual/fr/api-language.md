@@ -29,7 +29,7 @@ Ces contrats décrivent le service natif exposé par l’intégration SDK/MCP of
 - [`language_highlight`](doc:operation-language-highlight-language-highlight) — Obtenir la coloration syntaxique ou sémantique disponible pour un document.
 - [`language_complete`](doc:operation-language-complete-language-complete) — Demander des propositions de complétion à une position du document.
 - [`language_completion_resolve`](doc:operation-language-completion-resolve-language-completion-resolve) — Résoudre les détails d’une proposition de complétion.
-- [`language_completion_prepare`](doc:operation-language-completion-prepare-language-completion-prepare) — Préparer l’application d’une proposition de complétion sélectionnée.
+- [`language_completion_prepare`](doc:operation-language-completion-prepare-language-completion-prepare) — Préparer une transaction de complétion serveur avec imports, ou un extrait local émis, avec contrôle des révisions, du catalogue et du disque. Les quatorze variables incluent TM_SELECTED_TEXT pour une sélection locale explicite, éventuellement multiligne, avec plage exacte et disposition littérale. Les champs liés et transformations bornées réutilisent le moteur natif ; appliquer et enregistrer restent séparés.
 - [`language_code_actions`](doc:operation-language-code-actions-language-code-actions) — Demander les actions de code disponibles pour une plage du document.
 - [`language_code_action_prepare`](doc:operation-language-code-action-prepare-language-code-action-prepare) — Préparer les changements d’une action de code sélectionnée.
 - [`language_hover`](doc:operation-language-hover-language-hover) — Obtenir les informations de survol à une position du document.

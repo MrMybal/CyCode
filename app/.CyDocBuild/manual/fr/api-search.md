@@ -14,4 +14,4 @@ Ces contrats décrivent le service natif exposé par l’intégration SDK/MCP of
 
 ## Opérations {#operations}
 
-- [`search_text`](doc:operation-search-text-search-text) — Rechercher du texte dans les fichiers de l’espace de travail.
+- [`search_text`](doc:operation-search-text-search-text) — Rechercher le texte du projet avec les tampons non sauvegardés prioritaires. Les documents paginés modifiés sont copiés progressivement dans des instantanés privés pour la recherche littérale ou regex, puis leur révision est revérifiée. Aucun chargement complet paginé en RAM ni sauvegarde source ; budgets de sortie/temps et annulation ripgrep conservés.

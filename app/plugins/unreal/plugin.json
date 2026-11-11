@@ -1,7 +1,7 @@
 {
   "id": "cycode.unreal",
   "name": "Unreal project tools",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "hostVersion": {"minimum": "0.2.0"},
   "abi": 2,
   "library": "cycode_unreal",

@@ -3,6 +3,14 @@
 #include <limits>
 namespace cycode {
 size_t utf16Offset(const std::string &text, const Json &position) {
+    if (!position.is_object() || !position.contains("line") || !position.contains("character"))
+        throw std::runtime_error("Position requires integer line and character fields");
+    for (const auto *key : {"line","character"}) {
+        const auto &value=position.at(key);
+        if (!value.is_number_integer() || (value.is_number_unsigned() &&
+            value.get<uint64_t>()>static_cast<uint64_t>(std::numeric_limits<int64_t>::max())))
+            throw std::runtime_error("Position requires integer line and character fields");
+    }
     const auto line = position.at("line").get<std::int64_t>();
     const auto character = position.at("character").get<std::int64_t>();
     if (line < 0 || character < 0) throw std::runtime_error("Position must be zero-based UTF-16");
@@ -59,7 +67,9 @@ bool containsPath(const std::filesystem::path &root, const std::filesystem::path
     for (; a != root.end(); ++a, ++b) {
         if (b == path.end()) return false;
 #ifdef _WIN32
-        if (_wcsicmp(a->c_str(), b->c_str())) return false;
+        // path equality treats / and \ as the same Windows root separator.
+        // Keep case-insensitive component comparison for ordinary names.
+        if (*a != *b && _wcsicmp(a->c_str(), b->c_str())) return false;
 #else
         if (*a != *b) return false;
 #endif

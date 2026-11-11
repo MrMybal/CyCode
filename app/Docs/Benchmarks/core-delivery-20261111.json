@@ -1,0 +1,212 @@
+{
+  "format": "cycode-core-delivery/1",
+  "date": "2026-11-11",
+  "platform": "Windows x64",
+  "candidateVersion": "0.1.2",
+  "engineContractVersion": "0.2.3",
+  "publicOperations": 249,
+  "finalBinarySha256": "134711441d383158def2c570dead42ea56eb95055018268fdbd58c6907410056",
+  "finalBinaryChecks": {
+    "capacity": {
+      "actualMcpDiscovery": 270,
+      "largePagedText": {
+        "sourceBytes": 100663793,
+        "memorySamplingAvailable": true,
+        "nativeRssBeforeBytes": 10297344,
+        "nativeRssPeakBytes": 11046912,
+        "samples": 165,
+        "scope": "Sampled production Core RSS only; no LSP running; may miss peaks",
+        "applyUndoSaveAndConflicts": true,
+        "bomCrlfUnicodePreserved": true,
+        "readOnlySaveRefused": true,
+        "unsavedLiteralRegexGlobalSearch": true,
+        "originalSourceRestored": true
+      },
+      "largeCppDiskInspection": {
+        "sourceBytes": 5242925,
+        "status": "complete",
+        "unsavedPagedCompilerQueriesRefused": true,
+        "originalSourceRestored": true
+      },
+      "actualCompilerDatabaseAbove64MiB": {
+        "bytes": 73413721,
+        "realMsbuildCommands": 9,
+        "inventory": 9,
+        "inspectionStatus": "complete"
+      },
+      "checkpointAggregateAbove32MiB": {
+        "seededDataBytes": 36754134,
+        "rows": 17000,
+        "compilerEvidence": false,
+        "allRestoredUnknown": true,
+        "lastPageAccessible": true,
+        "tamperedPageRefused": true,
+        "deepManifestRefused": true
+      },
+      "actualCompilerTransactionAbove16MiB": {
+        "beforeAfterBytes": 20972676,
+        "files": 9,
+        "previewApplyUndo": true,
+        "stalePlanRefusedBeforeAnyMutation": true
+      }
+    },
+    "lineNavigation": {
+      "sparseLineIndexUnicodeAndMixedNewlines": {
+        "lines": 24001,
+        "bomExcludedOnlyFromLineCoordinates": true,
+        "byteChunkBoundaryCrlf": true,
+        "surrogateSplitRefused": true
+      },
+      "exclusiveStreamedSaveAs": {
+        "identityPreserved": true,
+        "oldPlansStale": true,
+        "existingAndMissingAndChangedSourcesRefused": true,
+        "originalSourcePreserved": true,
+        "newBytesVerified": true
+      },
+      "hostDrained": true
+    },
+    "pagedRecovery": {
+      "ownedHostCrashAfterDurableCheckpoint": {
+        "checkpointBytes": 6000042,
+        "sourcePreserved": true,
+        "scope": "Terminate exactly the one descendant production Core after publication, not an OS/power-loss test"
+      },
+      "crossProcessRecoveryApplyUndoAndSaveAs": {
+        "sourcePreserved": true,
+        "recoveredBytesVerified": true,
+        "staleRevisionAndDiskConflictRefused": true,
+        "tamperedPayloadAndDeepMetadataRefused": true,
+        "checkpointRetained": true
+      },
+      "hostsDrained": true
+    },
+    "debugger": {
+      "actualConditionalFunctionBreakpoint": {
+        "reason": "breakpoint",
+        "argcEvaluated": true
+      },
+      "actualInstructionBreakpointBindingAndClear": true,
+      "actualMultithreadPauseAndSelection": {
+        "threads": 19,
+        "selectedOtherThread": true,
+        "stackAndFrameRead": true
+      },
+      "actualStoppedThreadDisassembly": 8,
+      "actualStoppedThreadMemory": true,
+      "staleExecutionRefused": true,
+      "actualExceptionConfigurationEvidence": {
+        "acknowledged": true,
+        "breakpoints": [
+          {
+            "id": 1,
+            "message": "Resolved locations: 0",
+            "verified": false
+          }
+        ],
+        "filters": [
+          "cpp_throw"
+        ],
+        "verificationReported": true
+      },
+      "actualMsvcThrowFunctionBreakpoint": {
+        "scope": "Explicit _CxxThrowException function breakpoint; not DAP exceptionInfo or automatic fallback",
+        "stackObserved": true
+      },
+      "actualLocalAttachAndDetachPreservesTarget": {
+        "threads": 19,
+        "postDetachNativeRequestSucceeded": true,
+        "scope": "Same Windows host, existing production CLI; not a remote-machine test"
+      },
+      "ownedDebuggerStopped": true,
+      "hostDrained": true
+    }
+  },
+  "debuggeeSha256": "d3d4e1b093da8fc0d6b63a616191d617e2d21399f9db859910e406c03bfeead3",
+  "debuggerRuntimeLimits": [
+    "CodeLLDB advertised cpp_throw but did not stop this MSVC production throw; no native exception-filter acceptance claim"
+  ],
+  "earlierCompilerChecks": {
+    "nativeSha256": "05dd66e2680504dfc41cf76e58c5e8e721bf08f25d8dbeb5b4082ce2b9ba7763",
+    "templates": {
+      "Debug": {
+        "templateMemberDefinition": true,
+        "evaluatedAlias": "int",
+        "threeFileTemplateFieldAndMacroArgumentRenameApplyUndo": true,
+        "sourcePreserved": true
+      },
+      "Release": {
+        "templateMemberDefinition": true,
+        "evaluatedAlias": "long long",
+        "threeFileTemplateFieldAndMacroArgumentRenameApplyUndo": true,
+        "sourcePreserved": true
+      },
+      "hostDrained": true
+    },
+    "transformationNativeSha256": "05dd66e2680504dfc41cf76e58c5e8e721bf08f25d8dbeb5b4082ce2b9ba7763",
+    "validatedTransformations": 8,
+    "originalSourcesPreserved": true
+  },
+  "unreal": {
+    "inventory": 37557,
+    "visited": 354,
+    "remaining": 37203,
+    "longRunAdded": 158,
+    "continuationRunAdded": 16,
+    "lastRunFreshClean": 16,
+    "historicalUnknownAtLastResume": 338,
+    "unlimitedDuration": true,
+    "explicitStopRetainsCheckpoint": true,
+    "wholeProjectIndexCompleteness": "unknown",
+    "longRunMemory": {
+      "available": true,
+      "peakObservedWorkingSetSumBytes": 4235513856,
+      "samples": 12827,
+      "unavailableProcessObservations": 0,
+      "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+    },
+    "continuedRunMemory": {
+      "available": true,
+      "peakObservedWorkingSetSumBytes": 2678456320,
+      "samples": 1168,
+      "unavailableProcessObservations": 0,
+      "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+    }
+  },
+  "nativeComponent": {
+    "target": "CyCode::PagedText",
+    "compiledWithoutEngineLanguageOrGUI": true,
+    "dependencies": [
+      "Files",
+      "JSON",
+      "Monocypher digest"
+    ]
+  },
+  "documentation": {
+    "localizedPages": 658,
+    "routes": 6701,
+    "locales": [
+      "en",
+      "fr"
+    ],
+    "sourceGuides": 97,
+    "modules": [
+      "image",
+      "gallery"
+    ]
+  },
+  "remainingScopes": [
+    "Virtual document provider and GUI adapters in CyUI/CyCodeIDE/CyCodeReader",
+    "Live paged LSP overlays and compiler refactorings for paged buffers",
+    "Full 37,557-unit UE traversal and broader semantic/configuration/Blueprint coverage",
+    "Remote-machine debugging and other adapters",
+    "Linux/macOS execution deferred by owner"
+  ],
+  "execution": {
+    "generatedNativeFixtureExecutables": false,
+    "githubActions": false,
+    "push": false,
+    "newAntivirusDetectionObserved": false,
+    "scope": "Explicit Windows production builds and SDK/compiler/DAP checks under read-only Kaspersky monitoring. No antivirus certification or cross-platform/GUI acceptance claim."
+  }
+}

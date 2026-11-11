@@ -4,7 +4,7 @@ title: Modifier et enregistrer les fichiers
 description: Gérez les onglets, les brouillons et les modifications externes.
 section: Travailler dans CyCode
 order: 40
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Documents et brouillons {#documents}
@@ -20,3 +20,5 @@ Le service natif de documents de CyCode prend en charge UTF-8, avec ou sans BOM,
 ## Disposition de l’éditeur {#layout}
 
 Utilisez les onglets, le repli des blocs, les retours visuels à la ligne et la taille du texte pour faciliter la lecture. Les curseurs et sélections multiples agissent sur le document en mémoire. Les textes sont limités à 4 Mio. Les [images](doc:images#preview) utilisent un aperçu en lecture seule avec d’autres commandes.
+
+[Les opérations physiques et la corbeille](doc:workspace-files#preview) ont leurs propres aperçus et annulations.

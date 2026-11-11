@@ -30,6 +30,7 @@ class Plugins {
     Json project(const std::string &, const std::string &, const Json &);
     uint64_t revision() const;
     Json templateSnapshot() const;
+    Json snippetSnapshot() const;
     Json languageSnapshot() const;
     Json serviceSnapshot() const;
     Json createFromTemplate(const std::string &owner, uint64_t revision, const std::function<Json()> &);

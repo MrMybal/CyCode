@@ -5,6 +5,7 @@ namespace cycode {
 Json Engine::buildOperation(const std::string &method, const Json &params,
                             const std::atomic<bool> *cancellation) {
     checkBuildCancellation(cancellation);
+    if (method == "analysis.inspect") return inspectCpp(params, cancellation);
     const auto succeeded = [&](const Json &result) {
         return result.value("exitCode", -1) == 0 && !result.value("cancelled", false) &&
                !result.value("truncated", false) && !result.value("timedOut", false) && !cancellation->load();

@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/GitSubmodules.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
@@ -117,7 +118,11 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
     std::chrono::steady_clock::time_point inspectionDeadline{};
     auto git = [&](const fs::path &directory, std::vector<std::string> args, int seconds = 15,
                    bool transport = true) {
-        args.insert(args.begin(), {"git", "--no-pager", "--no-optional-locks", "--literal-pathspecs", "-c",
+        // check-ignore consumes literal filenames, not pathspecs. Forcing Git's
+        // literal pathspec magic makes that command reject every filename.
+        const bool pathspecs = args.empty() || args.front() != "check-ignore";
+        if (pathspecs) args.insert(args.begin(), "--literal-pathspecs");
+        args.insert(args.begin(), {"git", "--no-pager", "--no-optional-locks", "-c",
                                    "submodule.recurse=false", "-C", pathUtf8(directory)});
         auto timeout = std::chrono::milliseconds(seconds * 1000);
         if (inspectionDeadline != std::chrono::steady_clock::time_point{}) {
@@ -128,6 +133,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
             timeout = std::min(timeout, remaining);
         }
         std::map<std::string, std::string> environment = {{"GIT_TERMINAL_PROMPT", "0"}};
+        if (!pathspecs) environment["GIT_LITERAL_PATHSPECS"] = "0";
         // Nonempty environment value survives Windows CRT handling of empty values.
         // ':' is a list of empty names, so it authorizes no Git transport protocol.
         if (!transport)
@@ -405,7 +411,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
         const auto result =
             git(selected.directory, model.at("arguments").get<std::vector<std::string>>(), 180);
         Json output = {{"exitCode", result.exitCode},
-                       {"output", result.output},
+                       {"output", processOutputText(result.output, true)},
                        {"timedOut", result.timedOut},
                        {"truncated", result.truncated}};
         try {
@@ -581,7 +587,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
         const auto result = git(selected.directory,
                                 settingsModel.at("arguments").get<std::vector<std::string>>(), 180, false);
         Json output = {{"exitCode", result.exitCode},
-                       {"output", result.output},
+                       {"output", processOutputText(result.output, true)},
                        {"timedOut", result.timedOut},
                        {"truncated", result.truncated}};
         try {
@@ -727,7 +733,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
         const auto result =
             git(selected.directory, reviewed.at("arguments").get<std::vector<std::string>>(), 180, false);
         Json output = {{"exitCode", result.exitCode},
-                       {"output", result.output},
+                       {"output", processOutputText(result.output, true)},
                        {"timedOut", result.timedOut},
                        {"truncated", result.truncated}};
         try {
@@ -782,7 +788,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
     const auto result =
         git(selected.directory, args, 180, action != "update" || params.value("fetch", false));
     Json output = {{"exitCode", result.exitCode},
-                   {"output", result.output},
+                   {"output", processOutputText(result.output, true)},
                    {"timedOut", result.timedOut},
                    {"truncated", result.truncated}};
     try {

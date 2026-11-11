@@ -73,7 +73,12 @@ The shared code-action service now routes advertised Roslyn edit-only fixes and
 lazy resolution through native previews, apply and undo. Server commands and
 resource operations remain unsupported; broader Roslyn action acceptance is pending.
 
-Remaining work includes complete Roslyn action coverage, snippet variables/transforms and a user catalogue,
+Completion now resolves [document/workspace snippet variables](CompletionVariables.md)
+and their bounded regex/case transforms through the same native completion owner.
+The separate project catalogue can wrap an explicit selection with TM_SELECTED_TEXT;
+it preserves literal layout rather than performing a semantic Roslyn refactoring.
+Remaining work includes complete Roslyn action coverage, further variable families,
+interactive field transforms and global user catalogue management,
 rich documentation rendering, metadata decompilation/source-generated views,
 Razor, test discovery and broader framework/SDK/project-load coverage. External
 project files outside the workspace remain outside editable document permissions.

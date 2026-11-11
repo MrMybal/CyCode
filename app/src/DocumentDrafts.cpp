@@ -1,3 +1,4 @@
+#include "cycode/Error.h"
 #include "cycode/Engine.h"
 #include "cycode/Paths.h"
 #include "cycode/TextFile.h"
@@ -43,7 +44,8 @@ Json Engine::saveDocumentAs(const Json &params) {
     const auto key = documentKey(params.at("path"));
     const auto full = resolve(params.at("destination"));
     const auto target = pathUtf8(full.lexically_relative(root_));
-    if (target == key || documents_.contains(target) || std::filesystem::exists(full))
+    if (target == key || documents_.contains(target) || pagedDocuments_.contains(target) ||
+        pendingPagedDocuments_.contains(target) || std::filesystem::exists(full))
         throw std::runtime_error(
             "Choose a new workspace file; Save as never replaces an existing file or buffer");
 #ifdef _WIN32
@@ -54,7 +56,7 @@ Json Engine::saveDocumentAs(const Json &params) {
 #endif
     auto &doc = openLocked(key);
     if (params.at("expectedRevision") != doc.revision)
-        throw std::runtime_error("RevisionConflict: document changed before Save as");
+        throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed before Save as");
     const auto bytes = encodeEditorText(doc.text, doc.bom, doc.crlf, doc.crOnly);
     Document saved = doc;
     saved.revision = nextRevision_++;

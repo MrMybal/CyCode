@@ -1,7 +1,7 @@
 <table width="100%">
   <tr>
     <td width="300" align="left" valign="top">
-      <a href="https://github.com/MrMybal/CyCode/tree/codex/core-intelligence">Native Core source</a><br>
+      <a href="https://github.com/MrMybal/CyCode/tree/main">Native Core source</a><br>
       <a href="https://mrmybal.github.io/CyCode/Documentation.html#/en/overview">Documentation · HTML manual</a><br>
       <a href="https://github.com/MrMybal/CyCode">GitHub</a><br><br>
       <a href="README.md">English</a> · <a href="README.fr.md">Français</a>
@@ -37,10 +37,15 @@ persistent command-line service or the official CyToolsCore SDK/MCP bridge.
 | [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE) | Desktop IDE: windows, panels, commands and the graphical editing workflow. |
 | [CyCodeReader](https://github.com/MrMybal/CyCodeReader) | Standalone text/code editor using the lightweight native text profile. |
 
-**Source transition:** `main` still contains the historical desktop source tree.
-The published native Core source is on
-[`codex/core-intelligence`](https://github.com/MrMybal/CyCode/tree/codex/core-intelligence); use that branch for the Core build below.
-The old CyCode 0.2.x downloads belong to the earlier desktop application.
+**Current sources:** `main` contains the standalone native Core. Desktop UI
+development belongs to CyCodeIDE, and the standalone text editor belongs to
+CyCodeReader. The old CyCode 0.2.x downloads belong to the earlier desktop application.
+The source snapshot adds shared `CyCode::PagedText`, guarded line/UTF-16 reads,
+exclusive Save as and explicit paged crash recovery. Its canonical catalogue has
+249 public operations. See [large text and projects](app/Docs/LargeProjects.md),
+[persistent analysis](app/Docs/AnalysisProgress.md) and
+[native integration](app/Docs/CoreExtraction.md). These source updates do not
+replace the separately published 0.1.1 Windows package.
 
 The Core runs without CyUI, SDL, ImGui, OpenGL or an IDE window. Applications
 choose the services they need; the standalone text profile does not start
@@ -60,13 +65,13 @@ project or language workers.
   Capabilities depend on the installed tools and selected provider.
 - **Embed selected components:** use `CyCode::Core` for project services,
   `CyCode::TextSession` / `TextBridge` for standalone text, or individual native
-  foundations such as `Files`, `Snippets`, `Process`, `Transport` and `Protocol`.
+  foundations such as `Files`, `Snippets`, `PagedText`, `Process`, `Transport` and `Protocol`.
 
 Compilers, clangd/other language servers, debugger adapters and revision-control
 clients remain external prerequisites. Native plugins execute trusted code.
 Semantic coverage depends on real compiler commands and generated headers;
 exhaustive Unreal coverage and Rider/CLion feature parity are not established.
-Large-project scalability work and the full Unreal campaign are in progress.
+Large-project work is documented separately; the full Unreal campaign is incomplete.
 
 ---
 
@@ -84,7 +89,7 @@ The complete package includes the native CLI, app-local MSVC runtime, isolated
 CPython/CyToolsCore/MCP, ripgrep, the `cycode-core` agent skill and the offline
 English/French CyDoc reader. Packages are unsigned. The published distribution
 targets Windows x64; Linux/macOS packaging and the latest changes need separate
-validation. See the [installation and update guide](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreInstallation.md).
+validation. See the [installation and update guide](https://github.com/MrMybal/CyCode/blob/main/app/Docs/CoreInstallation.md).
 
 ### Connect an AI agent
 
@@ -99,7 +104,7 @@ This installs the skill and configures the project's Codex MCP connection.
 `--access edit` permits source edits and process execution; VCS, plugin and
 settings writes remain separate. Reload the client's MCP connection after
 registration. Other MCP clients can use the documented stdio command.
-The [agent guide](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/Agents.md) explains discovery, jobs, permissions
+The [agent guide](https://github.com/MrMybal/CyCode/blob/main/app/Docs/Agents.md) explains discovery, jobs, permissions
 and attaching to the IDE's shared live service.
 
 ## Source, build and integration
@@ -112,7 +117,7 @@ builds need the matching Visual Studio/MSBuild tools. Source dependencies are
 pinned; backend toolchains have their own requirements.
 
 ```sh
-git clone --branch codex/core-intelligence https://github.com/MrMybal/CyCode.git
+git clone --branch main https://github.com/MrMybal/CyCode.git
 cd CyCode
 python app/scripts/fetch_dependencies.py --core-only
 cmake -S . -B runtime/core -DBUILD_TESTING=OFF
@@ -121,7 +126,7 @@ cmake --build runtime/core --config Release --target cycode_cli
 
 Use the `core-v0.1.1` tag to reproduce the published preview's source.
 Ordinary builds do not run native tests or launch an application. GitHub Actions
-is paused. See [native integration](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreExtraction.md) for component
+is paused. See [native integration](https://github.com/MrMybal/CyCode/blob/main/app/Docs/CoreExtraction.md) for component
 selection, embedding and the persistent stdio/loopback service. The source API is
 not a stable C++ binary ABI.
 
@@ -132,9 +137,9 @@ not a stable C++ binary ABI.
 The [English HTML manual](https://mrmybal.github.io/CyCode/Documentation.html#/en/overview)
 retains the CyDoc reader, search, images and language switching. The hosted
 application manual includes historical desktop material; use the current
-[Core installation guide](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreInstallation.md),
-[native integration guide](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreExtraction.md) and
-[method catalogue](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/MCPMethods.json) for the published engine.
+[Core installation guide](https://github.com/MrMybal/CyCode/blob/main/app/Docs/CoreInstallation.md),
+[native integration guide](https://github.com/MrMybal/CyCode/blob/main/app/Docs/CoreExtraction.md) and
+[method catalogue](https://github.com/MrMybal/CyCode/blob/main/app/MCPMethods.json) for the published engine.
 The complete package's reader also opens locally through `file://`, without a server.
 
 ---
@@ -148,20 +153,20 @@ The complete package's reader also opens locally through `file://`, without a se
 
 | Library · source | License · terms | Use / scope |
 | --- | --- | --- |
-| [nlohmann/json](https://github.com/nlohmann/json) | [MIT](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/nlohmann-json.txt) | Native JSON models and protocols. |
-| [TinyXML2](https://github.com/leethomason/tinyxml2) | [zlib](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/TinyXML2.txt) | XML project and provider data. |
-| [Monocypher](https://monocypher.org/) | [BSD-2-Clause OR CC0-1.0](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/Monocypher.txt) | Cryptographic primitives and native plugin-package verification. |
-| [PCRE2](https://github.com/PCRE2Project/pcre2) | [BSD-3-Clause WITH PCRE2-exception](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/PCRE2.txt) | Regular-expression snippet transforms in the project profile. |
-| [utf8proc](https://github.com/JuliaStrings/utf8proc) | [MIT + Unicode data terms](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/utf8proc.txt) | Unicode snippet casing. |
-| [libvterm](https://www.leonerd.org.uk/code/libvterm/) | [MIT](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/libvterm.txt) | Terminal screen model in the project profile. |
-| CyToolsCore SDK · private distribution | [MIT](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/CyToolsCore.txt) | SDK/MCP runtime, jobs, identities and permissions; supplied in the complete Windows package. |
-| [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) | [MIT](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/licenses/MCP-Python.txt) | MCP transport in the private Python runtime. |
+| [nlohmann/json](https://github.com/nlohmann/json) | [MIT](https://github.com/MrMybal/CyCode/blob/main/app/licenses/nlohmann-json.txt) | Native JSON models and protocols. |
+| [TinyXML2](https://github.com/leethomason/tinyxml2) | [zlib](https://github.com/MrMybal/CyCode/blob/main/app/licenses/TinyXML2.txt) | XML project and provider data. |
+| [Monocypher](https://monocypher.org/) | [BSD-2-Clause OR CC0-1.0](https://github.com/MrMybal/CyCode/blob/main/app/licenses/Monocypher.txt) | Cryptographic primitives and native plugin-package verification. |
+| [PCRE2](https://github.com/PCRE2Project/pcre2) | [BSD-3-Clause WITH PCRE2-exception](https://github.com/MrMybal/CyCode/blob/main/app/licenses/PCRE2.txt) | Regular-expression snippet transforms in the project profile. |
+| [utf8proc](https://github.com/JuliaStrings/utf8proc) | [MIT + Unicode data terms](https://github.com/MrMybal/CyCode/blob/main/app/licenses/utf8proc.txt) | Unicode snippet casing. |
+| [libvterm](https://www.leonerd.org.uk/code/libvterm/) | [MIT](https://github.com/MrMybal/CyCode/blob/main/app/licenses/libvterm.txt) | Terminal screen model in the project profile. |
+| CyToolsCore SDK · private distribution | [MIT](https://github.com/MrMybal/CyCode/blob/main/app/licenses/CyToolsCore.txt) | SDK/MCP runtime, jobs, identities and permissions; supplied in the complete Windows package. |
+| [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) | [MIT](https://github.com/MrMybal/CyCode/blob/main/app/licenses/MCP-Python.txt) | MCP transport in the private Python runtime. |
 
 The complete Windows package also retains CPython's PSF/component notices and
 ripgrep's [MIT OR Unlicense terms](https://github.com/BurntSushi/ripgrep/blob/15.2.0/COPYING).
 Optional language servers and adapters have separate licenses. The bundled
 [CyDoc](https://github.com/MrMybal/CyDoc) reader uses MIT; its generation tools and
-media notices are indexed in the [third-party notices](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/THIRD_PARTY_NOTICES.md).
+media notices are indexed in the [third-party notices](https://github.com/MrMybal/CyCode/blob/main/app/THIRD_PARTY_NOTICES.md).
 
 [CyUI](https://github.com/MrMybal/CyUI) retains its [MIT license](app/licenses/CyUI.txt).
 Graphical dependencies such as CyUI, Dear ImGui and SDL belong to the desktop
@@ -171,17 +176,17 @@ Core build. The component table is an index, not a replacement for full notices.
 ## References
 
 - [Published Core release and checksums](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1) · [All releases](https://github.com/MrMybal/CyCode/releases).
-- [Native Core source](https://github.com/MrMybal/CyCode/tree/codex/core-intelligence) · [Issue tracker](https://github.com/MrMybal/CyCode/issues).
+- [Native Core source](https://github.com/MrMybal/CyCode/tree/main) · [Issue tracker](https://github.com/MrMybal/CyCode/issues).
 - [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE) · [CyCodeReader](https://github.com/MrMybal/CyCodeReader).
 - [English manual](https://mrmybal.github.io/CyCode/Documentation.html#/en/overview) · [Manuel en français](https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview).
 
 <details>
 <summary><strong>AI Usage</strong></summary>
 
-- [Start here: Core project instructions](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/AGENTS.md) — ownership and repository conventions.
-- [Agent guide](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/Agents.md) — persistent startup, compiler context, MCP jobs and guarded changes.
-- [Install and update](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreInstallation.md) — packages, skills and project registration.
-- [Integrate the native library](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/Docs/CoreExtraction.md) — components, source APIs and validation scope.
-- [Operation schemas](https://github.com/MrMybal/CyCode/blob/codex/core-intelligence/app/MCPMethods.json) — discover supported operations and their actual contracts.
+- [Start here: Core project instructions](https://github.com/MrMybal/CyCode/blob/main/app/AGENTS.md) — ownership and repository conventions.
+- [Agent guide](https://github.com/MrMybal/CyCode/blob/main/app/Docs/Agents.md) — persistent startup, compiler context, MCP jobs and guarded changes.
+- [Install and update](https://github.com/MrMybal/CyCode/blob/main/app/Docs/CoreInstallation.md) — packages, skills and project registration.
+- [Integrate the native library](https://github.com/MrMybal/CyCode/blob/main/app/Docs/CoreExtraction.md) — components, source APIs and validation scope.
+- [Operation schemas](https://github.com/MrMybal/CyCode/blob/main/app/MCPMethods.json) — discover supported operations and their actual contracts.
 
 </details>

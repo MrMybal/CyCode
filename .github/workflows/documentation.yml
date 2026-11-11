@@ -1,7 +1,6 @@
 name: Documentation
 on:
-  push:
-    branches: [main]
+  # Owner pause: manual-only definition; GitHub workflow remains disabled.
   workflow_dispatch:
 
 permissions:

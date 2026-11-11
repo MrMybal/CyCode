@@ -1,0 +1,8 @@
+if(NOT TARGET CyCode::Transport OR NOT TARGET CyCode::TextSession)
+  message(FATAL_ERROR "Configure CyCode::Transport and CyCode::TextSession before TextBridge")
+endif()
+add_library(cycode_text_bridge STATIC EXCLUDE_FROM_ALL ../src/SessionBridge.cpp)
+target_include_directories(cycode_text_bridge PUBLIC ../include)
+target_link_libraries(cycode_text_bridge PUBLIC CyCode::TextSession CyCode::Protocol CyCode::Transport)
+set_target_properties(cycode_text_bridge PROPERTIES POSITION_INDEPENDENT_CODE ON)
+add_library(CyCode::TextBridge ALIAS cycode_text_bridge)

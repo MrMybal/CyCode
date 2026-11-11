@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
 #include "cycode/TextEdits.h"
 #include <algorithm>
@@ -5,7 +6,7 @@
 #include <sstream>
 namespace cycode {
 static Json processJson(const ProcessResult &result) {
-    return {{"exitCode",result.exitCode},{"output",result.output},{"timedOut",result.timedOut},{"truncated",result.truncated}};
+    return {{"exitCode",result.exitCode},{"output",processOutputText(result.output, true)},{"timedOut",result.timedOut},{"truncated",result.truncated}};
 }
 static std::string trim(std::string text) { while (!text.empty() && (text.back() == '\n' || text.back() == '\r')) text.pop_back(); return text; }
 static std::vector<std::string> fields(const std::string &text, char separator) {

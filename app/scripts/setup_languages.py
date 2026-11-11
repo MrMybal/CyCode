@@ -8,6 +8,10 @@ import shutil
 import sys
 import tarfile
 import urllib.request
+import urllib.error
+import http.client
+import tempfile
+import time
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -15,13 +19,29 @@ def archive(item):
     cache=ROOT/'runtime/tools/downloads'
     cache.mkdir(parents=True,exist_ok=True)
     path=cache/(item['sha256']+('.zip' if item['url'].endswith('.zip') else '.tar.xz' if item['url'].endswith('.xz') else '.tar.gz'))
-    if not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest()!=item['sha256']:
-        print('Downloading '+item['url'],flush=True)
-        request=urllib.request.Request(item['url'],headers={'User-Agent':'CyCode-build/0.1'})
-        with urllib.request.urlopen(request,timeout=120) as source, path.open('wb') as output:
-            shutil.copyfileobj(source,output)
-        if hashlib.sha256(path.read_bytes()).hexdigest()!=item['sha256']: raise RuntimeError('Language tool checksum mismatch')
-    return path
+    def digest(file):
+        with file.open('rb') as stream:return hashlib.file_digest(stream,'sha256').hexdigest()
+    if path.exists() and digest(path)==item['sha256']:return path
+    request=urllib.request.Request(item['url'],headers={'User-Agent':'CyCode-build/0.1'})
+    for attempt in range(3):
+        # Each attempt owns a fresh staging file. Never publish a partial archive
+        # as the checksum-keyed cache, or retry an integrity/version mismatch.
+        with tempfile.NamedTemporaryFile(prefix=item['sha256']+'-',suffix='.partial',dir=cache,delete=False) as output:
+            temporary=Path(output.name)
+            try:
+                with urllib.request.urlopen(request,timeout=180) as source:
+                    shutil.copyfileobj(source,output,1024*1024)
+            except (OSError,http.client.IncompleteRead) as error:
+                retryable=not isinstance(error,urllib.error.HTTPError) or error.code in (408,429,500,502,503,504)
+                if not retryable or attempt==2:raise
+                print(f'Transient language download failure; retry {attempt+2}/3 (partial retained).',flush=True)
+                time.sleep(attempt+1)
+                continue
+        if digest(temporary)!=item['sha256']:raise RuntimeError('Language tool checksum mismatch; staging file retained')
+        temporary.replace(path)
+        return path
+    raise RuntimeError('Language tool download did not complete')
+
 
 def extract(item,destination,strip=0):
     destination.mkdir(parents=True,exist_ok=True)

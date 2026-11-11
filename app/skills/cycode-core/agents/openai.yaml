@@ -1,0 +1,4 @@
+interface:
+  display_name: "CyCode Core"
+  short_description: "Compiler navigation and guarded project edits"
+  default_prompt: "Use $cycode-core to investigate this project and prepare a reviewed code change."

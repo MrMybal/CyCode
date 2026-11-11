@@ -32,11 +32,18 @@ NativeFileLease::NativeFileLease(const std::filesystem::path &path, NativeFileLe
     if (std::filesystem::is_symlink(std::filesystem::symlink_status(path, error)))
         throw std::runtime_error("Lease path must not be a symbolic link");
 #ifdef _WIN32
+    auto filename = std::filesystem::absolute(path).lexically_normal().make_preferred().native();
+    if (!filename.starts_with(L"\\\\?\\")) {
+        if (filename.starts_with(L"\\\\"))
+            filename = L"\\\\?\\UNC\\" + filename.substr(2);
+        else
+            filename = L"\\\\?\\" + filename;
+    }
     state_->handle =
-        CreateFileW(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+        CreateFileW(filename.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
                     OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
     if (state_->handle == INVALID_HANDLE_VALUE)
-        throw std::runtime_error("Cannot open state lease file");
+        throw std::runtime_error("Cannot open state lease file (Windows error " + std::to_string(GetLastError()) + ")");
     BY_HANDLE_FILE_INFORMATION info{};
     if (!GetFileInformationByHandle(state_->handle, &info) ||
         (info.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY)) ||

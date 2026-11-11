@@ -1,9 +1,1090 @@
-# Validation — 2026-11-05
+# Validation — 2026-11-08
+
+## 2026-11-11 — local 0.1.2 candidate
+
+[Delivery evidence](Benchmarks/core-delivery-20261111.json) binds each production
+binary to its actual scope. The final Core passes 96 MiB paged operations,
+line/UTF-16 navigation, explicit process-crash checkpoint recovery and real DAP
+conditional/instruction/19-thread/memory/disassembly/attach/detach checks.
+CodeLLDB reports the MSVC cpp_throw binding unverified; the explicit MSVC throw
+function-breakpoint recipe passes and remains a separate opt-in workflow.
+Earlier compiler checks pass both real Debug/Release template contexts and eight
+actual clangd transformations, retaining their own binary provenance.
+
+The genuine UE inventory has reached 354 visited units out of 37,557.
+Unbounded-duration traversal and explicit-stop checkpoint retention are checked;
+the full engine is still not traversed or semantically certified. The new shared
+PagedText library also builds independently without Engine/LSP/GUI. Source/data,
+local documentation, package/installation and graphical acceptance are distinct
+checks. No push, GitHub workflow or new platform claim follows this candidate.
+
+
+## Progressive capacity evidence
+
+The [recorded Windows evidence](Benchmarks/core-capacity-20261111.json) passes
+96 MiB native paged UTF-8 read/edit/search/Apply/Save/Undo, clean paged 5 MiB C++
+inspection, a real-command 70 MiB database, 35 MiB aggregate seeded unknown cache
+metadata and a real nine-file/20 MiB compiler transaction. Read-only, external
+conflict, stale plan, invalid numeric offsets, tampered pages and nested manifests
+are refused. Earlier real regressions and continued Unreal traversal retain
+separate binary hashes; the actual UE inventory now has 180 visited units,
+176 historical/unknown plus four fresh clean observations in the last run.
+37,377 remain unvisited; no whole-engine completeness is inferred. The new source
+profile, backend guards and remaining UI/LSP/recovery limits are documented in
+[Large projects](LargeProjects.md). Production checks used Kaspersky actively,
+with no new observed detection, no generated native test executable or GUI.
+
+The progressive-capacity stage adds [paged native text and storage](LargeProjects.md):
+streamed compiler databases, incremental checkpoint pages and disk-backed native
+transactions. Paged documents now add sparse line/UTF-16 reads, exclusive Save as
+and explicit durable checkpoint preview/restoration through Apply/Undo. The public
+SDK catalogue has 249 operations. Graphical/LSP adapters and automatic per-keystroke
+recovery remain separate; ordinary GUI/LSP buffers retain their compatibility policy.
+No hardware-unlimited or exhaustive Unreal claim follows.
+
+
+## 2026-11-11 — measured traversal, navigation and transformations
+
+The [scale evidence](Benchmarks/core-scale-20261111.json) distinguishes every
+production binary. The real Unreal campaign traversed 104 then 64 additional
+units across restart, while keeping the older observations historical/unknown.
+37,389 units remain unvisited. The navigation-cache regression is reproduced
+before the fix and checked after it (3/16 versus 16/16 concurrent cache hits).
+Real edits still invalidate. The final deduced-type action identifier is corrected
+from the unsupported ExpandAutoType to clangd's ExpandDeducedType; eight actual
+compiler transformations pass preview/Apply/Undo, including two-file changes.
+InlineVariable and hidden SwapIfBranches were not offered by clangd 18.1.8.
+These Windows source-preserving checks pass with Kaspersky active and no new
+observed detection. No GUI, GitHub Actions, installation or publication is implied.
+
+## 2026-11-11 — persistent analysis and actual inspection bounds
+
+The production Core passes real SDK/MSBuild/clangd checks on 162 source units:
+normal restart, real cancellation with persisted progress, historical-proof
+invalidation, live document edits, metadata pagination, single-writer leases,
+malformed paths and same-size/same-time compiler-database changes. All original
+source bytes are retained. Real clang-tidy identifies null dereference, stack
+escape and use after delete; bounded results remain explicitly truncated and
+missing/empty compiler commands are refused. Detailed source-preserving Unreal
+campaign evidence is recorded separately. See [persistent progress](AnalysisProgress.md).
+These are Windows production checks; no native CTest program, IDE GUI, new
+installation or GitHub workflow is launched by this stage.
+
+
+## 2026-11-11 — shared atomic I/O and C++ quality
+
+The shared atomic publication owner and MSBuild helpers compile in production.
+Real official SDK/MCP checks pass compiler navigation, three-file rename,
+variable/function/macro preview/Apply/Undo, live-header invalidation, Debug/Release
+context, an actual Clang Static Analyzer uninitialised-value finding, revision,
+read-only and disk-conflict guards, and repeated saves. CodeLLDB passes a production
+target stop/stack/memory/disassembly, stale-stop refusal, continue and owned shutdown.
+Actual JetBrains InspectCode 2025.1.5 comparisons retain differing check-suite and
+process-lifecycle limits. See [Core quality](CoreQuality.md) for reproducible runners
+and precise limits. No native CTest fixture executable or IDE GUI was launched.
+These are Windows runs with Kaspersky active, not exhaustive platform/Unreal parity.
+
+
+## 2026-11-10 - corrected standalone Core production acceptance
+
+The owner resumed the corrected delivery and removed the obsolete blanket native
+hold. The production target builds with BUILD_TESTING=OFF and private recovery
+reproductions disabled. The official CyToolsCore 0.10.1 / MCP bridge completed
+search, document reads, actual MSBuild evaluation and clangd definition/references
+on CyCodeIDE (62 compilation commands). A separate owned workspace completed twelve
+edit/checkpoint/save cycles, refused a stale revision without changing the buffer,
+and preserved the last saved text when closing with unsaved changes.
+
+The Core and its children drained normally. Kaspersky remained active and no new
+event was observed during the runs and their documented post-exit observation.
+This is scoped Windows evidence; complete GUI/Unreal and further Linux/macOS
+acceptance are not inferred. Installer/portable acceptance is recorded separately
+when that delivery step completes.
+
+## 2026-11-10 — private GSI collected and checked; Core hold preserved
+
+Following explicit owner approval of administrator/UAC collection and documented
+network diagnostics, the official Authenticode-valid Kaspersky GSI 6.2.2.110
+collector exited 0 and produced a local report. Its SHA-256, bounded ZIP structure
+and all entry CRCs pass; private names and contents were not exposed or extracted.
+The ZIP is ignored by Git and remains outside the minimised, unsent review draft.
+No Core rebuild/run, protection/installation change, restore, publication or upload.
+Original 154 dirty-file and 254 native-source hashes are intact. GSI does not
+establish a false positive or fix the Core detection; KSN/KPSN connectivity and
+any vendor-requested detailed trace remain unestablished. See
+[Windows security](WindowsSecurity.md) and
+[the diagnostic result](Benchmarks/gsi-local-report-20261110.json).
+
+## 2026-11-10 — isolated controls pass; complete sequence reproduces AV
+
+The owner's resumed campaign is finished: one normal production build, four native
+cases, all with the same original-path executable. Write-only, index-only and
+remove-only controls pass with exit 0, intended file effects, intact source/base
+and no observed AV event through their bounded observation windows. The fourth,
+complete existing files-only positive control reproduces matching behavioural
+avp 22418621/22418622, exit 5, actual PID 45656 confirmed by the official report.
+The first event is 155.2395 ms after successful old-text removal and 1021.8505 ms
+before requested shutdown. All 12 / 14 / 2 / 64 trace records are complete, with
+no failed/open spans. Kaspersky later deletes the executable; postflight has no
+Core process. The three isolated caches were host-preseeded; the full control
+includes its own initial publication history. The sequence/context is sufficient
+in this sample, while a single offending API/vendor rule remains unestablished.
+
+No production antivirus fix or false-positive verdict is claimed. The finite
+scope is consumed and no fifth case or post-alert rebuild was run. Original
+154 dirty-file and 254 native-source hashes remain intact. No native test
+executable, protection change, restore/relocation, installation, upload, publication
+or Actions operation occurred. The unsent vendor-review draft contains selected
+findings only. At the close of this native campaign the required GSI was still
+missing; its subsequent local collection is recorded above. No report has been
+submitted to the vendor. See [Windows security](WindowsSecurity.md) and
+[the measured result](Benchmarks/recovery-operations-20261110.json).
+
+## 2026-11-10 — isolated-operation sources checked; native campaign not started
+
+Four bounded private diagnostics now isolate text publication, index replacement,
+obsolete-text removal and the combined sequence using exact host-preseeded synthetic
+fixtures. MSVC /Zs passes for RecoveryDiagnostic.cpp and cli.cpp; six in-memory
+postcondition tests pass, including an index hash match to captured native evidence.
+No object or executable was produced and no Core process was started. All 154
+original local-file hashes are preserved; production storage and SDK/MCP are unchanged.
+The earlier two-case native approval is exhausted. The new campaign remains gated
+on explicit owner resumption under AGENTS.md. No AV fix, false-positive verdict or
+broader native/platform acceptance is claimed. See [Windows security](WindowsSecurity.md)
+and [the prepared comparison](Benchmarks/recovery-operation-preparation-20261110.json).
+
+## Minimal recovery diagnostics completed — alert reproduced in both paths
+
+The owner's explicit two-case approval was used for two production relinks and
+exactly two native diagnostic cases. RecoveryStore-only reproduced the behavioural
+alert without Engine, workers, CoreService, SDK or MCP. Files-only reproduced it
+without a RecoveryStore instance or lease, using the production atomic writer,
+owned text/base/index files and normal obsolete-text removal. Both first observed
+their initial checkpoint alive for 20 seconds without a new event. Both exited 5
+after matching alerts, 86.9839 ms / 52.2373 ms after old-text removal and before
+requested shutdown. Official vendor reports bind the actual PIDs. Traces and
+filesystem snapshots agree: 70 / 64 complete records, no failed/open spans, current
+text/base retained and source baseline unchanged. Kaspersky deleted both samples;
+postflight found no remaining Core process or executable.
+
+The source manifest and compiler flags are identical across both rebuilds, but
+executable hashes differ after deletion/relinking; this is not a same-sample A/B
+test. Production builds and minimal C++ syntax checks passed. The 20 trace,
+10 correlation and 4 boundary-snapshot data tests pass. Original 154 local files
+and all 254 native source hashes remain intact. No native test binaries, protection
+changes, restoration, relocation, upload, installation, publication or Actions.
+The approved campaign is exhausted; no third build/case was launched.
+
+The earlier approved 15-second boundary test also completed: committed index and
+unchanged old payloads survived the full measured pause, then old-text cleanup
+was followed by a matching alert. The conditional unpaused case did not start.
+Its earlier pending-approval note is historical and superseded by these results.
+No antivirus fix or vendor false-positive verdict is established. Full CLI/MCP,
+Unreal and other-platform runtime acceptance remain pending. See
+[Windows security](WindowsSecurity.md),
+[the boundary measurement](Benchmarks/recovery-cleanup-boundary-20261109.json) and
+[the minimal campaign](Benchmarks/recovery-minimal-20261109.json).
+
+## Ordinary Windows deletion trial — new AV detection, source experiment reverted
+
+The owner authorised one normal production rebuild and the prepared two-case
+comparison with DeleteFileW/RemoveDirectoryW cleanup. Build passed at unchanged
+compiler options. The no-removal control passed with exit 0, 184 complete trace
+records and the 20-second live/post-exit windows. Normal refresh then reproduced
+matching avp 22418312/22418313: exit 5, 126 complete records, successful index
+replacement and old-text removal, unchanged original base, no shutdown span.
+The first event preceded requested shutdown by 299.5167 ms. The observation
+stopped, the executable disappeared, and postflight found no Core process.
+
+This is a failed AV candidate, not an accepted fix. The two experimental source
+edits were reverted to their exact pre-trial snapshots while earlier diagnostics
+and all 154 original dirty-file baselines remain preserved. Candidate /Zs checks
+and the 18 trace + 10 correlation + 8 postcondition data tests passed. Expanded
+candidate recovery assertions were syntax checked only and are archived with the
+trial, not counted as executed native tests. The original guarded transaction and
+cleanup remain in place. No protection, binary restoration, installation,
+publication or Actions change occurred; no retry followed the new alert.
+Full MCP, save/restore/discard and Linux/macOS runtime acceptance remain pending.
+See [Windows security](WindowsSecurity.md) and
+[the measured outcome](Benchmarks/recovery-cleanup-source-fix-20261109.json).
+
+## Two-case recovery comparison — control passes, refresh reproduces AV
+
+The owner's explicit approval resumed one normal Windows production rebuild and
+the prepared comparisons using the new lifecycle trace. The same exact binary
+passed index replacement while retaining all old payloads: exit 0, normal native
+shutdown spans, 20 seconds observed alive after the operation and 20 after exit,
+with no new AV event. Ordinary refresh then reproduced the detection after its
+own clean 20-second initial checkpoint observation: successful index replacement
+and old-text removal, native exit 5, avp 22418304/22418305 matching that sample.
+
+The first event preceded the host shutdown request by 774.2203 ms. The earlier
+harness postcondition defect did not recur. Both snapshots and the 184/124-record
+native traces agree with the intended retention/removal distinction; no trace
+is truncated or has an open/failed span. The campaign stopped at the new event,
+and later postflight found no Core process or executable. The original 154 local
+baselines and 252 native-source manifest entries are unchanged.
+
+This strengthens the old-text-removal candidate but does not identify the exact
+API/vendor rule or certify a false positive. One ordered comparison cannot remove
+timing/content/reputation effects. Actual runtime validation of the new lifecycle
+markers is now recorded for the passing control; broader Core/platform/AV
+acceptance remains unestablished. No protection, sample-copy, installation,
+publication or Actions change occurred. See [Windows security](WindowsSecurity.md)
+and [the comparison record](Benchmarks/recovery-operation-isolation-20261109.json).
+
+## Continued AV research — source/data only
+
+The new explicit-evidence correlator reanalysed the retained last incident without
+starting Core. It preserves Windows event fractions, rejects unrelated sample
+hashes and ambiguous fields, and keeps timestamp order separate from causality.
+Source review found no autonomous index-write loop in the tested path; the retained
+dirty checkpoint state should skip empty-session cleanup during normal shutdown.
+Native service/Engine/recovery-scan/store lifecycle spans were added to fill the
+older trace's shutdown-observation gap, without changing persistence decisions.
+
+All 28 data tests pass (18 trace-reader and 10 correlation), and the five touched
+C++ translation units pass MSVC /Zs without an object or binary. Correlation of
+actual retained evidence succeeds. Existing WER/Sysmon/vendor trace availability
+was checked read-only; the report DB denied ordinary reads. No capture, protection
+change, quarantine access, new Core build or native run occurred. The 154 original
+workspace baselines remain intact. Actual new-marker/runtime and other-platform
+acceptance remain unexecuted; the AV cause and a changed verdict are not established.
+See [Windows security](WindowsSecurity.md) and
+[the research record](Benchmarks/recovery-antivirus-research-20261109.json).
+
+## Corrected production Core retest — new detection, interrupted acceptance
+
+On the owner's explicit `retest`, the corrected Windows production CLI linked
+successfully. No new native test executable or compiler-option change was used.
+The first recovery-refresh case completed five native operations and recorded
+74 complete diagnostic records: successful index replacement and old-text removal,
+with the original base retained and no documents.save, MCP Runtime or project
+compiler. The native process nevertheless exited 5 and Kaspersky deleted the output;
+avp records 22418291/22418292 match its exact SHA-256.
+
+A harness postcondition incorrectly expected the document pathname to be absent,
+although documents.create creates an empty file. It requested immediate EOF after
+the second flush, before the AV event publication. The test's observation window
+was therefore shortened; the original evidence is retained, the data-only driver
+assertions are corrected and **no retry follows** the detection. This is not a
+passing native case or a proof of the precise offending Windows API.
+
+The remaining inactive-discard and checkpoint/save cases were not started.
+The 154 original local-change baselines remain byte-identical, no Core process
+remains, and the native hold is active again. No installation, publication,
+protection change or Actions run occurred. The atomic-save fixes are not a
+validated antivirus remedy. See [Windows security](WindowsSecurity.md) and
+[the sanitized retest](Benchmarks/recovery-antivirus-retest-20261109.json).
+
+## Recovery retirement instrumentation and atomic-save fixes — 2026-11-09
+
+Source review after the command-order experiment found two real shared-file-I/O
+defects: cleanup retained a consumed temporary name after successful replacement,
+and could delete the remaining replacement after Windows partial failure 1176/1177.
+The guard now distinguishes those ownership outcomes; close failures are checked.
+No recovery operation is disabled and no antivirus verdict change is established.
+
+An explicitly enabled CLI diagnostic trace separates the atomic writer, recovery
+index commit and individual text/base removals. It is OFF by default, stderr-only,
+bounded to 64 KiB and restricted to fixed labels/numeric metadata. A process-free
+reader analyses completed logs without starting Core or copying unrelated stderr.
+See [Windows security](WindowsSecurity.md#optional-bounded-native-trace) for usage
+and the next diagnostic cases using the existing recovery operations.
+
+Sixteen Python data tests pass for the trace reader, including interrupted/nested
+and interleaved spans, truncation, mismatches, rejected private/duplicate fields,
+input bounds and agreement with the native label catalogue. Windows MSVC `/Zs`
+checks the six modified/new C++ translation units without producing a binary.
+Source/data checks and whitespace verification pass. The original 154 local-change
+baselines are preserved. At that source-only stage native runtime/link and
+Linux/macOS acceptance were unexecuted; the later explicit retest and new
+detection are recorded above.
+
+## Native command-order isolation — four controls and one new detection
+
+The owner authorised one unchanged-source production rebuild plus six independent
+scenarios. On the same rebuilt sample, startup/idle, immediate save before tools,
+actual compiler analysis without document save, and explicit recovery checkpoint
+without save all exited 0 with no avp event through 20 seconds after exit.
+
+Checkpoint followed by save reproduced the detection (avp 22418285/22418286,
+native exit 5), about 24.7 ms after the save response. The checkpoint existed
+before save; its index/payload retirement had completed by response. That case
+used no MCP, CyToolsCore Runtime, MSBuild or compiler. The sixth scenario was not
+started. This is not complete acceptance or an identified vendor rule. No source
+fix or changed antivirus verdict is claimed. See [Windows security](WindowsSecurity.md)
+and [the command-order record](Benchmarks/command-order-antivirus-20261109.json).
+The binary was subsequently absent; native retries remain suspended.
+
+## Direct native CLI/MCP comparison — interrupted on the first case
+
+The owner's explicitly authorised diagnostic used the same existing production
+sample and an owned synthetic C++ workspace, with Kaspersky active. The direct
+native `--stdio` case completed fourteen operations, including actual MSBuild,
+two clean clangd observations, definition/references and explicit document save.
+No MCP server or CyToolsCore Runtime was running for this case.
+
+New avp records 22418283/22418284 match the exact sample. The first was recorded
+26.6 ms after the save response and 440.7 ms before the harness requested shutdown.
+The native exit was 5 and the binary was subsequently removed. All remaining
+cases stopped; socket/MCP comparison and overall acceptance are **not passing**.
+MCP is therefore not required to reproduce this incident. The precise cause and
+vendor rule remain unknown, and the earlier shutdown-only explanation is weakened.
+The 154 original local-change baselines remained byte-identical. See
+[Windows security](WindowsSecurity.md) and
+[the sanitized record](Benchmarks/cli-antivirus-comparison-20261109.json).
+No new native run, protection change, sample restoration or Actions run follows
+this new detection.
+
+## Standalone installed Core/MCP — second antivirus interruption
+
+The owner lifted the earlier hold for this delivery. Production builds pass,
+and the installed isolated CPython 3.13.17 / CyToolsCore 0.10.1 / MCP 1.30.0
+exposes all 237 operations plus 21 controls. Actual CyCodeIDE search, MSBuild
+evaluation (62 C++ units), definition/four references and two clean version-bound
+diagnostic observations passed. The Core created and explicitly saved the IDE
+agent guide through actual MCP operations. Two defects found in this acceptance
+were corrected: missing typed hierarchy capability fields, and omitted evaluated
+MSVC exception handling in the derived compiler database. Older analysis caches
+are invalidated. Ten data-only installer tests and six analysis contract tests pass.
+
+Kaspersky then deleted the installed CLI at 19:20 Europe/Paris. Its MD5 matches
+the recorded build. The full installed acceptance failed at host cleanup and is
+not marked passing. MCP was disabled, no Core process remains, and no native
+retry followed. Only source/skill preparation and an agents-only draft may be
+delivered now; executable publication and final Setup acceptance remain blocked.
+See Benchmarks/core-agents-windows-20261109.json and WindowsSecurity.md.
+
+
+## Standalone agent installation preparation — 2026-11-09
+
+The standalone installer source, isolated MCP payload packaging, project-scoped
+Codex registration and cycode-core skill are present. Nine process-free data
+tests pass, including settings/skill preservation, CRLF handling, permissions,
+missing-native refusal and incomplete-package labelling. The automatic approval
+review refused both an instruction-file change and rebuilding the flagged Core.
+No instruction file was changed, binary rebuilt or native process executed by
+this delivery. Actual complete Setup/portable installation, MCP activation and
+production acceptance remain blocked. GitHub Actions stay manually disabled.
+
+
+## Recovered AV evidence and private transport sources — 2026-11-09
+
+Two original avp Application-log records identify the removed production Core
+as SHA-256 90a9b3ce88c53f26911e6367d7a2a10865966a744508808f88559c38c59e3b27.
+The event times match the interrupted MCP operation. Product version and database
+stamp were recovered read-only; opaque vendor codes do not explain the detection.
+The updated local dossier does not contain raw private event fields or a sample.
+
+Native transport sources now use OS entropy and private-at-creation descriptor
+permissions, verified Windows ACLs and atomic publication. Windows MSVC `/Zs`
+passes without a binary; data-only evidence tests cover the new import path.
+The existing native endpoint assertions were extended but not executed. Native
+link/runtime/POSIX acceptance and a changed antivirus verdict remain unverified;
+the owner hold and GitHub Actions pause remain active. See WindowsSecurity.md.
+
+
+## Windows source hardening after the PDM alert — 2026-11-09
+
+The generic process runner and language-server launcher now use explicit Windows
+child handle lists. The latter also refuses failed job setup/assignment or thread
+resume, rather than running an unowned child. Both sources pass MSVC `/Zs`; no
+binary was produced or executed. The local evidence tool handles missing samples,
+exact hashes and private export metadata without uploads or sample copies. The
+owner does not intend to buy a signing certificate; no certificate, protection
+setting or vendor verdict has been changed. Runtime and antivirus acceptance
+remain blocked. See [Windows security](WindowsSecurity.md) for the precise scope.
+
+
+## Semantic scaling and production antivirus hold — 2026-11-09
+
+The former 128-file preparation ceiling has been removed. On Windows, 160 real
+compiled Runtime/Core sources passed in four 40-file batches, all with clean
+version-bound diagnostics. Metadata pagination returned 128 + 32 records, only
+the three pre-existing editor buffers remained open, and a real document change
+rejected the stale continuation. The 37,679-command inventory contained 37,557
+unique translation units. This narrow selection does not certify the engine.
+
+The later official MCP run discovered 237 domain operations plus 21 SDK controls
+and passed read-only permission, cancellation/progress, cancelled-checkpoint
+resumption, compiler-database prefix filtering and typed result pages. It was
+then interrupted between rename Apply and Undo by loss of the native endpoint.
+The owner supplied a matching 16:07 Kaspersky PDM:Trojan.Win32.Generic alert for
+the production CLI. This run is **not a passing end-to-end MCP acceptance**;
+disk source hashes remained unchanged. The exact detected behaviour is unknown,
+so a false positive has not been established. All local native execution and
+rebuild/retry are suspended. No exclusions, quarantine restoration, renamed
+binaries, protection changes or uploads were used. GitHub Actions remain paused.
+
+Unexpected host exits now retain a bounded 64 KiB log tail and exit metadata in
+the trusted private data directory's `native-core-failures` folder before deleting
+the temporary endpoint descriptor. This Python change is checked with process-free
+unit tests only; it has not been exercised by another native run. The benchmark
+record `Benchmarks/unreal55-scaling-20261109.json` separates passed and interrupted
+evidence, executable hashes and remaining limitations.
+
+
+## Actual packaged MCP and repeated native matrix — 2026-11-08
+
+Run 42462705540 at ab82791 again passes Windows 64/64 and Linux/macOS 63 with one
+MSBuild platform skip each. Three additional actual Mac Git replay cases pass.
+Production 42462705649 passes extended Linux rendering/input/information/windows.
+Mac actual primary-modifier editing passes; slow software frames expire its next
+scripted chord. Only scripted input now declares a fixed 60 Hz frame clock; the
+ordinary physical keymap deadlines remain unchanged and unvalidated by that fix.
+
+Windows's real newly installed MCP passes interpreter/dependency isolation and
+the official-client shared-Core/Unicode/edit/permission/private-job/stale guards,
+then fails at plugins_list: its native snippetCatalogues metadata was absent
+from the closed output schema. The additive typed schema and a strict data
+regression now cover that actual wire mismatch. The full corrected installer/
+MCP/shutdown/uninstall path and new Windows/semantic graphical cases remain
+pending remote execution. The current data-only suite totals 38 tests.
+
+## Complete native matrix and redistributable MCP implementation — 2026-11-08
+
+Native run 42459406339 at 32ff605 passes all 64 Windows cases and 63 cases on
+Linux/macOS, with only MSBuild platform-skipped on each POSIX platform. This
+includes real installed language/debug adapters, Git/worktree groups, document
+observation ownership, Unicode live search and the previously unreached Windows
+update staging/rollback/recovery paths. The earlier intermittent macOS replay
+reference failure did not recur; it remains under a targeted three-pass check.
+
+Production run 42459406453 builds the full GUI/CLI on all three platforms.
+Windows Setup, payload hashes, busy/pending guards, French repair and uninstall
+with user-data retention pass. Linux passes eight EN/FR theme renders, twelve
+keyboard cases, six actual clangd hover/signature cases, detached native windows
+and two simultaneous native Engine/bridge instances. Mac's eight renders pass;
+its first information shortcut fails because the fixture injected physical
+Control instead of the ImGui platform primary modifier. The corrected fixture
+and added Mac editing/search cases still need actual runner execution. Physical
+system shortcuts, IME and DPI behavior are not established by these fixtures.
+
+The new Windows distribution includes a pinned CPython 3.13.17/CyToolsCore
+0.10.1 runtime. Provided-wheel and clean published-source authoring produce the
+same reviewed 1,567-file payload. Six new data-only bundle contracts pass;
+the current local data-only suite totals 36 cases. Installed official MCP-client
+execution, native/Core lifecycle and permissions remain pending Windows CI.
+No newly downloaded interpreter, SDK Runtime, native app/helper or native test
+has been executed locally. Original 0.2.3 public assets remain unchanged.
+
+The sections below retain earlier milestone evidence and their original status.
+
+## Finalization integration and real platform matrix — 2026-11-08
+
+The published 0.2.3 installer/updater and the preceding local editor/navigation
+milestones are reunited on the finalization branch without overwriting the
+development checkout. Installed/portable update selection and dependency notices
+are retained. The native core remains UI-free, with 233 unchanged public operation
+identities and matching source/generated input/output schemas.
+
+Windows production GUI/CLI/helper/providers compile with BUILD_TESTING=OFF.
+Strict Clang syntax checks pass all 62 interface translation units, including the
+revised outline comparator. Targeted MSVC /Zs checks evaluate production UTF-8 and
+integer policies and compile native regression bodies without producing or
+running fixtures. Thirty Python data-only tests cover build-plan boundaries,
+release authoring, navigation and snippet/schema contracts. Source syntax/data and
+the complete EN/FR reader remain separate checks from native behavior.
+
+Production run 42457286801 at 8490f94 passes full GUI/CLI builds on Windows,
+Linux and macOS. Linux and macOS actually render English graphite and French
+light-grey with the checked-in fonts and mapped icon glyphs. Captures from both
+platforms were visually inspected. Linux's twelve actual keyboard cases pass.
+Windows installs Setup, checks payload hashes, refuses busy/pending changes,
+repairs in French and uninstalls while retaining user data. Full installed/
+portable online updating remains a separate gate.
+
+Native run 42457286802 completes 64 CTest cases per platform: Windows 63 passed /
+1 failed, Linux 63 passed / 1 platform skip, macOS 62 passed / 1 failed / 1
+platform skip. Real managed debugging now passes on all three platforms, including
+macOS after its executable-mode fix. All Windows repository/worktree, extension
+and session guards pass. Its remaining core fixture used text-mode CRLF output
+against an LF assertion; the occupied-file refusal itself passed. The corrected
+fixture retains exact byte preservation and must still execute. macOS retains a
+Git replay reference-inspection failure; strict diagnostics now include the exact
+reference, child status and bounded UTF-8 output. No failure or skip is a pass.
+
+The next batch adds real six-theme/EN-FR renders, native detached-window and two-
+instance isolation, actual clangd hover/signature keyboard cases and document-
+observation lifetime guards. These still require runner execution. The distributed
+MCP runtime remains incomplete; candidate dependency provenance/inventory alone
+does not establish a packaged or working SDK. See Finalization.md for evidence.
+
+Local application/installer/helper/native fixture execution remains suspended
+during the antivirus issue. See Finalization.md for the current gates and the
+workflow artifacts for actual runner results.
+
+
+## Logical includes, result actions, index pages and contextual help — 2026-11-07
+
+Four connected navigation milestones extend the existing bounded native owner.
+Literal includes accept inline block comments between directive tokens and
+immediate backslash-LF/CRLF continuations, including a split keyword. The caret
+may be on any component; returned UTF-16 ranges use the actual physical header
+line. The header itself stays physical. Existing lexical/source guards and the
+1 MiB prefix / 8 KiB whole-directive / 1024-byte target limits remain. Macros,
+conditions, nonspliced multiline token comments and compiler/external SDK roots
+are still outside this conservative subset.
+
+Find related C/C++ files... always shows counterpart results. Shared result rows
+add Retry, explicit bounded index refresh/retry, all-path/report copying and local
+contextual help. The visible Help action and configured single-stroke help.context
+binding (default Shift+F1) route to matching EN/FR navigation sections; modal
+chords remain blocked. Source identity/revision/tab/Engine guards remain, plus
+caret guards for includes. Ordinary queries do not scan; explicit refresh reuses
+workspace.files and its existing bounds. Closing suppresses late opening but does
+not terminate an explicitly requested refresh. Clipboard/browser/modal behavior
+has not been executed.
+
+workspace.files / workspace_files now returns required positive generation with
+indexRevision. Desktop pagination compares both before appending a page. A manual
+rebuild therefore cannot combine generations sharing an unchanged watcher counter.
+These are process-local observations, not frozen snapshot handles. No operation,
+ABI field, CyUI module, dependency or executable target is added.
+
+Final MSVC /Zs and Clang syntax-only checks pass eight affected translation units
+without diagnostics. They evaluate 106 actual helper assertions, including 27 new
+comment/continuation/physical-range/forced-choice/page-generation/help contracts.
+The native fixture also contains a real compiler include with inline comments
+and escaped newlines. Its Engine/filesystem bodies, continued Unicode range case,
+keymap fixtures and refresh/close races remain unlinked/unexecuted.
+Eleven Python JSON-data tests pass; all 233 operations / 466 public schemas match
+the generated descriptor. Source checks pass 56 Python / 23 JSON files.
+Windows x64 Release GUI/CLI and production dependencies build with BUILD_TESTING=OFF,
+without reported build warnings.
+
+The manual and both distribution copies verify 590 localized pages / 6172 routes
+with matching EN/FR revisions/anchors. Node DOM checks exercise the actual pinned
+CyDoc reader's new result-help routes, logical include examples, required file-page
+generation schema, search, six themes and existing media/Escape/accessibility
+controls. All three 19-file exports are identical. These checks perform no fetches
+or browser/native execution. Filesystem/cache races, SDK/plugin callbacks,
+clipboard, GUI keyboard/DPI/Undo and Linux/macOS acceptance remain unverified
+during the antivirus suspension. No application, updater, language server or
+native fixture is launched.
+
+## Literal C/C++ include navigation — 2026-11-07
+
+Navigate / Find Action / the active editor context menu now expose Open included
+file, without a new default binding. The shared native query snapshots a bounded
+live source prefix, releases the document mutex before UTF-16/lexical processing,
+then rechecks document lifetime/revision after metadata probes. Its conservative
+reader follows ordinary literal physical #include directives, excludes comment /
+string / common raw-string bodies, handles preceding escaped-newline context and
+numeric separators, and enforces 1 MiB prefix / 8 KiB line / 1024-byte target
+bounds. Unsupported spellings fail; macros and conditions are not evaluated.
+
+Quoted targets probe the source-relative path before cached suffix-component
+matches. The existing index now uses one per-stem map with bounded header/source/
+other offset buckets, also covering extensionless/.inc and existing generated
+headers. It inspects at most 128 matching bucket entries and shares the existing
+128-total-path metadata budget. No index activation or additional scan occurs.
+Parent segments remain confined to the quoted relative probe. Canonical regular
+workspace targets, case rules, local/index deduplication and cache-generation /
+watcher guards reuse the header/source owner. Incomplete/changed observations
+never auto-open; the common palette additionally guards caret and source context.
+An empty include result points to Go to definition for compiler/SDK headers.
+
+SDK workspace_include / native workspace.include and ABI2 expose the same
+permission-free metadata: requested position, target/kind/inner UTF-16 range,
+candidates/provenance and explicit cache/bound observations. No source save/edit,
+compiler include-directory resolution, external SDK lookup, project-rule
+execution, ABI field, dependency, CyUI module or native target is added.
+
+MSVC /Zs and Clang syntax-only checks pass nine affected translation units, with
+targeted final rechecks of the native guard and UI. Seventy-nine actual helper
+assertions include 36 new literal/context/bound contracts. Native fixture bodies
+specify suffix/kind isolation, relative/index deduplication, extensionless and
+generated targets, parent/external exclusions, live dirty text, UTF-16 ranges /
+surrogate refusal and source guards; these bodies remain unlinked/unexecuted.
+Ten Python JSON-data checks pass; all 233 operations / 466 public schemas match
+their generated descriptor. Source checks pass 56 Python / 23 JSON files.
+Windows x64 Release GUI/CLI and production dependencies build with BUILD_TESTING=OFF,
+without reported build warnings.
+
+The manual and both build copies verify 590 localized pages / 6168 routes with
+complete EN/FR revisions/anchors. Node DOM checks pass the new include/API routes,
+literal/candidate schemas, local search, six themes and existing media/Escape /
+accessible controls without fetches, browser or native execution. Actual lexical /
+filesystem/index-race, SDK/plugin callbacks, GUI keyboard/DPI/Undo and Linux/macOS
+acceptance remain unverified during the antivirus suspension. No application,
+updater, language server or native fixture is launched.
+
+## Cached C/C++ header/source matches — 2026-11-07
+
+The existing workspace file refresh now builds a per-stem header/source offset
+lookup alongside its sorted path cache. Counterpart navigation copies at most
+128 matches under a nonblocking cache lock, then combines them with local probes
+within the same 128-path metadata bound. It finds flat-source/namespaced-header
+and other same-stem layouts, including indexed mixed-case extensions, without
+starting a scan, waiting for one or walking all indexed paths per query. Local
+relations retain priority and canonical duplicates are removed. The index keeps
+its existing discovery limits and ignore scope; names are not semantic proof.
+
+Missing/busy/stale caches contribute no paths; partial current caches can
+contribute retained paths. The final native guard rechecks watcher revision and
+cache generation after metadata probing and document-lock reacquisition, so a
+manual refresh with unchanged watcher revision is also detected. Any unavailable,
+partial or changed coverage prevents automatic one-result opening. GUI labels
+and status guidance are localized; SDK/ABI2 return the same explicit index
+observation without activating it. No dependency, module or executable target
+is added. Existing source lifetime/revision and ordinary-opening guards remain.
+
+Final MSVC /Zs and Clang syntax-only checks pass the four affected translation
+units without diagnostics. Forty-three actual helper assertions cover extension,
+generated-stem, bound, index-state/freshness and automatic-opening policies.
+Native fixtures additionally specify offset rebuilds, namespaced and reverse
+matches, local/index deduplication, Unicode/case rules, malformed cache paths,
+bucket/combined-probe limits and conditional indexed-symlink exclusion. These
+bodies remain unlinked/unexecuted. Eight Python JSON-data tests pass, and all
+232 operations / 464 public schemas match their generated descriptor. Source
+checks pass 56 Python / 23 JSON files. Windows x64 Release GUI/CLI and production
+dependencies build with BUILD_TESTING=OFF, without reported build warnings.
+
+The regenerated manual and both distribution copies verify 588 localized pages /
+6132 routes with complete EN/FR revisions and anchors. Node DOM checks pass the
+updated navigation/API content, cache-state schemas, local search, six themes and
+existing media/Escape/accessibility controls, without resource fetches or browser
+execution. Filesystem behavior, real cache contention/monitor races, native/SDK/
+plugin/GUI keyboard/DPI and Linux/macOS acceptance remain unverified during the
+antivirus suspension. No application, language server, updater or native fixture
+is launched.
+
+## Local C/C++ header/source navigation — 2026-11-07
+
+RelatedFiles adds a process-free, nonrecursive metadata query for already-open
+saved workspace C/C++ sources. Siblings and the nearest conventional Unreal or
+include/src layout produce same-stem candidates, retaining nested paths and a
+paired-root fallback. Source lifetime/revision are checked before/after probing;
+regular canonical targets remain inside the workspace, with generated stems and
+file symlinks excluded. At most 128 unique paths and sixteen ancestors are
+considered; unreadable/truncated observations remain explicit. This is local
+filename/layout navigation, not semantic or full-index pairing.
+
+Navigate / Find Action and Rider Alt+O / Visual Studio Ctrl+K, Ctrl+O use the same
+native owner as SDK/ABI2 workspace_counterparts. A complete unique result opens
+normally; ambiguous/partial results use cached CyUI Commands rows and explicit
+choice. Tab/Engine/lifetime/revision guards prevent stale replies from opening
+files, cancellation suppresses delayed opening, and shutdown/workspace switching
+retain/join pending work. Unsaved source buffers are preserved. The core and UI
+reuse existing targets/modules/dependencies; no new executable or ABI field is added.
+
+MSVC /Zs and Clang syntax-only checks pass 28 translation units without final
+diagnostics. Twenty-four actual extension/generated-stem/probe-bound assertions
+join the previous 143 snippet assertions (167 for these helpers). Native fixtures
+specify sibling/nested/root matches, Unreal/include layouts, duplicate paths,
+Unicode, missing/unsupported/generated files, source opening/revision guards and
+conditional symlink/external exclusion. These bodies remain unlinked/unexecuted.
+Five existing snippet JSON-data tests and two new navigation JSON-data tests pass;
+all 232 operations / 464 public schemas match their definitions. Source checks pass
+56 Python / 23 JSON files. Windows x64 Release GUI/CLI and bundled production
+dependencies build with BUILD_TESTING=OFF and no reported build warnings.
+The regenerated manual and both build copies verify
+588 localized pages / 6132 routes with complete EN/FR revisions/anchors. Node DOM
+checks pass the new navigation/API routes, local search, six themes and existing
+media/Escape/accessibility controls, without browser/native execution or fetches.
+
+Actual filesystem/race/cancellation, native/SDK/plugin/GUI keyboard/DPI navigation
+and Linux/macOS acceptance remain unverified during the antivirus suspension. No
+application, updater, language server, SDK/MCP runtime or native fixture is launched.
+
+## Selected source to personal snippet draft — 2026-11-07
+
+Edit > Create user snippet from selection opens the existing personal JSON editor
+with a dirty generated draft. The native Engine validates an already-open saved
+workspace path, expected revision and one nonempty ordered UTF-16 range. It copies
+live text, including unsaved changes, releases its mutex for bounded drafting and
+rechecks source revision/generation before return. UserSnippets reads its configured
+catalogue without creating storage, retains existing definition values, chooses an
+unused name and sets a default prefix/language scope. The shared literal escaping
+owner preserves dollar signs, backslashes, braces, newlines and Unicode; the body
+includes a final caret within its 8 KiB limit. The complete pretty-printed JSON
+must fit the existing 256-definition / 256 KiB catalogue limits. Invalid/full or
+unconfigured catalogues refuse capture. Source and saved preferences are retained.
+
+GUI, SDK/MCP and ABI2 share snippets.userDraft / snippets_user_draft as a read-only
+export; persistence still requires explicit snippets_user_save and settings.write
+with the returned catalogue revision. The draft is an immutable captured copy;
+later source changes do not rewrite it. Existing draft Undo/Redo, dirty decisions,
+workspace-switch/quit gates and joined I/O ownership remain in place. No native
+target, dependency, module, ABI field or alternative editor model is added.
+
+MSVC /Zs and Clang syntax-only checks pass 24 translation units with no final
+diagnostics. Fourteen assertions on the actual literal-body helper join the
+previous 129, giving 143 compiler-evaluated contracts, including 8190 plain-byte
+and 4095 escaped-dollar boundaries plus the final caret. Native fixture bodies
+specify noncreation, literal round-trip, unique names, explicit save, retained
+source/definitions, full/invalid catalogue refusal, unsaved Verse capture and
+stale/empty/split-surrogate rejection. These bodies are not linked or run.
+
+Five Python JSON-data-only regression tests pass; all 231 operations / 462 public
+schemas match their definitions, including nested draft provenance, required
+selection, no caller storage directory and separate save permission metadata.
+Source checks pass 55 Python / 23 JSON files. Windows x64 Release GUI/CLI and
+bundled production dependencies build with BUILD_TESTING=OFF and no reported
+build warnings. The manual and both build copies
+verify 586 localized pages / 6100 routes with complete EN/FR revisions/anchors.
+Node component checks pass new capture sections/API routes, local search, six
+themes, media/Escape and existing accessibility controls without resource fetches.
+
+No produced executable/library, native fixture, browser/application window, SDK/MCP
+runtime or language server is launched. Actual native capture/parser/filesystem,
+GUI selection/keyboard/dirty dialogs/Undo/DPI and Linux/macOS acceptance remain
+unverified during the antivirus suspension.
+
+## Personal insertion snippets — 2026-11-06
+
+The trusted desktop/installed CLI configure a fixed portable catalogue under
+data/settings/snippets; a default Engine and smoke/test desktop session leave it
+disabled. Reads do not create storage. Explicit saves validate UTF-8 and the common
+catalogue grammar, compare an opaque BLAKE2b-256 revision under NativeFileLease,
+use the existing guarded atomic writer and confirm the saved content. A failed
+explicit save may leave its directory/retained lock. Readable malformed JSON can
+be repaired; unreadable, invalid UTF-8/NUL, oversized or redirected data is preserved.
+No arbitrary caller path, forced overwrite, automatic retry or process is added.
+
+The shared CyUI JSON editor provides draft Undo/Redo/find, explicit Save/Ctrl+S,
+Reload and dirty Save/Discard/Keep editing decisions. Errors retain the draft;
+workspace switching waits and pending I/O blocks closing. Personal definitions
+merge between project and active plugin catalogues with separate provenance.
+Native sessions recheck saved revisions; desktop palettes/acceptance observe a
+cheap local generation, without per-frame reads or a cross-instance watcher.
+Concrete issued plans retain ordinary apply guards. SDK/ABI2 read/save reuse the
+same owner; settings.write controls saving separately from workspace.write.
+No new dependency, CyUI module, ABI layout or executable target is introduced.
+
+MSVC /Zs and Clang syntax-only checks pass 24 translation units without final
+diagnostics. Twelve actual revision/byte-bound assertions bring the combined
+snippet total to 129. Native fixtures specify disabled/noncreating storage,
+cross-instance conflicts, lease refusal, malformed JSON repair, preservation of
+invalid bytes, two-workspace queries, stale sessions, plugin permission denial and
+existing plan/apply/Undo behavior. These fixture bodies remain unlinked/unexecuted.
+
+Four Python JSON-data-only regression tests pass, including disabled/unreadable
+generation zero, exact save token lengths, fixed-location input and declared
+permission/scheduler metadata. All 230 operations / 460 schemas match their
+source definitions. Source checks pass 55 Python / 23 JSON files. Windows x64
+Release GUI/CLI and bundled production dependencies build with BUILD_TESTING=OFF
+and no reported build warnings. The manual and both build copies verify at 584
+localized pages / 6066 routes, with matching EN/FR anchors and revisions. Node
+component checks pass the new personal guide/API routes, local search, six themes,
+media/Escape and existing accessibility controls without resource fetches.
+
+No produced executable/library, native fixture, application window, browser,
+SDK/MCP runtime, updater or language server is launched. Actual hashing/file I/O,
+locks/races, GUI keyboard/dirty dialogs/Undo/DPI and Linux/macOS acceptance remain
+unverified during the antivirus suspension. The local generation is observation
+metadata, not cross-process synchronization; OS-account-wide storage and cloud
+synchronization remain separate work.
+
+## Declarative plugin snippets and Unreal templates — 2026-11-06
+
+ABI2 adds optional feature bit CYCODE_HOST_FEATURE_SNIPPETS_V2 (16), without a
+layout/version change. During initialization, plugins can register namespaced
+snippets descriptors with inline definitions and no callback. The existing project
+parser validates their scopes, bodies and limits. Unknown keys, file paths, owner
+overrides, conditions and callbacks are refused. Registry count/serialized-byte
+limits include inactive registrations and host owner metadata: 32 catalogues /
+1 MiB, with existing per-catalogue bounds. Active snapshots sort by order then ID;
+workspace candidates come first, duplicates retain provenance, and the combined
+list is bounded to 512 plus the ordinary completion payload budget.
+
+Queries copy the plugin snapshot after releasing the Engine mutex; callbacks can
+still enter Engine without reversing lock order. Atomic registry revisions are
+checked before issuance and before/after preparation, alongside existing source,
+workspace, catalogue and disk guards. Desktop palettes and pending acceptance
+also check that revision. Configuration changes or a disabled dependency invalidate
+pending local sessions conservatively. Already returned concrete SDK plans keep
+their ordinary apply guards and contain prepared text without plugin callbacks.
+The UI now borrows issued item bodies instead of copying the result per frame.
+Plugin inventory directly constructs summaries without body copies; snippet queries
+alone copy the bounded active definitions.
+
+The bundled Unreal provider is 1.6.0 and feature-gates four definitions with five
+prefix proposals: ue_log/uelog, ue_property, ue_function and ue_editor. They use the
+same fields/choices/selection/Undo path, scope cpp and explicit owner labels. They
+also appear in non-Unreal C++ workspaces while enabled; no reflection query,
+generated header, imports, semantic validation or engine compilation is implied.
+No external dependency, CyUI module or native executable/test target is added.
+
+MSVC /Zs and Clang syntax-only checks pass twenty production/UI/provider/fixture
+translation units with no diagnostics. Eight actual registry boundary assertions
+join the previous 109, giving 117 compiler-evaluated snippet contracts under normal
+compiler budgets. Native source fixtures additionally specify descriptor/owner
+validation, excluded scopes, duplicate provenance, workspace-first merging/global
+truncation, summary-only inventory, same-thread host queries, disable invalidation
+and Unreal issued-field rendering. These bodies are not linked or run; real parser,
+plugin loading/callback/activation, lock races, rendering/keyboard/Undo and platform
+acceptance remain unverified during the antivirus suspension.
+
+All 228 operations / 456 public input-output schemas pass structural/data checks,
+including existing selection examples and result provenance/registry metadata.
+Source checks pass for 54 Python / 23 JSON files. The Windows x64 Release GUI/CLI,
+updater and bundled providers build with BUILD_TESTING=OFF and no reported build
+warnings. The local manual regenerates to 580 localized pages / 6022 routes with
+complete EN/FR revisions; the ABI2 example now uses its declared plugin namespace.
+Node component checks pass all four new guide/anchor families, API routes, local
+search, six themes and existing media/Escape/accessibility controls. No browser or
+application window, native fixture, CLI, updater, SDK/MCP or language server is
+launched. File-URL policy, native GUI/DPI and Linux/macOS remain unverified.
+
+## Selected-code snippets and plugin service comparisons — 2026-11-06
+
+The saved project catalogue now accepts an explicit single selection through the
+shared native/SDK/ABI2 query. TM_SELECTED_TEXT is the fourteenth context variable;
+outside an issued local selection it is empty. Ordered UTF-16 endpoints become
+native byte offsets with caret-endpoint, UTF-8 boundary and 8 KiB guards. A body
+must actually resolve the selection and replace exactly the issued range. Unused
+defaults, escaped text and literal choices do not qualify. Server completions
+retain the same-line primary edit rule. Wrapping keeps literal layout rather than
+automatically reindenting selected code. Catalogue parsing/preflight uses copied
+source text outside the Engine lock and revalidates source/generation/catalogue
+before issuance; preparation retains its source/workspace/disk guards.
+
+Edit > Surround with snippet... / Rider Ctrl+Alt+J requires a selection; Insert
+snippet also accepts one. Other profiles expose Surround without a new default
+binding. The CyUI Commands palette displays localized reasons in disabled labels,
+retaining descriptions in search ranking. It snapshots and rechecks both selection
+endpoints, caret, revision and completion generation before accepting a result.
+Numbered fields and the completion Undo transaction keep their existing owners.
+No library, module, operation or ABI-layout change is introduced.
+
+MSVC /Zs and Clang syntax-only checks pass fifteen translation units with ordinary
+Windows production flags and no final diagnostics. The actual production helpers
+evaluate 109 assertions: 28 substitution, 39 transform-format, 21 catalogue and 21
+selection contracts. The latter cover forward/reverse caret endpoints, empty and
+multiline ranges, Unicode boundaries, invalid context and the 8192-byte limit.
+Native opt-in bodies additionally specify literal selected code, fields, unused
+defaults, invalid coordinates/surrogates, no-LSP Verse preparation/preview/apply/
+undo, stale sessions/catalogues and the keymap. These bodies are not linked or run.
+The final syntax check also prompted correction of nine pointer-to-literal name
+comparisons in the existing plugin permission path: validated C names now use one
+owning string and compare contents. No permission or service is broadened. Actual
+cross-ABI permission/callback behavior remains unexecuted.
+
+All 228 operations / 456 input-output schemas pass standard JSON Schema structural
+checks as data. Examples cover the optional/empty selection, required revision,
+negative/fractional/type/shape refusal, native exports and EN/FR labels. Semantic
+ordering, caret relation, source bounds and integer representation are native
+checks, not established by JSON Schema examples. Source checks pass for 54 Python
+and 23 JSON files without loading application code.
+
+The Windows x64 Release GUI/CLI build succeeds, including the existing updater
+and bundled provider dependencies, with BUILD_TESTING=OFF and no reported build
+warnings. The offline manual regenerates as 580 localized pages / 6002 routes,
+with matching EN/FR revisions, selection anchors, API parameters and shortcut
+links. Node DOM checks pass the new selection/API routes and local search,
+alongside six themes, media/Escape and accessible controls. These component checks
+do not open a browser or establish real native rendering, DPI or file-URL policy.
+No application, CLI, helper, native fixture, SDK/MCP, language server or generated
+program is launched. Real GUI/keyboard/Undo, worker races, parser/regex/file I/O
+and Linux/macOS acceptance remain unverified during the antivirus suspension.
+
+## Saved project snippet catalogue and unlocked preparation — 2026-11-06
+
+SnippetCatalogue reads bounded saved workspace definitions and emits local items
+without opening a document or contacting a language server. CompletionEngine
+requires an already-open saved workspace source, stores the exact catalogue
+baseline in the existing bounded session cache and rechecks it during preparation.
+Local proposals skip LSP resolution. Regex/rendering work now uses copied inputs
+without retaining the Engine mutex; source/workspace/session/epoch/disk guards are
+repeated before the ordinary native ChangePlan is stored. The shared editor still
+owns fields, mirrors, indentation and the completion Undo transaction. See
+[Project snippets](SnippetCatalogue.md).
+
+Edit / Find Action uses CyUI Commands for insertion. Rider adds Ctrl+J; Visual
+Studio adds Ctrl+K, Ctrl+X; VS Code has no new default binding. Edit project
+snippets... opens the fixed configuration, creating it only on that explicit
+action and initializing an unsaved JSON object. Existing files/buffers are kept.
+Palette requests retain a weak tab reference, source/caret/revision/generation
+snapshot and joined future; closed/stale sources and cancelled lists cannot apply
+a late result. Application and catalogue data remain owned by CyCode, with no
+additional CyUI module, library, Reader/CyUI edit or native executable/test target.
+
+MSVC and Clang syntax-only checks pass twelve translation units covering catalogue,
+Engine/completion, plugin/keymap, GUI and opt-in fixture sources. Twenty-one new
+assertions evaluate the actual scope/prefix policy; the prior 67 variable/format
+assertions are reevaluated, giving 88 compiler-evaluated contracts. Native source
+fixtures specify parser/budget/malformed data, excluded scopes, no-LSP Verse
+queries, unopened sources, prefix/suffix retention, fields and preview/apply/undo,
+plus stale catalogue/disk rejection. Native bodies and keymap fixtures are not
+linked or executed; these checks do not establish actual parser/filesystem/thread/
+GUI/keyboard/Undo or Linux/macOS behavior.
+
+All 228 SDK operation schemas pass JSON Schema structural checks as data. The new
+snippets_complete input requires a revision and rejects negative positions; query
+permissions and the native route match the manifest. ABI2 exports the same query
+and existing completion resolve/prepare JSON services, without a layout/version
+change. Applying still requires workspace.write. The public prepare description
+now reflects the implemented document/workspace variables and bounded variable
+transforms. Source checks pass for 54 Python / 23 JSON files.
+
+The first production attempt stopped because the new operation lacked its reviewed
+French API translation. That translation and the generated API navigation group
+are added. The local manual regenerates with 580 localized pages / 5996 routes and
+complete EN/FR revisions. Node DOM checks exercise the new catalogue/API routes,
+search and stable anchors alongside the existing six themes, media/Escape and
+accessible controls, without opening a browser/native window.
+
+The corrected Windows x64 Release build succeeds for CyCode and cycode_cli,
+including the existing updater and bundled provider dependencies, with
+BUILD_TESTING=OFF and no reported compiler/linker warnings. No native fixture,
+application, CLI, updater, language server, SDK/MCP or generated program is run.
+The production files can be copied locally while retaining the previous files;
+this is not an application-update, runtime or graphical acceptance test.
+
+## Completion variable regex and case transforms — 2026-11-06
+
+The native completion adapter now handles variable-only regex transforms with
+capture/conditional formats and seven simple Unicode case methods. PCRE2 10.49
+and utf8proc 2.12.0 are pinned by commit and archive hash, linked statically and
+privately to cycode_core. Pattern/input/output, capture, match/callout, depth/heap
+limits and a cooperative deadline bound preparation. The suggestion list defers
+matching and displays server labels; the actual worker result retains the existing
+document/session/epoch/disk guards and atomic plan. Interactive numbered-field
+transforms remain unsupported. See [Completion variables](CompletionVariables.md).
+
+MSVC and Clang syntax-only checks pass seven translation units: Completion.cpp,
+CompletionEngine.cpp, CompletionTransforms.cpp, Application.cpp and the completion,
+completion-engine and new completion-transform fixture sources. Thirty-nine new
+static assertions evaluate the production scanner/formatter, including capture
+branches, escapes, Unicode literals, case dispatch and rejected grammar/options.
+Together with the previous 28 variable assertions, 67 contracts are evaluated
+without linking or executing a test program and without raised constexpr limits.
+Native bodies specify actual regex/case behavior, zero-length global replacement,
+budgets and transformed initial fields; the existing issued-proposal fixture now
+specifies transformed filenames alongside imports, ranges and apply/undo. These
+bodies are not executed. Syntax checks do not establish PCRE2/utf8proc runtime
+correctness, hard timing, UI responsiveness or actual Undo acceptance.
+
+The normal core-only fetch validates the cached dependency locks. Archive SHA-256
+and complete upstream license files match. CMake data confirms test/tools/JIT and
+unused widths disabled; the production updater has no core/PCRE2/utf8proc/UI
+reference. Python/data checks pass for 54 Python / 23 JSON files. The generated
+manual has 576 localized pages / 5976 routes, complete EN/FR revisions and shared
+snippet-transform anchors. Node DOM checks pass routing, local search, translations,
+six themes, media/Escape and accessible controls without opening a native app or
+browser. SDK 227 / ABI2 and shared Reader/CyUI sources remain unchanged by this step.
+Real matching/casing, language-server/widget/GUI and Linux/macOS acceptance remain
+unexecuted under the current native-test suspension.
+
+Windows x64 Release production compilation succeeds for CyCode and cycode_cli,
+including the new static libraries and the existing standalone updater, with
+BUILD_TESTING=OFF and no reported compiler/linker warnings. Upstream tools/test
+targets and unused PCRE2 widths are not built. No application, CLI, updater,
+language server, SDK/MCP, fixture or generated program is launched. The local
+development executables can be refreshed without starting a process; production
+compilation does not constitute a native runtime acceptance test.
+
+## Completion context variables — 2026-11-06
+
+CyCode's completion adapter substitutes thirteen document/workspace/position
+variables and explicit defaults before the unchanged shared numeric Snippet
+parser. Preview and native preparation use the same owner, with context supplied
+by the guarded document rather than server item data. Escaped literal values,
+8 KiB input/escaped-output bounds, sixteen nesting levels and 2048 nodes preserve
+the existing numeric fields, choices, indentation and change-plan ownership.
+Further variable families, unknown bare names and regex/placeholder transforms
+remain unsupported. See [Completion variables](CompletionVariables.md).
+
+MSVC and Clang syntax-only checks pass Completion.cpp, CompletionEngine.cpp,
+Application.cpp, completion_tests.cpp and completion_engine_tests.cpp with normal
+Windows production flags. Twenty-eight assertions evaluate the production
+preprocessor, including branch selection, literal dollar/braces/backslashes,
+UTF-8, limits and malformed syntax. No constexpr-limit override is needed.
+Existing native fixture bodies specify context values, original-line numbering,
+additional import offsets, literal filenames, large-line behavior and the existing
+prepare/apply/undo/stale-session path; these bodies are not linked or executed.
+
+Source checks pass for 54 Python / 23 JSON files. The SDK operation catalogue and
+plugin ABI remain 227 / ABI2; no module, dependency, shared Reader/CyUI source or
+second mutable editor model is added. Real language-server/widget/GUI/Undo and
+Linux/macOS runtime acceptance remain suspended or unverified separately.
+
+Windows x64 Release production compilation succeeds for CyCode, CLI and their
+existing updater/provider dependencies with BUILD_TESTING=OFF. The local manual
+regenerates with 576 localized pages / 5974 routes and complete EN/FR translations.
+Node component checks pass routing, local search, six themes, media/Escape and
+accessible controls; they do not open a browser or native window. No application,
+CLI, helper, language server, SDK/MCP or native fixture is executed locally.
+
+## Shared CMake discovery and compiler invocation identity — 2026-11-06
+
+CMake's separate PATH resolver now delegates to cycode_process. Both discovery
+clients preserve executable aliases; CMake retains its PATH-first/hints-second
+order. Explicit compiler-cache checks compare the invocation filename and resolved
+parent directories instead of accepting different driver names for the same binary.
+Source/build directory containment and custom/automatic/preset configuration remain
+unchanged. Old saved canonical toolchain IDs require refresh/reselection; differing
+cached drivers require a fresh build directory.
+
+MSVC and Clang syntax-only checks pass Tools.cpp, BuildSystem.cpp, UnrealProject.cpp,
+core_tests.cpp and build_tests.cpp with installed Windows headers/ABI. Opt-in bodies
+specify PATH/hint order, quoted entries, relative/missing/non-executable candidates,
+directory aliases, filename/case identity and actual detected C++ paths. They are
+not linked or run; POSIX-only bodies are not checked by this Windows compilation.
+
+Windows x64 Release production compilation succeeds for the GUI, CLI, updater and
+six bundled providers, with BUILD_TESTING=OFF. A sandbox FileTracker access failure
+occurred before compilation; the normal host production build then completed.
+No application, SDK/MCP, debugger, installer, native fixture or generated program
+was launched. The revised remote CI is still unexecuted; the older macOS compiler
+failure still needs full diagnostics before a platform fix can be claimed.
+
+The local CyDoc manual regenerates with 576 localized pages / 5972 routes, matching
+EN/FR compiler-recovery sections and stable shared anchors. See
+[Toolchain reliability](ToolchainReliability.md).
+
+## Toolchain reliability and shared editor refresh — 2026-11-06
+
+The shared editor is pinned to Reader `31ee97949620d62ede0c603e71094483c5c21531`,
+which contains the published 0.1.3 editor and the matching CyUI Verse catalogue.
+Tool discovery preserves symbolic-link invocation paths and filters non-executable
+POSIX candidates. The build wrapper now prints compiler reasons with adjacent
+notes, bounds the failure read/preview and retains the full log. Windows CI pins
+Visual Studio 2022's runner and preserves failed-build logs for diagnosis.
+
+Windows x64 Release production compilation succeeds for CyCode, its updater and
+CLI with BUILD_TESTING=OFF. MSVC /Zs checks Tools.cpp and the existing core test
+source without emitting a test executable. Six pure Python build-reporting tests,
+five in-memory packaging tests and syntax/data checks for 54 Python / 23 JSON
+sources pass. The compiler-alias fixture is POSIX-only and was not executed;
+Windows syntax checking does not validate its POSIX body. See
+[Toolchain reliability](ToolchainReliability.md).
+
+Read-only PE/resource inspection confirms AMD64 / 0.2.2 for GUI/CLI/updater.
+Root production files match that milestone's fresh build, with
+previous binaries retained. No process was started or closed to refresh them.
+
+The revised CyCode workflow has not been pushed or executed. Previous Linux
+linker output motivated alias preservation; macOS compiler-failure diagnosis
+remains pending a complete log. Native applications, project builds, SDK/MCP,
+debuggers, installers and GUI acceptance were not launched locally. No Linux/macOS
+runtime or clean-machine support is established by this milestone.
+
+## Shared Verse syntax — 2026-11-06
+
+CyUI `c5b0f8ad818a6927a4e04600e3867d7d350a8841` adds the native Verse mode
+without a new external lexer/parser. Its 32 assertions evaluate the actual
+production scanner at compile time, including nested/indented comments,
+interpolation, escapes, CRLF, UTF-8, ranges, specifiers and function modifiers.
+The existing catalogue/plugin/editor fixtures pass MSVC /Zs only; their runtime
+inheritance, refresh and Undo/Redo bodies were not executed. Original syntax
+numeric IDs are preserved, Verse is appended as 101, and both application pins
+match. No native fixture, SDK/MCP server or application was run.
+
+Windows x64 Release CyUI Code, CyCode and CyCodeReader builds succeeded with tests
+disabled. Both local EN/FR manuals regenerated and passed their link/translation/
+resource checks. Source checks passed (CyCode 53 Python / 23 JSON, Reader 24 / 14).
+GUI interaction, native runtime, Linux/macOS and real UEFN/compiler/LSP integration
+remain unverified. Verse compilation or an official UEFN backend is not provided.
 
 Earlier milestones were exercised locally on Windows x64. New work below
 distinguishes compilation/schema checks from runtime acceptance.
-Linux/macOS builds and clean-machine installation have not been executed. A core CI
-matrix is configured but has not run on GitHub. The project license is GPL-3.0-only;
+Linux/macOS local builds and clean-machine installation have not been executed.
+Earlier core CI attempts exposed platform failures; the revised matrix still needs
+a successful run. The project license is GPL-3.0-only;
 the full text and project copyright notice are in the root LICENSE and COPYRIGHT.
 
 ## Executed checks
@@ -3385,8 +4466,11 @@ every frame. File rows are clipped to the visible portion of the explorer.
   1 MiB body limit. Mixed newlines are retained on no-op saves and normalized to the
   detected convention on edits. Legacy text encodings are rejected rather than converted.
 - Dirty buffers override disk results for literal and regex search. Unsaved regex
-  snapshots are limited to 128 buffers / 64 MiB. Case folding in dirty literal buffers is
-  currently ASCII-oriented. Search previews/row counts and process output are bounded.
+  and Unicode-insensitive literal snapshots are limited to 128 buffers / 64 MiB.
+  The Unicode literal route now shares ripgrep's simple-fold semantics; exact
+  and all-ASCII literal matching retain the in-memory path. Actual new Unicode
+  regression execution remains pending. Search previews/row counts and process
+  output are bounded; previews retain complete UTF-8 scalars.
 - The path snapshot is capped at 200,000 files/32 MiB of ripgrep output and cached
   in memory, with 20,000-item/8 MiB pages. Windows notifications invalidate structural
   changes; ignored/open files also reconcile periodically. Global Git ignore changes

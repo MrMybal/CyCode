@@ -222,12 +222,28 @@ void TerminalSession::start(const std::filesystem::path &cwd, const std::vector<
         std::lock_guard lock(osMutex); if (console) { ClosePseudoConsole(console); console = nullptr; }
 #else
         int status = 0;
-        while (waitpid(pid, &status, WNOHANG) == 0) {
-            if (stopping) { kill(-pid, SIGKILL); while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {} break; }
+        bool finished = false;
+        for (;;) {
+            if (stopping) kill(-pid, SIGKILL);
+            const auto observed = waitpid(pid, &status, WNOHANG);
+            if (observed == pid && (WIFEXITED(status) || WIFSIGNALED(status))) {
+                finished = true;
+                break;
+            }
+            if (observed < 0 && errno != EINTR) {
+                // A tracer may temporarily own wait notifications (notably on
+                // macOS). Keep the terminal live while its issued PID exists.
+                const auto waitError=errno;
+                if (waitError!=ECHILD) break;
+                if (kill(pid,0)!=0 && errno!=EPERM) break;
+            }
+            // A debugger can report a traced child's stop to its real parent.
+            // Neither a stop/continue notification nor EINTR means it exited.
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
-        exitCode = WIFEXITED(status) ? WEXITSTATUS(status) : 128 + WTERMSIG(status);
-        kill(-pid, SIGKILL); running = false; queued.notify_all();
+        exitCode = finished ? (WIFEXITED(status) ? WEXITSTATUS(status) : 128 + WTERMSIG(status)) : -1;
+        if (finished || stopping) kill(-pid, SIGKILL);
+        running = false; queued.notify_all();
 #endif
     });
 }

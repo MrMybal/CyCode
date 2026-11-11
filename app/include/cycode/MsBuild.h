@@ -11,6 +11,7 @@ class MsBuild {
                        const std::atomic<bool> *cancellation = nullptr);
 
   private:
+    nlohmann::json prepareIndex(const nlohmann::json &, const std::atomic<bool> *);
     nlohmann::json inspectLocked(const nlohmann::json &);
     nlohmann::json evaluate(const nlohmann::json &, const nlohmann::json &, const std::atomic<bool> *);
     std::vector<std::string> command(const nlohmann::json &, const std::atomic<bool> *);

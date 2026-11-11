@@ -5,7 +5,7 @@ description: Choisissez Rider, Visual Studio ou VS Code et personnalisez les com
 section: Bien démarrer
 order: 100
 parent: settings
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Touches communes {#shortcuts}
@@ -29,6 +29,8 @@ Les options de raccourcis proposent Rider / ReSharper, Visual Studio et Visual S
 | Renommer un symbole | Maj+F6 | Ctrl+R, Ctrl+R | F2 |
 | Formater le document | Ctrl+Alt+L | Ctrl+K, Ctrl+D | Maj+Alt+F |
 | Actions contextuelles | Alt+Entrée | Ctrl+. | Ctrl+. |
+| [Insérer un extrait du projet](doc:refactoring#snippet-catalogue) | Ctrl+J | Ctrl+K, Ctrl+X | À définir dans les préférences |
+| [Encadrer avec un extrait](doc:refactoring#snippet-selection) | Ctrl+Alt+J | À définir dans les préférences | À définir dans les préférences |
 | Structure du fichier | Ctrl+F12 | Ctrl+1, Ctrl+M | Ctrl+Maj+O |
 
 Rider utilise Ctrl+F9 pour Compiler et Maj+F10 pour Exécuter. Ctrl+Maj+B rejoint la définition du type dans Rider ; ce n’est pas un second raccourci de compilation. F1 ouvre l’aide, sauf dans VS Code où il ouvre la palette d’actions. Ces profils utilisent des touches de style Windows/Linux ; aucun profil macOS dédié n’est fourni.

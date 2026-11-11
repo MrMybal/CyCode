@@ -42,7 +42,20 @@ int main(int argc,char **argv) {
             Engine engine(root); engine.configureLanguage(argv[1],true,true);
             auto main=engine.dispatch("documents.read",{{"path","main.cpp"}});
             auto types=engine.dispatch("documents.read",{{"path","types.hpp"}});
-            auto query=[&](const std::string &path,const Json &doc) { return engine.dispatch("language.highlight",{{"path",path},{"expectedRevision",doc.at("revision")}}); };
+            auto query=[&](const std::string &path,const Json &doc) {
+                const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+                for (;;) {
+                    try {
+                        return engine.dispatch("language.highlight",{{"path",path},{"expectedRevision",doc.at("revision")}});
+                    } catch (const std::exception &error) {
+                        if (std::string(error.what()) != "RevisionConflict: semantic context changed" ||
+                            std::chrono::steady_clock::now() >= deadline ||
+                            engine.dispatch("documents.read",{{"path",path}}).at("revision") != doc.at("revision"))
+                            throw;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                    }
+                }
+            };
             const auto result=query("main.cpp",main), declarations=query("types.hpp",types);
             auto publishedRevision=[&](const Json &document) {
                 const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(10);

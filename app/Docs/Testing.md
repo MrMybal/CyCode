@@ -1,5 +1,288 @@
 # Local verification and native tests
 
+The progressive-capacity stage adds [paged native text and storage](LargeProjects.md):
+streamed compiler database digests/commands, incremental format-2 checkpoint pages,
+immutable transaction payloads on private disk and four guarded paged-document
+SDK operations. Ordinary GUI/LSP buffers retain their compatibility policy; the
+paged profile is explicit, uses UTF-8 byte cursors and has no GUI/LSP/crash-recovery
+adapter yet. No hardware-unlimited or exhaustive Unreal claim follows.
+
+
+## Opt-in analysis campaigns — 2026-11-11
+
+[Persistent analysis progress](AnalysisProgress.md) documents the explicit
+production-only runners for real MCP/MSBuild/clangd restart/cancellation and the
+existing UBT Unreal corpus. They create source data, not native fixture programs.
+clang-tidy flow/lifetime and bounded-diagnostic checks also use the production
+Core. Time budgets leave a resumable pending traversal, not a passing whole-engine
+certificate. The shared build owner reports incomplete/truncated operations with
+a nonzero exitCode even when the underlying tool exits normally; inspect flags.
+Ordinary source checks do not launch these runners. GitHub Actions stays paused.
+The opt-in `verify_navigation_analysis.py` checks read-only traversal/cache reuse
+and real-edit invalidation. `verify_cpp_transformations.py` requires eight offered
+clangd transformations to pass preview/Apply/Undo, preserving original source
+bytes. Both accept `--core`, `--executable`, `--clangd`, a new `--output` directory
+and the explicit `--run-native` flag. They launch only the existing production
+Core and language tools, never a generated fixture executable or the IDE.
+
+
+
+## Current explicit Core validation — 2026-11-11
+
+The owner resumed the corrected Core and requested quality, compiler, debugger and
+comparative validation. The opt-in production-only runners in [Core quality](CoreQuality.md)
+exercise actual SDK/MCP, clangd, clang-tidy, CodeLLDB and JetBrains inspection tools.
+They do not launch a GUI or generate native test executables. Ordinary source checks
+stay data-only. Native CTest remains a separate explicit test-build choice; Actions
+remains disabled. The antivirus-hold paragraphs below record historical incidents,
+not the current corrected Core's explicit validation scope.
+
+
+The owner later authorised a controlled standalone production delivery. The
+installed MCP completed scoped CyCodeIDE calls, then a second Kaspersky detection
+deleted its CLI at 19:20 Europe/Paris. That attempt is interrupted, MCP is disabled,
+and native retries/binary publication are suspended again. See Validation.md.
+
+## Production CLI antivirus hold — 2026-11-09
+
+The owner's PDM alert also targets the production CLI. Local native execution and
+rebuild/retry are suspended, including production-only acceptance. Existing runner
+commands below remain historical/opt-in, and GitHub Actions remain paused.
+Read [Windows antivirus investigation](WindowsSecurity.md) before attempting
+another native run. Source/data/documentation and `/Zs` syntax-only checks remain
+available; no exclusion, quarantine restoration or alternate binary retry is used.
+
+
+## Windows graphical runner preparation
+
+The production workflow now prepares a separate owned runner fixture with a
+byte-identical production CyCode.exe and three SHA-256-pinned Mesa 26.2.4 DLLs.
+The archive and individual x64 images are pinned in
+`.github/ci/mesa-windows.lock.json`, sourced from
+[mesa-dist-win](https://github.com/pal1000/mesa-dist-win/releases/tag/26.2.4).
+`python app/scripts/prepare_windows_graphics_ci.py --executable runtime/build-vs/Release/CyCode.exe`
+refuses local execution before inspecting paths, downloading or creating files.
+It streams only the three exact archive members; bundled batch/installer scripts
+are never extracted or run. It changes no source/production folder or system
+driver and preserves failed fixtures/cache evidence. No renderer binary is
+checked in, uploaded as evidence or included by the product's explicit package
+allow-list. Software rendering is selected only for the runner child processes.
+
+The pending Windows checks use that fixture for eight EN/FR renders, twelve
+editing/search/keymap cases, six real clangd hover/signature cases and detached
+native windows/two simultaneous instances. Test reports record the actual GL
+vendor, renderer and version; Windows captures must report llvmpipe. The font
+assertions accept the actual Windows Segoe/Consolas or pinned portable fallback,
+and require the actual mapped/system icon glyphs. Keyboard fixture source bytes
+are explicitly LF on all platforms, avoiding text-mode CRLF fixture differences.
+These runner checks do not establish physical multi-monitor, DPI, IME, GPU-driver
+or performance acceptance. No local driver/application execution was performed.
+
+## Shared semantic desktop acceptance on runners
+
+The existing navigation, semantic-highlight and refactoring scripts now accept
+`--ci --executable PATH` and optional `--output DIR`. Each refuses a local CI
+invocation before creating fixtures, importing any managed fixture, or spawning
+an application. The production workflow runs them on Linux/Xvfb, macOS and the
+isolated Windows renderer fixture. These new cases remain pending execution.
+
+- `verify_navigation.py`: three real clangd definition/reference jumps, including
+  an accented filename, spaces, `#`, emoji, UTF-16 coordinates and source hashes.
+- `verify_semantic_highlights.py --cpp-only`: two actual native/clangd semantic
+  color captures, EN graphite and FR light-grey, with unchanged Unicode source.
+  C#/Roslyn is preserved as a separate explicit path; cpp-only does not claim it.
+- `verify_semantic.py --hidden`: fifteen real ImGui-input scenarios for types,
+  members, rename previews across six themes/FR, multi-file apply/Undo and
+  formatting/Undo. Startup and apply/Undo wait on actual command availability,
+  with bounded deadlines rather than dispatching commands directly or replacing
+  their services. Fixtures are unique owned directories; failed refactoring
+  cases retain evidence. Disk source bytes must remain exact on every platform.
+
+No visible application is launched locally by the data/safety-contract checks.
+The fixtures do not substitute for physical keyboard, screen-reader, IME or DPI
+acceptance. The color captures still need visual inspection after actual CI.
+
+## Scripted input cadence
+
+Actual macOS keyboard acceptance at ab82791 executes Rider duplicate/delete/Undo,
+then reports only `edit.copy` for Visual Studio's two-stroke comment chord. A
+115-frame software-rendered session takes about 24 seconds: its nine-frame gap
+can exceed the real keymap's unchanged 1.5-second deadline. This also makes a
+seven-frame double-Shift interval exceed the unchanged 0.4-second tap window.
+
+Only when explicit `--test-keys` events are present, their authored frame units
+now use an ImGui delta of 1/60 second. Ordinary physical input keeps the SDL frame
+clock; language workers, process/network deadlines and test readiness gates keep
+real clocks. Reports expose the fixed input delta and maximum observed SDL frame
+delta. The runner scripts assert the declared cadence and still exercise actual
+ImGui events, focus, command routing, native services and Undo. This deliberately
+does not prove physical input timing/responsiveness on the slow runner or any
+machine. The revised Mac cases still need execution.
+
+## Current remote evidence and historical entries
+
+Finalization.md records the latest actual platform results. The milestone notes
+below retain what was checked at the time; historical local run holds below describe those earlier milestones. Current
+explicit production acceptance is recorded in Validation.md; CTest remains
+opt-in and GitHub Actions remains paused by the owner.
+Windows update contracts already exercised real owned filesystem staging,
+locked-file rollback, payload verification and user-data retention. They do not
+prove complete online GUI consent/download/helper/restart behavior.
+
+Offline font tests read the actual TTF tables with Python's standard library,
+verify seven resource hashes/notices and all 104 control codepoints, and check
+Latin accents, Greek and Cyrillic examples. Regeneration reproduces the assets
+byte for byte with the pinned optional authoring tool. No native fixture or GUI
+is launched by these data checks.
+
+
+The production workflow adds runner-only native viewport/isolation acceptance
+through `python app/scripts/verify_viewports_ci.py --executable runtime/build/CyCode`
+(under `xvfb-run -a` on Linux). It launches two owned native GUI processes, talks
+to their real loopback Engine bridges and checks editor/panel OS windows, close,
+reopen, redocking, unsaved-buffer isolation, independent shutdown and descriptor
+cleanup. It neither substitutes a Python document model nor claims SDK/MCP
+coverage. The CLI guard refuses local execution before reading an executable or
+spawning a process. Reports omit bridge tokens. Native runs remain remote only.
+
+The existing `verify_information.py` accepts `--ci --executable PATH --output DIR`
+for actual hover and signature help through all three keyboard profiles. Linux
+uses its Xvfb display; macOS uses the real runner window system. A real clangd
+server supplies the selected second parameter and source documentation. The
+runner guard is checked before filesystem/process actions; no language service
+is substituted or simulated. These six new graphical cases still need execution.
+
+The hidden renderer now requests all six English themes plus French graphite and
+light-grey; these eight new cases and the viewport lifecycle must actually pass
+before being described as verified. No simulated DPI or second physical monitor
+is claimed. Existing Linux twelve-case keyboard acceptance stays separate.
+
+Header/source and include navigation have 106 compiler-evaluated helper contracts
+on the actual native constexpr owners. The 27 additions cover inline comments,
+logical LF/CRLF components, spliced keywords, physical header offsets, conservative
+refusals, forced choice, file-page revision/generation pairs and help anchors.
+MSVC /Zs and Clang syntax-only checks cover eight affected translation units.
+The fixture also contains a real compiler include directive split across lines
+with inline comments. Native bodies specify continued Unicode includes with a
+caret on the first line and a header range on the third, in addition to the prior
+index/suffix/case/scope/dirty-buffer/source-guard contracts. These bodies are
+syntax checked only, not linked or executed.
+
+`python -B app/tests/test_navigation_contracts.py` has six JSON-data-only checks
+of guarded source/caret inputs, explicit cache observations, continued physical
+ranges and required positive file-page generations. Together with the five
+snippet checks below, eleven tests run without an SDK/application/native runtime.
+JSON validation does not establish filesystem, callback, cache contention or
+permission behavior. Actual clipboard, refresh/close race and configurable modal
+help-keyboard acceptance remain pending. DOM tests exercise the local manual's
+matching EN/FR stable anchors; they do not launch a browser or prove native help
+handoff, rendering or keyboard behavior.
+
+`python -B app/tests/test_snippet_contracts.py` runs five JSON-data-only tests:
+generated input/output parity, disabled/unreadable zero-generation states,
+save revision/fixed-location validation and permission/scheduler declarations.
+It imports schema constants, without tool.py, the SDK runtime or native processes.
+This does not establish native permission, hashing or file-lock behavior.
+
+Selection capture adds fourteen compiler-evaluated contracts on the actual shared
+literal-body helper (143 combined snippet assertions): dollar/backslash/brace
+escaping, Unicode/newline retention, empty/NUL refusal and plain/escaped 8 KiB
+boundaries including the final caret. Native fixtures additionally specify
+noncreating drafts, unchanged existing definitions/source files, unique names,
+explicit save, invalid/full catalogue refusal, unsaved Verse capture and stale or
+split-surrogate selection rejection. They are syntax-checked, not linked or run.
+The fifth Python test checks the read-only draft schemas and metadata as data.
+
+Personal snippet helpers add twelve compiler-evaluated revision/byte-limit
+assertions to the existing 117 (129 total). Native fixture bodies specify disabled
+hosts, noncreating reads, cross-instance revisions, retained-lock refusal,
+malformed JSON repair, invalid UTF-8/oversize preservation, two-workspace queries,
+stale-session refusal and existing plan/apply/Undo behavior. The extension fixture
+adds denial of settings.write for a workspace-only plugin. These bodies remain
+unlinked/unexecuted. No native target is added. Native hash/file/locking/race,
+GUI keyboard/dirty-dialog/Undo and Linux/macOS acceptance remain unverified while
+the antivirus suspension is in effect.
+
+Plugin snippets add eight compiler-evaluated boundary assertions on the actual
+registry count/byte policy, bringing the combined snippet helper total to 117.
+Native fixture bodies specify descriptor/owner validation, excluded scopes,
+workspace-first merging, duplicate provenance and global truncation, summary-only
+inventory, same-thread host queries, disable invalidation and Unreal field rendering.
+The existing completion/extension/Unreal sources are syntax checked only; no new
+native target is added and these fixtures are not linked or executed. Actual plugin
+loading, callbacks, lifecycle races, edit/Undo and graphical/platform acceptance
+remain unverified during the antivirus suspension.
+
+Selection wrapping adds 21 compiler-evaluated assertions on the actual production
+CompletionSelection policy: forward/reverse caret endpoints, empty/multiline and
+Unicode byte ranges, invalid anchors/order/bounds, and the 8192-byte limit. The
+combined variable/format/catalogue/selection helpers now have 109 assertions under
+ordinary compiler budgets. The compiler-only pass covers fifteen translation units.
+Native opt-in source bodies also specify literal escaping, field metadata, unused
+defaults, integer/surrogate guards, multiline layout, reverse selections, no-LSP
+Verse preparation/preview/apply/undo and stale catalogue/session refusal. These
+bodies and the Ctrl+Alt+J keymap fixture are not linked or run. Native thread races,
+real keyboard/GUI/Undo, regex matching and Linux/macOS remain unverified during the
+antivirus suspension. The SDK schema remains 228 operations with optional selection;
+source/data and DOM checks cannot prove runtime or graphical acceptance.
+
+The project-snippet catalogue adds 21 compiler-evaluated assertions on the actual
+prefix and scope policy: exact/partial/mismatched/case-sensitive prefixes, retained
+suffixes, punctuation, Unicode bytes, empty/invalid positions, scope tokens and
+limits. MSVC /Zs and Clang syntax-only checks include the native catalogue, Engine,
+completion, plugin/command owners, UI and existing opt-in completion/keymap fixtures.
+Native source bodies specify parser/schema/size/depth limits, scope filtering,
+unopened-document refusal, no-LSP Verse issuance, prefix/suffix preservation,
+transformed fields, preview/apply/undo and stale catalogue/disk rejection. They
+are not linked or run. No new executable or native test target is introduced.
+Real worker races, parser/file I/O, SDK/plugin transport, keymap, Escape, focus,
+palette and widget/Undo/platform acceptance remain unexecuted. See
+[Project snippets](SnippetCatalogue.md).
+
+The final compiler-only pass also reevaluates the previous 67 variable/format
+assertions: 88 compile-time contracts at that milestone, before the 21 selection
+contracts above, with no raised constexpr budget.
+All 228 SDK input/output schemas are checked as data with the standard JSON Schema
+validator; the new route, read-only permissions, required revision and negative
+position refusal are verified without creating a runtime, MCP or native process.
+The offline manual DOM fixture checks the new EN/FR catalogue/API routes and
+local search, alongside the existing six themes and keyboard/media controls.
+
+Variable-transform checks add 39 compiler-evaluated assertions on the actual
+production scanner and capture-format parser. They cover captures/conditionals,
+nested/unused branches, case dispatch, escapes, Unicode literals, invalid formats,
+flags and scanner/capture limits. Together with the existing 28 variable assertions,
+67 compile-time contracts pass MSVC /Zs and Clang syntax-only checks with normal
+Windows production flags. The case callback assertion verifies dispatch only;
+it does not execute utf8proc or PCRE2.
+CompletionTransforms.cpp and the new completion_transform_tests.cpp are checked
+alongside the existing completion/engine/UI units. Native source fixtures specify
+real matching, Unicode casing, empty global matches, limits, deferred popup text,
+transformed initial fields and filename/import/apply/undo through issued proposals.
+These bodies are not linked or executed. The fixture joins the existing opt-in
+completion target; no extra native test executable is introduced. Actual regex
+timing/cancellation, PCRE2/utf8proc behavior, GUI input and Linux/macOS remain to
+validate after the antivirus issue is resolved. See [Completion variables](CompletionVariables.md).
+
+Completion-variable substitution adds 28 compiler-evaluated assertions on the
+actual preprocessing helper: selected/unused defaults, numbered-field passthrough,
+choices, literal escaping, Unicode, malformed/unsupported forms, 8 KiB raw/escaped
+budgets and depth/node boundaries. MSVC /Zs and Clang syntax-only checks use normal
+Windows production flags; no raised constexpr budget is required. Existing native
+completion/service fixtures specify real context values, imports/byte ranges,
+literal filenames, large lines and the ordinary apply/undo guards, but their bodies
+are unexecuted. No extra native target or duplicate snippet renderer is added.
+See [Completion variables](CompletionVariables.md).
+
+Toolchain reporting adds six pure Python checks for Clang/MSVC/CMake context,
+bounded output, unknown failures and bounded large-log reads. Together with the
+five in-memory packaging checks they execute without a native fixture. The native
+core suite specifies executable-alias preservation, missing targets and POSIX
+permission filtering, PATH/hint order, directory aliases and invocation identity.
+The existing build suite checks actual detected C++ paths. Their MSVC and Clang
+syntax-only checks use Windows headers/ABI; fixture bodies were not run. No POSIX
+runtime execution is claimed. See [Toolchain reliability](ToolchainReliability.md).
+
 Detailed update history adds twenty actual attention/phase/count/outcome assertions,
 bringing updater policy checks to 115 compiler-evaluated assertions. Opt-in bodies
 specify discovery beyond twelve metadata rows, no created locks, sorting/unknown
@@ -550,3 +833,47 @@ advisory phase handling, foreign/missing identities, unsafe maps/hardlinks and
 mandatory backups. Native bodies remain unexecuted during the antivirus
 interruption; source/build/data checks cannot establish real recovery acceptance.
 See [Recovery resumption](UpdateRecovery.md).
+
+
+## Explicit remote platform validation
+
+The native GitHub matrix targets Windows Server 2022 / Visual Studio 2022,
+Ubuntu and macOS. The CI invocation explicitly opts into --run-tests and
+--keep-going-tests so one runner collects ordinary independent failures in one
+pass. Default local behavior still stops at the first test failure. Collection
+does not rebuild/retry failures or change antivirus settings, and ordinary
+application builds remain BUILD_TESTING=OFF. Data-only build-plan checks cover
+these boundaries. Three compiler platforms are not equivalent GUI platforms.
+
+Production desktop CI separately compiles the GUI/CLI/providers on all three
+platforms. Its Linux job explicitly runs verify_graphical_ci.py inside Xvfb/Mesa
+against a synthetic workspace. It captures actual hidden Graphite/English and
+light-grey/French rendering, checks active source, theme, clean buffers and source
+preservation, and retains bounded reports/images as workflow artifacts. That
+script refuses local invocation. Windows/macOS jobs compile only; no GUI/input,
+DPI, native updater or clean-machine installer acceptance is inferred from them.
+
+
+Each native test now has a 180-second default deadline (an existing explicit
+per-test timeout still takes precedence). CTest writes a JUnit result alongside
+its ordinary LastTest.log; CI retains both with the build log, including passing
+and skipped evidence. Obsolete runs on the same branch are cancelled by workflow
+concurrency so newer fixes do not queue behind repeated full builds.
+
+
+The existing twelve keyboard scenarios can also run with an explicit executable,
+output directory and hidden-window flag. Production Linux CI reuses them under
+Xvfb, including actual key chords, search/file palettes, double Shift, live edits
+and Undo, while verifying the fixture files are not saved. Successful source
+fixtures are retired; failures retain them. --ci refuses ordinary local invocation.
+The graphical/installer scripts and this CI mode have a data-only CLI guard test
+that mocks all process creation and proves refusal occurs before any native spawn.
+These guard tests do not substitute for the actual remote keyboard results.
+
+
+## Native byte-offset representation
+
+`verify_native_byte_ranges.py --run-native --core . --executable <Core> --output <new-directory>`
+uses the production CLI's documented ready event and stdio protocol. It checks
+invalid/huge/fractional offsets before conversion, valid integral JSON floats,
+paged previews and explicit Apply/Save/Undo/Save. Only source data is generated.

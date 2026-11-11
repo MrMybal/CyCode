@@ -136,7 +136,7 @@ static const char *vcs(void *context, const char *text) {
                                .dump();
         } else
             state.output = Json({{"exitCode", 0},
-                                 {"output", action},
+                                 {"output", action == "diff" ? std::string("diff --git a/main.cpp b/main.cpp\n--- a/main.cpp\n+++ b/main.cpp\n@@ -1 +1 @@\n-int main() {}\n+int main() { return 0; }\n") : action},
                                  {"timedOut", false},
                                  {"truncated", false},
                                  {"parameters", input.at("parameters")}})
@@ -175,6 +175,10 @@ extern "C" CYCODE_PLUGIN_EXPORT int cycode_plugin_init_v2(const CyCodeHostV2 *ho
         };
         if (add("template", fixtureProjectTemplate(), nullptr))
             return 1;
+        if ((host->features & CYCODE_HOST_FEATURE_SNIPPETS_V2) && add("snippets",
+            {{"id","fixture.native.snippets"},{"title","Fixture snippets"},
+             {"definitions",{{"Wrap",{{"prefix","wrap_fixture"},{"scope","cpp"},
+                 {"body","[${1:$TM_SELECTED_TEXT}]$0"}}}}}},nullptr)) return 1;
         if (add("command",
                 {{"id", "fixture.native.inspect"},
                  {"title", "Inspect extension workspace"},
@@ -207,7 +211,7 @@ extern "C" CYCODE_PLUGIN_EXPORT int cycode_plugin_init_v2(const CyCodeHostV2 *ho
         if (add("vcs",
                 {{"id", "fixture.native.depot"},
                  {"title", "Fixture depot"},
-                 {"capabilities", {"status", "checkout", "submit"}},
+                 {"capabilities", {"status", "diff", "checkout", "submit"}},
                  {"actions",
                   Json::array({{{"id", "checkout"}, {"title", "Check out file"}, {"scope", "file"}},
                                {{"id", "submit"},

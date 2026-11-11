@@ -1,0 +1,37 @@
+name: Native semantic baseline
+on:
+  # Owner pause: manual-only definition; GitHub workflow remains disabled.
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Native build prerequisites only
+        run: sudo apt-get update && sudo apt-get install -y ninja-build clangd
+      - run: python app/scripts/verify_sources.py
+      - run: python app/tests/test_semantic_baseline_data.py
+      - run: python app/scripts/fetch_dependencies.py --core-only
+      - run: cmake -S . -B runtime/baseline-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCYCODE_BUILD_PROVIDERS=OFF
+      - run: cmake --build runtime/baseline-build --target cycode_cli --parallel 4
+      - name: Explicit semantic runner measurement
+        run: python app/scripts/benchmark_semantic.py --ci --cli runtime/baseline-build/app/cycode_cli --clangd "$(command -v clangd)" --output runtime/semantic-baseline
+      - name: Measure the actual configured native Core project
+        run: python app/scripts/benchmark_semantic.py --ci --cli runtime/baseline-build/app/cycode_cli --clangd "$(command -v clangd)" --core-project . --compilation-database runtime/baseline-build/compile_commands.json --samples 5 --iterations 1 --output runtime/semantic-baseline-core
+      - name: Preserve raw results and owned corpus
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-baseline-linux
+          path: |
+            runtime/semantic-baseline/
+            runtime/semantic-baseline-core/
+          retention-days: 14

@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-09",
+  "platform": "windows-x64",
+  "distributionVersion": "0.1.0",
+  "engineVersion": "0.2.3",
+  "scope": "Actual CyCodeIDE project; no generated test executable, GUI or Actions",
+  "runtime": {
+    "python": "3.13.17",
+    "sdk": "0.10.1",
+    "mcp": "1.30.0"
+  },
+  "passed": {
+    "domainOperations": 237,
+    "sdkControls": 21,
+    "workspaceFileIndex": 135,
+    "msbuildTranslationUnits": 62,
+    "cleanVersionBoundDocuments": 2,
+    "definition": true,
+    "referencesReturned": 4,
+    "guideCreatedAndSavedThroughMCP": true,
+    "guardedSourceInputsUnchanged": true,
+    "installerDataTests": 10,
+    "analysisContractTests": 6
+  },
+  "fixes": [
+    "Typed actual callHierarchy/typeHierarchy capabilities without opening the schema",
+    "Preserve evaluated MSVC ExceptionHandling in compiler commands and invalidate old analysis metadata"
+  ],
+  "fullInstalledAcceptance": false,
+  "failure": "System Watcher deleted installed production CLI; host drain failed",
+  "detectedSha256": "609035c6cadb3d6dd667d55cb2d415092367910cbe1297647ef330e6eefcb1f7",
+  "detectedMd5": "442a69730eff3e458c329d1027d82139",
+  "detection": "PDM:Trojan.Win32.Generic",
+  "localTime": "19:20:18 Europe/Paris",
+  "mcpEnabledAfterIncident": false,
+  "nativeRetry": false,
+  "binaryPublication": "suspended",
+  "actionsUsed": false,
+  "wholeProjectSemanticCoverage": "unknown",
+  "linuxMacosThisDelivery": "not-tested",
+  "vendorVerdict": "unknown"
+}

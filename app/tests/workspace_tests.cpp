@@ -32,7 +32,18 @@ int main() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(30));
                 }
             };
+            auto closed = engine.dispatch("documents.read", {{"path", "main.cpp"}});
+            engine.dispatch("documents.close",{{"path","main.cpp"},{"expectedRevision",closed.at("revision")}});
+            bool staleReloadRejected=false;
+            try {
+                engine.dispatch("documents.reload",{{"path","main.cpp"},{"expectedRevision",closed.at("revision")}});
+            } catch (const std::exception &error) {
+                staleReloadRejected=std::string(error.what()).starts_with("RevisionConflict");
+            }
+            require(staleReloadRejected && engine.dispatch("documents.list").at("documents").empty(),
+                    "A stale reload resurrected a deliberately closed document");
             const auto opened = engine.dispatch("documents.read", {{"path", "main.cpp"}});
+            require(opened.at("id")!=closed.at("id"),"Reopening retained a retired document identity");
             const auto initial = engine.dispatch("workspace.files", {{"limit", 1}});
             require(initial.at("files").size() == 1 && !initial.at("nextOffset").is_null(),
                     "Path index did not paginate");
@@ -47,6 +58,7 @@ int main() {
                        opened.at("revision");
             });
             auto doc = engine.dispatch("documents.read", {{"path", "main.cpp"}});
+            require(doc.at("id")==opened.at("id"),"Automatic reload changed the current document identity");
             require(doc.at("text") == "int disk_update;\n" && !doc.at("dirty").get<bool>(),
                     "Clean external edit did not reload");
             engine.dispatch(

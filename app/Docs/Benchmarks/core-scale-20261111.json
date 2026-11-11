@@ -1,0 +1,461 @@
+{
+  "format": "cycode-core-scale-evidence/1",
+  "date": "2026-11-11",
+  "platform": "Windows x64",
+  "clangd": "18.1.8",
+  "productionBinarySha256": "cceb6cb1027e37f2257d32f1f1d9353c99fadf23b6d514ef3110d8e4b2c6bb0d",
+  "nativeFixtureExecutablesCreated": false,
+  "githubActionsLaunched": false,
+  "guiLaunched": false,
+  "antivirus": {
+    "active": true,
+    "newDetectionObserved": false,
+    "scope": "Owned production builds and runs, plus passive post-run observation; not an antivirus certification"
+  },
+  "unreal": {
+    "version": "5.5 source",
+    "commands": 37679,
+    "translationUnits": 37557,
+    "compilationDatabaseSha256": "4265231242954cf12734235d3659ca0c0afd7dbe8378762d3dd8e21364d7b041",
+    "campaigns": [
+      {
+        "nativeSha256": "7f284324c30c537b18a38a9b07f6e66445de0768e1753b916f0eb397da6270f7",
+        "state": "pending",
+        "total": 37557,
+        "startObserved": 0,
+        "finalObserved": 104,
+        "addedThisRun": 104,
+        "initialCoverage": {
+          "commands": 37679,
+          "diagnosticClean": 0,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 0,
+          "observed": 0,
+          "outOfScope": 0,
+          "remaining": 37557,
+          "translationUnits": 37557
+        },
+        "finalCoverage": {
+          "commands": 37679,
+          "diagnosticClean": 104,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 0,
+          "observed": 104,
+          "outOfScope": 0,
+          "remaining": 37453,
+          "translationUnits": 37557
+        },
+        "traversalComplete": false,
+        "wholeProjectIndexCompleteness": "unknown",
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 4243279872,
+          "samples": 9346,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        },
+        "unitTimingMilliseconds": {
+          "samples": 104,
+          "median": 3949.2509,
+          "p95": 9577.604,
+          "maximum": 9896.5184
+        },
+        "checkedSourceHashes": 256,
+        "selectedSourcesAndDatabasePreserved": true,
+        "hostDrained": true,
+        "totalSeconds": 614.6931174000056
+      },
+      {
+        "nativeSha256": "058ee4db713275bd94ffe5e98a63b3ec79b386bd774021158913c2bb324ca852",
+        "state": "pending",
+        "total": 37557,
+        "startObserved": 104,
+        "finalObserved": 168,
+        "addedThisRun": 64,
+        "initialCoverage": {
+          "commands": 37679,
+          "diagnosticClean": 0,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 104,
+          "observed": 104,
+          "outOfScope": 0,
+          "remaining": 37453,
+          "translationUnits": 37557
+        },
+        "finalCoverage": {
+          "commands": 37679,
+          "diagnosticClean": 64,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 104,
+          "observed": 168,
+          "outOfScope": 0,
+          "remaining": 37389,
+          "translationUnits": 37557
+        },
+        "traversalComplete": false,
+        "wholeProjectIndexCompleteness": "unknown",
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 4234498048,
+          "samples": 6963,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        },
+        "unitTimingMilliseconds": {
+          "samples": 64,
+          "median": 7330.81525,
+          "p95": 9043.13,
+          "maximum": 14674.1125
+        },
+        "checkedSourceHashes": 64,
+        "selectedSourcesAndDatabasePreserved": true,
+        "hostDrained": true,
+        "totalSeconds": 462.68954479999957
+      }
+    ],
+    "scope": "Existing actual UnrealEditor Win64 Development UBT database, ordered generated/source units; not a representative whole-engine benchmark",
+    "remainingAfterRestart": 37389,
+    "historicalObservationsAfterRestart": 104,
+    "freshCleanObservationsAfterRestart": 64,
+    "scopedRegression": {
+      "state": "passed",
+      "sourceSha256": {
+        "Engine/Source/Runtime/Core/Public/Misc/DateTime.h": "dc7cadfe641d2108f694ce0acb390ac326be0b316b6f35fcecd326c8625c6277",
+        "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp": "b66efe1e0c03c392f50453b831a0e2e52abeab0ed519fb8757d506ed8afe773b",
+        "Engine/Source/Runtime/Online/HTTP/Private/HttpRetrySystem.cpp": "f7c8a73a28d59fbf4d2308a3c9d09440928a4b8b6a27f9bcc46299f93d5199b7"
+      },
+      "compilationDatabaseSha256": "4265231242954cf12734235d3659ca0c0afd7dbe8378762d3dd8e21364d7b041",
+      "ubtCommands": 37679,
+      "checks": {
+        "wholeDatabaseInventory": 37557,
+        "rollingPreparationContinued": {
+          "commands": 37679,
+          "diagnosticClean": 2,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 0,
+          "observed": 2,
+          "outOfScope": 0,
+          "remaining": 37555,
+          "translationUnits": 37557
+        },
+        "dateTimeAndHttpCompilerScope": {
+          "commands": 0,
+          "diagnosticClean": 3,
+          "diagnosticErrors": 0,
+          "diagnosticUnknown": 0,
+          "observed": 3,
+          "outOfScope": 0,
+          "remaining": 0,
+          "translationUnits": 0
+        },
+        "realThreeFileRenameApplyUndo": true,
+        "unrealSourcesAndDatabasePreserved": true,
+        "hostDrained": true
+      },
+      "limits": [
+        "Scoped source regression, not exhaustive UE semantics, reflection/Blueprint analysis or Rider integration parity."
+      ]
+    },
+    "scopedRegressionBinarySha256": "a2d64ba92eb9667c76a3affdf35a120012d38391b9771007bf0395305065fcf7"
+  },
+  "navigation": {
+    "scope": "Two small MSBuild units plus 160 traversal units; SDK/MCP round trips during read-only analysis, OS caches not controlled, no whole-IDE speed claim",
+    "before": {
+      "nativeSha256": "058ee4db713275bd94ffe5e98a63b3ec79b386bd774021158913c2bb324ca852",
+      "state": "baseline-measured",
+      "cacheSurvivesReadOnlyTraversal": false,
+      "samplesMilliseconds": [
+        89.24569999362575,
+        76.47659999929601,
+        74.57029999932274,
+        62.95160000445321,
+        102.21260000253096,
+        67.76639999588951,
+        62.87589999556076,
+        69.2129000017303,
+        95.185300000594,
+        65.92290000116918,
+        72.77610000164714,
+        68.16050000634277,
+        120.45370000123512,
+        63.73449999955483,
+        71.13419999950565,
+        112.63079999480397
+      ],
+      "medianMilliseconds": 71.9551500005764,
+      "completed": 16,
+      "cacheHits": 3,
+      "actualEditStillInvalidatesCache": true
+    },
+    "after": {
+      "nativeSha256": "a2d64ba92eb9667c76a3affdf35a120012d38391b9771007bf0395305065fcf7",
+      "state": "passed",
+      "cacheSurvivesReadOnlyTraversal": true,
+      "samplesMilliseconds": [
+        36.029100003361236,
+        36.40639999503037,
+        36.77620000235038,
+        40.276399995491374,
+        36.02819999650819,
+        36.992999994254205,
+        36.93790000397712,
+        37.11579999799142,
+        37.81940000044415,
+        37.433199999213684,
+        36.937199998646975,
+        38.22790000413079,
+        37.00750000280095,
+        38.18019999744138,
+        38.47769999993034,
+        37.25910000503063
+      ],
+      "medianMilliseconds": 37.061650000396185,
+      "completed": 16,
+      "cacheHits": 16,
+      "actualEditStillInvalidatesCache": true
+    }
+  },
+  "persistence": {
+    "state": "passed",
+    "nativeSha256": "a2d64ba92eb9667c76a3affdf35a120012d38391b9771007bf0395305065fcf7",
+    "checks": {
+      "actualMcpDiscovery": 260,
+      "actualMsbuildCommands": 162,
+      "isolatedUnreadableAndOversizedSources": {
+        "commands": 162,
+        "diagnosticClean": 3,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 2,
+        "observed": 5,
+        "outOfScope": 0,
+        "remaining": 157,
+        "translationUnits": 162
+      },
+      "progressPersistedBeforeShutdown": 7,
+      "discoveredAfterProcessRestart": true,
+      "noHistoricalCompilerProofReused": {
+        "commands": 162,
+        "diagnosticClean": 2,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 7,
+        "observed": 9,
+        "outOfScope": 0,
+        "remaining": 153,
+        "translationUnits": 162
+      },
+      "actualCancellationSavedProgress": 25,
+      "all162TraversedAndLastPageAccessible": {
+        "commands": 162,
+        "diagnosticClean": 137,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 25,
+        "observed": 162,
+        "outOfScope": 0,
+        "remaining": 0,
+        "translationUnits": 162
+      },
+      "liveEditInvalidatesPassWithoutSourceSave": true,
+      "sameProcessSnapshotRebaseRetainsNoFreshProof": true,
+      "concurrentCheckpointOwnerRefused": true,
+      "sameSizeTimestampCompilerChangeRefused": true,
+      "malformedCheckpointPathRefused": true,
+      "originalSourceBytesPreserved": true,
+      "allHostsDrained": true
+    },
+    "sourceFiles": 162
+  },
+  "inspections": {
+    "state": "passed",
+    "nativeSha256": "a2d64ba92eb9667c76a3affdf35a120012d38391b9771007bf0395305065fcf7",
+    "checks": {
+      "realFlowAndLifetimeDiagnostics": [
+        "clang-analyzer-core.NullDereference",
+        "clang-analyzer-core.StackAddressEscape",
+        "clang-analyzer-cplusplus.NewDelete"
+      ],
+      "diagnosticCapProcessObservation": {
+        "diagnostics": 2000,
+        "status": "truncated",
+        "exitCode": -1,
+        "truncated": true,
+        "outputBytes": 475829
+      },
+      "diagnosticCapReportedExplicitly": true,
+      "missingCompilerCommandRefused": true,
+      "emptyArgumentsCannotUseCommandFallback": true,
+      "sourcePreservedAndHostDrained": true
+    }
+  },
+  "transformations": {
+    "state": "passed",
+    "nativeSha256": "cceb6cb1027e37f2257d32f1f1d9353c99fadf23b6d514ef3110d8e4b2c6bb0d",
+    "transformations": [
+      {
+        "id": "InlineVariable",
+        "offered": [],
+        "state": "not-offered"
+      },
+      {
+        "id": "ExpandDeducedType",
+        "offered": [
+          "Replace with deduced type"
+        ],
+        "state": "preview-apply-undo-passed",
+        "title": "Replace with deduced type",
+        "files": 1
+      },
+      {
+        "id": "DefineInline",
+        "offered": [
+          "Move function body to declaration"
+        ],
+        "state": "preview-apply-undo-passed",
+        "title": "Move function body to declaration",
+        "files": 2
+      },
+      {
+        "id": "DefineOutline",
+        "offered": [
+          "Move function body to out-of-line"
+        ],
+        "state": "preview-apply-undo-passed",
+        "title": "Move function body to out-of-line",
+        "files": 2
+      },
+      {
+        "id": "RemoveUsingNamespace",
+        "offered": [
+          "Remove using namespace, re-qualify names instead"
+        ],
+        "state": "preview-apply-undo-passed",
+        "title": "Remove using namespace, re-qualify names instead",
+        "files": 1
+      },
+      {
+        "id": "ScopifyEnum",
+        "offered": [
+          "Convert to scoped enum"
+        ],
+        "state": "preview-apply-undo-passed",
+        "title": "Convert to scoped enum",
+        "files": 1
+      },
+      {
+        "id": "SwapIfBranches",
+        "offered": [],
+        "state": "not-offered"
+      },
+      {
+        "id": "ExtractVariable",
+        "offered": [
+          "Extract subexpression to variable"
+        ],
+        "state": "preview-apply-undo-passed",
+        "title": "Extract subexpression to variable",
+        "files": 1
+      },
+      {
+        "id": "ExtractFunction",
+        "offered": [
+          "Extract to function"
+        ],
+        "state": "preview-apply-undo-passed",
+        "title": "Extract to function",
+        "files": 1
+      },
+      {
+        "id": "ExpandMacro",
+        "offered": [
+          "Expand macro 'DOUBLE_VALUE'",
+          "Extract subexpression to variable"
+        ],
+        "state": "preview-apply-undo-passed",
+        "title": "Expand macro 'DOUBLE_VALUE'",
+        "files": 1
+      }
+    ],
+    "originalSourcesPreserved": true,
+    "hostDrained": true,
+    "validated": 8
+  },
+  "qualityRegression": {
+    "state": "passed",
+    "checks": {
+      "officialSdkDiscovery": 260,
+      "realMsBuildCommands": 2,
+      "analysisCoverage": {
+        "commands": 0,
+        "diagnosticClean": 3,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 0,
+        "observed": 3,
+        "outOfScope": 0,
+        "remaining": 0,
+        "translationUnits": 0
+      },
+      "compilerDefinition": true,
+      "compilerReferences": 3,
+      "mcpWarmNavigation": {
+        "samplesMilliseconds": [
+          36.23610000067856,
+          36.162800002784934,
+          35.95140000106767,
+          35.52379999746336,
+          40.067500005534384,
+          35.584400000516325,
+          35.40509999584174,
+          35.60549999383511,
+          35.867699996742886,
+          36.30479999992531,
+          65.98989999474725,
+          36.53340000164462
+        ],
+        "medianMilliseconds": 36.0571000019263,
+        "p95Milliseconds": 65.98989999474725,
+        "scope": "SDK/MCP round trip; OS caches not controlled"
+      },
+      "threeFileRenameApplyUndo": true,
+      "clangdExtractionPreviewApplyUndo": "Extract subexpression to variable",
+      "functionPreviewApplyUndo": "Extract to function",
+      "macroPreviewApplyUndo": "Expand macro 'DOUBLE_VALUE'",
+      "headerEditInvalidatesNavigation": true,
+      "actualDebugToReleaseContext": {
+        "entries": 2,
+        "macro": "QUALITY_MODE=2",
+        "diagnosticErrors": 0
+      },
+      "realStaticAnalyzer": {
+        "diagnostics": 3,
+        "codes": [
+          "",
+          "clang-analyzer-core.uninitialized.UndefReturn"
+        ]
+      },
+      "staleInspectionRevisionRejected": true,
+      "sharedAtomicSaves": 8,
+      "readOnlySavePreservedDisk": true,
+      "diskConflictPreservedExternalContent": true,
+      "originalSourcesPreserved": true,
+      "hostDrained": true
+    },
+    "sourceSha256": {
+      "model.hpp": "ff5253ce4880d737ed1dd551a759e3fdd6af4c2d046cc09ac18a0d7aab47e7e8",
+      "main.cpp": "ec68c06c7baa062330ff2fbacf8705c5d36698a755db6b1edd6be85e10886b1e",
+      "caller.cpp": "6cc3adadf99044774c376c504ee8d54490b3506803e13c76edc4b42b9a664ae2"
+    },
+    "nativeSha256": "a2d64ba92eb9667c76a3affdf35a120012d38391b9771007bf0395305065fcf7"
+  },
+  "sourceDataChecks": {
+    "state": "passed",
+    "unitTests": 34,
+    "nativeOptInGuards": 10
+  },
+  "limits": [
+    "Native checks identify their binary hashes: traversal/restart used the first two persistence builds, full regression used the navigation build, and the final deduced-type fix has its own eight-transformation acceptance.",
+    "Restored rows are unknown historical observations, not current compiler proof; no persisted compiler index is claimed.",
+    "The entire 37,557-unit Unreal inventory has not been analysed or certified; cancellation leaves explicit pending work.",
+    "RSS is the sampled sum of owned Core/clangd process working sets; shared pages can be counted repeatedly and short peaks missed.",
+    "No new Linux/macOS, GUI, whole-engine/Blueprint, remote-debugger or power-loss acceptance was performed.",
+    "No installation, release, push or remote pin change was performed."
+  ]
+}

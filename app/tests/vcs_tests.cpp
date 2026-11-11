@@ -1,3 +1,6 @@
+#include "OwnedTestDirectory.h"
+#include <algorithm>
+#include <array>
 #include "cycode/Engine.h"
 #include "cycode/GitConflicts.h"
 #include <fstream>
@@ -35,16 +38,32 @@ static void conflictModelContracts() {
     entries[1]["supported"]=false;
     rejects([&]{gitConflictIndexPlan(entries,Json::array({{{"path","new, name.cpp"},{"choice","delete"}}}));},"Unsupported conflicts are not silently removed");
 }
-int main() {
-    const auto root = std::filesystem::temp_directory_path() / ("cycode-vcs-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+int main(int argc,char **argv) {
+    const std::string group=argc==2 ? argv[1] : "all";
+    const std::array<std::string,8> groups={"all","models","structural","merge","replay","submodules","repositories","general"};
+    if (argc>2 || std::find(groups.begin(),groups.end(),group)==groups.end()) {
+        std::cerr<<"Unknown VCS acceptance group\n";return 2;
+    }
+    const OwnedTestDirectory owned("cycode-vcs-");
+    const auto &root=owned.path();
+    auto cleanup=[&] {owned.clean();};
     try {
-        conflictModelContracts();
-        gitStructuralConflictContracts(root);
-        gitMergeContracts(root);
-        gitReplayContracts(root);
-        gitSubmoduleContracts();
+        auto run=[&](const char *name,auto function) {
+            if (group=="all" || group==name) {
+                std::cout<<"VCS stage: "<<name<<'\n'<<std::flush;
+                function();
+            }
+        };
+        run("models",[&]{conflictModelContracts();});
+        run("structural",[&]{gitStructuralConflictContracts(root);});
+        run("merge",[&]{gitMergeContracts(root);});
+        run("replay",[&]{gitReplayContracts(root);});
+        run("submodules",[&]{gitSubmoduleContracts();});
+        run("repositories",[&]{gitRepositoryContracts(root);});
+        if (group!="all" && group!="general") {
+            cleanup();std::cout<<"VCS "<<group<<" contracts passed\n";return 0;
+        }
         std::filesystem::create_directories(root/"workspace");
-        gitRepositoryContracts(root);
         const auto workspace = root/"workspace";
         auto git = [&](const std::filesystem::path &cwd, std::vector<std::string> args) {
             args.insert(args.begin(),{"git","-C",pathUtf8(cwd),"-c","core.autocrlf=false","-c","commit.gpgsign=false","-c","user.name=CyCode test","-c","user.email=cycode@example.invalid"});
@@ -122,6 +141,6 @@ int main() {
             rejects([&] { nested.dispatch("vcs.branch.switch",{{"name","renamed"}}); },"Nested workspace cannot mutate outside root");
             call("vcs.remote.remove"); check(call("vcs.inspect").at("remotes").empty(),"Remote remove");
         }
-        std::filesystem::remove_all(root); std::cout << "Git branches, sync, stashes, history and merge resolution passed\n"; return 0;
+        cleanup(); std::cout << "Git branches, sync, stashes, history and merge resolution passed\n"; return 0;
     } catch (const std::exception &error) { std::cerr << error.what() << "\nFixture: " << pathUtf8(root) << '\n'; return 1; }
 }

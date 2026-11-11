@@ -5,12 +5,15 @@ description: Réglez la langue, le thème, la taille du texte et la restauration
 section: Bien démarrer
 order: 30
 parent: overview
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Apparence {#appearance}
 
 Ouvrez les options pour choisir le français ou l’anglais, un thème et la taille du texte de l’éditeur. Graphite est l’apparence propre à l’application ; d’autres thèmes CyUI sont disponibles. Agrandissez le texte selon votre écran plutôt que de modifier l’indentation du code.
+
+
+CyCode embarque les polices d’interface Roboto, JetBrains Mono et une petite police d’icônes de contrôle pour les systèmes sans les polices Windows. Aucune police n’est téléchargée au démarrage. Ces ressources suivent les réglages existants de taille du texte et de DPI. Leur répertoire ne garantit pas une prise en charge complète des caractères CJK, des emoji ou des écritures complexes.
 
 ## Fenêtres et sessions {#windows}
 

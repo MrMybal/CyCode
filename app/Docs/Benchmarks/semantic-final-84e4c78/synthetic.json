@@ -1,0 +1,347 @@
+{
+  "format": "cycode-semantic-baseline/1",
+  "corpus": {
+    "kind": "synthetic-cpp",
+    "translationUnits": 33,
+    "sourceFiles": 34,
+    "sourceBytes": 2522,
+    "sourceSha256": "233e08dabff73991f8b3c7074c8553d798eb119eabfea6870a4d8583ef7a78ea",
+    "compileArguments": [
+      "clang++",
+      "-std=c++20",
+      "-DCYCODE_BENCH_FACTOR=2",
+      "-I<corpus>",
+      "-c",
+      "<source>"
+    ]
+  },
+  "scope": "Synthetic C++ workload, production CLI JSON/stdio overhead included; process-cold is not OS-cache cold; no GUI, no file-search proxy",
+  "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+  "python": "3.11.18",
+  "sourceRevision": "84e4c7831afeab27406a958a957db23fe005eae8",
+  "workflowRun": "42492881444",
+  "limits": [
+    "No Unreal/MSBuild performance acceptance or comparative IDE benchmark; real Core CMake is a separate workload",
+    "No whole-project index completion signal",
+    "No concurrent/cancellation/load-invalidation benchmark yet",
+    "No peak/private memory measurement"
+  ],
+  "runs": [
+    {
+      "processColdStartupMilliseconds": 5.429913000000397,
+      "firstVersionBoundDiagnosticsMilliseconds": 454.945524999971,
+      "warmOperations": {
+        "definition": {
+          "samplesMilliseconds": [
+            4.336218999981156,
+            4.613383999981124,
+            5.094143999997414,
+            5.119858999989901,
+            5.097539000018969,
+            5.094004000000041,
+            5.179316999999628
+          ],
+          "medianMilliseconds": 5.094143999997414,
+          "p95Milliseconds": 5.179316999999628
+        },
+        "references": {
+          "samplesMilliseconds": [
+            6.341453999993973,
+            5.221387999995386,
+            5.111220999992838,
+            5.291928000019652,
+            5.2178270000240445,
+            5.181060999973397,
+            5.18920199999684
+          ],
+          "medianMilliseconds": 5.2178270000240445,
+          "p95Milliseconds": 6.341453999993973
+        },
+        "completion": {
+          "samplesMilliseconds": [
+            9.145401000012043,
+            10.183741999981066,
+            10.118288999990455,
+            5.042290000005778,
+            5.037527000013142,
+            5.080438999982562,
+            5.071186999998645
+          ],
+          "medianMilliseconds": 5.080438999982562,
+          "p95Milliseconds": 10.183741999981066
+        },
+        "renamePreview": {
+          "samplesMilliseconds": [
+            16.668473000038375,
+            243.0576450000217,
+            9.349353999994037,
+            10.246922000021641,
+            10.262629999999717,
+            10.73394399998051,
+            9.841207000022223
+          ],
+          "medianMilliseconds": 10.262629999999717,
+          "p95Milliseconds": 243.0576450000217
+        }
+      },
+      "semanticResultShapes": {
+        "definition": {
+          "locations": 1,
+          "paths": [
+            "widget.hpp"
+          ],
+          "truncated": false,
+          "projectIndexCompleteness": "unknown"
+        },
+        "references": {
+          "locations": 35,
+          "paths": [
+            "main.cpp",
+            "unit_0000.cpp",
+            "unit_0001.cpp",
+            "unit_0002.cpp",
+            "unit_0003.cpp",
+            "unit_0004.cpp",
+            "unit_0005.cpp",
+            "unit_0006.cpp",
+            "unit_0007.cpp",
+            "unit_0008.cpp",
+            "unit_0009.cpp",
+            "unit_0010.cpp",
+            "unit_0011.cpp",
+            "unit_0012.cpp",
+            "unit_0013.cpp",
+            "unit_0014.cpp",
+            "unit_0015.cpp",
+            "unit_0016.cpp",
+            "unit_0017.cpp",
+            "unit_0018.cpp",
+            "unit_0019.cpp",
+            "unit_0020.cpp",
+            "unit_0021.cpp",
+            "unit_0022.cpp",
+            "unit_0023.cpp",
+            "unit_0024.cpp",
+            "unit_0025.cpp",
+            "unit_0026.cpp",
+            "unit_0027.cpp",
+            "unit_0028.cpp",
+            "unit_0029.cpp",
+            "unit_0030.cpp"
+          ],
+          "truncated": false,
+          "projectIndexCompleteness": "unknown"
+        },
+        "completion": {
+          "items": 2,
+          "isIncomplete": false
+        },
+        "renamePreview": {
+          "editCount": 35,
+          "files": 34,
+          "state": "preview"
+        }
+      },
+      "probe": {
+        "path": "main.cpp",
+        "header": "widget.hpp",
+        "expression": "w.value",
+        "member": "value"
+      },
+      "unsavedEditDiagnosticsAndDefinition": {
+        "samplesMilliseconds": [
+          109.28723700004639,
+          111.57583700003215,
+          65.91174499999397,
+          65.89419199997337,
+          65.89445799994564
+        ],
+        "medianMilliseconds": 65.91174499999397,
+        "p95Milliseconds": 111.57583700003215
+      },
+      "backendEpoch": 1,
+      "memory": {
+        "available": true,
+        "processes": [
+          {
+            "pid": 4010,
+            "name": "cycode_cli",
+            "rssBytes": 11223040
+          },
+          {
+            "pid": 4026,
+            "name": "clangd.main",
+            "rssBytes": 213676032
+          }
+        ],
+        "sumRssBytes": 224899072,
+        "scope": "CLI plus live descendants; instantaneous RSS, shared pages may be counted repeatedly; not peak/private memory"
+      },
+      "checks": {
+        "persistentContext": true,
+        "persistentBackendEpoch": true,
+        "diskSourcesUnchanged": true
+      }
+    },
+    {
+      "processColdStartupMilliseconds": 5.254723000007289,
+      "firstVersionBoundDiagnosticsMilliseconds": 42.61608100000558,
+      "warmOperations": {
+        "definition": {
+          "samplesMilliseconds": [
+            4.499183000007179,
+            5.085005000012188,
+            5.185071000028074,
+            5.032736000032401,
+            5.067832999998245,
+            5.077250999988792,
+            5.100513000002138
+          ],
+          "medianMilliseconds": 5.077250999988792,
+          "p95Milliseconds": 5.185071000028074
+        },
+        "references": {
+          "samplesMilliseconds": [
+            5.894240000031914,
+            5.1843439999856855,
+            5.16199300000153,
+            5.18861199998355,
+            5.159151999976075,
+            5.209481999997934,
+            5.181930999981432
+          ],
+          "medianMilliseconds": 5.1843439999856855,
+          "p95Milliseconds": 5.894240000031914
+        },
+        "completion": {
+          "samplesMilliseconds": [
+            9.473180000043158,
+            5.067531000008785,
+            5.068149999999605,
+            5.09848100000454,
+            5.080511000016941,
+            5.111666000004789,
+            5.05870199998526
+          ],
+          "medianMilliseconds": 5.080511000016941,
+          "p95Milliseconds": 9.473180000043158
+        },
+        "renamePreview": {
+          "samplesMilliseconds": [
+            14.101060000029975,
+            239.2486770000346,
+            24.142983999979606,
+            10.29035900000963,
+            10.25974800000995,
+            10.252462000039486,
+            10.321088000011969
+          ],
+          "medianMilliseconds": 10.321088000011969,
+          "p95Milliseconds": 239.2486770000346
+        }
+      },
+      "semanticResultShapes": {
+        "definition": {
+          "locations": 1,
+          "paths": [
+            "widget.hpp"
+          ],
+          "truncated": false,
+          "projectIndexCompleteness": "unknown"
+        },
+        "references": {
+          "locations": 35,
+          "paths": [
+            "main.cpp",
+            "unit_0000.cpp",
+            "unit_0001.cpp",
+            "unit_0002.cpp",
+            "unit_0003.cpp",
+            "unit_0004.cpp",
+            "unit_0005.cpp",
+            "unit_0006.cpp",
+            "unit_0007.cpp",
+            "unit_0008.cpp",
+            "unit_0009.cpp",
+            "unit_0010.cpp",
+            "unit_0011.cpp",
+            "unit_0012.cpp",
+            "unit_0013.cpp",
+            "unit_0014.cpp",
+            "unit_0015.cpp",
+            "unit_0016.cpp",
+            "unit_0017.cpp",
+            "unit_0018.cpp",
+            "unit_0019.cpp",
+            "unit_0020.cpp",
+            "unit_0021.cpp",
+            "unit_0022.cpp",
+            "unit_0023.cpp",
+            "unit_0024.cpp",
+            "unit_0025.cpp",
+            "unit_0026.cpp",
+            "unit_0027.cpp",
+            "unit_0028.cpp",
+            "unit_0029.cpp",
+            "unit_0030.cpp"
+          ],
+          "truncated": false,
+          "projectIndexCompleteness": "unknown"
+        },
+        "completion": {
+          "items": 2,
+          "isIncomplete": false
+        },
+        "renamePreview": {
+          "editCount": 35,
+          "files": 34,
+          "state": "preview"
+        }
+      },
+      "probe": {
+        "path": "main.cpp",
+        "header": "widget.hpp",
+        "expression": "w.value",
+        "member": "value"
+      },
+      "unsavedEditDiagnosticsAndDefinition": {
+        "samplesMilliseconds": [
+          68.89746900003502,
+          65.85219400000142,
+          66.04056399999081,
+          66.09638600002654,
+          66.1120269999742
+        ],
+        "medianMilliseconds": 66.09638600002654,
+        "p95Milliseconds": 68.89746900003502
+      },
+      "backendEpoch": 1,
+      "memory": {
+        "available": true,
+        "processes": [
+          {
+            "pid": 4143,
+            "name": "cycode_cli",
+            "rssBytes": 11587584
+          },
+          {
+            "pid": 4159,
+            "name": "clangd.main",
+            "rssBytes": 221638656
+          }
+        ],
+        "sumRssBytes": 233226240,
+        "scope": "CLI plus live descendants; instantaneous RSS, shared pages may be counted repeatedly; not peak/private memory"
+      },
+      "checks": {
+        "persistentContext": true,
+        "persistentBackendEpoch": true,
+        "diskSourcesUnchanged": true
+      }
+    }
+  ],
+  "binarySha256": "486e9f5de31fc04d399dd29c920e09e37c3c5add6888f68b4e458ed6ba8b5866",
+  "clangdVersion": "Ubuntu clangd version 21.1.8 (6ubuntu1)\nFeatures: linux+grpc\nPlatform: x86_64-pc-linux-gnu\n",
+  "coreVersion": "CyCode 0.2.3",
+  "execution": "completed"
+}

@@ -1,3 +1,4 @@
+#include "OwnedTestDirectory.h"
 #include "cycode/Commands.h"
 #include "cycode/Engine.h"
 #include "cycode/PluginManifest.h"
@@ -5,7 +6,7 @@
 #include <iostream>
 using namespace cycode;
 void pluginPackageContracts(const std::filesystem::path &,const std::filesystem::path &);
-static void require(bool ok, const char *message) {
+static void require(bool ok, const std::string &message) {
     if (!ok)
         throw std::runtime_error(message);
 }
@@ -22,9 +23,8 @@ static void rejected(const std::function<void()> &call) {
     require(failed, "Expected an operation rejection");
 }
 int main(int argc, char **argv) {
-    const auto root = std::filesystem::temp_directory_path() /
-                      utf8Path("cycode-extensions-" +
-                               std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const OwnedTestDirectory owned("cycode-extensions-");
+    const auto &root=owned.path();
     try {
         require(argc == 3, "Expected fixture and dependency libraries");
         const auto hostInfo = pluginHostInfo();
@@ -121,6 +121,25 @@ int main(int argc, char **argv) {
             first.dispatch("documents.close",{{"path","event.cpp"},{"discard",true}});
             const auto info = first.dispatch("plugins.list");
             require(info.at("host") == hostInfo, "Plugin host metadata is unavailable");
+            require(info.at("snippetCatalogues").size()==1 &&
+                info.at("snippetCatalogues")[0].at("definitionCount")==1 &&
+                !info.at("snippetCatalogues")[0].contains("definitions"),"Snippet inventory must expose summaries");
+            {
+                const auto source=first.dispatch("documents.read",{{"path","main.cpp"}});
+                const auto query=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method","snippets.complete"},
+                    {"parameters",{{"path","main.cpp"},{"expectedRevision",source.at("revision")},
+                        {"position",{{"line",0},{"character",0}}}}}});
+                require(query.at("ok")==true && query.at("result").at("result").at("items").size()==1,
+                    "Plugin host request did not share its own declarative snippets");
+                bool denied = false;
+                try {
+                    first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method","snippets.userSave"},
+                        {"parameters",{{"text","{}"},{"expectedRevision","absent"}}}});
+                } catch (const std::exception &error) {
+                    denied = std::string(error.what()).find("settings.write") != std::string::npos;
+                }
+                require(denied, "Workspace-only plugin changed personal settings");
+            }
             bool incompatible = false;
             for (const auto &entry : info.at("plugins"))
                 if (entry.value("id", std::string{}) == "fixture.future")
@@ -164,11 +183,13 @@ int main(int argc, char **argv) {
             auto document = first.dispatch("documents.read", {{"path", "main.cpp"}});
             for(const auto *method:{"language.codeActions","language.codeActionPrepare","language.rename", "language.format",
                                     "changes.preview","changes.apply","changes.undo"}) {
-                const auto response=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},
-                    {"parameters",{{"id","not-issued"},{"path",""}}}});
-                require(!response.at("ok").get<bool>() &&
-                    response.at("error").get<std::string>().find("not exported")==std::string::npos,
-                    "Refactoring host request did not reach native validation");
+                std::string failure;
+                try {
+                    first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},
+                        {"parameters",{{"id","not-issued"},{"path",""}}}});
+                } catch (const std::exception &error) { failure=error.what(); }
+                require(!failure.empty() && failure.find("not exported")==std::string::npos,
+                    "Refactoring host request did not reach native validation: "+failure);
             }
             {
                 const auto readDirectory=root/"read-extensions";
@@ -179,10 +200,14 @@ int main(int argc, char **argv) {
                     {"library",library},{"permissions",Json::array()}}.dump());
                 Engine readOnly(root/"read-workspace");readOnly.plugins().load(readDirectory);
                 for(const auto *method:{"changes.apply","changes.undo"}) {
-                    const auto denied=readOnly.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},
-                        {"parameters",{{"id","not-issued"}}}});
-                    require(!denied.at("ok").get<bool>() && denied.at("error").get<std::string>().find("permission")!=std::string::npos,
-                            "Refactoring host mutation bypassed workspace.write");
+                    bool denied = false;
+                    try {
+                        readOnly.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},
+                            {"parameters",{{"id","not-issued"}}}});
+                    } catch (const std::exception &error) {
+                        denied = std::string(error.what()).find("permission") != std::string::npos;
+                    }
+                    require(denied, "Refactoring host mutation bypassed workspace.write");
                 }
             }
             const auto templateList = first.plugins().invoke(
@@ -227,8 +252,12 @@ int main(int argc, char **argv) {
             const auto projectInspection=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method","project.inspect"},{"parameters",Json::object()}});
             require(projectInspection.at("ok")&&projectInspection.at("result").contains("profile"),"Plugin cannot inspect shared project tasks");
             for(const auto *method:{"project.configure","project.build","project.test","project.install","project.script","project.launch","project.debug","project.cancel"}) {
-                const auto denied=first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},{"parameters",Json::object()}});
-                require(!denied.at("ok").get<bool>()&&denied.at("error").get<std::string>().find("permission")!=std::string::npos,"Project task plugin service bypassed process.execute");
+                std::string failure;
+                try {
+                    first.plugins().invoke("fixture.native.inspect",{{"mode","host"},{"method",method},{"parameters",Json::object()}});
+                } catch (const std::exception &error) {failure=error.what();}
+                require(failure.find("Plugin permission is missing: process.execute")!=std::string::npos,
+                        "Project task plugin service bypassed process.execute: "+failure);
             }
             require(first.dispatch("vcs.status").at("hostWriteDenied").get<bool>(),
                     "Read provider mutated host documents");
@@ -270,10 +299,19 @@ int main(int argc, char **argv) {
                                                      {"enabled", false},
                                                      {"expectedRevision", plugins.at("revision")}});
             });
+            const auto snippetSource=first.dispatch("documents.read",{{"path","main.cpp"}});
+            const Json snippetRequest={{"path","main.cpp"},{"expectedRevision",snippetSource.at("revision")},
+                {"position",{{"line",0},{"character",0}}}};
+            const auto snippetIssued=first.dispatch("snippets.complete",snippetRequest);
             first.dispatch("plugins.configure", {{"id", "fixture.addon"}, {"enabled", false}});
             first.dispatch("plugins.configure", {{"id", "fixture.native"}, {"enabled", false}});
             require(first.dispatch("plugins.list").at("menus").empty(),
                     "Disabled plugin menu remained registered");
+            require(first.dispatch("plugins.list").at("snippetCatalogues").empty() &&
+                first.dispatch("snippets.complete",snippetRequest).at("result").at("items").empty(),
+                "Disabled plugin snippets remained available");
+            rejected([&]{first.dispatch("language.completionPrepare",{{"sessionId",snippetIssued.at("sessionId")},
+                {"item",0},{"expectedRevision",snippetSource.at("revision")}});});
             rejected([&] { first.plugins().invoke("fixture.native.inspect", Json::object()); });
             require(!first.dispatch("vcs.context").at("available").get<bool>(),
                     "Unavailable selected provider silently fell back to Git");
@@ -310,7 +348,7 @@ int main(int argc, char **argv) {
                                                             {"expectedRevision", view.at("revision")}});
             require(changed.at("properties").at(0).at("value") == 42, "Panel property commit failed");
         }
-        std::filesystem::remove_all(root);
+        owned.clean();
         std::cout << "Extensions passed: ABI compatibility, instances, permissions, revisions, dependencies, "
                      "activation, provider routing and persistence.\n";
         return 0;

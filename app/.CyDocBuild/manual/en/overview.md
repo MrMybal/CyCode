@@ -4,8 +4,11 @@ title: CyCode
 description: Choose a task and start working in the IDE.
 section: Start here
 order: 0
-revision: 2
+revision: 4
 ---
+
+CyCode Core and the desktop interface are being separated. Read [the native architecture](doc:native-core#ownership) for current build/service ownership.
+
 
 ## Start here {#getting-started}
 
@@ -27,3 +30,13 @@ Use a separate application instance for a second project. Dockable panels can be
 ## Licence {#licensing}
 
 CyCode is GPL-3.0-only. Its libraries retain their own licences. See [licences](doc:licences#licence).
+
+## Task guides {#task-guides}
+
+- [Create a project](doc:project-templates#create) or [run its tasks](doc:project-tasks#tasks).
+- [Manage files and trash](doc:workspace-files#files).
+- [Explore symbols](doc:symbols#structure) and [diagnostics](doc:diagnostics#problems).
+- [Control a paused program](doc:debug-execution#stepping) and [advanced breakpoints](doc:debug-breakpoints#data).
+- [Inspect update storage/history](doc:update-storage#storage).
+- [Develop a revision-control provider](doc:custom-vcs#provider).
+- [Use this offline reader](doc:reader#open).

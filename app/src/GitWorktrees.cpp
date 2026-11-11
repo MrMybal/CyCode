@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
 #include "cycode/TextEdits.h"
@@ -16,7 +17,7 @@ std::string trimmed(std::string value) {
 }
 Json processResult(const ProcessResult &r) {
     return {
-        {"exitCode", r.exitCode}, {"output", r.output}, {"truncated", r.truncated}, {"timedOut", r.timedOut}};
+        {"exitCode", r.exitCode}, {"output", processOutputText(r.output, true)}, {"truncated", r.truncated}, {"timedOut", r.timedOut}};
 }
 } // namespace
 GitRepositorySelection Engine::gitSelection(const Json &params) const {
@@ -36,7 +37,9 @@ GitRepositorySelection Engine::gitSelection(const Json &params) const {
             runProcess({"git", "-C", pathUtf8(folder), "rev-parse", "--show-toplevel"}, folder);
         if (probe.exitCode || probe.truncated || probe.timedOut ||
             !fs::equivalent(utf8Path(trimmed(probe.output)), folder))
-            throw std::runtime_error("Git reports a different repository root; refresh the selection");
+            throw std::runtime_error("Git reports a different repository root; refresh the selection: " +
+                Json({{"exitCode",probe.exitCode},{"timedOut",probe.timedOut},{"truncated",probe.truncated},
+                      {"output",probe.output}}).dump());
     }
     return selection;
 }

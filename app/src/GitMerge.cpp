@@ -1,3 +1,4 @@
+#include "cycode/ProcessText.h"
 #include "cycode/GitMerge.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
@@ -101,15 +102,20 @@ Json Engine::gitMerge(const std::string &method, const Json &params) {
                            {"GIT_EDITOR", ":"}});
     };
     auto checked = [&](std::vector<std::string> args) {
-        const auto result = git(std::move(args));
+        const auto result = git(args);
         if (result.exitCode || result.timedOut || result.truncated)
-            throw std::runtime_error("Git merge inspection failed: " + result.output);
+            throw std::runtime_error("Git merge inspection failed: " +
+                Json({{"arguments",args},{"exitCode",result.exitCode},{"timedOut",result.timedOut},
+                      {"cancelled",result.cancelled},{"truncated",result.truncated},{"output",result.output}}).dump());
         return result.output;
     };
     auto ref = [&](const std::string &name) {
         const auto result = git({"rev-parse", "--verify", "--quiet", name});
         if (result.timedOut || result.truncated || (result.exitCode != 0 && result.exitCode != 1))
-            throw std::runtime_error("Cannot inspect Git merge reference");
+            throw std::runtime_error("Cannot inspect Git merge reference: " +
+                Json{{"reference",name},{"exitCode",result.exitCode},{"timedOut",result.timedOut},
+                     {"truncated",result.truncated},
+                     {"output",processOutputText(std::string_view(result.output).substr(0,2048),true)}}.dump());
         return result.exitCode ? std::string{} : trimmed(result.output);
     };
     const auto admin =
@@ -360,7 +366,7 @@ Json Engine::gitMerge(const std::string &method, const Json &params) {
                                     : std::vector<std::string>{"merge", "--quit"},
                              120, hooks, true);
     Json result = {{"exitCode", process.exitCode},
-                   {"output", process.output},
+                   {"output", processOutputText(process.output, true)},
                    {"timedOut", process.timedOut},
                    {"truncated", process.truncated},
                    {"action", request.at("action")},

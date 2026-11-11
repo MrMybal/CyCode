@@ -27,7 +27,7 @@ bool path(const std::string &s) {
     if (isUntitledDocument(s))
         return true;
     const auto p = utf8Path(s);
-    if (s.empty() || s.find('\0') != std::string::npos || p.is_absolute() || p.has_root_name() ||
+    if (s.empty() || s.find('\0') != std::string::npos || p.has_root_path() ||
         s.find_first_of("\\:\r\n") != std::string::npos)
         return false;
     for (const auto &part : p)

@@ -94,7 +94,19 @@ int main(int argc,char **argv) {
                 engine.dispatch("changes.apply",{{"id",rename.at("id")}});
                 engine.dispatch("changes.undo",{{"id",rename.at("id")}});
                 doc=engine.dispatch("documents.read",{{"path",path}});
-                const auto highlight=engine.dispatch("language.highlight",{{"path",path},{"expectedRevision",doc.at("revision")}});
+                Json highlight;
+                const auto refreshDeadline=std::chrono::steady_clock::now()+std::chrono::seconds(10);
+                for (;;) {
+                    try {
+                        highlight=engine.dispatch("language.highlight",{{"path",path},{"expectedRevision",doc.at("revision")}});
+                        break;
+                    } catch (const std::exception &error) {
+                        if (std::string(error.what())!="RevisionConflict: semantic context changed" ||
+                            std::chrono::steady_clock::now()>=refreshDeadline ||
+                            engine.dispatch("documents.read",{{"path",path}}).at("revision")!=doc.at("revision")) throw;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                    }
+                }
                 require(!highlight.at("supported").get<bool>() || !highlight.at("tokens").empty(),"Advertised semantic colors missing");
             }
             if (backend=="css") {

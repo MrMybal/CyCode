@@ -1,9 +1,12 @@
+#include "cycode/AtomicFile.h"
+#include "cycode/ProcessText.h"
 #include "cycode/BuildSystem.h"
 #include "cycode/BuildLimits.h"
 #include "cycode/BuildOperations.h"
 #include "cycode/CMakePresets.h"
 #include "cycode/Tools.h"
 #include <algorithm>
+#include <atomic>
 #include <cstdlib>
 #include <fstream>
 #include <memory>
@@ -35,33 +38,7 @@ static std::string environment(const char *name) {
 #endif
 }
 static fs::path executable(const std::string &name, const std::vector<fs::path> &hints = {}) {
-    std::vector<fs::path> candidates;
-    std::istringstream stream(environment("PATH"));
-    std::string directory;
-#ifdef _WIN32
-    constexpr char separator = ';';
-    auto filename = name.ends_with(".exe") ? name : name + ".exe";
-#else
-    constexpr char separator = ':';
-    auto filename = name;
-#endif
-    while (std::getline(stream, directory, separator)) {
-        auto path = utf8Path(directory);
-        if (path.is_absolute())
-            candidates.push_back(path / filename);
-    }
-    candidates.insert(candidates.end(), hints.begin(), hints.end());
-    for (const auto &candidate : candidates) {
-        std::error_code ec;
-        if (fs::is_regular_file(candidate, ec)) {
-#ifndef _WIN32
-            if (access(candidate.c_str(), X_OK))
-                continue;
-#endif
-            return fs::canonical(candidate);
-        }
-    }
-    return {};
+    return findExecutableOnPath(name, hints);
 }
 static std::string read(const fs::path &path, size_t limit = 32 * 1024 * 1024) {
     std::ifstream in(path, std::ios::binary);
@@ -120,28 +97,7 @@ static bool within(const fs::path &base, const fs::path &path) {
     return true;
 }
 static void writeAtomic(const fs::path &path, const std::string &text) {
-    if (fs::exists(path) && read(path) == text)
-        return;
-    fs::create_directories(path.parent_path());
-    auto temporary = path;
-    temporary += ".tmp-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
-    {
-        std::ofstream out(temporary, std::ios::binary);
-        out << text;
-        out.flush();
-        if (!out) {
-            fs::remove(temporary);
-            throw std::runtime_error("Cannot write build metadata");
-        }
-    }
-#ifdef _WIN32
-    if (!MoveFileExW(temporary.c_str(), path.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
-        fs::remove(temporary);
-        throw std::runtime_error("Cannot replace build metadata");
-    }
-#else
-    fs::rename(temporary, path);
-#endif
+    writeMetadataFileAtomic(path, text);
 }
 static void ignoreGeneratedTree(const fs::path &path) {
     constexpr char text[] = "# CyCode: generated CMake build tree\n*\n";
@@ -619,7 +575,7 @@ Json BuildSystem::runPreset(const Json &params,const std::atomic<bool> *cancella
         for(const auto *entry:{"codemodel-v2","toolchains-v1"})writeAtomic(resolve_(pathUtf8(query/entry)),"");
     }
     auto process=runProcess(args,source,timeout,8*1024*1024,cancellation,{},processOutputObserver(cancellation));
-    Json result={{"exitCode",process.exitCode},{"output",process.output},{"timedOut",process.timedOut},
+    Json result={{"exitCode",process.exitCode},{"output",processOutputText(process.output, true)},{"timedOut",process.timedOut},
                  {"truncated",process.truncated},{"cancelled",process.cancelled},{"plan",plan},{"project",nullptr}};
     // A completed external action cannot be rolled back by a later inspection failure.
     try {
@@ -710,13 +666,13 @@ Json BuildSystem::run(const std::string &method, const Json &params, const std::
             for (const auto &entry : current.at("toolchains"))
                 if (entry.value("language", "") == "CXX") {
                     auto path = entry.value("compiler", Json::object()).value("path", "");
-                    if (!path.empty() && !samePath(utf8Path(path), utf8Path(compiler.at("cxxCompiler"))))
+                    if (!path.empty() && !sameExecutableInvocation(utf8Path(path), utf8Path(compiler.at("cxxCompiler"))))
                         throw std::runtime_error("Compiler changed; choose a new build directory");
                     verified = !path.empty();
                 }
             if (!verified && stored.contains("CMAKE_CXX_COMPILER")) {
                 verified =
-                    samePath(utf8Path(stored.at("CMAKE_CXX_COMPILER")), utf8Path(compiler.at("cxxCompiler")));
+                    sameExecutableInvocation(utf8Path(stored.at("CMAKE_CXX_COMPILER")), utf8Path(compiler.at("cxxCompiler")));
                 if (!verified)
                     throw std::runtime_error("Compiler changed; choose a new build directory");
             }
@@ -782,7 +738,7 @@ Json BuildSystem::run(const std::string &method, const Json &params, const std::
     auto process = runProcess(args, presetMode ? source : root_, timeout, 8 * 1024 * 1024, cancellation,
                               {}, processOutputObserver(cancellation));
     Json result = {{"exitCode", process.exitCode},
-                   {"output", process.output},
+                   {"output", processOutputText(process.output, true)},
                    {"timedOut", process.timedOut},
                    {"truncated", process.truncated},
                    {"cancelled", process.cancelled}};

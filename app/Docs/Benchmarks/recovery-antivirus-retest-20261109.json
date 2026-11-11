@@ -1,0 +1,129 @@
+{
+  "format": "cycode-recovery-retest-assessment/1",
+  "createdAt": "2026-11-09T20:36:52.425364+00:00",
+  "sourceCommit": "34323ccbb042cb14d3596dd177da967a3049e6b7",
+  "sourceDigest": "149395e787f3507ddb51c0f5e0924c0098305bc916b434bdf784b39f39f0b6db",
+  "reviewedAtomicSaveFixesPresent": true,
+  "sampleSha256": "d351fc02181ca2e609463d985cf2dde3318799987c168d72ab4a9199e3a9c76f",
+  "buildExitCode": 0,
+  "nativeTraceEnabled": true,
+  "scenario": "refresh-checkpoint-without-save",
+  "completedNativeOperations": [
+    "documents.create",
+    "documents.replace",
+    "recovery.flush",
+    "documents.replace",
+    "recovery.flush"
+  ],
+  "documentSaveCalled": false,
+  "mcpServerStarted": false,
+  "cyToolsRuntimeStarted": false,
+  "projectCompilerStarted": false,
+  "nativeExitCode": 5,
+  "trace": {
+    "records": 74,
+    "closedSpans": 37,
+    "openSpans": [],
+    "failedSpans": [],
+    "truncated": false,
+    "finalPhase": {
+      "format": "cycode-native-trace/1",
+      "seq": 74,
+      "utcMicros": 1794256457198927,
+      "span": 23,
+      "parent": 0,
+      "event": "recovery.checkpoint",
+      "phase": "end",
+      "outcome": "returned",
+      "systemError": 0
+    },
+    "indexReplacement": [
+      {
+        "span": 36,
+        "parent": 31,
+        "event": "file.replace.existing",
+        "outcome": "success",
+        "systemError": 0,
+        "startSeq": 68,
+        "endSeq": 69,
+        "durationMicros": 1171
+      }
+    ],
+    "payloadRemoval": [
+      {
+        "span": 37,
+        "parent": 23,
+        "event": "recovery.payload.text.remove",
+        "outcome": "success",
+        "systemError": 0,
+        "startSeq": 72,
+        "endSeq": 73,
+        "durationMicros": 136
+      }
+    ],
+    "consumedTemporaryCleanupAttempts": 0
+  },
+  "persistedState": {
+    "documents": 1,
+    "dirtyRevision": 3,
+    "matchesSecondRevision": true,
+    "textMatchesSecondRevision": true,
+    "secondTextPresent": true,
+    "oldTextPresent": false,
+    "firstBaselinePresent": true,
+    "documentBytes": 0
+  },
+  "harnessFailure": {
+    "type": "AssertionError",
+    "cause": "Postcondition wrongly required the document pathname to be absent. documents.create creates an empty disk file.",
+    "effect": "Assertion requested EOF immediately after checkpoint response; planned 8-second pause and 20-second post-exit observation did not occur.",
+    "changedAfterRunWithoutRelaunch": true
+  },
+  "events": [
+    {
+      "provider": "avp",
+      "eventId": "4662",
+      "recordId": "22418291",
+      "utcTime": "2026-11-09T20:34:17.2751051Z",
+      "processSha256": "d351fc02181ca2e609463d985cf2dde3318799987c168d72ab4a9199e3a9c76f",
+      "databaseVersionAsReported": "2026.11.09 11:44:00:000",
+      "detectionNumber": "369941",
+      "opaqueName": "32d87a95",
+      "confidenceCodeUninterpreted": "00000000",
+      "rawContentIncluded": false
+    },
+    {
+      "provider": "avp",
+      "eventId": "4662",
+      "recordId": "22418292",
+      "utcTime": "2026-11-09T20:34:17.3074843Z",
+      "processSha256": "d351fc02181ca2e609463d985cf2dde3318799987c168d72ab4a9199e3a9c76f",
+      "databaseVersionAsReported": "2026.11.09 11:44:00:000",
+      "detectionNumber": "369941",
+      "opaqueName": "28808cb6",
+      "confidenceCodeUninterpreted": "00000006",
+      "rawContentIncluded": false
+    }
+  ],
+  "firstEventMillisecondsAfterResponse": 23.704,
+  "firstEventMillisecondsAfterRequestedShutdown": 18.687,
+  "firstEventMillisecondsAfterLastNativeTrace": 76.178,
+  "unexecutedCases": [
+    "inactive-checkpoint-discard",
+    "checkpoint-then-save"
+  ],
+  "samplePresentAtPostflight": false,
+  "coreProcessesAtPostflight": [],
+  "originalWorkspaceFilesPreserved": 154,
+  "originalWorkspaceChangedPaths": [],
+  "finding": "The corrected production sample was detected during an independent checkpoint-refresh case with no documents.save request, MCP runtime or project compiler. Native trace confirms successful index replacement and old-text removal; the old base remains.",
+  "causalityLimit": "The harness assertion caused immediate EOF before the AV event was published. This case does not isolate replacement, payload deletion, shutdown, accumulated activity or the proprietary vendor rule. Trace I/O, changed sample reputation, timing and single-run coverage remain limitations.",
+  "antivirusIssueResolved": false,
+  "falsePositiveConfirmed": false,
+  "nativeHold": "active again following new avp records 22418291/22418292; no rebuild/retry after detection",
+  "protectionChanged": false,
+  "sampleRestoredOrCopied": false,
+  "uploaded": false,
+  "installationOrPublication": false,
+  "githubActionsUsed": false
+}

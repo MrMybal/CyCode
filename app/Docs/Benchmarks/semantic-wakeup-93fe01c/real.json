@@ -1,0 +1,147 @@
+{
+  "format": "cycode-semantic-baseline/1",
+  "corpus": {
+    "kind": "real-native-core-cmake",
+    "sourceFiles": 227,
+    "translationUnits": 121,
+    "sourceBytes": 1771868,
+    "sourceSha256": "d20d0a879d19b2979c7dd84bdd290dc149eeab34041fce42fb652edcd71f6cce",
+    "compileDatabaseSha256": "17f71b017d2014ae6b48d75e4e5e0009fee1b44ff8325b15f9bad8c13b620a95",
+    "compileArgumentsOrigin": "Actual CMake Ninja export used to compile the production CLI and native libraries"
+  },
+  "scope": "Actual native CyCode CMake project, production CLI JSON/stdio overhead included; process-cold is not OS-cache cold; no GUI, no file-search proxy",
+  "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+  "python": "3.11.18",
+  "sourceRevision": "93fe01cdd0d337b4aaa1a57d704ab6c055c5804c",
+  "workflowRun": "42488130338",
+  "limits": [
+    "No Unreal/MSBuild performance acceptance or comparative IDE benchmark; real Core CMake is a separate workload",
+    "No whole-project index completion signal",
+    "No concurrent/cancellation/load-invalidation benchmark yet",
+    "No peak/private memory measurement"
+  ],
+  "runs": [
+    {
+      "processColdStartupMilliseconds": 7.257412000001295,
+      "firstVersionBoundDiagnosticsMilliseconds": 3296.5217970000253,
+      "warmOperations": {
+        "definition": {
+          "samplesMilliseconds": [
+            1.2491790000126457,
+            5.6980069999781335,
+            5.405329999973674,
+            5.083021000018562,
+            5.086804999962169
+          ],
+          "medianMilliseconds": 5.086804999962169,
+          "p95Milliseconds": 5.6980069999781335
+        },
+        "references": {
+          "samplesMilliseconds": [
+            5.136479000043437,
+            4.970911999976124,
+            5.060033999995994,
+            5.0811500000236265,
+            5.168825999987803
+          ],
+          "medianMilliseconds": 5.0811500000236265,
+          "p95Milliseconds": 5.168825999987803
+        },
+        "completion": {
+          "samplesMilliseconds": [
+            472.7162890000045,
+            454.1274929999872,
+            461.751382999978,
+            436.77169400001503,
+            431.55717600001253
+          ],
+          "medianMilliseconds": 454.1274929999872,
+          "p95Milliseconds": 472.7162890000045
+        },
+        "renamePreview": {
+          "samplesMilliseconds": [
+            10.035487000038756,
+            10.182807999967736,
+            10.233101999972405,
+            10.247734000017772,
+            10.100968000017474
+          ],
+          "medianMilliseconds": 10.182807999967736,
+          "p95Milliseconds": 10.247734000017772
+        }
+      },
+      "semanticResultShapes": {
+        "definition": {
+          "locations": 1,
+          "paths": [
+            "app/include/cycode/Engine.h"
+          ],
+          "truncated": false,
+          "projectIndexCompleteness": "unknown"
+        },
+        "references": {
+          "locations": 2,
+          "paths": [
+            "app/include/cycode/Engine.h",
+            "app/src/cli.cpp"
+          ],
+          "truncated": false,
+          "projectIndexCompleteness": "unknown"
+        },
+        "completion": {
+          "items": 16,
+          "isIncomplete": false
+        },
+        "renamePreview": {
+          "editCount": 2,
+          "files": 2,
+          "state": "preview"
+        }
+      },
+      "probe": {
+        "path": "app/src/cli.cpp",
+        "header": "app/include/cycode/Engine.h",
+        "expression": "engine.dispatch",
+        "member": "dispatch"
+      },
+      "unsavedEditDiagnosticsAndDefinition": {
+        "samplesMilliseconds": [
+          949.7008430000164,
+          876.552715999992,
+          878.36532700004,
+          936.0567429999946,
+          852.0278739999867
+        ],
+        "medianMilliseconds": 878.36532700004,
+        "p95Milliseconds": 949.7008430000164
+      },
+      "backendEpoch": 1,
+      "memory": {
+        "available": true,
+        "processes": [
+          {
+            "pid": 4244,
+            "name": "cycode_cli",
+            "rssBytes": 11677696
+          },
+          {
+            "pid": 4260,
+            "name": "clangd.main",
+            "rssBytes": 1168453632
+          }
+        ],
+        "sumRssBytes": 1180131328,
+        "scope": "CLI plus live descendants; instantaneous RSS, shared pages may be counted repeatedly; not peak/private memory"
+      },
+      "checks": {
+        "persistentContext": true,
+        "persistentBackendEpoch": true,
+        "diskSourcesUnchanged": true
+      }
+    }
+  ],
+  "binarySha256": "8b1b1d62336926814867f42b097836cbd22b6a734d24e4dc40599efb35ed1f2d",
+  "clangdVersion": "Ubuntu clangd version 21.1.8 (6ubuntu1)\nFeatures: linux+grpc\nPlatform: x86_64-pc-linux-gnu\n",
+  "coreVersion": "CyCode 0.2.3",
+  "execution": "completed"
+}

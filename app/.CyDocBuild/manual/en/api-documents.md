@@ -16,6 +16,16 @@ These contracts describe the native service exposed by the official SDK/MCP inte
 
 - [`documents_reload`](doc:operation-documents-reload-documents-reload) — Reload a document from disk with a fresh revision.
 - [`documents_list`](doc:operation-documents-list-documents-list) — List documents currently open in the IDE.
+- [`documents_read_page`](doc:operation-documents-read-page-documents-read-page) — Open native paged UTF-8 text and read at most 256 KiB at a time.
+- [`documents_checkpoint_paged`](doc:operation-documents-checkpoint-paged-documents-checkpoint-paged) — Explicitly persist a full immutable paged snapshot under private workspace working-data, using streaming atomic publication.
+- [`documents_paged_checkpoints`](doc:operation-documents-paged-checkpoints-documents-paged-checkpoints) — Discover at most 256 explicit paged checkpoints while scanning at most 4096 working directories.
+- [`documents_preview_paged_checkpoint`](doc:operation-documents-preview-paged-checkpoint-documents-preview-paged-checkpoint) — Read a bounded UTF-8 byte page from an issued durable paged checkpoint, after full streamed payload digest verification.
+- [`documents_restore_paged_checkpoint`](doc:operation-documents-restore-paged-checkpoint-documents-restore-paged-checkpoint) — Prepare a guarded restoration into an already-open paged document, keeping the current buffer as the Undo preimage.
+- [`documents_read_lines`](doc:operation-documents-read-lines-documents-read-lines) — Read an already-open native paged source by zero-based line and UTF-16 character, excluding an initial BOM.
+- [`documents_save_paged_as`](doc:operation-documents-save-paged-as-documents-save-paged-as) — Stream an already-open paged document into a NEW workspace file in an existing folder and rebind its native identity.
+- [`documents_prepare_byte_edit`](doc:operation-documents-prepare-byte-edit-documents-prepare-byte-edit) — Prepare one edit of an already-open paged document using UTF-8 byte boundaries and expectedRevision.
+- [`documents_save_paged`](doc:operation-documents-save-paged-documents-save-paged) — Explicitly stream an already-open paged document to its original workspace file using the shared atomic writer.
+- [`documents_close_paged`](doc:operation-documents-close-paged-documents-close-paged) — Close a native paged live document with its expected revision.
 - [`documents_read`](doc:operation-documents-read-documents-read) — Read the live document and its revision, including unsaved edits.
 - [`documents_create`](doc:operation-documents-create-documents-create) — Create an empty UTF-8 file inside the workspace.
 - [`documents_create_untitled`](doc:operation-documents-create-untitled-documents-create-untitled) — Create an in-memory draft with an issued untitled reference, optional filename for lexical coloring and initial text.

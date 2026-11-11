@@ -1,0 +1,18 @@
+# Native disk-backed text only: no Engine, language server, process or graphical runtime.
+if(NOT TARGET CyCode::Files)
+  message(FATAL_ERROR "Add CyCode/common before PagedText")
+endif()
+if(NOT EXISTS "${CYCODE_COMMON_DEPS}/monocypher/src/monocypher.c")
+  message(FATAL_ERROR "Pinned Monocypher sources missing; fetch --components PagedText")
+endif()
+if(NOT TARGET cycode_crypto)
+  add_library(cycode_crypto STATIC "${CYCODE_COMMON_DEPS}/monocypher/src/monocypher.c")
+  target_include_directories(cycode_crypto PUBLIC "${CYCODE_COMMON_DEPS}/monocypher/src")
+  set_target_properties(cycode_crypto PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON C_VISIBILITY_PRESET hidden)
+endif()
+add_library(cycode_paged_text STATIC EXCLUDE_FROM_ALL
+  ../../app/src/LargeText.cpp ../../app/src/SpoolStore.cpp ../../app/src/StreamingData.cpp)
+target_include_directories(cycode_paged_text PUBLIC include PRIVATE ../../app/include)
+target_link_libraries(cycode_paged_text PUBLIC CyCode::Files PRIVATE cycode_crypto)
+set_target_properties(cycode_paged_text PROPERTIES POSITION_INDEPENDENT_CODE ON)
+add_library(CyCode::PagedText ALIAS cycode_paged_text)

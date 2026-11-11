@@ -19,6 +19,7 @@ class Keymap {
     struct Result { std::string command; bool consumed = false; };
     void load(const std::string &profile, const Json &overrides = Json::object());
     void extensions(std::vector<Command> commands, Json defaults = Json::object());
+    // Accepts one canonical or display-form stroke; invalid events cancel a pending chord.
     Result press(const std::string &stroke, double time, bool editor, bool document);
     void cancel();
     std::string pending(double time) const;

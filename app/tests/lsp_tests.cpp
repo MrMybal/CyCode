@@ -55,6 +55,35 @@ int main(int argc, char **argv) {
         }
         require(invalidUri, "Malformed URI rejected");
         {
+            std::mutex wakeMutex;
+            std::condition_variable wake;
+            size_t signals = 0;
+            LanguageClient transport([&] {
+                std::lock_guard lock(wakeMutex);
+                ++signals;
+                wake.notify_one();
+            });
+            require(transport.start(root, argv[1]), "Start real wake-enabled clangd transport");
+            {
+                std::unique_lock lock(wakeMutex);
+                require(wake.wait_for(lock,std::chrono::seconds(10),[&]{return signals != 0;}),
+                        "Incoming response did not wake the owning thread");
+            }
+            require(!transport.initialized(), "Transport reader dispatched an owner-thread callback");
+            const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(10);
+            while (!transport.initialized() && transport.running() && std::chrono::steady_clock::now()<deadline) {
+                size_t before;
+                { std::lock_guard lock(wakeMutex); before=signals; }
+                transport.poll();
+                if (transport.initialized()) break;
+                std::unique_lock lock(wakeMutex);
+                wake.wait_for(lock,std::chrono::milliseconds(100),[&]{return signals!=before;});
+            }
+            require(transport.initialized(), "Owner could not initialize after the wake signal");
+            transport.stop();
+            require(!transport.running(), "Wake-enabled transport failed to join on stop");
+        }
+        {
             Engine engine(root);
             engine.configureLanguage(argv[1], true, true);
             auto doc = engine.dispatch("documents.read", {{"path", name}});
@@ -146,6 +175,17 @@ int main(int argc, char **argv) {
             require(preview.at("after").get<std::string>().find("widget.number")!=std::string::npos,"clangd resolved insertion preview");
             engine.dispatch("changes.apply",{{"id",prepared.at("plan").at("id")}});engine.dispatch("changes.undo",{{"id",prepared.at("plan").at("id")}});
             doc=engine.dispatch("documents.read",{{"path",name}});
+            {
+                const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(15);bool current=false;
+                while(std::chrono::steady_clock::now()<deadline) {
+                    const auto state=engine.languageStatus();
+                    const auto &cpp=state.at("servers").at("cpp");
+                    const auto publication=cpp.at("diagnosticRevisions").value(name,Json::object());
+                    if(publication.value("revision",uint64_t(0))==doc.at("revision")) {current=true;break;}
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+                require(current,"Rapid transaction Apply/Undo lost current-revision clangd diagnostics");
+            }
             const auto callText=std::string("#include \"widget.hpp\"\nvoid test() { Widget widget; widget.cal }\n");
             doc=engine.dispatch("documents.replace",{{"path",name},{"text",callText},{"expectedRevision",doc.at("revision")}});
             const auto calls=query("language.complete",callText," }");const auto &callItems=calls.at("result").at("items");

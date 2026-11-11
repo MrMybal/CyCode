@@ -8,6 +8,7 @@
 #include <sstream>
 #ifdef _WIN32
 #include <windows.h>
+#include "cycode/WindowsChildHandles.h"
 #else
 #include <cerrno>
 #include <csignal>
@@ -25,7 +26,11 @@ struct LanguageClient::Child {
     pid_t process = -1;
 #endif
 };
-LanguageClient::LanguageClient() = default;
+LanguageClient::LanguageClient(std::function<void()> wake) : wakeHandler_(std::move(wake)) {}
+void LanguageClient::signalWake() noexcept {
+    // Signals never own protocol dispatch; a host callback cannot unwind a thread.
+    try { if (wakeHandler_) wakeHandler_(); } catch (...) {}
+}
 LanguageClient::~LanguageClient() {
     stop();
 }
@@ -99,7 +104,7 @@ bool LanguageClient::start(const std::filesystem::path &root, const std::string 
                            const std::filesystem::path &compilationDatabase, Json settings) {
     waitForWorkspace_ = false;
     if (!compilationDatabase.empty()) settings["compilationDatabasePath"] = pathUtf8(compilationDatabase);
-    return startImpl(root, {executable, "--background-index", "--log=error", "--header-insertion=never", "--completion-style=detailed"}, settings, false);
+    return startImpl(root, {executable, "--background-index", "--rename-file-limit=0", "--use-dirty-headers", "--log=error", "--header-insertion=never", "--completion-style=detailed"}, settings, false);
 }
 bool LanguageClient::startServer(const std::filesystem::path &root, const std::vector<std::string> &argv, Json configuration, bool waitForWorkspace, Json environment) {
     waitForWorkspace_ = waitForWorkspace;
@@ -144,7 +149,7 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     workspaceFolders_ = Json::array({{{"uri",uri(root)},{"name",pathUtf8(root.filename())}}});
     raw_ = raw; incomingBytes_ = 0;
     child_ = std::make_unique<Child>();
-    initialized_ = false;
+    initialized_ = false;serverName_.clear();
     diagnostics_ = Json::object();diagnosticVersions_=Json::object();
     ++diagnosticGeneration_;
     {
@@ -162,18 +167,26 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
         !CreatePipe(&child_->output, &childOut, &security, 0) ||
         !CreatePipe(&child_->errors, &childErr, &security, 0)) {
         error_ = "Cannot create language server pipes";
+        for(auto handle:{childIn,childOut,childErr})if(handle)CloseHandle(handle);
         stop();
         return false;
     }
     SetHandleInformation(child_->input, HANDLE_FLAG_INHERIT, 0);
     SetHandleInformation(child_->output, HANDLE_FLAG_INHERIT, 0);
     SetHandleInformation(child_->errors, HANDLE_FLAG_INHERIT, 0);
-    STARTUPINFOW si{};
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput = childIn;
-    si.hStdOutput = childOut;
-    si.hStdError = childErr;
+    WindowsChildHandles inheritedHandles{childIn,childOut,childErr};
+    if(!inheritedHandles.get()) {
+        error_="Cannot restrict language-server handle inheritance (Windows error "+std::to_string(inheritedHandles.error())+")";
+        for(auto handle:{childIn,childOut,childErr})CloseHandle(handle);
+        stop();return false;
+    }
+    STARTUPINFOEXW si{};
+    si.StartupInfo.cb = sizeof(si);
+    si.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+    si.StartupInfo.hStdInput = childIn;
+    si.StartupInfo.hStdOutput = childOut;
+    si.StartupInfo.hStdError = childErr;
+    si.lpAttributeList=inheritedHandles.get();
     PROCESS_INFORMATION process{};
     std::wstring command;
     for (const auto &arg : argv) {
@@ -191,8 +204,11 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     child_->job = CreateJobObjectW(nullptr, nullptr);
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit{};
     limit.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-    if (child_->job)
-        SetInformationJobObject(child_->job, JobObjectExtendedLimitInformation, &limit, sizeof(limit));
+    if (!child_->job || !SetInformationJobObject(child_->job, JobObjectExtendedLimitInformation, &limit, sizeof(limit))) {
+        error_="Cannot create the language-server process job (Windows error "+std::to_string(GetLastError())+")";
+        for(auto handle:{childIn,childOut,childErr})CloseHandle(handle);
+        stop();return false;
+    }
     // Windows accepts duplicate Path/PATH entries; MSBuild/.NET reject them.
     auto insensitive = [](const std::wstring &a,const std::wstring &b) { return _wcsicmp(a.c_str(),b.c_str()) < 0; };
     std::map<std::wstring,std::wstring,decltype(insensitive)> variables(insensitive);
@@ -216,20 +232,31 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     for (const auto &[key,value] : variables) { environment.insert(environment.end(),value.begin(),value.end()); environment.push_back(0); }
     environment.push_back(0);
     bool created =
-        CreateProcessW(nullptr, command.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT,
-                       environment.data(), root.c_str(), &si, &process) != FALSE;
+        CreateProcessW(nullptr, command.data(), nullptr, nullptr, TRUE,
+                       CREATE_NO_WINDOW | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | EXTENDED_STARTUPINFO_PRESENT,
+                       environment.data(), root.c_str(), &si.StartupInfo, &process) != FALSE;
+    const auto creationError=created?ERROR_SUCCESS:GetLastError();
     CloseHandle(childIn);
     CloseHandle(childOut);
     CloseHandle(childErr);
     if (!created) {
-        error_ = "Cannot start language server: " + argv.front();
+        error_ = "Cannot start language server: " + argv.front()+" (Windows error "+std::to_string(creationError)+")";
         stop();
         return false;
     }
     child_->process = process.hProcess;
-    if (child_->job)
-        AssignProcessToJobObject(child_->job, process.hProcess);
-    ResumeThread(process.hThread);
+    if (!AssignProcessToJobObject(child_->job, process.hProcess)) {
+        error_="Cannot own the language-server process tree (Windows error "+std::to_string(GetLastError())+")";
+        // Only the child handle returned by our own CreateProcess is terminated.
+        // It is still suspended and has not executed server/project code.
+        TerminateProcess(process.hProcess,1);WaitForSingleObject(process.hProcess,INFINITE);
+        CloseHandle(process.hThread);stop();return false;
+    }
+    if(ResumeThread(process.hThread)==static_cast<DWORD>(-1)) {
+        error_="Cannot resume the owned language server (Windows error "+std::to_string(GetLastError())+")";
+        TerminateJobObject(child_->job,1);WaitForSingleObject(process.hProcess,INFINITE);
+        CloseHandle(process.hThread);stop();return false;
+    }
     CloseHandle(process.hThread);
 #else
     int in[2], out[2], err[2];
@@ -331,6 +358,8 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
             }
             initialized_ = true;
             capabilities_ = result.value("capabilities",Json::object());
+            const auto info=result.value("serverInfo",Json());
+            serverName_=info.is_object()&&info.value("name",Json()).is_string()?info.at("name").get<std::string>():"";
             notify("initialized", Json::object());
             notify("workspace/didChangeConfiguration",{{"settings",configuration_}});
         }
@@ -339,6 +368,9 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     return true;
 }
 void LanguageClient::stop() {
+    previewRequest_ = 0;
+    previewUncertain_ = false;
+    previewEdit_ = nullptr;
     capabilities_ = Json::object(); ++semanticGeneration_; ++semanticRefreshGeneration_;
     running_ = false;
     outgoingReady_.notify_all();
@@ -378,7 +410,7 @@ void LanguageClient::stop() {
     child_.reset();
     socket_.reset();
     callbacks_.clear();
-    initialized_ = false;
+    initialized_ = false;serverName_.clear();
     diagnostics_ = Json::object();diagnosticVersions_=Json::object();
     ++diagnosticGeneration_;
 }
@@ -422,6 +454,25 @@ int LanguageClient::request(const std::string &method, Json params,
                             std::function<void(const Json &)> callback) {
     if (!running_)
         return 0;
+    if (method == "cycode/prepareTweak") {
+        if (serverName_ != "clangd" || previewRequest_ || previewUncertain_) {
+            callback(Json{{"error", {{"code", -32602}, {"message", "Tweak preview unavailable; restart after cancellation"}}}});
+            return 0;
+        }
+        previewEdit_ = nullptr;
+        const auto command = Json{{"command", "clangd.applyTweak"}, {"arguments", Json::array({params})}};
+        previewRequest_ = request("workspace/executeCommand", command, [this, callback = std::move(callback)](const Json &result) {
+            auto captured = std::move(previewEdit_);
+            previewRequest_ = 0;
+            previewEdit_ = nullptr;
+            // clangd may report the deliberately refused applyEdit as a command
+            // failure. A single captured edit is the preparation result only.
+            if (captured.is_object()) callback(captured);
+            else callback(result.is_object() && result.contains("error") ? result :
+                Json{{"error", {{"code", -32603}, {"message", "clangd returned no preview edit"}}}});
+        });
+        return previewRequest_;
+    }
     int id = nextId_++;
     callbacks_[id] = std::move(callback);
     if (!enqueue({{"jsonrpc", "2.0"}, {"id", id}, {"method", method}, {"params", std::move(params)}})) {
@@ -431,6 +482,13 @@ int LanguageClient::request(const std::string &method, Json params,
     return id;
 }
 void LanguageClient::cancel(int id) {
+    if (id == previewRequest_) {
+        // applyEdit has no parent request ID. Refuse a new preview until restart
+        // so an old late response cannot be attributed to another operation.
+        previewUncertain_ = true;
+        previewRequest_ = 0;
+        previewEdit_ = nullptr;
+    }
     callbacks_.erase(id);
     notify("$/cancelRequest", {{"id", id}});
 }
@@ -488,7 +546,18 @@ void LanguageClient::poll() {
             } else if (method == "workspace/workspaceFolders") reply["result"] = workspaceFolders_;
             else if (method == "window/workDoneProgress/create") reply["result"] = nullptr;
             else if (method == "workspace/semanticTokens/refresh") { ++semanticGeneration_; ++semanticRefreshGeneration_; reply["result"] = nullptr; }
-            else if (method == "workspace/applyEdit") reply["result"] = {{"applied",false},{"failureReason","Use the revision-checked change preview API"}};
+            else if (method == "workspace/applyEdit") {
+                if (serverName_ == "clangd" && previewRequest_ && !previewUncertain_) {
+                    const auto candidate = message.value("params", Json::object()).value("edit", Json());
+                    if (previewEdit_.is_null() && candidate.is_object() && candidate.dump().size() <= 2 * 1024 * 1024)
+                        previewEdit_ = candidate;
+                    else {
+                        previewEdit_ = false;
+                        previewUncertain_ = true;
+                    }
+                }
+                reply["result"] = {{"applied",false},{"failureReason","Use the revision-checked change preview API"}};
+            }
             else if (method == "client/registerCapability" || method == "client/unregisterCapability")
                 reply["error"] = {{"code",-32601},{"message","Dynamic capability registration is not supported"}};
             else reply["error"] = {{"code",-32601},{"message","Unsupported client request"}};
@@ -553,6 +622,7 @@ void LanguageClient::writeLoop() {
 void LanguageClient::readLoop() {
     std::string buffer;
     while (running_) {
+        bool received = false;
         char bytes[8192];
         std::string stderrText;
         if (socket_) {
@@ -624,12 +694,17 @@ void LanguageClient::readLoop() {
                 else if (incoming_.size() < 1024) {
                     if (raw_) incomingBytes_ += length;
                     incoming_.push_back(std::move(message));
+                    received = true;
                 }
             }
             buffer.erase(0, end + 4 + length);
         }
+        // Publish only after releasing the incoming queue mutex. The owner may
+        // guard its condition predicate without inverting the transport locks.
+        if (received) signalWake();
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
+    signalWake(); // EOF, malformed frame or transport failure also wakes pending requests.
     outgoingReady_.notify_all();
 }
 } // namespace cycode

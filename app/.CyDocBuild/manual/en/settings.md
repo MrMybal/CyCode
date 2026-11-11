@@ -5,12 +5,15 @@ description: Set language, theme, text size and session restoration.
 section: Start here
 order: 30
 parent: overview
-revision: 2
+revision: 3
 ---
 
 ## Appearance {#appearance}
 
 Open Options to choose English or French, a theme and the editor text size. Graphite is the application-specific appearance; other CyUI themes are available. Enlarge text to suit your display instead of changing source indentation.
+
+
+CyCode includes offline Roboto interface faces, JetBrains Mono and a compact control-icon font for systems without the Windows fonts. No font download occurs at startup. These resources follow the existing text-size and DPI controls. Their included character repertoire does not establish complete CJK, emoji or complex-script support.
 
 ## Windows and sessions {#windows}
 

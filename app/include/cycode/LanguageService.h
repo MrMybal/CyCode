@@ -15,13 +15,14 @@ class LanguageService {
     void configureManaged(std::string executable, bool enabled, bool prewarm = true);
     void configureBuiltin(const std::string &backend, std::string executable, bool enabled, bool prewarm);
     Json configuration(const std::string &backend) const;
+    std::filesystem::path compilationDatabase(const std::string &backend) const;
     void configureBackend(const std::string &backend, const std::vector<std::string> &argv,
                           const Json &settings, bool enabled, bool prewarm = true,
                           const Json &cargoProject = Json());
     void enableBackend(const std::string &backend, bool enabled, bool prewarm = true);
     void setProject(const std::filesystem::path &entry);
     void setCompilationDatabase(std::filesystem::path directory, bool reload = false);
-    void sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity = 0);
+    void sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity = 0, bool diagnosticCheckpoint = false, bool refreshAnalysis = false, bool reopenAnalysis = false);
     void close(const std::string &path);
     std::future<Json> request(std::string method, Json params, std::shared_ptr<std::atomic<bool>> cancelled = {});
     Json status() const;
@@ -45,6 +46,7 @@ class LanguageService {
     struct Document {
         std::string text;
         std::uint64_t revision, identity;
+        bool diagnosticCheckpoint=false,refreshAnalysis=false,reopenAnalysis=false;
     };
     struct Query {
         std::string method;

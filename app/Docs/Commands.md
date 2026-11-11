@@ -1,5 +1,44 @@
 # Commands and keyboard profiles
 
+Open included file follows supported literal C/C++ directives, including inline
+comments and immediate backslash-newline continuations. Find related C/C++ files...
+always opens the counterpart inspector; its result actions provide Retry,
+explicit index refresh/retry, path/report copying and contextual local help.
+The configured single-stroke help.context binding works in that modal; default
+Shift+F1 opens the relevant section. These new actions have no default binding.
+SDK/ABI2 share workspace.include; see [Includes](CppIncludes.md) and
+[Related results](CppCounterparts.md#inspect-related-results).
+
+Navigate > Switch header/source uses Rider Alt+O or Visual Studio Ctrl+K, Ctrl+O,
+and Find Action without requiring a language server. One complete match opens
+through the ordinary owner; ambiguous/partial results use the shared palette.
+See [C++ companions](CppCounterparts.md).
+
+Edit > Insert snippet... and Find Action open the shared CyUI palette for saved
+project insertion snippets. Rider uses Ctrl+J; Visual Studio uses Ctrl+K, Ctrl+X.
+The VS Code profile has no new default binding. Availability requires a writable
+saved workspace document and one caret. With a selection, Insert snippet uses
+wrapping; Edit > Surround with snippet... requires a nonempty selection and uses
+Ctrl+Alt+J in the Rider profile. VS/VS Code expose Surround without a default
+binding. Both use TM_SELECTED_TEXT and disable bodies that cannot consume the
+selection. Escape closes the list;
+Enter prepares the selected issued proposal through the ordinary atomic editor
+completion path. Edit project snippets... opens the fixed project catalogue,
+creating it only on that explicit action and leaving its initial JSON buffer
+unsaved. Existing files and dirty buffers are retained. See
+[Project snippets](SnippetCatalogue.md) for scope and format.
+
+Edit > Create user snippet from selection... requires one selected saved workspace
+source and opens a literal personal JSON draft. Review its name, prefix and scope
+before explicit Save; the source is not edited. Find Action exposes it without a
+new default key binding. See [Selection capture](SnippetCapture.md).
+
+Edit > Edit user snippets... opens the shared JSON editor for the fixed personal
+catalogue, also through Find Action with no new default binding. Ctrl+S explicitly
+saves/closes this modal; draft Undo/Redo, Reload and confirmed dirty close/quit
+reuse common controls. This catalogue is shared by projects in the portable
+installation. See [Personal snippets](UserSnippets.md).
+
 View > Application updates opens the installation update view; Check for updates
 is also available there and through Find Action, with no new default shortcut.
 Startup checking is configurable and enabled by default. A newer stable release

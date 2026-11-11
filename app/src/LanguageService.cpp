@@ -1,3 +1,5 @@
+#include "cycode/Error.h"
+#include "cycode/ProcessText.h"
 #include "cycode/LanguageService.h"
 #include <climits>
 #include "cycode/TextEdits.h"
@@ -146,6 +148,11 @@ void LanguageService::configureManaged(std::string executable, bool enabled, boo
     else if (managed_)
         configure(executable.empty() ? managedExecutable() : std::move(executable), enabled, prewarm);
 }
+std::filesystem::path LanguageService::compilationDatabase(const std::string &backend) const {
+    std::lock_guard route(routingMutex_);
+    if(children_.contains(backend))return children_.at(backend)->compilationDatabase(backend);
+    std::lock_guard lock(mutex_);return compilationDatabase_;
+}
 void LanguageService::configureBackend(const std::string &backend, const std::vector<std::string> &argv,
                                        const Json &settings, bool enabled, bool prewarm, const Json &cargoProject) {
     std::lock_guard route(routingMutex_);
@@ -269,18 +276,25 @@ void LanguageService::setCompilationDatabase(std::filesystem::path directory, bo
     }
     wake_.notify_one();
 }
-void LanguageService::sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity) {
+void LanguageService::sync(const std::string &path, const std::string &text, std::uint64_t revision, std::uint64_t identity, bool diagnosticCheckpoint, bool refreshAnalysis, bool reopenAnalysis) {
     std::lock_guard route(routingMutex_);
     const auto backend = this->backend(path);
     if (children_.contains(backend)) {
-        children_.at(backend)->sync(path, text, revision, identity);
+        children_.at(backend)->sync(path, text, revision, identity, diagnosticCheckpoint,refreshAnalysis,reopenAnalysis);
         return;
     }
     if (backend != backend_)
         return;
     {
         std::lock_guard lock(mutex_);
-        updates_[path] = Document{text, revision, identity};
+        const auto previous=updates_.find(path);
+        if(previous!=updates_.end()&&previous->second&&previous->second->revision==revision&&previous->second->identity==identity)
+        {
+            diagnosticCheckpoint=diagnosticCheckpoint||previous->second->diagnosticCheckpoint;
+            refreshAnalysis=refreshAnalysis||previous->second->refreshAnalysis;
+            reopenAnalysis=reopenAnalysis||previous->second->reopenAnalysis;
+        }
+        updates_[path] = Document{text, revision, identity, diagnosticCheckpoint,refreshAnalysis,reopenAnalysis};
     }
     wake_.notify_one();
 }
@@ -327,8 +341,9 @@ std::future<Json> LanguageService::request(std::string method, Json params, std:
     auto future = query->promise.get_future();
     {
         std::lock_guard lock(mutex_);
-        if (stopping_ || !enabled_ || outstanding_ >= 32)
-            throw std::runtime_error("Language service unavailable or queue full");
+        if(stopping_)throw NativeError(ErrorCode::ServiceStopping,"Language service is stopping");
+        if(!enabled_)throw NativeError(ErrorCode::BackendUnavailable,"Language service is disabled");
+        if(outstanding_>=32)throw NativeError(ErrorCode::CapacityExceeded,"Language request queue is full");
         ++outstanding_;
         queries_.push_back(query);
     }
@@ -347,7 +362,14 @@ Json LanguageService::status() const {
         result["languages"] = definition_.at("languages");
     }
     result["enabled"] = enabled_;
-    result["available"] = backend_ == "cpp" || managed_ || !argv_.empty();
+    // A configured launch is not proof that a backend exists or initialized.
+    result["configured"] = (backend_=="cpp" || managed_) ? !executable_.empty() : !argv_.empty();
+    result["available"] = enabled_ && !reconfigure_ && result.value("running",false);
+    if(!enabled_)result["state"]="disabled";
+    else if(reconfigure_)result["state"]="reconfiguring";
+    else if(!result.contains("state"))result["state"]="idle";
+    result["analysis"]["backend"]=backend_;
+    result["analysis"]["projectIndexCompleteness"]="unknown";
     result["arguments"] = argv_;
     result["settings"] = settings_;
     result["configuration"] = configuration_;
@@ -359,6 +381,7 @@ Json LanguageService::status() const {
             result["servers"][key]["epoch"] = routingEpoch_ * 0x100000000ULL + server.at("epoch").get<uint64_t>();
             result["ready"] = result.value("ready", false) || server.value("ready", false);
             result["running"] = result.value("running", false) || server.value("running", false);
+            result["available"] = result.value("available",false) || server.value("available",false);
             for (const auto &[uri, entries] : server.at("diagnostics").items())
                 result["diagnostics"][uri] = entries;
             result["diagnosticRevisions"].update(server.at("diagnosticRevisions"));
@@ -443,7 +466,15 @@ void LanguageService::replaceExtensions(const Json &definitions) {
 void LanguageService::run() {
     SemanticTokens semanticTokens;
     size_t semanticRefresh = 0;
-    LanguageClient client;
+    bool incomingReady = false;
+    // Declare captured state before client: its destructor joins the transport
+    // before that state disappears. The service mutex closes the predicate/wait
+    // race; simply notifying a condition variable would lose some replies.
+    LanguageClient client([this, &incomingReady] {
+        std::lock_guard lock(mutex_);
+        incomingReady = true;
+        wake_.notify_one();
+    });
     std::map<std::string, Document> documents;
     std::map<std::string, std::pair<std::uint64_t, int>> sent;
     std::map<std::string, uint64_t> sentIdentities;
@@ -457,24 +488,25 @@ void LanguageService::run() {
     auto environment = defaults.environment;
     std::filesystem::path compilationDatabase, project;
     size_t diagnosticsGeneration = 0;
-    auto fail = [](const std::shared_ptr<Query> &q, const std::string &message) {
+    auto fail = [](const std::shared_ptr<Query> &q, const std::string &message,ErrorCode code=ErrorCode::OperationFailed) {
         if (q->done)
             return;
         q->done = true;
-        q->promise.set_exception(std::make_exception_ptr(std::runtime_error(message)));
+        q->promise.set_exception(std::make_exception_ptr(NativeError(code,message)));
     };
     for (;;) {
         bool reset = false, stop = false;
         std::map<std::string, std::optional<Document>> updates;
         {
             std::unique_lock lock(mutex_);
-            auto changed = [this] {
-                return stopping_ || reconfigure_ || !updates_.empty() || !queries_.empty();
+            auto changed = [this, &incomingReady] {
+                return incomingReady || stopping_ || reconfigure_ || !updates_.empty() || !queries_.empty();
             };
             if (client.running() || !pending.empty())
                 wake_.wait_for(lock, std::chrono::milliseconds(8), changed);
             else
                 wake_.wait(lock, changed);
+            incomingReady = false;
             stop = stopping_;
             reset = reconfigure_;
             reconfigure_ = false;
@@ -504,22 +536,36 @@ void LanguageService::run() {
             failure.clear();
             for (auto &q : pending)
                 if (stop || q->id)
-                    fail(q, "Language service restarted or stopped");
+                    fail(q,"Language service restarted or stopped",stop?ErrorCode::ServiceStopping:ErrorCode::RevisionConflict);
         }
         if (stop)
             break;
         for (auto &[path, doc] : updates) {
-            if (doc)
+            if (doc) {
+                const auto previous=documents.find(path);
+                if(previous!=documents.end()&&previous->second.revision==doc->revision&&previous->second.identity==doc->identity)
+                {
+                    doc->diagnosticCheckpoint=doc->diagnosticCheckpoint||previous->second.diagnosticCheckpoint;
+                    doc->refreshAnalysis=doc->refreshAnalysis||previous->second.refreshAnalysis;
+                    doc->reopenAnalysis=doc->reopenAnalysis||previous->second.reopenAnalysis;
+                }
                 documents.insert_or_assign(path, std::move(*doc));
-            else
-                documents.erase(path);
+            } else documents.erase(path);
         }
         if (!attempted && enabled && ((!documents.empty() && prewarm) || !pending.empty())) {
             attempted = true;
             if (!argv.empty()) {
                 if (backend_ == "cpp" && !compilationDatabase.empty())
                     settings["compilationDatabasePath"] = pathUtf8(compilationDatabase);
-                if (!client.startServer(root_, argv, settings, managed_, environment))
+                auto launch=argv;
+                // The built-in C++ backend is clangd (14+ for draft headers).
+                // Honour an explicit opt-out, while keeping unsaved includes in
+                // the default editor/compiler context. Other LSPs are untouched.
+                if(backend_=="cpp" && std::none_of(launch.begin(),launch.end(),[](const auto &arg){return arg.starts_with("--use-dirty-headers");}))
+                    launch.push_back("--use-dirty-headers");
+                if(backend_=="cpp" && std::none_of(launch.begin(),launch.end(),[](const auto &arg){return arg.starts_with("--rename-file-limit") || arg.starts_with("-rename-file-limit");}))
+                    launch.push_back("--rename-file-limit=0");
+                if (!client.startServer(root_, launch, settings, managed_, environment))
                     failure = client.error();
             } else if (managed_) {
                 std::vector<std::string> argv{executable};
@@ -555,6 +601,12 @@ void LanguageService::run() {
                 failure = client.error();
         }
         client.poll();
+        if (attempted && !client.running() && failure.empty()) {
+            failure = client.error();
+            if (failure.empty()) failure = "Language server stopped; install or configure the matching backend and restart it in Problems";
+            const auto logs = client.logs();
+            if (!logs.empty()) failure += "\n" + processOutputText(std::string_view(logs).substr(logs.size() > 4096 ? logs.size() - 4096 : 0), true);
+        }
         if (semanticRefresh != client.semanticRefreshGeneration()) {
             semanticTokens.clear();
             semanticRefresh = client.semanticRefreshGeneration();
@@ -564,7 +616,7 @@ void LanguageService::run() {
         // preserves notification order; queries wait for the load progress to end.
         if (client.initialized()) {
             for (auto it = sent.begin(); it != sent.end();) {
-                if (documents.contains(it->first) && documents.at(it->first).identity == sentIdentities.at(it->first)) {
+                if (documents.contains(it->first) && documents.at(it->first).identity == sentIdentities.at(it->first) && !documents.at(it->first).reopenAnalysis) {
                     ++it;
                     continue;
                 }
@@ -580,14 +632,18 @@ void LanguageService::run() {
                 sentIdentities.erase(it->first);
                 it = sent.erase(it);
             }
-            for (const auto &[path, doc] : documents) {
+            // Publish every changed dependency before forcing unchanged includers.
+            // std::map path order can place Private/Foo.cpp before Public/Foo.h.
+            for(const bool refreshing : {false,true})
+            for (auto &[path, doc] : documents) {
+                if(doc.refreshAnalysis!=refreshing)continue;
                 auto uri = LanguageClient::uri(root_ / utf8Path(path));
                 auto entry = sent.find(path);
                 if (entry != sent.end() && sentIdentities.at(path) != doc.identity) {
                     synchronized = false; // didClose has not been accepted yet.
                     continue;
                 }
-                if ((entry == sent.end() || entry->second.first != doc.revision) && nextVersion == INT_MAX) {
+                if ((entry == sent.end() || entry->second.first != doc.revision || doc.refreshAnalysis) && nextVersion == INT_MAX) {
                     synchronized = false;
                     failure = "Language document versions exhausted; restart this language server";
                     continue;
@@ -602,18 +658,22 @@ void LanguageService::run() {
                                          {"version", nextVersion + 1},
                                          {"text", doc.text}}}})) {
                         sent[path] = {doc.revision, ++nextVersion};
-                        sentIdentities[path] = doc.identity;
+                        sentIdentities[path] = doc.identity;doc.refreshAnalysis=false;doc.reopenAnalysis=false;
                         client.invalidateSemantic();
                         semanticTokens.erase(LanguageClient::uriKey(uri));
                     } else
                         synchronized = false;
-                } else if (entry->second.first != doc.revision) {
-                    if (client.notify(
-                            "textDocument/didChange",
-                            {{"textDocument", {{"uri", uri}, {"version", nextVersion + 1}}},
-                             {"contentChanges", Json::array({{{"text", doc.text}}})}})) {
+                } else if (entry->second.first != doc.revision || doc.refreshAnalysis) {
+                    Json change={{"textDocument",{{"uri",uri},{"version",nextVersion+1}}},
+                                 {"contentChanges",Json::array({{{"text",doc.text}}})}};
+                    // Explicit transactions need diagnostics for the exact settled
+                    // version, including a rapid Undo back to identical text. Keep
+                    // ordinary typing debounced; never relabel stale publications.
+                    // https://clangd.llvm.org/extensions#force-diagnostics-generation
+                    if(doc.diagnosticCheckpoint&&client.supportsForcedDiagnostics())change["wantDiagnostics"]=true;
+                    if (client.notify("textDocument/didChange",std::move(change))) {
                         entry->second.first = doc.revision;
-                        entry->second.second = ++nextVersion;
+                        entry->second.second = ++nextVersion;doc.refreshAnalysis=false;
                         client.invalidateSemantic();
                     } else
                         synchronized = false;
@@ -632,7 +692,7 @@ void LanguageService::run() {
                     q->cancelSent = true;
                 } else {
                     if (q->id) client.cancel(q->id);
-                    fail(q, "Language request cancelled");
+                    fail(q,"Language request cancelled",ErrorCode::Cancelled);
                     continue;
                 }
             }
@@ -641,7 +701,7 @@ void LanguageService::run() {
                     client.cancel(q->id);
                 fail(q, now >= q->deadline ? "Language request timed out"
                         : failure.empty()  ? "Language server stopped; restart it in Problems"
-                                           : failure);
+                                           : failure,now>=q->deadline?ErrorCode::DeadlineExceeded:ErrorCode::BackendUnavailable);
             } else if (synchronized && !q->id) {
                 if ((q->method == "cycode/javaDebugSession" || q->method == "cycode/javaBuildWorkspace") &&
                     (backend_ != "java" || !javaDebugAvailable(client.capabilities()))) {
@@ -677,7 +737,7 @@ void LanguageService::run() {
                                           ? "callHierarchyProvider" : "typeHierarchyProvider";
                     const auto value = client.capabilities().value(name, Json());
                     if (value != true && !value.is_object()) {
-                        fail(q, languageServerName(backend_) + " does not support " + q->method);
+                        fail(q,languageServerName(backend_) + " does not support " + q->method,ErrorCode::UnsupportedOperation);
                         continue;
                     }
                 }
@@ -688,7 +748,7 @@ void LanguageService::run() {
                     capabilities.contains(q->method)) {
                     const auto value = client.capabilities().value(capabilities.at(q->method), Json());
                     if (value != true && !value.is_object()) {
-                        fail(q, languageServerName(backend_) + " does not support " + q->method);
+                        fail(q,languageServerName(backend_) + " does not support " + q->method,ErrorCode::UnsupportedOperation);
                         continue;
                     }
                 }
@@ -697,19 +757,19 @@ void LanguageService::run() {
                 if (q->method == "completionItem/resolve" &&
                     (!completionProvider.is_object() ||
                      !completionProvider.value("resolveProvider", false))) {
-                    fail(q, languageServerName(backend_) + " does not support completionItem/resolve");
+                    fail(q,languageServerName(backend_) + " does not support completionItem/resolve",ErrorCode::UnsupportedOperation);
                     continue;
                 }
                 const auto symbolProvider = client.capabilities().value("workspaceSymbolProvider", Json());
                 if (q->method == "workspaceSymbol/resolve" &&
                     (!symbolProvider.is_object() || !symbolProvider.value("resolveProvider", false))) {
-                    fail(q, languageServerName(backend_) + " does not support workspaceSymbol/resolve");
+                    fail(q,languageServerName(backend_) + " does not support workspaceSymbol/resolve",ErrorCode::UnsupportedOperation);
                     continue;
                 }
                 const auto actionProvider = client.capabilities().value("codeActionProvider", Json());
                 if (q->method == "codeAction/resolve" &&
                     (!actionProvider.is_object() || !actionProvider.value("resolveProvider", false))) {
-                    fail(q, languageServerName(backend_) + " does not support codeAction/resolve");
+                    fail(q,languageServerName(backend_) + " does not support codeAction/resolve",ErrorCode::UnsupportedOperation);
                     continue;
                 }
                 if (q->method == "textDocument/codeAction") {
@@ -852,7 +912,7 @@ void LanguageService::run() {
                                             }
                                         }
                                 };
-                                if (q->method == "textDocument/rename")
+                                if (q->method == "textDocument/rename" || q->method == "cycode/prepareTweak")
                                     mapVersions(response);
                                 if (q->method == "textDocument/codeAction" && response.is_array())
                                     for (auto &action : response)
@@ -875,6 +935,10 @@ void LanguageService::run() {
             outstanding_ -= completed;
             status_["ready"] = client.ready();
             status_["running"] = client.running();
+            status_["launchAttempted"]=attempted;
+            status_["initialized"]=client.initialized();
+            status_["state"]=!enabled?"disabled":!failure.empty()?"failed":client.ready()?"ready":client.initialized()?"loading-project":client.running()?"initializing":attempted?"unavailable":"idle";
+            status_["compilationDatabase"]=pathUtf8(compilationDatabase);
             const auto provider = client.capabilities().value("semanticTokensProvider", Json::object());
             status_["semanticTokens"] = provider.is_object() && provider.contains("full") &&
                                         (provider.at("full").is_object() || provider.at("full") == true);
@@ -934,6 +998,16 @@ void LanguageService::run() {
                         eligible[path]={{"revision",version.first},{"id",document->second.identity},{"uri",publication->second}};
                 }
             }
+            Json synchronizedRevisions=Json::object();
+            for(const auto &[path,version]:sent) {
+                const auto document=documents.find(path);
+                if(document!=documents.end() && document->second.revision==version.first && document->second.identity==sentIdentities.at(path))
+                    synchronizedRevisions[path]={{"revision",version.first},{"id",document->second.identity},{"lspVersion",version.second}};
+            }
+            status_["synchronizedRevisions"]=std::move(synchronizedRevisions);
+            status_["analysis"]={{"backend",backend_},{"projectIndexCompleteness","unknown"},{"openDocuments",documents.size()},
+                {"synchronizedDocuments",status_["synchronizedRevisions"].size()},{"versionBoundDiagnosticDocuments",eligible.size()},
+                {"synchronizationMeaning","notifications-sent-not-proof-of-analysis"}};
             status_["diagnosticRevisions"]=std::move(eligible);
         }
     }

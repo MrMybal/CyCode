@@ -13,7 +13,7 @@ milestones add verified restart discovery, persistent attempt history and cleare
 cancellation/retry states.
 Native update services are independent of the workspace engine, SDL, ImGui and
 CyToolsCore. No workspace MCP operation or plugin installation permission is added;
-the SDK still has 227 operations. CyUI's existing Core controls provide the UI;
+the SDK currently has 233 operations. CyUI's existing Core controls provide the UI;
 no new CyUI module or third-party runtime is selected.
 
 ## Desktop flow

@@ -1,0 +1,25 @@
+{
+  "purpose": "Windows GitHub Actions graphical acceptance only; never a product dependency or system driver installation",
+  "project": "pal1000/mesa-dist-win",
+  "version": "26.2.4",
+  "url": "https://github.com/pal1000/mesa-dist-win/releases/download/26.2.4/mesa3d-26.2.4-release-msvc.7z",
+  "size": 70257286,
+  "sha256": "351fc8c8b695878ffb3eaa044b3ead08672a48b1a045e3c3e3975811df0f6695",
+  "files": [
+    {
+      "member": "x64/opengl32.dll",
+      "size": 139264,
+      "sha256": "75b295fc80df0eaa8f1264c28663f6932c8b72d36513eb092556608858b7f5e0"
+    },
+    {
+      "member": "x64/libgallium_wgl.dll",
+      "size": 61868032,
+      "sha256": "53e49adf87590d5b0cab8553b1e98084812040cc1fca8c487695b17b7af3702e"
+    },
+    {
+      "member": "x64/dxil.dll",
+      "size": 1995584,
+      "sha256": "64be2368211d257a038a7d4ea6bb3e24c878eb8d588c7b8414fccf759b69c2ac"
+    }
+  ]
+}

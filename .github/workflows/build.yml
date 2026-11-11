@@ -1,45 +1,79 @@
 name: Native core
-on: [push, pull_request]
+on:
+  # Owner pause: manual-only definition; GitHub workflow remains disabled.
+  workflow_dispatch:
 jobs:
   core:
-    env:
-      CYCODE_EDITOR_ROOT: ${{ github.workspace }}/runtime/deps/cycode-reader
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        # Match the supported Visual Studio 2022 generator, as Reader does.
+        os: [windows-2022, ubuntu-latest, macos-latest]
+    concurrency:
+      group: native-${{ github.ref }}-${{ matrix.os }}
+      cancel-in-progress: false
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Check sources without native executables
         run: python app/scripts/verify_sources.py
       - name: Verify update archive authoring without native processes
         run: python app/tests/test_release_package.py
-      - name: Resolve shared editor pin
-        id: editor
-        run: python -c "import json,os; from pathlib import Path; revision=json.loads(Path('app/editor-source.lock.json').read_text())['revision']; Path(os.environ['GITHUB_OUTPUT']).open('a').write('revision='+revision+'\n')"
-      - uses: actions/checkout@v4
-        with:
-          repository: MrMybal/CyCodeReader
-          ref: ${{ steps.editor.outputs.revision }}
-          path: runtime/deps/cycode-reader
-          token: ${{ secrets.CYCODE_READER_READ_TOKEN || github.token }}
-          persist-credentials: false
+      - name: Verify compiler failure diagnostics without native processes
+        run: python app/tests/test_build_diagnostics.py
+      - name: Verify language downloader failure contracts without network
+        run: python app/tests/test_language_download_data.py
+      - name: Verify minimal component dependencies without network
+        run: python app/tests/test_component_fetch_data.py
+      - name: Install the pinned JSON Schema validator
+        run: python -m pip install jsonschema==4.25.1
+      - name: Verify public navigation and snippet contracts without native processes
+        run: python -m unittest discover -s app/tests -p "test_*contracts.py"
       - name: Install ripgrep on Linux
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y ripgrep ninja-build
+        run: sudo apt-get update && sudo apt-get install -y ripgrep ninja-build clangd
       - name: Install ripgrep on macOS
         if: runner.os == 'macOS'
-        run: brew install ripgrep ninja
+        run: brew install ripgrep ninja llvm
+      - name: Use the installed LLVM tools on macOS
+        if: runner.os == 'macOS'
+        run: echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
       - name: Install ripgrep on Windows
         if: runner.os == 'Windows'
         run: choco install ripgrep -y --no-progress
+      - name: Install the pinned real language backends used by the integration tests
+        run: python app/scripts/setup_languages.py --rust --java --web --python --glsl
+      - name: Install the pinned C# server and its private SDK
+        run: python app/scripts/setup_csharp.py
+      - name: Install checksum-pinned debugger adapters for native integration
+        run: python app/scripts/setup_debugger.py
       - run: python app/scripts/fetch_dependencies.py --core-only
       - name: Explicit native validation on the CI runner
-        run: python app/scripts/build.py --core-only --run-tests
-      # Private Reader access needs a read-only CYCODE_READER_READ_TOKEN secret.
-      # Full GUI/MCP jobs also require the owner's CyUI and Core wheel.
-      # This workflow has not been run on GitHub during local development.
+        run: python app/scripts/build.py --core-only --run-tests --keep-going-tests
+      - name: Check the previously intermittent macOS replay path three more times
+        if: runner.os == 'macOS'
+        run: ctest --test-dir runtime/tests-core-build --output-on-failure --repeat until-fail:3 -R "^vcs_replay$"
+      - name: Preserve native build and test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-build-log-${{ matrix.os }}
+          path: |
+            runtime/tests-core-build*/build.log
+            runtime/tests-core-build*/native-results.xml
+            runtime/tests-core-build*/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
+          retention-days: 7
+      # Production jobs author the Core wheel from its exact published source.
+      # Local native runs remain suspended; this is explicit runner-only validation.
