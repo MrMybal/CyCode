@@ -451,3 +451,15 @@ one page and routing an ordinary save would risk truncation and is forbidden.
 This source integration does not implement either application's adapter or paged
 LSP overlays. The ordinary GUI/LSP policy remains explicit until those are built
 and validated.
+
+
+## Consumer update library identity
+
+Enable CYCODE_BUILD_UPDATES before adding Core and link CyCode::Updates to the
+host and its helper. CYCODE_UPDATES_PRODUCT, CYCODE_UPDATES_REPOSITORY and
+CYCODE_UPDATES_VERSION configure one immutable update identity per target graph,
+independently of the Core's version. Read productIdentity() from Updates.h.
+Nonhistorical manifests and cache/recovery records require exact product/repository
+fields; names, private-data/path/SHA256 checks and leases share the existing owner.
+See [the complete profile and authoring contract](Updates.md#products). No second
+Core, UI dependency, SDK operation, network request or install is started by linking.

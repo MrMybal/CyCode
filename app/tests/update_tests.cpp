@@ -1,4 +1,6 @@
 #include "cycode/update/detail/UpdateInstall.h"
+#include "cycode/update/detail/UpdateFiles.h"
+#include "cycode/update/detail/UpdateManifest.h"
 #include "cycode/Paths.h"
 #include "cycode/Updates.h"
 #include <fstream>
@@ -117,6 +119,32 @@ Json manifest(const std::filesystem::path &root, const std::string &version,
 #endif
 } // namespace
 void updateContracts(const std::filesystem::path &parent) {
+    const auto &identity = updates::productIdentity();
+    const auto owned = updates::detail::productMetadata(Json::object());
+    check(updates::detail::matchesProduct(owned), "Native product rejected its own metadata");
+    auto foreign = owned;
+    foreign["product"] = std::string(identity.product) + "Other";
+    rejects([&] { updates::detail::requireProduct(foreign); });
+    foreign = owned;
+    foreign["repository"] = "OtherOwner/OtherProduct";
+    rejects([&] { updates::detail::requireProduct(foreign); });
+    foreign = owned;
+    foreign.erase("repository");
+    rejects([&] { updates::detail::requireProduct(foreign); });
+    check(updates::detail::matchesProduct(Json::object()) == identity.acceptsLegacyMetadata,
+          "Legacy update metadata escaped its historical profile");
+    const auto ownName = std::string(identity.product) + "-99.0.0-windows-x64.zip";
+    check(updates::packageArchiveName(ownName, "99.0.0", "windows-x64") &&
+          !updates::packageArchiveName("OtherProduct-99.0.0-windows-x64.zip", "99.0.0", "windows-x64"),
+          "Configured native asset identity is not enforced");
+    Json productFiles = Json::array();
+    for (const auto name : identity.requiredFiles)
+        productFiles.push_back({{"path", name}, {"size", 1}, {"sha256", std::string(64, 'a')}});
+    auto productManifest = updates::detail::productMetadata(Json{{"version", "99.0.0"},
+        {"platform", updates::platform()}, {"updateFormat", 1}, {"files", productFiles}});
+    (void)updates::detail::managedManifest(productManifest);
+    productManifest["product"] = "OtherProduct";
+    rejects([&] { updates::detail::managedManifest(productManifest); });
     updateHistoryContracts(parent);
     updateStorageContracts(parent);
     updateDownloadContracts(parent);

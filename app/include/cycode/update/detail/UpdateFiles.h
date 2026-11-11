@@ -6,6 +6,9 @@ class Cancellation : public std::runtime_error {
   public:
     using std::runtime_error::runtime_error;
 };
+bool matchesProduct(const nlohmann::json &);
+void requireProduct(const nlohmann::json &);
+nlohmann::json productMetadata(nlohmann::json);
 void safe(const std::filesystem::path &);
 std::string read(const std::filesystem::path &, uint64_t limit);
 std::filesystem::path work(const std::filesystem::path &installation, const char *prefix);
@@ -19,7 +22,7 @@ bool recordedOutcome(std::string_view);
 std::unique_ptr<NativeFileLease> cacheLease(const std::filesystem::path &, NativeFileLeaseMode);
 void moveFile(const std::filesystem::path &source, const std::filesystem::path &destination);
 std::string hashFile(const std::filesystem::path &, uint64_t maximum, const std::atomic<bool> *cancel);
-void jsonFile(const std::filesystem::path &, const nlohmann::json &);
+void jsonFile(const std::filesystem::path &, const nlohmann::json &, bool productBound = true);
 uint64_t availableSpace(const std::filesystem::path &directory);
 uint64_t allocationUnit(const std::filesystem::path &directory);
 void removeOwnedText(const std::filesystem::path &, const std::string &baseline);

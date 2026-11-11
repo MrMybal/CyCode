@@ -5,7 +5,7 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 16
+revision: 17
 ---
 
 ## Current delivery status {#current-status}
@@ -249,3 +249,6 @@ guarded guide authoring. Kaspersky deleted that installed CLI again at 19:20
 Europe/Paris. Its MD5 matches the built payload; full installed acceptance is
 interrupted, MCP is disabled and binary publication is suspended. No automatic
 native retry followed. See [Core installation](core-installation#distribution).
+
+
+The shared native update library now has an immutable consumer identity, separate from the Core version. See [consumer update profiles](doc:updates#products).

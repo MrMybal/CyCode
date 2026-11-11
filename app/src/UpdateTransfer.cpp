@@ -34,7 +34,7 @@ std::wstring wide(const std::string &text) {
     return utf8Path(text).wstring();
 }
 std::string token() {
-    for (const auto *name : {"CYCODE_UPDATE_TOKEN", "GH_TOKEN", "GITHUB_TOKEN"})
+    for (const auto *name : {productIdentity().tokenEnvironment, "GH_TOKEN", "GITHUB_TOKEN"})
         if (const auto *value = std::getenv(name); value && *value) {
             const std::string result = value;
             if (result.size() > 8192 ||
@@ -123,8 +123,8 @@ struct PartialFile {
 bool http(const std::string &initial, const std::string &accept, uint64_t maximum,
           const std::atomic<bool> &cancel, const std::function<void(const char *, size_t)> &consume,
           uint64_t offset = 0, uint64_t packageSize = 0) {
-    Internet session(WinHttpOpen(L"CyCode-updates/"
-                                 L"1",
+    const auto agent = wide(std::string(productIdentity().product) + "-updates/1");
+    Internet session(WinHttpOpen(agent.c_str(),
                                  WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME,
                                  WINHTTP_NO_PROXY_BYPASS, 0));
     if (!WinHttpSetTimeouts(session.value, 5000, 5000, 5000, 10000))
@@ -200,7 +200,7 @@ bool http(const std::string &initial, const std::string &accept, uint64_t maximu
         if (status == 404)
             throw DownloadError(DownloadIssue::access,
                                 "No accessible release. For a private repository, provide "
-                                "CYCODE_UPDATE_TOKEN with repository Contents read access.");
+                                "the product update token environment with repository Contents read access.");
         if (status == 401 || status == 403 || status == 429)
             throw DownloadError(
                 DownloadIssue::access,
@@ -241,7 +241,7 @@ std::optional<Release> check(const std::atomic<bool> &cancel, bool installed) {
     std::string body;
     http(apiRoot() + "/latest", "application/vnd.github+json", 4 * 1024 * 1024, cancel,
          [&](const char *data, size_t size) { body.append(data, size); });
-    return parseRelease(nlohmann::json::parse(body), CYCODE_VERSION, platform(), installed);
+    return parseRelease(nlohmann::json::parse(body), productIdentity().currentVersion, platform(), installed);
 #else
     (void)cancel;
     throw std::runtime_error("Automatic application updates currently require Windows x64; open GitHub "
@@ -265,12 +265,12 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
     const auto managed = detail::managedManifest(manifest);
     uint64_t helperBytes = 0;
     for (const auto &[name, file] : managed)
-        if (name == "CyCodeUpdater.exe" || (name.find('/') == std::string::npos && name.ends_with(".dll"))) {
+        if (name == productIdentity().helper || (name.find('/') == std::string::npos && name.ends_with(".dll"))) {
             if (file.size > 64 * 1024 * 1024 || helperBytes > maximumPackage - file.size)
                 throw std::runtime_error("Update helper runtime exceeds its size limit");
             helperBytes += file.size;
         }
-    if (!newer(release.version, CYCODE_VERSION) ||
+    if (!newer(release.version, productIdentity().currentVersion) ||
         !newer(release.version, manifest.at("version").get<std::string>()))
         throw DownloadError(DownloadIssue::installation,
                             "The requested update is no longer newer than this installation");
@@ -284,7 +284,7 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
     if (cancel)
         throw std::runtime_error("Update cancelled");
     const auto previous = detail::selectPartial(root, release, mode, cancel);
-    const auto helper = managed.find("CyCodeUpdater.exe");
+    const auto helper = managed.find(productIdentity().helper);
     if (helper == managed.end() || !helper->second.size || helper->second.size > 64 * 1024 * 1024)
         throw DownloadError(DownloadIssue::installation, "Invalid installed update helper size");
     const auto initialOffset = previous ? previous->received : uint64_t{0};
@@ -356,18 +356,18 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
                                      helperBytes, status);
         if (payload != archive)
             detail::moveFile(payload, archive);
-        Prepared result{archive, directory / "CyCodeUpdater.exe", root, release.version,
+        Prepared result{archive, directory / productIdentity().helper, root, release.version,
                         release.asset.digest};
         if (helper == managed.end() || !helper->second.size || helper->second.size > 64 * 1024 * 1024 ||
-            !fs::is_regular_file(root / "CyCodeUpdater.exe") ||
-            fs::hard_link_count(root / "CyCodeUpdater.exe") != 1 ||
-            fs::file_size(root / "CyCodeUpdater.exe") != helper->second.size ||
-            detail::hashFile(root / "CyCodeUpdater.exe", 64 * 1024 * 1024, &cancel) != helper->second.digest)
+            !fs::is_regular_file(root / productIdentity().helper) ||
+            fs::hard_link_count(root / productIdentity().helper) != 1 ||
+            fs::file_size(root / productIdentity().helper) != helper->second.size ||
+            detail::hashFile(root / productIdentity().helper, 64 * 1024 * 1024, &cancel) != helper->second.digest)
             throw DownloadError(DownloadIssue::installation,
                                 "Installed update helper changed; reinstall the application");
         detail::safe(result.helper);
         if (!fs::exists(result.helper))
-            fs::copy_file(root / "CyCodeUpdater.exe", result.helper);
+            fs::copy_file(root / productIdentity().helper, result.helper);
         if (!fs::is_regular_file(result.helper) || fs::hard_link_count(result.helper) != 1 ||
             fs::file_size(result.helper) != helper->second.size ||
             detail::hashFile(result.helper, 64 * 1024 * 1024, &cancel) != helper->second.digest) {
@@ -391,7 +391,7 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
             try {
                 const auto catalogue =
                     nlohmann::json::parse(detail::read(root / "app/locales/ui.json", 4 * 1024 * 1024));
-                detail::jsonFile(messages, catalogue);
+                detail::jsonFile(messages, catalogue, false);
             } catch (...) {
                 // The catalogue is optional; installation and archive guards are not.
             }
@@ -413,12 +413,12 @@ static Prepared performDownload(const Release &release, const std::filesystem::p
                                                        : detail::hashFile(file, 4 * 1024 * 1024, &cancel)}};
             }
         }
-        detail::jsonFile(directory / "prepared.json", {{"format", 2},
+        detail::jsonFile(directory / "prepared.json", detail::productMetadata({{"format", 2},
                                                        {"files", files},
                                                        {"version", result.version},
                                                        {"sha256", result.digest},
                                                        {"installation", pathUtf8(root)},
-                                                       {"package", release.asset.name}});
+                                                       {"package", release.asset.name}}));
         verifyPrepared(result, cancel);
         // Only our unchanged metadata is disposable. Failed cleanup merely leaves
         // an extra protected record; it never invalidates a verified archive.

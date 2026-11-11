@@ -7,13 +7,23 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace cycode::updates {
-inline constexpr auto repository = "MrMybal/CyCode";
+struct ProductIdentity {
+    const char *product, *repository, *currentVersion, *application, *helper;
+    const char *installationMarker, *installationMarkerText, *tokenEnvironment;
+    std::span<const std::string_view> requiredFiles;
+    bool acceptsLegacyMetadata = false;
+};
+// Compiled once into cycode_updates. No process-global mutable configuration,
+// workspace input, network response or cache record can switch this identity.
+const ProductIdentity &productIdentity() noexcept;
+extern const char *const repository; // Source-compatible access to the configured repository.
 inline constexpr uint64_t maximumPackage = 256ull * 1024 * 1024;
 enum class DownloadMode { resume, fresh };
 enum class DownloadIssue {
@@ -77,9 +87,12 @@ std::string platform();
 std::optional<Release> parseRelease(const nlohmann::json &, std::string_view current,
                                     std::string_view target, bool installed = false);
 // The portable distribution is also the update payload; retain legacy caches.
-constexpr bool packageArchiveName(std::string_view name, std::string_view release, std::string_view target, bool installed = false) {
-    if (!name.starts_with("CyCode-")) return false;
-    name.remove_prefix(7);
+constexpr bool packageArchiveNameFor(std::string_view product, std::string_view name,
+                                     std::string_view release, std::string_view target, bool installed = false) {
+    if (product.empty() || !name.starts_with(product)) return false;
+    name.remove_prefix(product.size());
+    if (!name.starts_with('-')) return false;
+    name.remove_prefix(1);
     if (!name.starts_with(release)) return false;
     name.remove_prefix(release.size());
     if (!name.starts_with('-')) return false;
@@ -88,14 +101,13 @@ constexpr bool packageArchiveName(std::string_view name, std::string_view releas
     name.remove_prefix(target.size());
     return installed ? name == "-setup.exe" : (name == ".zip" || name == "-update.zip");
 }
-static_assert(packageArchiveName("CyCode-0.3.0-windows-x64.zip", "0.3.0", "windows-x64"));
-static_assert(packageArchiveName("CyCode-0.3.0-windows-x64-update.zip", "0.3.0", "windows-x64"));
-static_assert(!packageArchiveName("CyCode-0.3.0-windows-x64-setup.exe", "0.3.0", "windows-x64"));
-static_assert(!packageArchiveName("../CyCode-0.3.0-windows-x64.zip", "0.3.0", "windows-x64"));
-static_assert(!packageArchiveName("CyCode-0.3.0-windows-x64.zip", "0.3.1", "windows-x64"));
-static_assert(!packageArchiveName("CyCode-0.3.0-windows-x64.zip", "0.3.0", "linux-x64"));
-static_assert(packageArchiveName("CyCode-0.3.0-windows-x64-setup.exe", "0.3.0", "windows-x64", true));
-static_assert(!packageArchiveName("CyCode-0.3.0-windows-x64.zip", "0.3.0", "windows-x64", true));
+bool packageArchiveName(std::string_view name, std::string_view release, std::string_view target, bool installed = false);
+static_assert(packageArchiveNameFor("CyCode", "CyCode-0.3.0-windows-x64.zip", "0.3.0", "windows-x64"));
+static_assert(packageArchiveNameFor("CyCode", "CyCode-0.3.0-windows-x64-update.zip", "0.3.0", "windows-x64"));
+static_assert(!packageArchiveNameFor("CyCodeIDE", "CyCode-0.3.0-windows-x64.zip", "0.3.0", "windows-x64"));
+static_assert(!packageArchiveNameFor("CyCodeIDE", "CyCodeReader-0.3.0-windows-x64.zip", "0.3.0", "windows-x64"));
+static_assert(packageArchiveNameFor("CyCodeIDE", "CyCodeIDE-0.3.0-windows-x64-setup.exe", "0.3.0", "windows-x64", true));
+static_assert(!packageArchiveNameFor("CyCodeIDE", "../CyCodeIDE-0.3.0-windows-x64.zip", "0.3.0", "windows-x64"));
 bool packagePath(std::string_view);
 bool portableInstallation(const std::filesystem::path &);
 bool installedInstallation(const std::filesystem::path &);

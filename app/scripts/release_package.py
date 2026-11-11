@@ -1,5 +1,6 @@
 """Pure release authoring/data helpers; never execute packaged application code."""
 import ctypes
+from dataclasses import dataclass
 import hashlib
 import json
 import re
@@ -18,6 +19,52 @@ REQUIRED.update('app/resources/fonts/' + name for name in (
     'JetBrainsMono-OFL.txt','Codicons-LICENSE.txt'))
 
 
+@dataclass(frozen=True)
+class UpdateProduct:
+    """Trusted authoring identity, matching the immutable native build profile."""
+    product: str = 'CyCode'
+    repository: str = 'MrMybal/CyCode'
+
+    def __post_init__(self):
+        if (not isinstance(self.product, str) or len(self.product) > 64 or
+                not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', self.product) or
+                re.fullmatch(r'(con|nul|prn|aux|com[1-9]|lpt[1-9])', self.product.lower())):
+            raise ValueError('Invalid update product identifier')
+        if (not isinstance(self.repository, str) or len(self.repository) > 200 or
+                not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_.-]*/[A-Za-z0-9_][A-Za-z0-9_.-]*', self.repository)):
+            raise ValueError('Invalid update repository; expected owner/repository')
+
+    @property
+    def application(self):
+        return self.product + '.exe'
+
+    @property
+    def helper(self):
+        return self.product + 'Updater.exe'
+
+    @property
+    def accepts_legacy_metadata(self):
+        return self.product == 'CyCode' and self.repository == 'MrMybal/CyCode'
+
+    @property
+    def installation_marker(self):
+        return 'installed.flag' if self.accepts_legacy_metadata else self.product + '-installed.flag'
+
+    @property
+    def installation_marker_bytes(self):
+        return (self.product + ' per-user installation\n').encode('ascii')
+
+
+DEFAULT_PRODUCT = UpdateProduct()
+
+
+def required_files(product=DEFAULT_PRODUCT):
+    if not isinstance(product, UpdateProduct):
+        raise TypeError('Expected an UpdateProduct identity')
+    return (set(REQUIRED) if product.accepts_legacy_metadata else
+            {product.application, product.helper, 'LICENSE', 'COPYRIGHT'})
+
+
 def version_tuple(value):
     if not isinstance(value, str) or not re.fullmatch(r'(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)', value):
         raise ValueError('Invalid release version')
@@ -27,7 +74,9 @@ def version_tuple(value):
     return result
 
 
-def package_path(name):
+def package_path(name, *, product=DEFAULT_PRODUCT):
+    if not isinstance(product, UpdateProduct):
+        raise TypeError('Expected an UpdateProduct identity')
     if not isinstance(name, str) or not name or len(name) > 512:
         return False
     for part in name.split('/'):
@@ -37,21 +86,22 @@ def package_path(name):
                 part.endswith('.') or key in {'data', 'runtime', '.git', '.cydocbuild'} or
                 stem in {'con', 'nul', 'prn', 'aux'} or re.fullmatch(r'(com|lpt)[1-9]', stem)):
             return False
-    return (name in {'CyCode.exe', 'CyCodeUpdater.exe', 'cycode_cli.exe', 'manifest.json',
-                     'PACKAGE.md', 'README.md', 'README.fr.md', 'VERSION.fr.md', 'LISEZ-MOI.md', 'CHANGELOG.md', 'LICENSE', 'COPYRIGHT',
+    return (name in {product.application, product.helper, 'cycode_cli.exe', 'manifest.json',
+                     'PACKAGE.md', 'README.md', 'README.fr.md', 'VERSION.md', 'VERSION.fr.md', 'LISEZ-MOI.md', 'CHANGELOG.md', 'LICENSE', 'COPYRIGHT',
                      'msvcp140.dll', 'msvcp140_1.dll', 'msvcp140_2.dll', 'msvcp140_atomic_wait.dll',
                      'msvcp140_codecvt_ids.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'concrt140.dll', 'website/assets/workspace.png', 'website/assets/git-conflicts.png'} or
             name.startswith(('app/', 'icons/', 'tools/', 'extensions/')))
 
 
-def payload(entries, version, provenance):
+def payload(entries, version, provenance, *, product=DEFAULT_PRODUCT, required=()):
     version_tuple(version)
     entries = dict(entries)
-    if 'manifest.json' in entries or len(entries) > 4095 or not REQUIRED.issubset(entries):
+    if ('manifest.json' in entries or len(entries) > 4095 or
+            not (required_files(product) | set(required)).issubset(entries)):
         raise ValueError('Incomplete or duplicate release payload')
     unique = set()
     for name, data in entries.items():
-        if not package_path(name) or name.lower() in unique or not isinstance(data, bytes) or len(data) > 64 * 1024 * 1024:
+        if not package_path(name, product=product) or name.lower() in unique or not isinstance(data, bytes) or len(data) > 64 * 1024 * 1024:
             raise ValueError(f'Unsafe, duplicate or oversized release entry: {name}')
         unique.add(name.lower())
     for name in unique:
@@ -59,7 +109,11 @@ def payload(entries, version, provenance):
             raise ValueError('Conflicting release paths')
     if sum(map(len, entries.values())) > 240 * 1024 * 1024:
         raise ValueError('Release payload exceeds update extraction budget')
-    manifest = dict(provenance, version=version, platform='windows-x64', updateFormat=1,
+    if ('product' in provenance and provenance['product'] != product.product or
+            'repository' in provenance and provenance['repository'] != product.repository):
+        raise ValueError('Release provenance belongs to another product')
+    manifest = dict(provenance, product=product.product, repository=product.repository,
+                    version=version, platform='windows-x64', updateFormat=1,
                     files=[dict(path=name, size=len(data), sha256=hashlib.sha256(data).hexdigest())
                            for name, data in sorted(entries.items())])
     encoded = (json.dumps(manifest, indent=2) + '\n').encode('utf-8')
@@ -69,12 +123,31 @@ def payload(entries, version, provenance):
     return entries
 
 
-def write_archive(destination, entries, version, timestamp, *, update):
+def validate_payload(entries, version, *, product=DEFAULT_PRODUCT, required=()):
     version_tuple(version)
+    # Validate before opening/truncating the destination; never relabel a foreign
+    # manifest by changing only its ZIP root. The payload is data, never executed.
+    encoded = entries.get('manifest.json')
+    if not isinstance(encoded, bytes) or len(encoded) > 2 * 1024 * 1024:
+        raise ValueError('Missing or oversized release manifest')
+    manifest = json.loads(encoded)
+    if not isinstance(manifest, dict):
+        raise ValueError('Invalid release manifest')
+    expected = json.loads(payload({name: data for name, data in entries.items() if name != 'manifest.json'},
+                                  version, {}, product=product, required=required)['manifest.json'])
+    legacy_identity = product.accepts_legacy_metadata and 'product' not in manifest and 'repository' not in manifest
+    if (not legacy_identity and (manifest.get('product') != product.product or manifest.get('repository') != product.repository) or
+            any(manifest.get(key) != expected[key] for key in ('version', 'platform', 'updateFormat', 'files'))):
+        raise ValueError('Archive identity or manifest payload differs')
+    return manifest
+
+
+def write_archive(destination, entries, version, timestamp, *, update, product=DEFAULT_PRODUCT, required=()):
+    validate_payload(entries, version, product=product, required=required)
     compression = zipfile.ZIP_STORED if update else zipfile.ZIP_DEFLATED
     with zipfile.ZipFile(destination, 'w', compression=compression, allowZip64=False) as archive:
         for name, data in sorted(entries.items()):
-            info = zipfile.ZipInfo(f'CyCode-{version}/' + name, timestamp)
+            info = zipfile.ZipInfo(f'{product.product}-{version}/' + name, timestamp)
             info.compress_type = compression
             info.create_system = 3
             info.external_attr = 0o100644 << 16

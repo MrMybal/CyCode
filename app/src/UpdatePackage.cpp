@@ -55,7 +55,7 @@ std::vector<Entry> entries(const std::string &bytes, const std::string &expected
     if (!count || count > 4096 || count != number(bytes, end + 8, 2) ||
         uint64_t(central) + number(bytes, end + 12, 4) != end)
         throw std::runtime_error("Invalid update ZIP directory");
-    const auto prefix = "CyCode-" + expected + "/";
+    const auto prefix = std::string(productIdentity().product) + "-" + expected + "/";
     std::vector<Entry> result;
     std::set<std::string> names;
     std::vector<std::pair<size_t, size_t>> extents;
@@ -134,7 +134,7 @@ static void performApply(const fs::path &archive, const fs::path &installation, 
     const auto oldBytes = detail::read(root / "manifest.json", 2 * 1024 * 1024);
     const auto oldManifest = Json::parse(oldBytes);
     if (freshManifest.at("version") != expected ||
-        !newer(expected, oldManifest.at("version").get<std::string>()) || !newer(expected, CYCODE_VERSION))
+        !newer(expected, oldManifest.at("version").get<std::string>()) || !newer(expected, productIdentity().currentVersion))
         throw std::runtime_error("Update version does not advance the installed application");
     const auto freshFiles = detail::managedManifest(freshManifest),
                oldFiles = detail::managedManifest(oldManifest);
@@ -256,16 +256,16 @@ static void performApply(const fs::path &archive, const fs::path &installation, 
         const auto planHash = detail::hashFile(directory / "recovery.json", 8 * 1024 * 1024, nullptr);
         writeTextFileAtomic(
             directory / "RECOVERY.txt",
-            "CyCode update recovery / Recuperation de mise a jour\n\n"
-            "Close all CyCode instances. Keep pending.json, this transaction and its backups.\n"
+            std::string(productIdentity().product) + " update recovery / Recuperation de mise a jour\n\n"
+            "Close all application instances. Keep pending.json, this transaction and its backups.\n"
             "Run the staged helper below to review restoration of the previous version.\n"
             "Declining confirmation changes no installation file. Local conflicts block restoration.\n\n"
-            "Fermez toutes les instances de CyCode. Conservez pending.json, cette transaction et ses "
+            "Fermez toutes les instances de l'application. Conservez pending.json, cette transaction et ses "
             "sauvegardes.\n"
             "Lancez l'outil ci-dessous pour examiner la restauration de la version precedente.\n"
             "Le refus de confirmation ne modifie aucun fichier. Les conflits locaux bloquent la "
             "restauration.\n\n" +
-                pathUtf8(fs::absolute(archive).parent_path() / "CyCodeUpdater.exe") +
+                pathUtf8(fs::absolute(archive).parent_path() / productIdentity().helper) +
                 "\n\n"
                 "If the helper or a required backup is missing/modified, extract a complete release into a "
                 "new folder.\n"
@@ -277,10 +277,10 @@ static void performApply(const fs::path &archive, const fs::path &installation, 
                                                                   {"version", expected},
                                                                   {"required", *commitRequired},
                                                                   {"available", commitAvailable}});
-        pendingBytes = Json{{"format", 2},
+        pendingBytes = detail::productMetadata(Json{{"format", 2},
                             {"transaction", pathUtf8(directory)},
                             {"version", expected},
-                            {"planSha256", planHash}}
+                            {"planSha256", planHash}})
                            .dump(2) +
                        "\n";
         if (pendingBytes.size() > 8192)

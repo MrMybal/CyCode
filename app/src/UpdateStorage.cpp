@@ -37,6 +37,7 @@ Root root(const fs::path &supplied, const std::atomic<bool> &cancel) {
         throw std::runtime_error("Recover the pending installation before managing cached downloads");
     const auto bytes = detail::read(path / "manifest.json", 2 * 1024 * 1024);
     const auto manifest = Json::parse(bytes);
+    detail::requireProduct(manifest);
     (void)detail::managedManifest(manifest);
     const auto hash = detail::hashFile(path / "manifest.json", 2 * 1024 * 1024, &cancel);
     if (detail::read(path / "manifest.json", 2 * 1024 * 1024) != bytes)
@@ -60,6 +61,7 @@ Record record(const Root &r, const fs::path &directory, const std::atomic<bool> 
         throw std::runtime_error("Invalid cached download directory");
     const auto bytes = detail::read(directory / "prepared.json", 8192);
     const auto j = Json::parse(bytes);
+    detail::requireProduct(j);
     if (!format(j, 2) || !j.at("files").is_object() || j.at("files").size() < 2 || j.at("files").size() > 3)
         throw std::runtime_error("Legacy cache metadata is protected");
     const auto archive = pathUtf8(prepared.package.filename());
@@ -75,16 +77,16 @@ Record record(const Root &r, const fs::path &directory, const std::atomic<bool> 
         const auto hash = row.at("sha256").get<std::string>();
         const auto &size = row.at("size");
         const auto limit = name == archive               ? maximumPackage
-                           : name == "CyCodeUpdater.exe" ? 64ull * 1024 * 1024
+                           : name == productIdentity().helper ? 64ull * 1024 * 1024
                                                          : 4ull * 1024 * 1024;
-        if ((name != archive && name != "CyCodeUpdater.exe" && name != "updater-messages.json") ||
+        if ((name != archive && name != productIdentity().helper && name != "updater-messages.json") ||
             !detail::digest(hash) || !size.is_number_integer() || size <= 0 || size > limit ||
             (name == archive && hash != prepared.digest))
             throw std::runtime_error("Invalid owned cache payload");
         d.files.push_back({name, hash, size.get<uint64_t>()});
         d.bytes += size.get<uint64_t>();
     }
-    if (!j.at("files").contains(archive) || !j.at("files").contains("CyCodeUpdater.exe") ||
+    if (!j.at("files").contains(archive) || !j.at("files").contains(productIdentity().helper) ||
         d.bytes > payloadLimit)
         throw std::runtime_error("Incomplete cache ownership record");
     d.metadataDigest = detail::hashFile(directory / "prepared.json", 8192, &cancel);
@@ -128,12 +130,13 @@ CachedDownload candidate(const Root &r, const fs::path &directory, uint64_t &bud
                          const std::atomic<bool> &cancel) {
     auto entry = record(r, directory, cancel);
     auto &d = entry.download;
-    if (!newer(r.version, d.version) || !newer(CYCODE_VERSION, d.version))
+    if (!newer(r.version, d.version) || !newer(productIdentity().currentVersion, d.version))
         throw std::runtime_error("Current or newer cached releases are protected");
     Json baseline{{"metadata", d.metadataDigest}, {"files", Json::object()}};
     if (fs::exists(directory / "result.json")) {
         const auto bytes = detail::read(directory / "result.json", 8192);
         const auto j = Json::parse(bytes);
+        detail::requireProduct(j);
         const auto state = j.at("state").get<std::string>();
         if (!format(j, 1) || j.at("version") != d.version ||
             j.at("sha256") != detail::stagedMetadata(r.path, directory).digest ||
@@ -162,6 +165,7 @@ Retired retired(const Root &r, const fs::path &directory, uint64_t &budget, cons
         throw std::runtime_error("Invalid retired cache binding");
     const auto bytes = detail::read(directory / "retirement.json", 1024 * 1024);
     const auto j = Json::parse(bytes);
+    detail::requireProduct(j);
     const auto sourceName = j.at("source").get<std::string>();
     if (!format(j, 1) || j.at("installation") != pathUtf8(r.path) ||
         !detail::workName(sourceName, "download-"))
@@ -182,6 +186,7 @@ Retired retired(const Root &r, const fs::path &directory, uint64_t &budget, cons
     if (fs::exists(directory / "status.json")) {
         result.statusBytes = detail::read(directory / "status.json", 8192);
         const auto status = Json::parse(*result.statusBytes);
+        detail::requireProduct(status);
         const auto phase = status.at("phase").get<std::string>();
         if (!format(status, 1) || status.at("source") != sourceName || status.at("version") != d.version ||
             (phase != "retiring" && phase != "retired" && phase != "restoring" && phase != "restored" &&
@@ -232,10 +237,10 @@ void status(const fs::path &directory, const CachedDownload &d, const char *phas
             std::optional<std::string> &baseline) {
     const auto path = directory / "status.json";
     detail::safe(path);
-    const auto bytes = Json{{"format", 1},
+    const auto bytes = detail::productMetadata(Json{{"format", 1},
                             {"source", pathUtf8(d.directory.filename())},
                             {"version", d.version},
-                            {"phase", phase}}
+                            {"phase", phase}})
                            .dump(2) +
                        "\n";
     writeTextFileAtomic(path, bytes, baseline);

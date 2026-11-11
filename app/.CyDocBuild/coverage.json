@@ -104,7 +104,7 @@
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-coreextraction",
-      "sourceSha256": "a724dd822dba189477261613e572f5b300a040e611fa57e2c2d766ab55d9eb34"
+      "sourceSha256": "afda527658a8afb000aa903eb4645e2c6933b1f1df3cc06e06929ce0723078f6"
     },
     {
       "source": "Docs/CoreInstallation.md",
@@ -615,7 +615,7 @@
       "kind": "user-workflow",
       "target": "updates#updates",
       "legacyId": "reference-app-docs-updates",
-      "sourceSha256": "c7a0a32ee122eb38e05377156f885c0ea47c76497b6bec360f0d46361f7abdd6"
+      "sourceSha256": "170bfb456d47d934ae496082a1a75624463af8cdf49e02d1b0be702d4bf47eb0"
     },
     {
       "source": "Docs/UserSnippets.md",
@@ -629,7 +629,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "41fb0abb071e828f48cdbe67a355f2a809347b679c89e19fcfd7c7e4b69d41f5"
+      "sourceSha256": "321f91a96227882dbba944fdd8ff4864d5040a658d17009b2678da275d20509e"
     },
     {
       "source": "Docs/VersionControl.md",

@@ -31,7 +31,9 @@ struct Reader {
         checkpoint();
         if (fs::hard_link_count(path) != 1)
             throw std::runtime_error("Update history metadata changed during inspection");
-        return Json::parse(bytes);
+        auto metadata = Json::parse(bytes);
+        detail::requireProduct(metadata);
+        return metadata;
     }
 };
 uint64_t counter(const Json &j, const char *key, uint64_t limit) {
@@ -63,6 +65,7 @@ HistoryEntry recovery(Reader &reader, const fs::path &transaction, const fs::pat
     if (pending.size() > 8192)
         throw std::runtime_error("Recovery history pending identity exceeds its limit");
     const auto binding = Json::parse(pending);
+    detail::requireProduct(binding);
     if (!binding.at("format").is_number_integer() || binding.at("format") != 2 ||
         binding.at("transaction") != pathUtf8(transaction) || binding.at("version") != release ||
         binding.at("planSha256") != digest)

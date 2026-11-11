@@ -48,8 +48,8 @@ ManagedFiles records(const Json &j, bool installed) {
             throw std::runtime_error("Recovery file set exceeds size limit");
         result.emplace(name, ManagedFile{hash, size.get<uint64_t>()});
     }
-    if (!result.contains("manifest.json") || (installed && result.size() < 8) ||
-        (!installed && (!result.contains("CyCode.exe") || !result.contains("CyCodeUpdater.exe"))))
+    if (!result.contains("manifest.json") || (installed && result.size() < productIdentity().requiredFiles.size() + 1) ||
+        (!installed && (!result.contains(productIdentity().application) || !result.contains(productIdentity().helper))))
         throw std::runtime_error("Missing recovery manifest record");
     return result;
 }
@@ -76,6 +76,7 @@ Context load(const fs::path &supplied, const std::atomic<bool> &cancel) {
         throw std::runtime_error("Recovery requires a Windows x64 portable installation");
     c.pendingBytes = detail::read(c.root / "data/updates/pending.json", 8192);
     const auto pending = Json::parse(c.pendingBytes);
+    detail::requireProduct(pending);
     if (!format(pending, "format", 2))
         throw std::runtime_error("This older update journal requires manual recovery; retain its backups");
     c.directory = utf8Path(pending.at("transaction").get<std::string>());
@@ -92,6 +93,7 @@ Context load(const fs::path &supplied, const std::atomic<bool> &cancel) {
         detail::read(planFile, planLimit) != planBytes)
         throw std::runtime_error("Recovery plan changed or failed SHA-256 verification");
     const auto plan = Json::parse(planBytes);
+    detail::requireProduct(plan);
     if (!format(plan, "format", 1) || plan.at("installation") != pathUtf8(c.root) ||
         plan.at("version") != c.version)
         throw std::runtime_error("Recovery plan belongs to another installation");
@@ -99,8 +101,10 @@ Context load(const fs::path &supplied, const std::atomic<bool> &cancel) {
     c.installed = records(plan.at("installed"), true);
     const auto before = Json::parse(
         boundBytes(c.directory / "before.json", c.original.at("manifest.json"), manifestLimit, cancel));
+    detail::requireProduct(before);
     const auto after = Json::parse(
         boundBytes(c.directory / "after.json", c.installed.at("manifest.json"), manifestLimit, cancel));
+    detail::requireProduct(after);
     const auto oldFiles = detail::managedManifest(before), newFiles = detail::managedManifest(after);
     c.previousVersion = before.at("version").get<std::string>();
     if (after.at("version") != c.version || !newer(c.version, c.previousVersion) ||
@@ -117,8 +121,8 @@ Context load(const fs::path &supplied, const std::atomic<bool> &cancel) {
             throw std::runtime_error("Recovery targets differ from next manifest");
     }
     c.affected = detail::managedUnion(oldFiles, newFiles);
-    c.previousHelper = oldFiles.at("CyCodeUpdater.exe").digest;
-    c.nextHelper = newFiles.at("CyCodeUpdater.exe").digest;
+    c.previousHelper = oldFiles.at(productIdentity().helper).digest;
+    c.nextHelper = newFiles.at(productIdentity().helper).digest;
     return c;
 }
 Json observe(const fs::path &path, const std::set<uint64_t> &sizes, const std::atomic<bool> &cancel) {
@@ -174,6 +178,7 @@ std::string workIdentity(const fs::path &work, const Context &c) {
         throw std::runtime_error("Invalid prepared recovery directory");
     const auto bytes = ordinaryBytes(work / "work.json", workLimit);
     const auto j = Json::parse(bytes);
+    detail::requireProduct(j);
     if (!format(j, "format", 1) || j.at("installation") != pathUtf8(c.root) ||
         j.at("transaction") != pathUtf8(c.directory) || j.at("version") != c.version ||
         j.at("planSha256") != c.planDigest || j.at("pending") != c.pendingBytes)
@@ -192,6 +197,7 @@ void preparedCopies(Scan &s, const std::atomic<bool> &cancel) {
         if (!fs::exists(statusFile))
             return;
         const auto status = Json::parse(ordinaryBytes(statusFile, 8192));
+        detail::requireProduct(status);
         if (status.at("planSha256") != c.planDigest)
             throw std::runtime_error("Previous recovery status belongs to another plan");
         const auto hint = utf8Path(status.at("files").get<std::string>());
@@ -200,6 +206,7 @@ void preparedCopies(Scan &s, const std::atomic<bool> &cancel) {
         std::map<fs::path, std::optional<std::string>> identities;
         identities.emplace(hint, workIdentity(hint, c));
         const auto prepared = Json::parse(ordinaryBytes(hint / "prepared.json", preparedLimit));
+        detail::requireProduct(prepared);
         if (!format(prepared, "format", 1) || prepared.at("planSha256") != c.planDigest ||
             !prepared.at("files").is_object() || prepared.at("files").size() > 4096)
             throw std::runtime_error("Invalid prepared recovery file map");
@@ -454,7 +461,7 @@ static void performRecovery(const Recovery &expected, const std::atomic<bool> &c
     detail::safe(expected.installation / "data/updates/instances.lock");
     NativeFileLease lease(expected.installation / "data/updates/instances.lock");
     if (!lease.acquired())
-        throw std::runtime_error("Close all CyCode instances and other update helpers before recovery");
+        throw std::runtime_error("Close all application instances and other update helpers before recovery");
     auto s = scan(expected.installation, cancel);
     const auto &c = s.context;
     if (s.review.planDigest != expected.planDigest || s.review.transaction != expected.transaction ||
@@ -486,7 +493,7 @@ static void performRecovery(const Recovery &expected, const std::atomic<bool> &c
                            {"planSha256", c.planDigest},
                            {"state", outcome},
                            {"pendingCleared", pendingCleared}});
-            const auto bytes = record.dump(2) + "\n";
+            const auto bytes = detail::productMetadata(std::move(record)).dump(2) + "\n";
             if (bytes.size() > 8192)
                 return;
             detail::safe(work / "recovery-result.json");
@@ -496,12 +503,12 @@ static void performRecovery(const Recovery &expected, const std::atomic<bool> &c
     };
     bool mutated = false, advertised = false;
     try {
-        const auto identity = Json{{"format", 1},
+        const auto identity = detail::productMetadata(Json{{"format", 1},
                                    {"installation", pathUtf8(c.root)},
                                    {"transaction", pathUtf8(c.directory)},
                                    {"version", c.version},
                                    {"planSha256", c.planDigest},
-                                   {"pending", c.pendingBytes}}
+                                   {"pending", c.pendingBytes}})
                                   .dump(2) +
                               "\n";
         if (identity.size() > workLimit)
@@ -522,7 +529,7 @@ static void performRecovery(const Recovery &expected, const std::atomic<bool> &c
             sources[row.name] = pathUtf8(row.preparedWork.filename());
         }
         const auto prepared =
-            Json{{"format", 1}, {"planSha256", c.planDigest}, {"files", sources}}.dump(2) + "\n";
+            detail::productMetadata(Json{{"format", 1}, {"planSha256", c.planDigest}, {"files", sources}}).dump(2) + "\n";
         if (prepared.size() > preparedLimit)
             throw std::runtime_error("Prepared recovery map exceeds its size limit");
         detail::safe(work / "prepared.json");

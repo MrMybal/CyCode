@@ -5,7 +5,7 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 16
+sourceRevision: 17
 ---
 
 ## État actuel de la livraison {#current-status}
@@ -274,3 +274,6 @@ protégée du guide CyCodeIDE. Kaspersky a de nouveau supprimé le CLI installé
 19 h 20 (Europe/Paris). Son MD5 correspond au build. L'acceptation complète reste
 interrompue, le MCP est désactivé et la publication binaire suspendue. Aucune
 relance native automatique n'a suivi. Voir [l'installation](core-installation#distribution).
+
+
+La bibliothèque native de mise à jour possède une identité consommateur immuable, distincte de la version Core. Voir [les profils de mise à jour](doc:updates#products).

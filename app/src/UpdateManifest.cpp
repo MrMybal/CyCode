@@ -27,6 +27,7 @@ std::set<std::string> managedUnion(const ManagedFiles &before, const ManagedFile
     return result;
 }
 ManagedFiles managedManifest(const Json &json) {
+    requireProduct(json);
     (void)version(json.at("version").get<std::string>());
     if (!json.contains("updateFormat") || !json.at("updateFormat").is_number_integer() ||
         json.at("updateFormat") != 1 || json.at("platform") != platform() || !json.at("files").is_array() ||
@@ -46,9 +47,8 @@ ManagedFiles managedManifest(const Json &json) {
             throw std::runtime_error("Update manifest exceeds size limit");
         result.emplace(name, ManagedFile{hash, size.get<uint64_t>()});
     }
-    for (const auto *required : {"CyCode.exe", "CyCodeUpdater.exe", "cycode_cli.exe", "app/CyTool.json",
-                                 "app/locales/ui.json", "LICENSE", "COPYRIGHT"})
-        if (!result.contains(required))
+    for (const auto required : productIdentity().requiredFiles)
+        if (!result.contains(std::string(required)))
             throw std::runtime_error("Incomplete update package");
     return result;
 }

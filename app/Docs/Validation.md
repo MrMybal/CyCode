@@ -4591,3 +4591,32 @@ pages, 6,779 links/routes, 97 reviewed guide mappings, 27 native help topics and
 one explicit IDE help route. DOM checks passed routing, search, EN/FR, six themes,
 media/Escape and accessible controls. These are source/data/documentation checks,
 not native history or desktop runtime acceptance.
+
+
+## Consumer-specific native update profiles — 2026-11-11
+
+Production Windows x64 Release cycode_updates compiled for both the historical
+CyCode identity and CyCodeIDE/MrMybal/CyCodeIDE/0.2.3. BUILD_TESTING, CLI, providers
+and private diagnostics stayed OFF; only native production libraries were built.
+CMake compiler-identification probes are build-tool configuration artifacts, not
+application/native test payloads. No application, helper or native fixture/test
+was run or packaged. Kaspersky stayed active; the final monitored build observed
+no new detection. An initial report-only assertion incorrectly counted CMake's
+compiler-identification executables; it was corrected to check application/test
+artifacts. Native compilation itself succeeded in that initial pass as well.
+
+verify_update_profiles.py checks 27 accepted/rejected CMake configurations with
+LANGUAGES NONE, no compiler, network or executable. It verifies actual generated
+identity headers, legacy/fork distinctions, mandatory host repository/version and
+refusal of unsafe product/repository/version inputs. Eleven in-memory package
+regressions pass across the old authoring helper and the product-bound helper:
+manifest/hash/root checks, foreign products, untouched destination on rejection,
+legacy compatibility, host resource requirements and provider/MCP byte preservation.
+New native product/foreign-manifest checks are added to the existing suite but
+are not executed here. Download, installer execution, Apply/rollback/recovery,
+GUI and non-Windows runtime acceptance remain pending; Actions stays disabled.
+
+Source/data verification passed 109 Python and 53 JSON files; the 50 contract
+unittests passed. The complete offline manual export passed 664 localized pages,
+6,783 links/routes, 97 reviewed guides, 27 native help topics and two explicit IDE
+help routes. Configuration/library builds do not establish actual in-app updates.

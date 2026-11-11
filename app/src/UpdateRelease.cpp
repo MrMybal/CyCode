@@ -1,5 +1,6 @@
 #include "cycode/update/detail/UpdateFiles.h"
 #include "cycode/Updates.h"
+#include "cycode/Paths.h"
 #include <algorithm>
 #include <charconv>
 #include <fstream>
@@ -57,10 +58,10 @@ std::optional<Release> parseRelease(const nlohmann::json &json, std::string_view
     }
     if (!json.at("assets").is_array() || json.at("assets").size() > 1024)
         throw std::runtime_error("Invalid release asset list");
-    const auto portable = "CyCode-" + result.version + "-" + std::string(target) + ".zip";
-    const auto legacy = "CyCode-" + result.version + "-" + std::string(target) + "-update.zip";
+    const auto portable = std::string(productIdentity().product) + "-" + result.version + "-" + std::string(target) + ".zip";
+    const auto legacy = std::string(productIdentity().product) + "-" + result.version + "-" + std::string(target) + "-update.zip";
     const auto &assets = json.at("assets");
-    const auto name = installed ? "CyCode-" + result.version + "-" + std::string(target) + "-setup.exe" : std::any_of(assets.begin(), assets.end(), [&](const auto &asset) {
+    const auto name = installed ? std::string(productIdentity().product) + "-" + result.version + "-" + std::string(target) + "-setup.exe" : std::any_of(assets.begin(), assets.end(), [&](const auto &asset) {
         return asset.value("name", std::string{}) == portable;
     }) ? portable : legacy;
     unsigned matches = 0;
@@ -109,7 +110,7 @@ bool packagePath(std::string_view path) {
         std::transform(key.begin(), key.end(), key.begin(),
                        [](unsigned char c) { return char(std::tolower(c)); });
         const auto stem = key.substr(0, key.find('.'));
-        if (key == "data" || key == "runtime" || key == ".git" || stem == "con" || stem == "nul" ||
+        if (key == "data" || key == "runtime" || key == ".git" || key == ".cydocbuild" || stem == "con" || stem == "nul" ||
             stem == "prn" || stem == "aux" ||
             (stem.size() == 4 && (stem.starts_with("com") || stem.starts_with("lpt")) && stem[3] >= '1' &&
              stem[3] <= '9'))
@@ -122,20 +123,34 @@ bool packagePath(std::string_view path) {
             break;
         from = end + 1;
     }
-    return path == "CyCode.exe" || path == "cycode_cli.exe" || path == "CyCodeUpdater.exe" ||
+    return path == productIdentity().application || path == "cycode_cli.exe" || path == productIdentity().helper ||
            path == "manifest.json" || path == "PACKAGE.md" || path == "README.md" || path == "LISEZ-MOI.md" ||
            path == "website/assets/workspace.png" || path == "website/assets/git-conflicts.png" ||
-           path == "CHANGELOG.md" || path == "README.fr.md" || path == "VERSION.fr.md" ||
+           path == "CHANGELOG.md" || path == "README.fr.md" || path == "VERSION.md" || path == "VERSION.fr.md" ||
            path == "msvcp140.dll" || path == "msvcp140_1.dll" || path == "msvcp140_2.dll" ||
            path == "msvcp140_atomic_wait.dll" || path == "msvcp140_codecvt_ids.dll" ||
            path == "vcruntime140.dll" || path == "vcruntime140_1.dll" || path == "concrt140.dll" || path == "LICENSE" || path == "COPYRIGHT" || path.starts_with("app/") ||
            path.starts_with("icons/") || path.starts_with("tools/") || path.starts_with("extensions/");
 }
 bool installedInstallation(const std::filesystem::path &root) {
-    const auto flag = root / "installed.flag";
+    size_t visited = 0;
+    for (const auto &entry : std::filesystem::directory_iterator(root)) {
+        if (++visited > 512)
+            throw std::runtime_error("Installation identity scan exceeds its bound");
+        auto name = pathUtf8(entry.path().filename());
+        std::transform(name.begin(), name.end(), name.begin(),
+                       [](unsigned char c) { return char(std::tolower(c)); });
+        std::string ownMarker = productIdentity().installationMarker;
+        std::transform(ownMarker.begin(), ownMarker.end(), ownMarker.begin(),
+                       [](unsigned char c) { return char(std::tolower(c)); });
+        if ((name == "installed.flag" || name.ends_with("-installed.flag")) &&
+            name != ownMarker)
+            throw std::runtime_error("Installation marker belongs to another product");
+    }
+    const auto flag = root / productIdentity().installationMarker;
     detail::safe(flag);
     if (!std::filesystem::exists(flag)) return false;
-    if (detail::read(flag, 128) != "CyCode per-user installation\n")
+    if (detail::read(flag, 128) != productIdentity().installationMarkerText)
         throw std::runtime_error("Invalid installed distribution marker");
     return true;
 }
@@ -148,11 +163,13 @@ bool portableInstallation(const std::filesystem::path &root) {
             return false;
         std::ifstream in(root / "manifest.json");
         const auto m = nlohmann::json::parse(in);
+        if (!detail::matchesProduct(m)) return false;
+        (void)installedInstallation(root);
         (void)version(m.at("version").get<std::string>());
-        return m.contains("updateFormat") && m.at("updateFormat").is_number_integer() &&
+        return detail::matchesProduct(m) && m.contains("updateFormat") && m.at("updateFormat").is_number_integer() &&
                m.at("updateFormat") == 1 && m.value("platform", std::string{}) == platform() &&
-               m.at("files").is_array() && std::filesystem::is_regular_file(root / "CyCode.exe") &&
-               std::filesystem::is_regular_file(root / "CyCodeUpdater.exe");
+               m.at("files").is_array() && std::filesystem::is_regular_file(root / productIdentity().application) &&
+               std::filesystem::is_regular_file(root / productIdentity().helper);
     } catch (...) {
         return false;
     }
@@ -163,7 +180,7 @@ std::unique_ptr<NativeFileLease> installationUse(const std::filesystem::path &ro
     detail::safe(root / "data/updates/pending.json");
     if (std::filesystem::exists(root / "data/updates/pending.json"))
         throw std::runtime_error(
-            "An interrupted update needs recovery. Run the staged CyCodeUpdater.exe in "
+            std::string("An interrupted update needs recovery. Run the staged ") + productIdentity().helper + " in "
             "data/updates/download-... "
             "to review restoration. Keep pending.json, transaction backups and recovery files.");
     if (!portableInstallation(root))

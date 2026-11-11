@@ -167,9 +167,9 @@ std::filesystem::path work(const std::filesystem::path &root, const char *prefix
         throw std::runtime_error("Cannot create update work directory");
     return path;
 }
-void jsonFile(const std::filesystem::path &path, const nlohmann::json &value) {
+void jsonFile(const std::filesystem::path &path, const nlohmann::json &value, bool productBound) {
     safe(path);
-    const auto bytes = value.dump(2) + "\n";
+    const auto bytes = (productBound ? productMetadata(value) : value).dump(2) + "\n";
     if (bytes.size() > 8 * 1024 * 1024)
         throw std::runtime_error("Update journal exceeds its size limit");
     const auto baseline = std::filesystem::exists(path)

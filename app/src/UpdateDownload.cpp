@@ -83,13 +83,13 @@ void createPartialMetadata(const fs::path &root, const fs::path &directory, cons
     downloadBinding(release);
     const auto file = directory / "resume.json";
     safe(file);
-    const auto bytes = nlohmann::json{{"format", 1},
+    const auto bytes = productMetadata(nlohmann::json{{"format", 1},
                                       {"installation", pathUtf8(root)},
                                       {"version", release.version},
                                       {"name", release.asset.name},
                                       {"url", release.asset.url},
                                       {"sha256", release.asset.digest},
-                                      {"size", release.asset.size}}
+                                      {"size", release.asset.size}})
                            .dump(2) +
                        "\n";
     if (bytes.size() > 8192)
@@ -103,6 +103,7 @@ PartialDownload partialMetadata(const fs::path &root, const fs::path &directory)
         throw std::runtime_error("Invalid partial update location");
     ordinary(directory / "resume.json", 8192);
     const auto j = nlohmann::json::parse(read(directory / "resume.json", 8192));
+    requireProduct(j);
     if (!j.at("format").is_number_integer() || j.at("format") != 1 || j.contains("rejected") ||
         j.at("installation") != pathUtf8(root) || !j.at("size").is_number_unsigned())
         throw std::runtime_error("Invalid partial update metadata");
@@ -120,9 +121,9 @@ PartialDownload partialMetadata(const fs::path &root, const fs::path &directory)
             throw std::runtime_error("Unknown files in partial update directory");
         const auto name = pathUtf8(entry.path().filename());
         if (name != "resume.json" && name != "download.partial" && name != release.asset.name &&
-            name != "CyCodeUpdater.exe" && name != "updater-messages.json")
+            name != productIdentity().helper && name != "updater-messages.json")
             throw std::runtime_error("Unknown files in partial update directory");
-        ordinary(entry.path(), name == "CyCodeUpdater.exe"       ? 64 * 1024 * 1024
+        ordinary(entry.path(), name == productIdentity().helper       ? 64 * 1024 * 1024
                                : name == "updater-messages.json" ? 4 * 1024 * 1024
                                                                  : maximumPackage);
     }
