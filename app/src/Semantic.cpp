@@ -143,7 +143,7 @@ Json Engine::symbolQuery(const std::string &method, const Json &params) {
         epoch = language_.backendEpoch(backend);
         if (params.contains("expectedEpoch") && params.at("expectedEpoch") != epoch)
             throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: language configuration changed");
-        generation = nextRevision_; context=hierarchyGeneration_; diskGeneration=monitor_.snapshot().revision;
+        generation = documentGenerationLocked(); context=hierarchyGeneration_; diskGeneration=monitor_.snapshot().revision;
         future = language_.request(document ? "textDocument/documentSymbol" : "workspace/symbol", request);
     }
     const auto response = future.get();
@@ -156,7 +156,7 @@ Json Engine::symbolQuery(const std::string &method, const Json &params) {
         } else if (const auto found = documents_.find(key); found != documents_.end()) current = &found->second;
         if (!current || current->identity != identity || current->revision != revision)
             throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: symbol document was edited, closed or replaced");
-    } else if (generation != nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during symbol query");
+    } else if (generation != documentGenerationLocked() || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during symbol query");
     std::optional<SymbolTextBounds> bounds;
     if (document) bounds.emplace(current->text);
     const auto limit = static_cast<size_t>(std::clamp(params.value("limit", 200), 1, 1000));
@@ -226,7 +226,7 @@ Json Engine::resolveSymbol(const Json &params) {
             throw std::runtime_error("Unknown or expired workspace symbol; search again");
         auto &session=found->second;
         backend=session.backend; epoch=session.epoch; generation=session.generation; context=session.context; diskGeneration=session.diskGeneration; includeExternal=session.includeExternal;
-        if (generation!=nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision || epoch!=language_.backendEpoch(backend) ||
+        if (generation!=documentGenerationLocked() || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision || epoch!=language_.backendEpoch(backend) ||
             (params.contains("expectedEpoch") && params.at("expectedEpoch")!=epoch))
             throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace or language configuration changed; search again");
         if (session.resolved.contains(slot)) return session.resolved.at(slot);
@@ -238,7 +238,7 @@ Json Engine::resolveSymbol(const Json &params) {
     std::lock_guard lock(mutex_);
     pruneSymbolSessionsLocked();
     const auto found=symbolSessions_.find(id);
-    if (found==symbolSessions_.end() || generation!=nextRevision_ || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision || epoch!=language_.backendEpoch(backend))
+    if (found==symbolSessions_.end() || generation!=documentGenerationLocked() || context!=hierarchyGeneration_ || diskGeneration!=monitor_.snapshot().revision || epoch!=language_.backendEpoch(backend))
         throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: symbol session expired or workspace/language changed during resolution");
     if (!response.is_object() || response.value("name",Json())!=original.at("name") ||
         response.value("kind",Json())!=original.at("kind") || !response.contains("location") ||
@@ -270,7 +270,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
     const bool rename = method == "language.rename";
     {
         std::lock_guard lock(mutex_);
-        auto &doc = openLocked(key); before = doc.text; revision = doc.revision; generation = nextRevision_;
+        auto &doc = openLocked(key); before = doc.text; revision = doc.revision; generation = documentGenerationLocked();
         if (params.at("expectedRevision") != revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed; read it again");
         request = {{"textDocument", {{"uri", LanguageClient::uri(resolve(key))}}}};
         if (rename) {
@@ -298,7 +298,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
         std::future<Json> future;
         {
             std::lock_guard lock(mutex_);
-            if (generation != nextRevision_ || !documents_.contains(key) || documents_.at(key).revision != revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed during refactoring");
+            if (generation != documentGenerationLocked() || !documents_.contains(key) || documents_.at(key).revision != revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed during refactoring");
             future = language_.request(operation, data);
         }
         return future.get();
@@ -359,7 +359,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
             bool synchronize=false;
             {
                 std::lock_guard lock(mutex_);
-                if (generation!=nextRevision_) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during refactoring");
+                if (generation!=documentGenerationLocked()) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during refactoring");
                 std::set<std::string> paths;
                 if (edits.is_object() && edits.contains("changes")) for (const auto &[uri,list] : edits.at("changes").items()) paths.insert(pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(uri))).lexically_relative(root_)));
                 if (edits.is_object() && edits.contains("documentChanges")) for (const auto &change : edits.at("documentChanges")) {
@@ -367,7 +367,7 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
                     paths.insert(pathUtf8(resolve(pathUtf8(LanguageClient::fromUri(change.at("textDocument").at("uri")))).lexically_relative(root_)));
                 }
                 for (const auto &path : paths) if (!documents_.contains(path)) { openLocked(path);synchronize=true; }
-                generation=nextRevision_;
+                generation=documentGenerationLocked();
             }
             if (synchronize) edits=ask("textDocument/rename",request);
         }
@@ -378,12 +378,12 @@ Json Engine::prepareChange(const std::string &method, const Json &params) {
         title = params.contains("range") ? "Format selection" : "Format document";
     }
     std::lock_guard lock(mutex_);
-    if (generation != nextRevision_ || !documents_.contains(key) || documents_.at(key).revision != revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during refactoring");
+    if (generation != documentGenerationLocked() || !documents_.contains(key) || documents_.at(key).revision != revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: workspace changed during refactoring");
     auto result=workspaceChangeLocked(title,edits,LanguageService::supportsCpp(key) || LanguageService::supportsManaged(key) ? oldName : "",rename);
     if(!coverage.is_null()) {
         auto &plan=changes_.at(result.at("id").get<std::string>());plan.coverage=coverage;
         if(coverage.at("strategy")=="workspace-spelling-candidates") {
-            plan.scopeGeneration=nextRevision_;plan.scopeWorkspaceRevision=monitor_.snapshot().revision;
+            plan.scopeGeneration=documentGenerationLocked();plan.scopeWorkspaceRevision=monitor_.snapshot().revision;
             plan.scopeBackend=language_.backend(key);plan.scopeEpoch=language_.backendEpoch(plan.scopeBackend);
         }
         result["coverage"]=std::move(coverage);
@@ -490,7 +490,7 @@ Json Engine::changeOperation(const std::string &method, const Json &params) {
     }
     const bool undo = method == "changes.undo";
     if (plan.state != (undo ? "applied" : "preview")) throw std::runtime_error("Refactoring is not in the expected state");
-    if(!undo && plan.scopeGeneration && (plan.scopeGeneration!=nextRevision_ ||
+    if(!undo && plan.scopeGeneration && (plan.scopeGeneration!=documentGenerationLocked() ||
         plan.scopeWorkspaceRevision!=monitor_.snapshot().revision || language_.backendEpoch(plan.scopeBackend)!=plan.scopeEpoch))
         throw NativeError(ErrorCode::RevisionConflict,"Rename preparation scope changed; prepare the rename again");
     if (!undo) confirmChangeAnnotations(plan.annotations,params.value("confirmedAnnotations",Json::array()));

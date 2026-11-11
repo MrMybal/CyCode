@@ -1,5 +1,17 @@
 # Roadmap
 
+## Durable compiler traversal — 2026-11-11
+
+Native analysis now offers explicit disk checkpoints, discovery and restoration,
+including after an in-process document change. Restored observations become
+unknown historical metadata. Isolated source failures no longer stop a read-only
+traversal, and current-file timing makes slow work observable. Real production
+SDK/MSBuild/clangd checks cover 162 files, cancellation and restart; the real UE
+campaign continues a 37,557-unit inventory. See [persistent progress](AnalysisProgress.md).
+Full Unreal semantics, advanced resource refactorings and Linux/macOS execution
+remain separate work; no whole-engine completion is inferred from this stage.
+
+
 ## Core quality stage — 2026-11-11
 
 Shared atomic publication, readable MSBuild preparation, native cancellable

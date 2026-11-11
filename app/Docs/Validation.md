@@ -1,5 +1,33 @@
 # Validation — 2026-11-08
 
+## 2026-11-11 — measured traversal, navigation and transformations
+
+The [scale evidence](Benchmarks/core-scale-20261111.json) distinguishes every
+production binary. The real Unreal campaign traversed 104 then 64 additional
+units across restart, while keeping the older observations historical/unknown.
+37,389 units remain unvisited. The navigation-cache regression is reproduced
+before the fix and checked after it (3/16 versus 16/16 concurrent cache hits).
+Real edits still invalidate. The final deduced-type action identifier is corrected
+from the unsupported ExpandAutoType to clangd's ExpandDeducedType; eight actual
+compiler transformations pass preview/Apply/Undo, including two-file changes.
+InlineVariable and hidden SwapIfBranches were not offered by clangd 18.1.8.
+These Windows source-preserving checks pass with Kaspersky active and no new
+observed detection. No GUI, GitHub Actions, installation or publication is implied.
+
+## 2026-11-11 — persistent analysis and actual inspection bounds
+
+The production Core passes real SDK/MSBuild/clangd checks on 162 source units:
+normal restart, real cancellation with persisted progress, historical-proof
+invalidation, live document edits, metadata pagination, single-writer leases,
+malformed paths and same-size/same-time compiler-database changes. All original
+source bytes are retained. Real clang-tidy identifies null dereference, stack
+escape and use after delete; bounded results remain explicitly truncated and
+missing/empty compiler commands are refused. Detailed source-preserving Unreal
+campaign evidence is recorded separately. See [persistent progress](AnalysisProgress.md).
+These are Windows production checks; no native CTest program, IDE GUI, new
+installation or GitHub workflow is launched by this stage.
+
+
 ## 2026-11-11 — shared atomic I/O and C++ quality
 
 The shared atomic publication owner and MSBuild helpers compile in production.

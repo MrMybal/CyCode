@@ -5,7 +5,7 @@ description: Atomic publication, compiler inspections, guarded C++ transformatio
 section: Start here
 parent: native-core
 order: 264
-revision: 1
+revision: 2
 ---
 
 
@@ -66,9 +66,13 @@ iterate an explicit scope without claiming whole-project completeness.
 ## Guarded C++ transformations {#refactoring}
 
 Existing code-action listing/preparation now supports clangd's ExtractFunction,
-ExtractVariable, InlineVariable, ExpandMacro, ExpandAutoType, DefineInline,
+ExtractVariable, InlineVariable, ExpandMacro, ExpandDeducedType, DefineInline,
 DefineOutline, RemoveUsingNamespace, ScopifyEnum and SwapIfBranches when the server
-actually offers them. These are a fixed allowlist, not arbitrary command execution.
+actually offers them. These are a fixed allowlist, not arbitrary command execution. On the tested clangd 18.1.8,
+InlineVariable is absent and SwapIfBranches is hidden, so neither was offered.
+The dedicated acceptance runner requires eight actually offered transformations
+to pass preview/Apply/Undo, including two-file inline/outline moves and deduced
+type replacement. An allowlisted name alone never establishes implementation.
 
 The server computes an edit; its `workspace/applyEdit` is always refused. One
 captured edit is validated by the existing native preview/Apply/Undo transaction.

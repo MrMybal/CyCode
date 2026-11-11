@@ -37,7 +37,15 @@ Do not put workspace sources into the SDK's temporary task-file lifecycle.
   engine-only roots require real UBT compiler commands; do not fabricate flags.
 - Prepare the relevant scope with `analysis_prepare`. Follow its continuation
   while pending and page metadata with `analysis_results`. These checkpoints
-  exist only in the current Core process. Restart after a revision conflict.
+  remain in the current process unless the advertised contract supports persist.
+  For a durable compilation campaign, opt into persist:true, retain its issued
+  checkpoint and discover saved progress with analysis_checkpoints. Restore
+  through analysis_prepare checkpoint.
+  Restored prefix diagnostics are unknown historical-checkpoint observations,
+  never current compiler proof. Observe historicalObserved/currentPassObserved,
+  per-file errors and currentPath/currentFileMilliseconds. Read live documents
+  before using revisions; unopened failures have revision zero. A changed compiler
+  context needs a fresh inventory.
 - Distinguish a compiler result, a partial index and a textual candidate in the
   answer. A completed preparation does not certify exhaustive Unreal coverage.
 

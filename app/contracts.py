@@ -685,11 +685,21 @@ GIT_REPLAY_RESULT=schema({**PROCESS['properties'],'action':GIT_REPLAY_ACTION,'re
 ANALYSIS_COVERAGE = schema({key:NONNEGATIVE for key in ('diagnosticClean','diagnosticErrors','diagnosticUnknown',
     'commands','translationUnits','outOfScope','observed','remaining')},
     ('diagnosticClean','diagnosticErrors','diagnosticUnknown','commands','translationUnits','outOfScope','observed','remaining'))
-ANALYSIS_DOCUMENT = schema({'path':PATH,'revision':REVISION,'diagnostics':{'enum':['clean','errors','unknown']},'errors':NONNEGATIVE},
+ANALYSIS_CHECKPOINT_ID={'type':'string','pattern':'^analysis-[0-9a-f]{32}$'}
+ANALYSIS_DOCUMENT = schema({'path':PATH,'revision':NONNEGATIVE,'diagnostics':{'enum':['clean','errors','unknown']},'errors':NONNEGATIVE,
+    'evidence':{'enum':['current-process','historical-checkpoint']},'elapsedMilliseconds':{'type':'number','minimum':0},
+    'previousDiagnostics':{'enum':['clean','errors','unknown']},'error':{'type':'string','maxLength':2048}},
     ('path','revision','diagnostics','errors'))
+ANALYSIS_DOCUMENT['allOf']=[{'if':{'properties':{'revision':{'const':0}}},
+    'then':{'required':['error'],'properties':{'error':{'type':'string','minLength':1},'diagnostics':{'const':'unknown'}}}},
+    {'if':{'required':['evidence'],'properties':{'evidence':{'const':'historical-checkpoint'}}},
+     'then':{'properties':{'diagnostics':{'const':'unknown'},'errors':{'const':0}}}}]
+
 ANALYSIS_STATE = schema({'state':{'enum':['idle','running','pending','completed','failed','cancelled']},'phase':STRING,
     'completed':NONNEGATIVE,'total':NONNEGATIVE,'progress':{'type':'number','minimum':0,'maximum':100},'error':STRING,
-    'session':STRING,'coverage':ANALYSIS_COVERAGE,'resumable':BOOL},('state','phase','completed','total','progress','error'))
+    'session':STRING,'coverage':ANALYSIS_COVERAGE,'resumable':BOOL,
+    'checkpoint':ANALYSIS_CHECKPOINT_ID,'checkpointRevision':STRING,'checkpointError':STRING,
+    'historicalObserved':NONNEGATIVE,'currentPassObserved':NONNEGATIVE,'proofReused':{'const':False},'currentPath':STRING,'currentFileMilliseconds':{'type':'number','minimum':0}},('state','phase','completed','total','progress','error'))
 ANALYSIS_RESULT = schema({**ANALYSIS_STATE['properties'],
     'documents':{'type':'array','maxItems':128,'items':ANALYSIS_DOCUMENT},
     'scope':{'enum':['explicit-files','workspace-spelling-candidates','compilation-database']},
@@ -697,11 +707,18 @@ ANALYSIS_RESULT = schema({**ANALYSIS_STATE['properties'],
     (*ANALYSIS_STATE['required'],'session','coverage','documents','scope','wholeProjectIndexCompleteness','continuation','nextOffset'))
 ANALYSIS_INPUT = schema({'paths':{'type':'array','minItems':1,'uniqueItems':True,'items':PATH},
     'scope':{'const':'compilation-database'},'pathPrefix':PATH,'continuation':STRING,
+    'persist':BOOL,'checkpoint':ANALYSIS_CHECKPOINT_ID,
     'batchSize':{'type':'integer','minimum':0,'maximum':4096}})
-ANALYSIS_INPUT['oneOf']=[{'required':['paths'],'not':{'anyOf':[{'required':[key]} for key in ('scope','pathPrefix','continuation')]}},
-    {'required':['scope'],'not':{'anyOf':[{'required':[key]} for key in ('paths','continuation')]}},
+ANALYSIS_INPUT['oneOf']=[{'required':['paths'],'not':{'anyOf':[{'required':[key]} for key in ('scope','pathPrefix','continuation','checkpoint','persist')]}},
+    {'required':['scope'],'not':{'anyOf':[{'required':[key]} for key in ('paths','continuation','checkpoint')]}},
     {'required':['continuation'],'properties':{'continuation':{'type':'string','minLength':1}},
-     'not':{'anyOf':[{'required':[key]} for key in ('scope','pathPrefix','paths')]}}]
+     'not':{'anyOf':[{'required':[key]} for key in ('scope','pathPrefix','paths','checkpoint','persist')]}},
+    {'required':['checkpoint'],'not':{'anyOf':[{'required':[key]} for key in ('scope','pathPrefix','paths','continuation','persist')]}}]
+ANALYSIS_CHECKPOINTS=schema({'checkpoints':{'type':'array','maxItems':128,'items':schema({
+    'checkpoint':ANALYSIS_CHECKPOINT_ID,'total':NONNEGATIVE,'observed':NONNEGATIVE,
+    'scope':{'const':'compilation-database'},'proofReused':{'const':False}},('checkpoint','total','observed','scope','proofReused'))},
+    'invalid':NONNEGATIVE,'truncated':BOOL},('checkpoints','invalid','truncated'))
+
 ANALYSIS_PAGE = schema({'session':STRING,'documents':{'type':'array','maxItems':256,'items':ANALYSIS_DOCUMENT},
     'offset':NONNEGATIVE,'nextOffset':NONNEGATIVE,'available':NONNEGATIVE,'total':NONNEGATIVE,'hasMore':BOOL},
     ('session','documents','offset','nextOffset','available','total','hasMore'))
@@ -729,8 +746,9 @@ OPERATIONS = [
 
     ('service_status','service.status','Inspect the persistent native Core context, lifecycle and transport limits. Service ready is not proof of backend initialization or complete semantic indexing. Use language_status for per-backend state and analysis_status for semantic preparation progress.',schema(),SERVICE_STATUS,[]),
     ('analysis_status','analysis.status','Read aggregate native semantic-preparation progress without starting work. A completed preparation proves the stated source-file scope, not exhaustive whole-project semantic coverage. Per-job ownership, polling and cancellation remain CyToolsCore cy_get_job/cy_cancel_job.',schema(),ANALYSIS_STATE,[]),
-    ('analysis_prepare','analysis.prepare','Prepare explicit existing sources without a fixed file-count ceiling, or enumerate the active C++ compilation database (optional workspace pathPrefix). Rolling compiler analysis retains one temporary native buffer at a time and preserves existing/dirty documents. Compilation-database scope defaults to batches of 64; batchSize 0 inventories without analysing. Continue pending/cancelled work with its continuation/session ID and optional batchSize; document, workspace or compiler-context changes invalidate the checkpoint. No restart-persistent proof. Returns first 128 metadata rows; analysis_results pages the rest. Version-bound clean/error/unknown diagnostics and observed/remaining units are distinct from exhaustive Unreal/index completeness. Slow provider attempts retry until cancellation or a real failure; no source saves or backend installation.',
+    ('analysis_prepare','analysis.prepare','Prepare explicit existing sources without a fixed file-count ceiling, or enumerate the active C++ compilation database (optional workspace pathPrefix). Rolling compiler analysis retains one temporary native buffer at a time and preserves existing/dirty documents. Compilation-database scope defaults to batches of 64; batchSize 0 inventories without analysing. Continue pending/cancelled work with its continuation/session ID and optional batchSize; document, workspace or compiler-context changes invalidate the checkpoint. Opt-in persist:true saves native progress under .cycode/analysis-progress; restore with checkpoint, or discover analysis_checkpoints. Restarted prefix diagnostics become unknown historical-checkpoint observations, never reused compiler proof. Isolated unreadable/oversized sources are recorded and do not abort traversal. Returns first 128 metadata rows; analysis_results pages the rest. Version-bound clean/error/unknown diagnostics and observed/remaining units are distinct from exhaustive Unreal/index completeness. Slow provider attempts retry until cancellation or a real failure; no source saves or backend installation.',
      ANALYSIS_INPUT,ANALYSIS_RESULT,[]),
+    ('analysis_checkpoints','analysis.checkpoints','Discover bounded saved compiler traversal checkpoints in this workspace without starting analysis. Malformed entries are counted, not removed. IDs restore through analysis_prepare. Historical compiler results are never a current-process proof.',schema(),ANALYSIS_CHECKPOINTS,[]),
     ('analysis_results','analysis.results','Read a metadata page from the latest native preparation checkpoint. Rows are historical observations for that session, not proof of current whole-project completeness. Pending work is continued through analysis_prepare; SDK job ownership/cancellation is unchanged.',
      schema({'session':STRING,'offset':NONNEGATIVE,'limit':{'type':'integer','minimum':1,'maximum':256}},('session',)),ANALYSIS_PAGE,[]),
     ('unreal_automation_plan','unreal.automationPlan','Preview one Unreal Engine 5 cook/package action without executing tools or creating output files. Requires a discovered non-Editor game target and a precompiled AutomationTool/.NET host plus editor commandlet binary. Supports explicit existing /Game map packages, desktop platform/configuration, build, Pak/IoStore/compression and a 1..86400-second deadline (3600 default). Source descriptors/rules/map stamps, engine version/tool stamps, workspace/engine identities and exact argv are reviewed. Issues one of 16 native previews for 10 minutes, with a new managed staging/archive/log folder. Trusted Unreal/project tools can modify normal cook/build/DDC/engine caches; no deploy/run/sign/upload, SDK installation or arbitrary arguments. An argument preview is not a complete content snapshot or package validation.',
@@ -1164,7 +1182,7 @@ def write_manifest():
         platform['status'] = 'Experimental'
     manifest['operations'] = [dict(id=op, name=op.replace('_', ' ').title(),
         description=description+(' This typed operation always targets built-in Git in the selected workspace repository; use vcs_provider_action for plugins.' if method in GIT_METHODS else ''),
-        inputSchema=inputs, outputSchema=outputs, resourceRequirements=({'ramBytes':64*1024*1024,**({'diskBytes':272*1024*1024} if method=='packages.install' else {})} if method.startswith('packages.') else {'ramBytes': (64 if method=='unreal.artifacts' else 512 if method=='analysis.inspect' else 256 if method.startswith(('vcs.conflict.','vcs.checkout.','vcs.merge.','vcs.replay.','unreal.automation')) else 16) * 1024 * 1024}),
+        inputSchema=inputs, outputSchema=outputs, resourceRequirements=({'ramBytes':64*1024*1024,**({'diskBytes':272*1024*1024} if method=='packages.install' else {})} if method.startswith('packages.') else {'ramBytes': (64 if method=='unreal.artifacts' else 512 if method in ('analysis.inspect','analysis.prepare','analysis.checkpoints') else 256 if method.startswith(('vcs.conflict.','vcs.checkout.','vcs.merge.','vcs.replay.','unreal.automation')) else 16) * 1024 * 1024}),
         supportedBackends=[], permissions=permissions, canRunAsync=True, canCancel=not (method.startswith('packages.') or method.startswith('vcs.replay.') or method.startswith('vcs.merge.') or method.startswith('vcs.checkout.') or method.startswith('vcs.conflict.') or method.startswith('vcs.worktree.') or method.startswith('vcs.submodule') or method in DEBUG_MUTATIONS or method in DEBUG_EXECUTIONS or method in ('snippets.userSave','documents.createUntitled','documents.saveAs','documents.close','debug.dataBreakpoints','debug.runToCursor','debug.restoreRunToCursor','debug.instructionBreakpoints')), supportsProgress=method in ('analysis.prepare','language.rename'),
         **({'exclusiveGroups':['semantic-preparation']} if method in ('analysis.prepare','language.rename') else {'exclusiveGroups':['user-settings']} if method=='snippets.userSave' else {'exclusiveGroups':['plugin-packages']} if method.startswith('packages.') and method not in ('packages.list','packages.inspect') else
            {'exclusiveGroups': ['workspace-mutations']} if permissions and method not in ('terminal.list','terminal.read','debug.status','debug.profile','unreal.launchProfile','debug.cancelReload','project.cancel','project.output','tests.cancel','build.cancel','build.output','packages.list','packages.inspect') else {}))

@@ -265,7 +265,7 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
         auto [document, full] = semanticDocumentLocked(path);
         auto &doc = *document;
         revision = doc.revision; identity = doc.identity;
-        generation = nextRevision_;
+        generation = documentGenerationLocked();
         backend = language_.backend(pathUtf8(full));
         epoch = inspection ? language_.backendEpoch(backend) : language_.epoch(path);
         if ((params.contains("expectedDocumentId") && params.at("expectedDocumentId") != identity) ||
@@ -309,7 +309,7 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
     {
         std::lock_guard lock(mutex_);
         auto [document,full]=semanticDocumentLocked(path);
-        if(document->revision!=revision || document->identity!=identity || generation!=nextRevision_ ||
+        if(document->revision!=revision || document->identity!=identity || generation!=documentGenerationLocked() ||
            language_.backendEpoch(backend)!=epoch)
             throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: navigation dependency context changed");
         if(backend=="cpp") {
@@ -341,7 +341,7 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
                 } catch(const std::exception &) {}
             }
             if(liveTarget) {
-                if(generation!=nextRevision_)throw NativeError(ErrorCode::RevisionConflict,"Navigation dependency changed");
+                if(generation!=documentGenerationLocked())throw NativeError(ErrorCode::RevisionConflict,"Navigation dependency changed");
                 ast=language_.request("textDocument/symbolInfo",{{"textDocument",{{"uri",sourceUri}}},{"position",position}});
             }
         }
@@ -356,7 +356,7 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
         ? (externalSources_.contains(path) && externalSources_.at(path).loaded ? &externalSources_.at(path).document : nullptr)
         : (documents_.contains(path) ? &documents_.at(path) : nullptr);
     if (!current || current->revision != revision || current->identity != identity ||
-        (!inspection && generation != nextRevision_) ||
+        (!inspection && generation != documentGenerationLocked()) ||
         (inspection ? language_.backendEpoch(backend) : language_.epoch(path)) != epoch)
         throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed during language request");
     if (method == "language.complete")
@@ -386,7 +386,7 @@ Json Engine::languageQuery(const std::string &method, const Json &params) {
     if(astReconciled)report["astReconciled"]=true;
     if(cacheable) {
         report["cacheHit"]=false;
-        if(generation==nextRevision_ && cacheWorkspaceRevision==monitor_.snapshot().revision && !report.at("truncated").get<bool>() &&
+        if(generation==documentGenerationLocked() && cacheWorkspaceRevision==monitor_.snapshot().revision && !report.at("truncated").get<bool>() &&
            report.at("invalid")==0 && report.at("outsideWorkspace")==0 && !report.at("locations").empty() && report.at("locations").size()<=32) {
             NavigationCacheEntry entry;entry.result=report;entry.generation=generation;entry.workspaceRevision=cacheWorkspaceRevision;
             entry.epoch=epoch;entry.compilerContext=compilerContext;
@@ -818,7 +818,7 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
                 {"version", CYCODE_VERSION},
                 {"solution", solution_}};
     }
-    if(method=="analysis.prepare" || method=="analysis.status" || method=="analysis.cancel" || method=="analysis.results")return analysisOperation(method,params);
+    if(method=="analysis.prepare" || method=="analysis.status" || method=="analysis.cancel" || method=="analysis.results" || method=="analysis.checkpoints")return analysisOperation(method,params);
     if (method == "workspace.files")
         return files(params);
     if (method == "search.text")

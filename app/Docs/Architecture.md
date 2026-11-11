@@ -1,5 +1,12 @@
 # Native Core architecture
 
+The native semantic-preparation owner also maintains opt-in traversal metadata
+under `.cycode/analysis-progress`. OS leases and shared atomic publication protect
+its writer; restoring rebinds the current pass and downgrades historical compiler
+observations. Source text and SDK scheduling remain with their existing owners.
+See [persistent analysis progress](AnalysisProgress.md).
+
+
 The repository now provides the native Core and CLI. The graphical application
 has moved to [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE). Read
 [Core extraction and evidence](CoreExtraction.md) for the current dependency

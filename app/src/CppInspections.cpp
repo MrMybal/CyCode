@@ -5,6 +5,7 @@
 #include "cycode/ProcessText.h"
 #include "cycode/TextFile.h"
 #include "cycode/Tools.h"
+#include <algorithm>
 #include <fstream>
 #include <regex>
 #include <set>
@@ -37,10 +38,14 @@ std::string inspectionChecks(const std::string &profile) {
 
 Json Engine::inspectCpp(const Json &params, const std::atomic<bool> *cancellation) {
     const auto timeout = buildTimeout(params, 180);
+    if(timeout > std::chrono::seconds(900))
+        throw NativeError(ErrorCode::InvalidParams, "C++ inspection timeout must be 1..900 seconds");
     const auto profile = params.value("profile", std::string("recommended"));
     const auto checks = inspectionChecks(profile);
     const auto path = resolve(params.at("path"));
     const auto key = pathUtf8(path.lexically_relative(root_));
+    if(!LanguageService::supportsCpp(key))
+        throw NativeError(ErrorCode::InvalidParams,"Select an actual C/C++ translation unit");
     const auto database = resolve(params.at("compilationDatabase"));
     if (database.filename() != "compile_commands.json")
         throw std::runtime_error("Select a real compile_commands.json inside the workspace");
@@ -58,7 +63,18 @@ Json Engine::inspectCpp(const Json &params, const std::atomic<bool> *cancellatio
         if (directory.is_relative()) throw std::runtime_error("Inspection compile directory must be absolute");
         std::error_code error;
         const auto source = std::filesystem::weakly_canonical(directory / utf8Path(unit.at("file")), error);
-        if (!error && source == path) ++matching;
+        if (!error && source == path) {
+            // LLVM prefers arguments when present. A file/directory pair alone
+            // is not a real command and must never trigger guessed fallback flags.
+            if(unit.contains("arguments")) {
+                const auto &args=unit.at("arguments");
+                if(!args.is_array() || args.empty() || !args[0].is_string() || args[0].get_ref<const std::string&>().empty() ||
+                    std::any_of(args.begin(),args.end(),[](const Json &arg){return !arg.is_string();}))
+                    throw NativeError(ErrorCode::InvalidParams,"Inspection compilation arguments are missing or invalid");
+            } else if(!unit.contains("command") || !unit.at("command").is_string() || unit.at("command").get_ref<const std::string&>().empty())
+                throw NativeError(ErrorCode::InvalidParams,"Inspection needs a real compiler command, not fallback flags");
+            ++matching;
+        }
     }
     if (matching != 1) throw std::runtime_error("Select exactly one compilation context for this translation unit");
     uint64_t revision = 0, identity = 0, generation = 0, workspaceRevision = 0;
@@ -72,7 +88,7 @@ Json Engine::inspectCpp(const Json &params, const std::atomic<bool> *cancellatio
         if (document.revision != params.at("expectedRevision"))
             throw NativeError(ErrorCode::RevisionConflict, "RevisionConflict: inspect the current document revision");
         revision = document.revision; identity = document.identity; sourceText = document.disk;
-        generation = nextRevision_; workspaceRevision = monitor_.snapshot().revision;
+        generation = documentGenerationLocked(); workspaceRevision = monitor_.snapshot().revision;
     }
     std::string executable = params.value("executable", std::string{});
     if (executable.empty()) {
@@ -91,9 +107,10 @@ Json Engine::inspectCpp(const Json &params, const std::atomic<bool> *cancellatio
     const auto output = processOutputText(process.output, true);
     Json diagnostics = Json::array();
     size_t external = 0;
+    bool diagnosticsTruncated=false;
     static const std::regex diagnostic(R"re(^(.*):([0-9]+):([0-9]+): (warning|error|note|fatal error): (.*)$)re");
     std::istringstream lines(output); std::string line;
-    while (diagnostics.size() < 2000 && std::getline(lines, line)) {
+    while (std::getline(lines, line)) {
         if (!line.empty() && line.back() == '\r') line.pop_back();
         std::smatch match;
         if (!std::regex_match(line, match, diagnostic)) continue;
@@ -108,6 +125,7 @@ Json Engine::inspectCpp(const Json &params, const std::atomic<bool> *cancellatio
             if (bracket != std::string::npos && message.back() == ']') {
                 code = message.substr(bracket + 2, message.size() - bracket - 3); message.resize(bracket);
             }
+            if(diagnostics.size()==2000) {diagnosticsTruncated=true;continue;}
             diagnostics.push_back({{"path", relative}, {"line", row}, {"byteColumn", column},
                 {"severity", match[4].str()}, {"message", message}, {"code", code}});
         } catch (const std::exception &) { /* invalid external coordinates */ }
@@ -117,16 +135,17 @@ Json Engine::inspectCpp(const Json &params, const std::atomic<bool> *cancellatio
         std::lock_guard lock(mutex_);
         const auto found = documents_.find(key);
         stale = found == documents_.end() || found->second.identity != identity || found->second.revision != revision ||
-            nextRevision_ != generation || monitor_.snapshot().revision != workspaceRevision;
+            documentGenerationLocked() != generation || monitor_.snapshot().revision != workspaceRevision;
     }
     try { stale = stale || readTextFileBytes(path) != sourceText || inspectionDatabase(database) != databaseText; }
     catch (...) { stale = true; }
+    const bool truncated=process.truncated || diagnosticsTruncated;
     return {{"path", key}, {"revision", revision}, {"documentId", identity}, {"profile", profile},
         {"compilationDatabase", pathUtf8(database.lexically_relative(root_))}, {"executable", executable},
         {"status", stale ? "stale" : process.cancelled ? "cancelled" : process.timedOut ? "timed-out" :
-            process.truncated ? "truncated" : process.exitCode ? "failed" : "complete"},
+            truncated ? "truncated" : process.exitCode ? "failed" : "complete"},
         {"stale", stale}, {"exitCode", process.exitCode}, {"cancelled", process.cancelled},
-        {"timedOut", process.timedOut}, {"truncated", process.truncated}, {"output", output},
+        {"timedOut", process.timedOut}, {"truncated", truncated}, {"output", output},
         {"diagnostics", diagnostics}, {"externalDiagnostics", external}, {"sourceWritten", false},
         {"positionEncoding", "utf8-byte-columns"}};
 }

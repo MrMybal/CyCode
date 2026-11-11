@@ -15,6 +15,7 @@ Ces contrats décrivent le service natif exposé par l’intégration SDK/MCP of
 ## Opérations {#operations}
 
 - [`analysis_inspect`](doc:operation-analysis-inspect-analysis-inspect) — Inspecter une unité C++ enregistrée avec clang-tidy et sa vraie commande de compilation, sans modifier les sources ; résultats protégés et annulation du processus.
-- [`analysis_status`](doc:operation-analysis-status-analysis-status) — Consulter la progression de préparation sémantique sans démarrer de travail.
-- [`analysis_prepare`](doc:operation-analysis-prepare-analysis-prepare) — Analyser progressivement les sources ou les unités de compilation C++, avec reprise par lots et mesure explicite de couverture.
+- [`analysis_status`](doc:operation-analysis-status-analysis-status) — Consulter la progression native, le fichier courant et son temps de traitement sans démarrer une nouvelle analyse.
+- [`analysis_prepare`](doc:operation-analysis-prepare-analysis-prepare) — Analyser progressivement les sources ou les unités C++, enregistrer explicitement la progression et reprendre un instantané ; les preuves historiques sont invalidées, les erreurs isolées signalées et la couverture reste explicite.
+- [`analysis_checkpoints`](doc:operation-analysis-checkpoints-analysis-checkpoints) — Lister les progressions d’analyse enregistrées dans cet espace de travail, sans lancer d’analyse ni réutiliser les diagnostics historiques comme preuve actuelle.
 - [`analysis_results`](doc:operation-analysis-results-analysis-results) — Consulter une page des observations sémantiques de la session native, sans assimiler ces résultats à une couverture exhaustive.

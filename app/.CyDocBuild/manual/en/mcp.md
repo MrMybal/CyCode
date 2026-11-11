@@ -24,4 +24,4 @@ Reads and writes use the same native documents as the editor. Read a fresh revis
 
 ## Headless Core {#headless}
 
-The [AI integration guide](doc:core-agents#connect) documents standalone Core startup, all 238 operation contracts, permissions, jobs, analysis preparation, navigation and guarded refactorings.
+The [AI integration guide](doc:core-agents#connect) documents standalone Core startup, all 239 operation contracts, permissions, jobs, analysis preparation, navigation and guarded refactorings.

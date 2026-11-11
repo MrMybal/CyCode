@@ -51,14 +51,14 @@ Json Engine::highlight(const Json &params) {
     std::string text; uint64_t revision, snapshot; std::future<Json> pending;
     {
         std::lock_guard lock(mutex_); const auto [document,full]=semanticDocumentLocked(path);
-        revision=document->revision; snapshot=nextRevision_;
+        revision=document->revision; snapshot=documentGenerationLocked();
         if (params.at("expectedRevision").get<uint64_t>()!=revision) throw std::runtime_error("RevisionConflict: document changed");
         text=document->text; pending=language_.request("cycode/semanticTokens",{{"textDocument",{{"uri",LanguageClient::uri(full)}}}});
     }
     auto result=decodeHighlights(text,pending.get());
     {
         std::lock_guard lock(mutex_); const auto [document,full]=semanticDocumentLocked(path);
-        if (document->revision!=revision || snapshot!=nextRevision_) throw std::runtime_error("RevisionConflict: documents changed during highlighting");
+        if (document->revision!=revision || snapshot!=documentGenerationLocked()) throw std::runtime_error("RevisionConflict: documents changed during highlighting");
     }
     result["path"]=path; result["revision"]=revision; return result;
 }

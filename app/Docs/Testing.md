@@ -1,5 +1,24 @@
 # Local verification and native tests
 
+## Opt-in analysis campaigns — 2026-11-11
+
+[Persistent analysis progress](AnalysisProgress.md) documents the explicit
+production-only runners for real MCP/MSBuild/clangd restart/cancellation and the
+existing UBT Unreal corpus. They create source data, not native fixture programs.
+clang-tidy flow/lifetime and bounded-diagnostic checks also use the production
+Core. Time budgets leave a resumable pending traversal, not a passing whole-engine
+certificate. The shared build owner reports incomplete/truncated operations with
+a nonzero exitCode even when the underlying tool exits normally; inspect flags.
+Ordinary source checks do not launch these runners. GitHub Actions stays paused.
+The opt-in `verify_navigation_analysis.py` checks read-only traversal/cache reuse
+and real-edit invalidation. `verify_cpp_transformations.py` requires eight offered
+clangd transformations to pass preview/Apply/Undo, preserving original source
+bytes. Both accept `--core`, `--executable`, `--clangd`, a new `--output` directory
+and the explicit `--run-native` flag. They launch only the existing production
+Core and language tools, never a generated fixture executable or the IDE.
+
+
+
 ## Current explicit Core validation — 2026-11-11
 
 The owner resumed the corrected Core and requested quality, compiler, debugger and

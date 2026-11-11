@@ -5,7 +5,7 @@ description: Écritures communes, inspections du compilateur, transformations C+
 section: Pour commencer
 parent: native-core
 order: 264
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 ## Publication atomique commune {#atomic}
@@ -62,7 +62,12 @@ La préparation des actions reconnaît une liste explicite de transformations
 clangd : extraction de fonction/variable, variable en ligne, expansion de macro
 ou de type auto, définition inline/hors classe, suppression de using namespace,
 enum class et inversion des branches if, lorsqu’elles sont réellement proposées.
-Aucune commande arbitraire du serveur n’est autorisée.
+Aucune commande arbitraire du serveur n’est autorisée. Avec clangd 18.1.8,
+InlineVariable est absent et SwapIfBranches est masqué : ces deux actions ne sont
+pas proposées. Le test dédié exige huit transformations réellement disponibles,
+avec aperçu/Apply/Undo : extractions, macro, ExpandDeducedType, définitions
+inline/hors classe sur deux fichiers, using namespace et enum class. Un nom
+autorisé ne constitue pas à lui seul une fonctionnalité implémentée.
 
 Le serveur calcule la modification ; ses demandes workspace/applyEdit sont
 toujours refusées. Une seule modification capturée passe par l’aperçu natif puis

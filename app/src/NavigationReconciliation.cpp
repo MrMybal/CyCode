@@ -19,7 +19,7 @@ Json Engine::reconcileNavigationTargets(Json response,const Json &sourceSymbols,
     auto guard=[&] {
         if(std::chrono::steady_clock::now()>deadline)
             throw NativeError(ErrorCode::DeadlineExceeded,"Compiler target reconciliation timed out; prepare the target and retry");
-        if(nextRevision_!=generation || language_.backendEpoch("cpp")!=epoch)
+        if(documentGenerationLocked()!=generation || language_.backendEpoch("cpp")!=epoch)
             throw NativeError(ErrorCode::RevisionConflict,"Navigation target context changed during compiler lookup");
     };
     std::map<std::string,std::map<std::string,Json>> targets;

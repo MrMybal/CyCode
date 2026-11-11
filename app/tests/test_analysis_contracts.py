@@ -45,6 +45,25 @@ class AnalysisContracts(unittest.TestCase):
         self.assertEqual(self.ops['analysis_prepare']['exclusiveGroups'],self.ops['language_rename']['exclusiveGroups'])
         self.assertTrue(self.ops['analysis_prepare']['supportsProgress'])
 
+    def test_persist_restore_modes_and_opaque_identifiers(self):
+        checkpoint='analysis-'+'a'*32
+        for value in ({'scope':'compilation-database','persist':True,'batchSize':0},{'checkpoint':checkpoint,'batchSize':2}):
+            self.assertTrue(self.valid('analysis_prepare',value))
+        for value in ({'paths':['A.cpp'],'persist':True},{'checkpoint':'../checkpoint'},
+                      {'checkpoint':checkpoint,'scope':'compilation-database'},
+                      {'checkpoint':checkpoint,'continuation':'analysis-1'},
+                      {'continuation':'analysis-1','persist':False}):
+            self.assertFalse(self.valid('analysis_prepare',value))
+    def test_historical_and_unopened_rows_cannot_claim_clean_proof(self):
+        op=self.ops['analysis_results']['outputSchema']['properties']['documents']['items']
+        valid=Draft202012Validator(op)
+        self.assertTrue(valid.is_valid(dict(path='A.cpp',revision=0,diagnostics='unknown',errors=0,error='Unreadable')))
+        self.assertFalse(valid.is_valid(dict(path='A.cpp',revision=0,diagnostics='clean',errors=0)))
+        base=dict(path='A.cpp',revision=1,diagnostics='unknown',errors=0,evidence='historical-checkpoint',previousDiagnostics='clean')
+        self.assertTrue(valid.is_valid(base))
+        self.assertFalse(valid.is_valid(dict(base,diagnostics='clean')))
+        self.assertFalse(valid.is_valid(dict(base,errors=1)))
+
     def test_actual_clangd_hierarchy_capabilities_are_typed_without_open_schema(self):
         # Real MCP language_configure previously failed on these clangd fields.
         methods=self.ops['language_status']['outputSchema']['properties']['servers']['properties']['cpp']['properties']['methods']

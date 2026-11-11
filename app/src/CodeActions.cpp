@@ -18,7 +18,7 @@ static bool previewableCppTweak(const Json &action, const std::string &backend) 
     const auto &argument = arguments[0];
     if (!argument.contains("file") || !argument.at("file").is_string() || !argument.contains("selection")) return false;
     static const std::set<std::string> supported = {"ExtractFunction", "ExtractVariable", "InlineVariable",
-        "ExpandMacro", "ExpandAutoType", "DefineInline", "DefineOutline", "RemoveUsingNamespace",
+        "ExpandMacro", "ExpandDeducedType", "DefineInline", "DefineOutline", "RemoveUsingNamespace",
         "ScopifyEnum", "SwapIfBranches"};
     return supported.contains(argument.value("tweakID", ""));
 }
@@ -62,7 +62,7 @@ Json Engine::codeActionOperation(const std::string &method,const Json &params) {
     if (method=="language.codeActions") {
         const auto supplied=params.at("path").get<std::string>();if (supplied.starts_with("sdk://")) throw NativeError(ErrorCode::ReadOnly,"SDK sources are read-only");
         const auto path=pathUtf8(resolve(supplied).lexically_relative(root_));if (!language_.accepts(path)) throw std::runtime_error("No language backend for this file type");
-        auto &doc=openLocked(path);const auto revision=doc.revision,epoch=language_.epoch(path);auto generation=nextRevision_;
+        auto &doc=openLocked(path);const auto revision=doc.revision,epoch=language_.epoch(path);auto generation=documentGenerationLocked();
         if (params.at("expectedRevision")!=revision) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: document changed; read it again");
         const auto &range=params.at("range");if (utf16Offset(doc.text,range.at("start"))>utf16Offset(doc.text,range.at("end"))) throw std::runtime_error("Reversed code action range");
         const auto only=params.value("only",Json::array());if (!only.is_array() || only.size()>16) throw std::runtime_error("Code actions accept at most 16 kind filters");
@@ -72,7 +72,7 @@ Json Engine::codeActionOperation(const std::string &method,const Json &params) {
         Json items;bool truncated=false;bool resolvable=false;
         for (int pass=0;pass<3;++pass) {
             auto future=language_.request("textDocument/codeAction",request);lock.unlock();auto response=future.get();lock.lock();
-            if (documents_.at(path).revision!=revision || nextRevision_!=generation || language_.epoch(path)!=epoch) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: code action context changed during request");
+            if (documents_.at(path).revision!=revision || documentGenerationLocked()!=generation || language_.epoch(path)!=epoch) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: code action context changed during request");
             if (response.is_null()) response=Json::array();if (!response.is_array()) throw std::runtime_error("Invalid code action list");
             items=Json::array();size_t bytes=2;resolvable=serverCanResolve(path);std::set<std::string> unopened;
             for (auto &action : response) {
@@ -93,7 +93,7 @@ Json Engine::codeActionOperation(const std::string &method,const Json &params) {
             if (unopened.empty()) break;
             if (unopened.size()>100 || pass==2) throw std::runtime_error("Code action targets changed; request actions again");
             for (const auto &target : unopened) openLocked(target);
-            generation=nextRevision_; // Recompute edits only after new targets have live overlays.
+            generation=documentGenerationLocked(); // Recompute edits only after new targets have live overlays.
         }
         const auto now=std::chrono::steady_clock::now();
         for (auto i=codeActions_.begin();i!=codeActions_.end();) { if (now-i->second.created>std::chrono::minutes(5)) i=codeActions_.erase(i);else ++i; }
@@ -111,7 +111,7 @@ Json Engine::codeActionOperation(const std::string &method,const Json &params) {
         auto found=codeActions_.find(id);if (found==codeActions_.end() || std::chrono::steady_clock::now()-found->second.created>std::chrono::minutes(5)) throw std::runtime_error("Code action session expired; request actions again");
         auto &session=found->second;
         if (index>=session.items.size()) throw std::runtime_error("Invalid code action index");
-        if (!documents_.contains(session.path) || documents_.at(session.path).revision!=session.revision || params.at("expectedRevision")!=session.revision || nextRevision_!=session.generation || language_.epoch(session.path)!=session.epoch) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: code action context changed; request actions again");
+        if (!documents_.contains(session.path) || documents_.at(session.path).revision!=session.revision || params.at("expectedRevision")!=session.revision || documentGenerationLocked()!=session.generation || language_.epoch(session.path)!=session.epoch) throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: code action context changed; request actions again");
         return session;
     };
     const auto &initial=checked();auto action=initial.items.at(index);auto description=codeActionDescriptionLocked(action,index,initial.resolvable,language_.backend(initial.path));

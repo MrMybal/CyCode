@@ -88,7 +88,7 @@ Standalone packages and the reusable AI skill: [Core installation](app/Docs/Core
 
 Use [the agent guide](app/Docs/Agents.md) for persistent headless startup,
 analysis preparation, asynchronous jobs and guarded changes. The generated
-[MCP method catalogue](app/MCPMethods.json) lists all 238 native operations and
+[MCP method catalogue](app/MCPMethods.json) lists all 239 native operations and
 their complete schemas. The official CyToolsCore SDK owns MCP and permissions.
 
 ## Evidence and limits

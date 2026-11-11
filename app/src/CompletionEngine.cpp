@@ -43,7 +43,7 @@ Json Engine::snippetCompletions(const Json &params) {
     const auto selected=selectedSnippetText(doc->text,at,selection);
     if (!selected) throw std::runtime_error("Selection must be ordered, at most 8 KiB and end at the caret");
     const bool wrapping=!selected->empty();
-    const auto before=doc->text;const auto revision=doc->revision,generation=nextRevision_;
+    const auto before=doc->text;const auto revision=doc->revision,generation=documentGenerationLocked();
     const auto language=snippetLanguage(path);
     auto source=readSnippetCatalogue(resolve(std::string(snippetCataloguePath)));
     lock.unlock();
@@ -77,7 +77,7 @@ Json Engine::snippetCompletions(const Json &params) {
     }
     lock.lock();
     const auto current=documents_.find(path);
-    if (current==documents_.end() || current->second.revision!=revision || nextRevision_!=generation)
+    if (current==documents_.end() || current->second.revision!=revision || documentGenerationLocked()!=generation)
         throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: snippet source changed during catalogue preparation");
     if(plugins_.revision()!=pluginRevision)
         throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: plugin snippets changed; request snippets again");
@@ -106,11 +106,11 @@ Json Engine::userSnippetDraft(const Json &params) {
         utf16Offset(doc.text,params.at("selection").at("end"))};
     const auto selection=selectedSnippetText(doc.text,range.end,range);
     if(!selection || selection->empty())throw std::runtime_error("Capture one nonempty ordered selection of at most 8 KiB");
-    const auto source=std::string(*selection);const auto revision=doc.revision,generation=nextRevision_;
+    const auto source=std::string(*selection);const auto revision=doc.revision,generation=documentGenerationLocked();
     lock.unlock();
     auto draft=userSnippets_.draft(source,snippetLanguage(path));
     lock.lock();const auto current=documents_.find(path);
-    if(current==documents_.end() || current->second.revision!=revision || nextRevision_!=generation)
+    if(current==documents_.end() || current->second.revision!=revision || documentGenerationLocked()!=generation)
         throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: source changed while preparing the snippet draft");
     draft["path"]=path;draft["revision"]=revision;return draft;
 }
@@ -127,7 +127,7 @@ Json Engine::completionOperation(const std::string &method,const Json &params) {
             if (opened==documents_.end()) throw std::runtime_error("Snippet source document was closed");
             doc=&opened->second;
         } else doc=semanticDocumentLocked(session.path).first;
-        if (doc->revision!=session.revision || params.at("expectedRevision")!=session.revision || nextRevision_!=session.generation ||
+        if (doc->revision!=session.revision || params.at("expectedRevision")!=session.revision || documentGenerationLocked()!=session.generation ||
             (!session.local && language_.epoch(session.path)!=session.epoch))
             throw NativeError(ErrorCode::RevisionConflict,"RevisionConflict: completion context changed; request completion again");
         if (session.local && readSnippetCatalogue(resolve(std::string(snippetCataloguePath)))!=session.catalogue)
