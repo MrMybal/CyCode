@@ -32,6 +32,8 @@ predate this separation; they are not a newly packaged Core or CyCodeIDE release
 
 ## Standalone Windows preview
 
+The local 0.1.2 candidate adds shared `CyCode::PagedText`, guarded line/UTF-16 reads, exclusive Save as and explicit paged crash recovery. It has 249 public Core operations. See [large projects](app/Docs/LargeProjects.md) and [native integration](app/Docs/CoreExtraction.md). This development candidate is separate from the published download below.
+
 [CyCodeCore 0.1.1 Setup and portable ZIP](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1)
 provide the native CLI, private Python/CyToolsCore MCP runtime, ripgrep and agent
 skill. Setup offers CyCodeUpdater as a separate component, with optional sign-in

@@ -33,6 +33,8 @@ ou de CyCodeIDE.
 
 ## Version Windows autonome
 
+La version candidate locale 0.1.2 ajoute `CyCode::PagedText`, lecture par lignes/UTF-16, Enregistrer sous exclusif et récupération paginée explicite après crash. Elle expose 249 opérations publiques. Voir [les grands projets](app/Docs/LargeProjects.md) et [l’intégration native](app/Docs/CoreExtraction.md). Ce candidat de développement est distinct du téléchargement publié ci-dessous.
+
 [CyCodeCore 0.1.1 : installateur et ZIP portable](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1)
 fournit le CLI natif, le runtime privé Python/CyToolsCore MCP, ripgrep et le skill
 pour les agents. L’installateur propose CyCodeUpdater comme application séparée,

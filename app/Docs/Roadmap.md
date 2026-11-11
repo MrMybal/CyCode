@@ -1,11 +1,12 @@
 # Roadmap
 
 The progressive-capacity stage adds [paged native text and storage](LargeProjects.md):
-streamed compiler database digests/commands, incremental format-2 checkpoint pages,
-immutable transaction payloads on private disk and four guarded paged-document
-SDK operations. Ordinary GUI/LSP buffers retain their compatibility policy; the
-paged profile is explicit, uses UTF-8 byte cursors and has no GUI/LSP/crash-recovery
-adapter yet. No hardware-unlimited or exhaustive Unreal claim follows.
+streamed compiler databases, incremental checkpoint pages and disk-backed native
+transactions. Paged documents now add sparse line/UTF-16 reads, exclusive Save as
+and explicit durable checkpoint preview/restoration through Apply/Undo. The public
+SDK catalogue has 249 operations. Graphical/LSP adapters and automatic per-keystroke
+recovery remain separate; ordinary GUI/LSP buffers retain their compatibility policy.
+No hardware-unlimited or exhaustive Unreal claim follows.
 
 
 ## Durable compiler traversal — 2026-11-11

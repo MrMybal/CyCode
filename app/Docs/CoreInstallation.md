@@ -4,7 +4,7 @@
 
 CyCodeCore is a headless native service with the official CyToolsCore MCP bridge.
 It does not need the IDE, CyUI, SDL, OpenGL, a GPU model or a system Python.
-The standalone distribution is version 0.1.1, independently of the engine's
+This source tree prepares standalone distribution 0.1.2, independently of the engine's
 historical 0.2.3 contract version. This delivery is a development preview.
 The native --version response reports the engine contract; the package and
 CyCodeUpdater show the standalone distribution version.
@@ -61,6 +61,23 @@ Before removing an installation, disable/remove its managed project connection.
 A standalone agent host owns its own project buffers. To share the IDE's live
 unsaved documents, attach to its existing private SDK service as described in
 [Agents](Agents.md#connect), rather than assuming two hosts share state.
+
+## Updating a live agent installation {#versioned-installation}
+
+The installer remains the normal user-facing package. For a development update
+while a Core is running, a verified portable package can be extracted to a new
+versioned directory; keep the running installation intact. Register that exact
+new `--home` and private `--python`, passing `--state-dir <previous-home>/agent-state`
+to retain the original managed-config ownership receipt. The new home gets its
+own receipt and independent job-data root; the active old SDK runtime keeps its
+existing data. Later registrations can use the new home without --state-dir. Existing unrelated
+client settings and modified skills are preserved. The managed server block must
+still match its recorded hash. No running Core is terminated by registration.
+
+Reload the client's MCP connection to use the new catalogue; the existing process
+keeps its old binary until disconnected. Check the actual operation catalogue and
+a compiler-backed request after reconnecting. Source checkout, installed package,
+client catalogue and running process are separate versions.
 
 ## Optional update companion {#updates}
 

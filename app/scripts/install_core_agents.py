@@ -152,7 +152,16 @@ def configure(home, workspace, interpreter, skill_home, access='read', enabled=F
     receipt_file = state / 'connection.json'
     previous = json.loads(bounded(receipt_file)) if receipt_file.exists() else {}
     before = bounded(config) if config.exists() else None
-    block = block_for(home, workspace, interpreter, state / 'jobs', access, enabled)
+    # Versioned payloads must not start a second SDK runtime in the live old data root.
+    current_state = ordinary(home / 'agent-state') / key
+    current_receipt = current_state / 'connection.json'
+    current_before = bounded(current_receipt) if current_receipt.exists() else None
+    if current_receipt != receipt_file and current_before is not None:
+        owned = json.loads(current_before)
+        if (owned.get('format') != 'cycode-agent-connection/1' or
+                owned.get('workspace') != str(workspace) or owned.get('config') != str(config)):
+            raise ValueError('Unowned registration state preserved: ' + str(current_receipt))
+    block = block_for(home, workspace, interpreter, current_state / 'jobs', access, enabled)
     updated = managed_config(before, block, previous.get('managedBlockSha256'))
     # Refuse conflicts before copying the skill or touching project settings.
     skill = install_skill(home, ordinary(skill_home))
@@ -167,7 +176,11 @@ def configure(home, workspace, interpreter, skill_home, access='read', enabled=F
                'enabled': enabled, 'access': access, 'nativePresent': (home / 'cycode_cli.exe').is_file(),
                'managedBlockSha256': digest(block.encode('utf-8')), 'executed': False}
     old = bounded(receipt_file) if receipt_file.exists() else None
-    atomic(receipt_file, (json.dumps(receipt, indent=2) + '\n').encode('utf-8'), old)
+    payload = (json.dumps(receipt, indent=2) + '\n').encode('utf-8')
+    atomic(receipt_file, payload, old)
+    if current_receipt != receipt_file:
+        # Future ordinary updates can use this new home's default receipt.
+        atomic(current_receipt, payload, current_before)
     return receipt
 
 
@@ -177,6 +190,7 @@ def main(argv=None):
     parser.add_argument('--home', type=Path, default=ROOT)
     parser.add_argument('--python', type=Path)
     parser.add_argument('--skill-home', type=Path, default=Path(os.environ.get('CODEX_HOME', Path.home() / '.codex')) / 'skills')
+    parser.add_argument('--state-dir', type=Path, help='Existing registration-state root when switching to a versioned installation; preserves ownership checks')
     parser.add_argument('--config', type=Path, help='Explicit client config; default is project-scoped .codex/config.toml')
     parser.add_argument('--access', choices=('read', 'edit'), default='read')
     parser.add_argument('--enable', action='store_true')
@@ -198,7 +212,7 @@ def main(argv=None):
                          'nativePresent': (args.home / 'cycode_cli.exe').is_file(), 'executed': False}))
         return 0
     result = configure(args.home, args.workspace, args.python or args.home / 'tools/python/python.exe',
-                       args.skill_home, args.access, args.enable, config_path=args.config)
+                       args.skill_home, args.access, args.enable, state_dir=args.state_dir, config_path=args.config)
     print(json.dumps(result, indent=2))
     return 0
 

@@ -217,6 +217,7 @@ class Engine {
     std::shared_ptr<SpoolStore> workingStore_;
     std::shared_ptr<SpoolStore> workingStoreLocked();
     Json pagedDocumentOperation(const std::string &, const Json &);
+    Json pagedRecoveryOperation(const std::string &, const Json &);
     Json pagedDocumentDescription(const std::string &, const PagedDocument &) const;
     struct FileChange {
         std::string path, before, after, disk;

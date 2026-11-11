@@ -169,6 +169,24 @@ void LargeText::validate(LargeTextSnapshot state) const {
                 throw NativeError(ErrorCode::RevisionConflict, "Immutable large-text payload changed");
         }
 }
+void LargeText::stream(const AtomicByteSink &sink, LargeTextSnapshot state) const {
+    if (!state)
+        state = state_;
+    validate(state);
+    for (const auto &piece : state->pieces)
+        for (uint64_t at = 0; at < piece.bytes;) {
+            const auto count = std::min<uint64_t>(65536, piece.bytes-at);
+            sink(piece.blob->read(piece.offset+at, size_t(count)));
+            at += count;
+        }
+}
+LargeTextSnapshot LargeText::recovered(const std::filesystem::path &file, const std::string &digest) const {
+    // Import/validate into this document's private store, retaining its original disk baseline.
+    LargeText imported(file, store_);
+    if (imported.baselineDigest() != digest)
+        throw NativeError(ErrorCode::RevisionConflict, "Recovery payload changed while importing");
+    return imported.snapshot();
+}
 void LargeText::save() {
     if (!matchesDisk())
         throw NativeError(ErrorCode::DiskConflict, "Large source changed outside CyCode");
@@ -179,37 +197,145 @@ void LargeText::save() {
          (P::owner_write | P::group_write | P::others_write)) == P::none)
         throw NativeError(ErrorCode::ReadOnly, "Large source is read-only");
     validate(state_);
+    AtomicFileOptions options;
+    options.publication = AtomicPublication::ReplacePreservingMetadata;
+    auto digest = publish(source_, options);
+    saved_ = state_;
+    savedDigest_.swap(digest);
+}
+void LargeText::saveAs(std::filesystem::path destination) {
+    if (!matchesDisk())
+        throw NativeError(ErrorCode::DiskConflict, "Large source changed before Save as");
+    if (!std::filesystem::is_directory(destination.parent_path()))
+        throw NativeError(ErrorCode::InvalidParams, "Save as requires an existing destination folder");
+    validate(state_);
+    // Allocate the new path before publication; the final rebind cannot allocate.
+    auto digest = publish(destination, AtomicFileOptions{});
+    source_.swap(destination);
+    saved_ = state_;
+    savedDigest_.swap(digest);
+}
+std::string LargeText::publish(const std::filesystem::path &destination,
+                               const AtomicFileOptions &options) const {
     const auto prepared = state_;
     crypto_blake2b_ctx digest;
     crypto_blake2b_init(&digest, 32);
     std::string publishedDigest(64, '0');
-    AtomicFileOptions options;
-    options.publication = AtomicPublication::ReplacePreservingMetadata;
     writeFileAtomicStream(
-        source_,
+        destination,
         [&](const AtomicByteSink &sink) {
             for (const auto &piece : prepared->pieces)
                 for (uint64_t at = 0; at < piece.bytes;) {
                     const auto count = std::min<uint64_t>(65536, piece.bytes - at);
                     const auto bytes = piece.blob->read(piece.offset + at, size_t(count));
                     sink(bytes);
-                    crypto_blake2b_update(&digest, reinterpret_cast<const uint8_t *>(bytes.data()),
-                                          bytes.size());
+                    crypto_blake2b_update(&digest, reinterpret_cast<const uint8_t *>(bytes.data()), bytes.size());
                     at += count;
                 }
             std::array<uint8_t, 32> hash;
             crypto_blake2b_final(&digest, hash.data());
             for (size_t i = 0; i < hash.size(); ++i) {
-                publishedDigest[2 * i] = "0123456789abcdef"[hash[i] >> 4];
-                publishedDigest[2 * i + 1] = "0123456789abcdef"[hash[i] & 15];
+                publishedDigest[2*i] = "0123456789abcdef"[hash[i] >> 4];
+                publishedDigest[2*i+1] = "0123456789abcdef"[hash[i] & 15];
             }
-        },
-        options,
-        [&] {
+        }, options, [&] {
             if (!matchesDisk())
                 throw NativeError(ErrorCode::DiskConflict, "Large source changed before publication");
         });
-    saved_ = state_;
-    savedDigest_.swap(publishedDigest);
+    return publishedDigest;
+}
+void LargeText::indexLines() const {
+    if (indexed_ == state_)
+        return;
+    std::vector<uint64_t> anchors;
+    const auto bom = state_->bytes >= 3 && raw(0, 3, state_) == "\xef\xbb\xbf" ? 3u : 0u;
+    anchors.push_back(bom);
+    uint64_t lines = 1;
+    bool previousCr = false;
+    for (uint64_t offset = bom; offset < state_->bytes;) {
+        const auto text = raw(offset, size_t(std::min<uint64_t>(65536, state_->bytes-offset)), state_);
+        for (size_t i = 0; i < text.size(); ++i) {
+            const char c = text[i];
+            if (c == '\n' && previousCr) {
+                if ((lines-1) % 1024 == 0)
+                    anchors.back() = offset+i+1;
+            } else if (c == '\r' || c == '\n') {
+                if (lines == std::numeric_limits<uint64_t>::max())
+                    throw NativeError(ErrorCode::CapacityExceeded, "Line count exceeds native offsets");
+                ++lines;
+                if ((lines-1) % 1024 == 0)
+                    anchors.push_back(offset+i+1);
+            }
+            previousCr = c == '\r';
+        }
+        offset += text.size();
+    }
+    lineAnchors_.swap(anchors);
+    lineCount_ = lines;
+    indexed_ = state_;
+}
+uint64_t LargeText::lineOffset(uint64_t targetLine, uint64_t targetCharacter) const {
+    indexLines();
+    if (targetLine >= lineCount_)
+        throw NativeError(ErrorCode::InvalidParams, "Line is outside the paged document");
+    uint64_t line = targetLine/1024*1024, column = 0;
+    uint64_t offset = lineAnchors_.at(size_t(targetLine/1024));
+    while (true) {
+        if (line == targetLine && column == targetCharacter)
+            return offset;
+        if (offset == state_->bytes)
+            break;
+        const auto text = read(offset, 65536);
+        size_t at = 0;
+        while (at < text.size()) {
+            if (line == targetLine && column == targetCharacter)
+                return offset+at;
+            const auto c = static_cast<unsigned char>(text[at]);
+            const size_t width = c < 0x80 ? 1 : c < 0xe0 ? 2 : c < 0xf0 ? 3 : 4;
+            if (c == '\r' || c == '\n') {
+                if (line == targetLine)
+                    throw NativeError(ErrorCode::InvalidParams, "Character is beyond the line end");
+                const bool pair = c == '\r' && offset+at+1 < state_->bytes &&
+                                  raw(offset+at+1, 1, state_) == "\n";
+                at += pair ? 2 : 1;
+                ++line;
+                column = 0;
+            } else {
+                const uint64_t units = width == 4 ? 2 : 1;
+                if (line == targetLine && targetCharacter > column && targetCharacter < column+units)
+                    throw NativeError(ErrorCode::InvalidParams, "UTF-16 character splits a surrogate pair");
+                column += units;
+                at += width;
+            }
+        }
+        offset += at;
+    }
+    throw NativeError(ErrorCode::InvalidParams, "Character is outside the paged document");
+}
+LargeText::Lines LargeText::readLines(uint64_t line, uint64_t character, size_t length) const {
+    Lines result;
+    result.offset = lineOffset(line, character);
+    result.text = read(result.offset, length);
+    auto end = result.offset+result.text.size();
+    if (!result.text.empty() && result.text.back() == '\r' && end < state_->bytes &&
+        raw(end, 1, state_) == "\n")
+        result.text.pop_back(); // Never issue a continuation in the middle of CRLF.
+    result.nextOffset = result.offset+result.text.size();
+    result.nextLine = line;
+    result.nextCharacter = character;
+    result.totalLines = lineCount_;
+    for (size_t at = 0; at < result.text.size();) {
+        const auto c = static_cast<unsigned char>(result.text[at]);
+        if (c == '\r' || c == '\n') {
+            at += c == '\r' && at+1 < result.text.size() && result.text[at+1] == '\n' ? 2 : 1;
+            ++result.nextLine;
+            result.nextCharacter = 0;
+        } else {
+            const size_t width = c < 0x80 ? 1 : c < 0xe0 ? 2 : c < 0xf0 ? 3 : 4;
+            result.nextCharacter += width == 4 ? 2 : 1;
+            at += width;
+        }
+    }
+    return result;
 }
 } // namespace cycode

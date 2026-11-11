@@ -5,7 +5,7 @@ description: Utilisez les capacités réelles de l’adaptateur pour mémoire, r
 section: Travailler dans CyCode
 parent: debugging
 order: 316
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 ## Examiner un arrêt {#inspect}
@@ -21,3 +21,18 @@ Les modifications de variable, d’expression et de mémoire sont des changement
 Les commandes de points d’arrêt de fonction, d’exception, de données et d’instruction dépendent des capacités annoncées. Consultez la vérification ou l’erreur de l’adaptateur après envoi de l’ensemble demandé. Les identifiants de données et d’instructions appartiennent à la session et à l’arrêt observés ; une actualisation ou reprise peut les invalider. Certaines opérations remplacent l’ensemble complet des points d’arrêt : conservez les entrées souhaitées.
 
 Le pas inverse et le redémarrage d’une frame ne sont proposés que par les adaptateurs compatibles. Une reprise efface les données d’arrêt. Une réponse tardive d’un arrêt précédent est rejetée ; sélectionnez le nouveau thread et la nouvelle frame, puis relisez. Les changements du débogueur ne sont pas annulables dans l’historique du document.
+
+## Preuves de liaison des exceptions {#exception-bindings}
+
+`debug.status.exceptionBreakpointStatus` distingue l’acquittement de la requête
+et les liaisons réellement retournées. Consultez `acknowledged`,
+`verificationReported` et chaque ligne `verified`. Sur la cible de production
+Windows MSVC testée, le filtre CodeLLDB `cpp_throw` indique zéro emplacement lié.
+Le point d’arrêt de fonction explicite `_CxxThrowException` interrompt bien le
+lancer. Cette recette reste distincte de DAP exceptionInfo et préserve les autres
+points de fonction par la garde de liste attendue. Aucun repli caché n’est activé.
+
+Les essais réels passent pour les points conditionnels/instruction, l’inspection
+de 19 threads et l’attachement/détachement. L’événement stopped précède parfois
+les piles et threads : attendez leur inspection. Cela ne prouve ni débogage sur
+machine distante ni couverture d’autres adaptateurs.

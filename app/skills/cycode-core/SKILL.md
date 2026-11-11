@@ -20,6 +20,9 @@ Read the real `cy_describe`, `cy_list_operations`, `cy_describe_operation` and
 `cy_can_run` results before using an operation. Start with `op_service_status`
 and `op_language_status`. Server readiness does not mean that every source is
 indexed. A registered tool does not prove its compiler/server is installed.
+An idle/lazy backend with available:false has not necessarily failed: inspect its
+configured state and run an appropriate authorised compiler request before
+reporting an installed backend as unavailable.
 
 Domain tools accept native arguments inside `parameters`. They return an issued
 `jobId`; poll `cy_get_job` until terminal, then inspect `outputs` or the structured
@@ -54,10 +57,20 @@ Do not put workspace sources into the SDK's temporary task-file lifecycle.
 When an ordinary read exceeds its buffer policy, discover `documents_read_page`
 and use its native paged profile. Continue with `nextOffset` and the current
 revision. Offsets are UTF-8 bytes, not the UTF-16 positions of ordinary LSP calls.
+For line-based reading, discover `documents_read_lines`: lines are zero-based,
+characters are UTF-16, an initial BOM is excluded, and byte cursors remain separate.
+Use its nextLine/nextCharacter with the current revision; a long line spans pages.
+`documents_save_paged_as` publishes a new workspace file and rebinds the identity;
+it preserves the original, refuses overwrites and invalidates old path-bound plans.
 Save or close paged edits before compiler queries: there is no LSP overlay.
 `analysis_inspect` can use a clean paged C/C++ revision and a real compiler command
 without loading the whole source into RAM. A file cannot be open in both profiles; never discard an existing dirty buffer
-merely to switch storage. Paged text currently has no LSP or crash recovery.
+merely to switch storage. Paged text currently has no LSP overlay. Explicit durable recovery is available
+when advertised: `documents_checkpoint_paged`, then after restart discover
+`documents_paged_checkpoints`, inspect `documents_preview_paged_checkpoint`, reopen
+the original and prepare `documents_restore_paged_checkpoint` on its live revision.
+Review/Apply/Undo remain explicit; checkpoints never save sources. Changed disk
+baselines require reconciliation. There is no automatic per-keystroke checkpoint.
 
 Prepare a bounded byte edit with `documents_prepare_byte_edit`, then use the same
 `changes_preview/apply/undo` owner. Large previews need independent before/after
@@ -67,6 +80,18 @@ current revision; close uses `documents_close_paged`. Inspect canCancel: initial
 import/save and transaction commit are currently noncancellable. Keep source
 paths outside the SDK temporary task lifecycle. Read the maintained
 `app/Docs/LargeProjects.md` for storage/backend constraints.
+
+## Debugging evidence
+
+Use the advertised DAP capabilities and current session/stop/thread guards.
+A stopped event can precede the thread/stack inspection; wait for actual rows.
+Exception-filter acknowledgement is not a verified binding. Inspect
+`exceptionBreakpointStatus` when present, including every verified/message row.
+Do not claim an exception stop from an enabled checkbox or advertised filter.
+On a reviewed MSVC target, `_CxxThrowException` is an explicit function-breakpoint
+recipe, preserving the existing function list/expected guard; it is not a silent
+fallback or native exceptionInfo. A local attach/detach result proves that local
+target only, not remote debugging or other adapters.
 
 ## Change code
 

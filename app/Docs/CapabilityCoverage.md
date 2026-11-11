@@ -1,16 +1,17 @@
 # Capability coverage
 
 The progressive-capacity stage adds [paged native text and storage](LargeProjects.md):
-streamed compiler database digests/commands, incremental format-2 checkpoint pages,
-immutable transaction payloads on private disk and four guarded paged-document
-SDK operations. Ordinary GUI/LSP buffers retain their compatibility policy; the
-paged profile is explicit, uses UTF-8 byte cursors and has no GUI/LSP/crash-recovery
-adapter yet. No hardware-unlimited or exhaustive Unreal claim follows.
+streamed compiler databases, incremental checkpoint pages and disk-backed native
+transactions. Paged documents now add sparse line/UTF-16 reads, exclusive Save as
+and explicit durable checkpoint preview/restoration through Apply/Undo. The public
+SDK catalogue has 249 operations. Graphical/LSP adapters and automatic per-keystroke
+recovery remain separate; ordinary GUI/LSP buffers retain their compatibility policy.
+No hardware-unlimited or exhaustive Unreal claim follows.
 
 
 | Capability | Native UI | CyTools/MCP | State |
 |---|---|---|---|
-| Persistent compiler traversal | New view integration pending | analysis_prepare/checkpoints/results/status through the same native owner and official SDK | Opt-in 32 MiB checkpoints, OS lease, compiler digest, historical-proof invalidation, per-file errors/timing and explicit pending budgets. Windows real 162-unit and scoped Unreal runs; full-engine/current-proof, GUI and new Linux/macOS execution unverified. See [Progress](AnalysisProgress.md). |
+| Persistent compiler traversal | New view integration pending | analysis_prepare/checkpoints/results/status through the same native owner and official SDK | Opt-in paged checkpoints, OS lease, compiler digest, historical-proof invalidation, per-file errors/timing and explicit pending budgets. Windows real 162-unit and scoped Unreal runs; full-engine/current-proof, GUI and new Linux/macOS execution unverified. See [Progress](AnalysisProgress.md). |
 | Navigation during read-only analysis | Shared native cache; new GUI acceptance pending | Same compiler query and traversal owners | Reproduced 3/16 to 16/16 concurrent cache reuse on small Windows MSBuild fixture; real edits still invalidate. Not a whole-IDE benchmark. |
 | Compiler transformations | Existing preview/Apply/Undo owner | language_code_actions/code_action_prepare and changes_apply/undo | Eight actual clangd 18.1.8 cases pass, including two-file inline/outline moves and deduced-type replacement. InlineVariable absent and SwapIfBranches hidden; advanced resource operations remain separate. |
 | C++ inspection bounds and flow | View integration pending | analysis_inspect; shared build status/output/cancel | Actual clang-tidy null dereference, stack escape and use-after-delete findings; 2,000-row/output limits report truncation; missing/empty compiler commands refused. Read-only source policy, no full data-flow or lifetime-coverage claim. |

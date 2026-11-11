@@ -122,8 +122,9 @@ machine. The revised Mac cases still need execution.
 ## Current remote evidence and historical entries
 
 Finalization.md records the latest actual platform results. The milestone notes
-below retain what was checked at the time; the local native-run suspension still
-applies, while the separately configured GitHub runners explicitly run CTest.
+below retain what was checked at the time; historical local run holds below describe those earlier milestones. Current
+explicit production acceptance is recorded in Validation.md; CTest remains
+opt-in and GitHub Actions remains paused by the owner.
 Windows update contracts already exercised real owned filesystem staging,
 locked-file rollback, payload verification and user-data retention. They do not
 prove complete online GUI consent/download/helper/restart behavior.

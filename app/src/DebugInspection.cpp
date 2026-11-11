@@ -224,6 +224,22 @@ nlohmann::json exceptionBreakpointArguments(const Json &selected, const Json &ca
         }
     return {{"filters", enabled}};
 }
+nlohmann::json exceptionBreakpointVerification(const Json &arguments, const Json &response) {
+    if (!response.is_object() || response.dump().size() > 128 * 1024)
+        throw std::runtime_error("Invalid exception breakpoint response");
+    Json points = Json::array();
+    const bool reported = response.contains("breakpoints");
+    if (reported) {
+        const auto &rows = response.at("breakpoints");
+        if (!rows.is_array() || rows.size() > 64)
+            throw std::runtime_error("Excessive exception breakpoint verification");
+        for (const auto &point : rows)
+            points.push_back(debugBreakpointVerification(point, true));
+    }
+    // Acknowledgement and actual binding verification are different DAP evidence.
+    return {{"filters", arguments.at("filters")}, {"acknowledged", true},
+            {"verificationReported", reported}, {"breakpoints", std::move(points)}};
+}
 void validateDebugCapabilities(const Json &caps) {
     if (!caps.is_object() || caps.size() > 256 || caps.dump().size() > 256 * 1024)
         throw std::runtime_error("Invalid or excessive debug adapter capabilities");

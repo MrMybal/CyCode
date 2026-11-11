@@ -5,8 +5,28 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 12
+sourceRevision: 13
 ---
+
+## État actuel de la livraison {#current-status}
+
+Le Core autonome corrigé 0.1.1 est installé et sa connexion MCP fonctionne.
+Ces sources préparent la version locale 0.1.2 avec 249 opérations publiques,
+la récupération paginée et le composant indépendant PagedText. Les guides de
+validation conservent les preuves Windows sur le vrai Core de production.
+Les suspensions antivirus et états MCP désactivés du récit daté ci-dessous
+décrivent les anciens essais, pas la livraison courante. GitHub Actions reste
+en pause ; aucune nouvelle publication de release n’est sous-entendue.
+
+## Composant de stockage paginé facultatif {#paged-text}
+
+`CyCode::PagedText` se compile indépendamment avec Files, JSON et le digest de
+Monocypher. Il fournit morceaux immuables, lignes/colonnes UTF-16 parcimonieuses
+et publication progressive sans Engine, serveurs de langage ou dépendances
+graphiques. Incluez `cycode/paged/LargeText.h`. Le moteur de projet utilise cette
+même implémentation ; les adaptateurs Reader/IDE peuvent la sélectionner.
+Cette liaison ne fournit pas à elle seule un éditeur graphique virtuel.
+Consultez [le guide d’intégration](reference-app-docs-coreextraction).
 
 ## Propriété des services {#ownership}
 

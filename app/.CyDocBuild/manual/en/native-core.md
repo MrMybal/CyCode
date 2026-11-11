@@ -5,8 +5,26 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 12
+revision: 13
 ---
+
+## Current delivery status {#current-status}
+
+The corrected standalone 0.1.1 is installed and its MCP connection works. This
+source tree prepares local 0.1.2 with 249 public operations, paged recovery and
+the independent PagedText component. Actual Windows production evidence is in
+the maintained Core validation guides. Antivirus holds and disabled MCP states
+in the dated narrative below describe earlier attempts, not the current delivery.
+GitHub Actions remains paused; no new release publication is implied.
+
+## Optional paged storage component {#paged-text}
+
+`CyCode::PagedText` builds independently with Files, JSON and Monocypher's digest
+implementation. It provides immutable pieces, sparse line/UTF-16 addressing and
+streamed publication without Engine, language servers or graphical dependencies.
+Include `cycode/paged/LargeText.h`. The same implementation serves the project
+Engine and can be selected by Reader/IDE adapters; linking it does not provide a
+virtual graphical editor. See [the native integration guide](reference-app-docs-coreextraction).
 
 ## Ownership {#ownership}
 

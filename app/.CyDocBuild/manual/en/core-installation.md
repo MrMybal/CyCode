@@ -5,7 +5,7 @@ description: Local Core packages, AI skill and project MCP registration.
 section: API and extensions
 parent: mcp
 order: 262
-revision: 3
+revision: 4
 ---
 
 
@@ -13,7 +13,7 @@ revision: 3
 
 CyCodeCore is a headless native service with the official CyToolsCore MCP bridge.
 It does not need the IDE, CyUI, SDL, OpenGL, a GPU model or a system Python.
-The standalone distribution is version 0.1.1, independently of the engine's
+This source tree prepares standalone distribution 0.1.2, independently of the engine's
 historical 0.2.3 contract version. This delivery is a development preview.
 The native --version response reports the engine contract; the package and
 CyCodeUpdater show the standalone distribution version.
@@ -45,7 +45,7 @@ tools/python/python.exe -B app/scripts/install_core_agents.py --workspace <proje
 The script copies the skill to the user's Codex skills directory and registers
 `cycode_core` in the project's `.codex/config.toml`. Trust that project in the
 client and reload its MCP configuration. For another agent client, use the
-equivalent stdio command from [Agents](core-agents#configuration).
+equivalent stdio command from [Agents](Agents.md#configuration).
 
 Without `--enable`, the registration stays disabled; this is useful to prepare an
 agents-only installation. `--skill-only` installs only the instructions. `--status
@@ -69,7 +69,24 @@ Before removing an installation, disable/remove its managed project connection.
 
 A standalone agent host owns its own project buffers. To share the IDE's live
 unsaved documents, attach to its existing private SDK service as described in
-[Agents](core-agents#connect), rather than assuming two hosts share state.
+[Agents](Agents.md#connect), rather than assuming two hosts share state.
+
+## Updating a live agent installation {#versioned-installation}
+
+The installer remains the normal user-facing package. For a development update
+while a Core is running, a verified portable package can be extracted to a new
+versioned directory; keep the running installation intact. Register that exact
+new `--home` and private `--python`, passing `--state-dir <previous-home>/agent-state`
+to retain the original managed-config ownership receipt. The new home gets its
+own receipt and independent job-data root; the active old SDK runtime keeps its
+existing data. Later registrations can use the new home without --state-dir. Existing unrelated
+client settings and modified skills are preserved. The managed server block must
+still match its recorded hash. No running Core is terminated by registration.
+
+Reload the client's MCP connection to use the new catalogue; the existing process
+keeps its old binary until disconnected. Check the actual operation catalogue and
+a compiler-backed request after reconnecting. Source checkout, installed package,
+client catalogue and running process are separate versions.
 
 ## Optional update companion {#updates}
 

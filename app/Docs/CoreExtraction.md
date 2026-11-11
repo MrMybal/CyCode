@@ -13,6 +13,7 @@ flowchart TB
   CLI[Persistent CLI / native service] --> Engine
   Reader[CyCodeReader] --> Text[CyCode::TextSession]
   IDE --> Editor[Reader graphical editor API 1]
+  Engine --> Paged[CyCode::PagedText: optional disk-backed storage]
   Engine --> Buffers[CyCode::Documents: canonical buffers and codecs]
   Text --> Buffers
   Engine --> Backend[Persistent language servers and their semantic indexes]
@@ -48,6 +49,7 @@ Use one pinned Core checkout per target graph; mixing Core copies is refused.
 | CyCode::Core | Existing project Engine, build/language/debug/VCS services and transactions |
 | CyCode::Files | Paths and explicit guarded atomic text-file I/O |
 | CyCode::Snippets | Native snippet parsing/expansion and byte ranges |
+| CyCode::PagedText | Shared sparse line index, immutable native text pieces, streamed file/transaction storage; no Engine or GUI |
 | CyCode::Documents | BufferState, codecs, Document and literal text search |
 | CyCode::TextSession | Standalone live documents, revisions and text plugins |
 | CyCode::TextBridge | Text-profile adapter for the common native protocol |
@@ -97,6 +99,30 @@ session/plugin or snippet libraries are not compiled. A full project host adds
 the root Core directory and links CyCode::Core. Each Engine owns one project;
 keep it alive across requests, join callers, then destroy it. TextSession does
 not initialize project adapters or language workers.
+
+## Paged text without the project Engine
+
+Reader/IDE adapters can link the same storage without importing the full Core:
+
+```sh
+python app/scripts/fetch_dependencies.py --components PagedText
+cmake -S . -B runtime/paged -DCYCODE_COMPONENTS=PagedText -DBUILD_TESTING=OFF
+cmake --build runtime/paged --config Release
+```
+
+Link `CyCode::PagedText` and include `cycode/paged/LargeText.h`. Its only native
+dependencies are Files (paths/atomic I/O/JSON) and the pinned Monocypher digest
+implementation. Optional Ed25519 code is added only by the full Core. No Engine,
+clangd, process host, SDL, CyUI or ImGui is compiled for this component. Existing
+Core include names are compatibility forwards to the same implementation.
+
+The host must serialise a LargeText instance, own revisions and Undo snapshots,
+and keep saves/checkpoints explicit. `readLines` returns bounded pages with UTF-16
+positions; `edited` prepares an immutable piece snapshot and `commit` swaps it.
+Do not render a partial page as if it were the entire editable document. The
+graphical virtual-document adapter remains an application integration, not a
+second storage model. Trusted ABI2 plugins can call the same guarded paged Engine
+methods through the existing generic host service; no C ABI layout changes.
 
 ## Native service contract
 
@@ -383,3 +409,13 @@ the temporary endpoint descriptor. This Python change is checked with process-fr
 unit tests only; it has not been exercised by another native run. The benchmark
 record `Benchmarks/unreal55-scaling-20261109.json` separates passed and interrupted
 evidence, executable hashes and remaining limitations.
+
+## Graphical adapter boundary
+
+The inspected public CyUI CodeEditor contract exposes whole-text setText/text
+and its existing TextEditor hooks. It has no virtual-document/page-provider
+contract. PagedText is ready as a native component, but a complete virtual editor
+must be added in CyUI and connected by CyCodeIDE/Reader. Replacing a whole editor
+buffer with one page and routing an ordinary save would risk truncation; no such
+adapter or loss of content is introduced here. The ordinary GUI/LSP policy stays
+explicit until that integration and paged language overlays are implemented.

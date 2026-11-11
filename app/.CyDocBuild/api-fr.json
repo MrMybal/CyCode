@@ -241,5 +241,11 @@
   "documents_read_page": "Ouvrir un document UTF-8 paginé natif et lire des plages de 4 à 262 144 octets sans charger tout le fichier en mémoire. La suite exige la révision vivante. Ni coordonnées UTF-16, ni LSP, ni sauvegarde implicite ; import initial non annulable.",
   "documents_prepare_byte_edit": "Préparer une modification en octets UTF-8 du document paginé vivant, avec sa révision. Les morceaux immuables utilisent le stockage privé natif ; examiner puis appliquer/annuler avec les transactions communes, sans sauvegarde source.",
   "documents_save_paged": "Sauvegarder explicitement la révision du document paginé par écriture atomique progressive. Vérifier l’empreinte disque, les morceaux privés et la lecture seule ; publication non annulable, sans Enregistrer sous ni récupération après crash.",
-  "documents_close_paged": "Fermer le document paginé avec sa révision. Les modifications non sauvegardées exigent discard=true ; aucune sauvegarde ou suppression de la source. Les aperçus vivants peuvent conserver leurs morceaux privés."
+  "documents_close_paged": "Fermer le document paginé avec sa révision. Les modifications non sauvegardées exigent discard=true ; aucune sauvegarde ou suppression de la source. Les aperçus vivants peuvent conserver leurs morceaux privés.",
+  "documents_read_lines": "Lire un document paginé par ligne et colonne UTF-16 avec des curseurs distincts en octets, un index natif parcimonieux et une révision courante.",
+  "documents_save_paged_as": "Sauvegarder progressivement un document paginé dans un nouveau fichier du projet et réassocier son identité, sans écraser une destination ou modifier le fichier original.",
+  "documents_checkpoint_paged": "Persister explicitement un instantané paginé privé et son manifeste atomique, sans sauvegarder le fichier source.",
+  "documents_paged_checkpoints": "Découvrir les checkpoints paginés persistants par leurs métadonnées, sans supprimer de données ni présenter les anciennes révisions comme des droits d’édition courants.",
+  "documents_preview_paged_checkpoint": "Vérifier l’empreinte du contenu d’un checkpoint paginé et consulter une page UTF-8 bornée avec l’état de la référence disque d’origine.",
+  "documents_restore_paged_checkpoint": "Préparer la restauration d’un checkpoint paginé dans le tampon vivant avec sa révision actuelle, puis réutiliser aperçu, Apply et Undo sans sauvegarde implicite."
 }

@@ -118,3 +118,27 @@ adapter/cleanup/concurrency/GUI acceptance remains pending; see
 [Run to cursor](RunToCursor.md).
 
 Primary contract: [Debug Adapter Protocol specification](https://github.com/microsoft/debug-adapter-protocol/blob/main/debugAdapterProtocol.json).
+
+## Exception binding evidence
+
+`debug.status.exceptionBreakpointStatus` separates `acknowledged` (the adapter
+accepted setExceptionBreakpoints) from `verificationReported` and the actual
+bounded `breakpoints` verification rows. An advertised capability or an empty
+reply never means a thrown exception was observed. Failed reconfiguration keeps
+an unacknowledged state; shutdown clears prior binding evidence.
+
+The Windows production check records CodeLLDB accepting `cpp_throw` while
+reporting `verified:false`, "Resolved locations: 0", and letting an MSVC C++
+throw reach the program's handler. An explicit function breakpoint on the
+installed MSVC runtime's `_CxxThrowException` does stop that same production
+throw. This is a separate, opt-in MSVC recipe through function breakpoints,
+not DAP exceptionInfo and not an automatic hidden fallback. Preserve existing
+function breakpoints and their expected-list guard when adding such a recipe.
+
+Actual conditional function stops, instruction binding/clear, 19-thread pause
+and selection, frame/stack/memory/disassembly, stale-stop refusal and attach/
+detach are exercised on the existing production Core with its real CodeLLDB.
+After detach, that target still answers its own native service.status. Wait for
+actual stopped-state threads/frames: the event can arrive before inspection.
+Remote machines, other adapters, complete exception semantics and graphical
+controls remain separate acceptance scopes.

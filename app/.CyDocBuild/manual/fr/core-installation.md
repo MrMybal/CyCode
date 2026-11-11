@@ -5,14 +5,14 @@ description: Paquets locaux, skill IA et connexion MCP par projet.
 section: API et extensions
 parent: mcp
 order: 262
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 ## Distribution {#distribution}
 
 CyCodeCore fournit le moteur natif sans interface et le pont MCP officiel de
 CyToolsCore. Aucun IDE, CyUI/SDL/OpenGL, modèle GPU ou Python système n’est requis.
-La distribution autonome est en version 0.1.1 ; le contrat du moteur conserve
+La distribution autonome est en version candidate locale 0.1.2 ; le contrat du moteur conserve
 sa version historique 0.2.3. Il s’agit d’une préversion de développement.
 
 Le paquet Windows x64 contient `cycode_cli.exe`, les DLL MSVC, ripgrep vérifié,
@@ -68,6 +68,24 @@ Désactivez/supprimez la connexion du projet avant de retirer l'installation.
 Un hôte autonome possède ses propres buffers. Pour accéder aux documents non
 enregistrés de l'IDE, utilisez son service SDK partagé privé, décrit dans
 [le guide de connexion](core-agents#connect), plutôt que deux moteurs indépendants.
+
+## Mettre à jour une installation active {#versioned-installation}
+
+Le Setup reste le paquet d’installation habituel. Pour une mise à jour de
+développement pendant qu’un Core fonctionne, extrayez le paquet portable vérifié
+dans un nouveau dossier versionné en conservant l’installation active. Configurez
+son `--home` et son Python privé, avec
+`--state-dir <ancienne-installation>/agent-state` pour réutiliser le reçu de
+propriété de la connexion. Le nouveau dossier reçoit son propre reçu et son
+répertoire de jobs indépendant ; le runtime actif garde ses données. Les
+enregistrements suivants peuvent utiliser le nouveau dossier sans --state-dir. Les réglages sans rapport et les skills personnalisés
+sont préservés ; le bloc MCP géré doit toujours correspondre à son empreinte.
+L’enregistrement n’arrête aucun moteur en cours d’utilisation.
+
+Rechargez la connexion MCP du client pour charger le nouveau catalogue. Le
+processus précédent garde son ancien binaire jusqu’à sa déconnexion. Vérifiez
+ensuite le catalogue réel et une requête compilateur. Sources, paquet installé,
+catalogue du client et processus actif sont des versions distinctes.
 
 ## Application de mise à jour optionnelle {#updates}
 

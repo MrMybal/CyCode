@@ -44,7 +44,8 @@ Json Engine::saveDocumentAs(const Json &params) {
     const auto key = documentKey(params.at("path"));
     const auto full = resolve(params.at("destination"));
     const auto target = pathUtf8(full.lexically_relative(root_));
-    if (target == key || documents_.contains(target) || std::filesystem::exists(full))
+    if (target == key || documents_.contains(target) || pagedDocuments_.contains(target) ||
+        pendingPagedDocuments_.contains(target) || std::filesystem::exists(full))
         throw std::runtime_error(
             "Choose a new workspace file; Save as never replaces an existing file or buffer");
 #ifdef _WIN32

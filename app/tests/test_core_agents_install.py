@@ -81,6 +81,21 @@ class AgentInstallation(unittest.TestCase):
         self.assertEqual(parsed['mcp_servers']['other']['url'], 'https://example.invalid/mcp')
         self.assertEqual(len(list((self.home / 'agent-state').rglob('connection.json'))), 2)
 
+    def test_versioned_install_preserves_receipt_ownership_and_unrelated_settings(self):
+        self.configure()
+        next_home=self.root/'next-version'
+        import shutil
+        shutil.copytree(self.home,next_home)
+        result=install.configure(next_home,self.workspace,Path(sys.executable),self.skills,
+                                 state_dir=self.home/'agent-state')
+        parsed=tomllib.loads((self.workspace/'.codex/config.toml').read_text('utf-8'))
+        self.assertEqual(parsed['mcp_servers']['cycode_core']['env']['CYCODE_CORE_HOME'],str(next_home.resolve()))
+        self.assertEqual(result['home'],str(next_home.resolve()))
+        self.assertFalse(result['executed'])
+        next_config=parsed['mcp_servers']['cycode_core']
+        data_path=next_config['args'][next_config['args'].index('--data-dir')+1]
+        self.assertTrue(Path(data_path).resolve().is_relative_to(next_home.resolve()))
+        self.assertEqual(install.configure(next_home,self.workspace,Path(sys.executable),self.skills),result)
     def test_locally_edited_managed_block_is_not_overwritten(self):
         self.configure()
         path = self.workspace / '.codex/config.toml'

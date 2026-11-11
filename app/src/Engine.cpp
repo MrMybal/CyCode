@@ -944,8 +944,12 @@ Json Engine::git(const std::string &method, const Json &params) {
 Json Engine::dispatch(const std::string &method, const Json &params) {
     if (shuttingDown_ && method != "build.cancel" && method != "tests.cancel" && method != "project.cancel")
         throw std::runtime_error("Workspace is closing");
+    if (method == "documents.checkpointPaged" || method == "documents.pagedCheckpoints" ||
+        method == "documents.previewPagedCheckpoint" || method == "documents.restorePagedCheckpoint")
+        return pagedRecoveryOperation(method, params);
     if (method == "documents.readPage" || method == "documents.prepareByteEdit" ||
-        method == "documents.savePaged" || method == "documents.closePaged")
+        method == "documents.savePaged" || method == "documents.closePaged" ||
+        method == "documents.readLines" || method == "documents.savePagedAs")
         return pagedDocumentOperation(method, params);
     const bool compilerQuery =
         method == "analysis.prepare" ||

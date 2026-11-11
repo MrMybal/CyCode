@@ -2,7 +2,7 @@
   "format": "cycode-agent-methods/1",
   "toolId": "cy.code",
   "source": "app/CyTool.json + app/contracts.py",
-  "contractSha256": "3e22940aea2b479e2f618db2343658b140e88d0de1a57e5d7802f8f621252bfb",
+  "contractSha256": "3ecd060532e7fd936427ce21ba5b77c862d6d98797bf3d00ce2f34a71c362f68",
   "transport": "Official CyToolsCore MCP adapter; op_<id> submits a job, not a synchronous domain result.",
   "guide": "Docs/Agents.md",
   "persistentSources": "Workspace paths are persistent native document references, never SDK temporary input files.",
@@ -17,7 +17,7 @@
     "cy_cancel_job",
     "cy_events"
   ],
-  "operationCount": 243,
+  "operationCount": 249,
   "operations": [
     {
       "mcpTool": "op_analysis_inspect",
@@ -24812,6 +24812,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -26186,6 +26270,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -27872,6 +28040,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -29586,6 +29838,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -31333,6 +31669,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -32635,6 +33055,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -33955,6 +34459,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -35267,6 +35855,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -36593,6 +37265,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -37923,6 +38679,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -39251,6 +40091,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -40584,6 +41508,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -41908,6 +42916,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -43228,6 +44320,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -44717,6 +45893,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -46019,6 +47279,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -47403,6 +48747,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -48722,6 +50150,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -50272,6 +51784,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -51818,6 +53414,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -53155,6 +54835,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -54506,6 +56270,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -56145,6 +57993,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -57508,6 +59440,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -58873,6 +60889,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -60156,7 +62256,7 @@
       "documentation": "operation-debug-exception-breakpoints-debug-exception-breakpoints",
       "id": "debug_exception_breakpoints",
       "name": "Debug Exception Breakpoints",
-      "description": "Persist exception filter IDs advertised by the actual adapter. filters=null restores adapter defaults, [] disables all filters. expected rejects conflicting edits.",
+      "description": "Persist exception filter IDs advertised by the actual adapter. filters=null restores adapter defaults, [] disables all filters. expected rejects conflicting edits. exceptionBreakpointStatus separates acknowledgement from adapter-reported binding verification; neither capability advertising nor an empty response proves an actual exception stop.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -60205,6 +62305,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -61522,6 +63706,90 @@
               "failed"
             ]
           },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
+          },
           "reason": {
             "type": "string"
           },
@@ -62836,6 +65104,90 @@
               "exited",
               "failed"
             ]
+          },
+          "exceptionBreakpointStatus": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acknowledged": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              },
+              "breakpoints": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 8192,
+                      "not": {
+                        "pattern": "\u0000"
+                      }
+                    },
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8192,
+                          "not": {
+                            "pattern": "\u0000"
+                          }
+                        },
+                        "sourceReference": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "verified",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "filters",
+              "acknowledged",
+              "verificationReported",
+              "breakpoints"
+            ],
+            "additionalProperties": false
           },
           "reason": {
             "type": "string"
@@ -71577,7 +73929,7 @@
       "documentation": "operation-documents-read-page-documents-read-page",
       "id": "documents_read_page",
       "name": "Documents Read Page",
-      "description": "Open native paged UTF-8 text and read at most 256 KiB at a time. The Engine owns one piece-based live buffer with immutable private disk backing, independent of total source size. Source bytes are not saved. Cannot overlap an ordinary live buffer. Offsets/lengths are UTF-8 BYTES, not UTF-16 or line numbers; continuation requires the current expectedRevision. Returns nextOffset without splitting a code point. First open imports and validates the source; long import is currently noncancellable. This mode does not start LSP or provide crash recovery.",
+      "description": "Open native paged UTF-8 text and read at most 256 KiB at a time. The Engine owns one piece-based live buffer with immutable private disk backing, independent of total source size. Source bytes are not saved. Cannot overlap an ordinary live buffer. Offsets/lengths are UTF-8 BYTES, not UTF-16 or line numbers; continuation requires the current expectedRevision. Returns nextOffset without splitting a code point. First open imports and validates the source; long import is currently noncancellable. This mode does not start LSP. Explicit durable recovery uses documents_checkpoint_paged; there is no automatic per-keystroke checkpoint.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -71681,6 +74033,721 @@
       "canRunAsync": true,
       "canCancel": false,
       "supportsProgress": false
+    },
+    {
+      "mcpTool": "op_documents_checkpoint_paged",
+      "nativeMethod": "documents.checkpointPaged",
+      "documentation": "operation-documents-checkpoint-paged-documents-checkpoint-paged",
+      "id": "documents_checkpoint_paged",
+      "name": "Documents Checkpoint Paged",
+      "description": "Explicitly persist a full immutable paged snapshot under private workspace working-data, using streaming atomic publication. No source save. Checkpoints survive Core shutdown/crash and are retained until manually managed; disk headroom is required. Historical revisions cannot authorize edits. This is explicit checkpointing, not automatic per-keystroke recovery.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "checkpoint": {
+            "type": "string",
+            "pattern": "^core-[0-9a-f]{32}$",
+            "minLength": 37,
+            "maxLength": 37
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "historicalRevision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "checkpoint",
+          "path",
+          "bytes",
+          "updatedAt",
+          "historicalRevision"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "workspace.write"
+      ],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
+    {
+      "mcpTool": "op_documents_paged_checkpoints",
+      "nativeMethod": "documents.pagedCheckpoints",
+      "documentation": "operation-documents-paged-checkpoints-documents-paged-checkpoints",
+      "id": "documents_paged_checkpoints",
+      "name": "Documents Paged Checkpoints",
+      "description": "Discover at most 256 explicit paged checkpoints while scanning at most 4096 working directories. Metadata-only inspection validates paths and sizes, not payload digests. Invalid records are counted and retained. No destructive cleanup or source modification.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "checkpoints": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "object",
+              "properties": {
+                "checkpoint": {
+                  "type": "string",
+                  "pattern": "^core-[0-9a-f]{32}$",
+                  "minLength": 37,
+                  "maxLength": 37
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+                  "maxLength": 8192,
+                  "not": {
+                    "pattern": "\u0000"
+                  }
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "updatedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "historicalRevision": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "checkpoint",
+                "path",
+                "bytes",
+                "updatedAt",
+                "historicalRevision"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "scanned": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "invalid": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "payloadDigestsVerified": {
+            "const": false
+          }
+        },
+        "required": [
+          "checkpoints",
+          "scanned",
+          "invalid",
+          "truncated",
+          "payloadDigestsVerified"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false
+    },
+    {
+      "mcpTool": "op_documents_preview_paged_checkpoint",
+      "nativeMethod": "documents.previewPagedCheckpoint",
+      "documentation": "operation-documents-preview-paged-checkpoint-documents-preview-paged-checkpoint",
+      "id": "documents_preview_paged_checkpoint",
+      "name": "Documents Preview Paged Checkpoint",
+      "description": "Read a bounded UTF-8 byte page from an issued durable paged checkpoint, after full streamed payload digest verification. Reports whether its original source baseline still matches disk. Does not restore, open a live buffer or save the source. Rejects redirected/corrupt payloads and split UTF-8 cursors.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "checkpoint": {
+            "type": "string",
+            "pattern": "^core-[0-9a-f]{32}$",
+            "minLength": 37,
+            "maxLength": 37
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "length": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 262144
+          }
+        },
+        "required": [
+          "checkpoint"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "checkpoint": {
+            "type": "string",
+            "pattern": "^core-[0-9a-f]{32}$",
+            "minLength": 37,
+            "maxLength": 37
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "historicalRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "text": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextOffset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "payloadDigestsVerified": {
+            "const": true
+          },
+          "diskMatchesBaseline": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "checkpoint",
+          "path",
+          "bytes",
+          "updatedAt",
+          "historicalRevision",
+          "text",
+          "offset",
+          "nextOffset",
+          "hasMore",
+          "payloadDigestsVerified",
+          "diskMatchesBaseline"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false
+    },
+    {
+      "mcpTool": "op_documents_restore_paged_checkpoint",
+      "nativeMethod": "documents.restorePagedCheckpoint",
+      "documentation": "operation-documents-restore-paged-checkpoint-documents-restore-paged-checkpoint",
+      "id": "documents_restore_paged_checkpoint",
+      "name": "Documents Restore Paged Checkpoint",
+      "description": "Prepare a guarded restoration into an already-open paged document, keeping the current buffer as the Undo preimage. Validates the checkpoint digest, path, original disk baseline and current revision. Uses changes_preview/apply/undo; never writes the source and never deletes the checkpoint. Changed original disk baselines require reconciliation; preview remains available.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "checkpoint": {
+            "type": "string",
+            "pattern": "^core-[0-9a-f]{32}$",
+            "minLength": 37,
+            "maxLength": 37
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision",
+          "checkpoint"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "preview",
+              "applied",
+              "undone"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                },
+                "expectedRevision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "editCount": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "path",
+                "expectedRevision",
+                "editCount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "editCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "annotations": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "needsConfirmation": {
+                  "type": "boolean"
+                },
+                "files": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "description",
+                "needsConfirmation",
+                "files"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "preparedFiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wholeProjectIndexCompleteness": {
+                "const": "unknown"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "strategy",
+              "preparedFiles",
+              "wholeProjectIndexCompleteness",
+              "limitations"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "state",
+          "files",
+          "editCount"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false
+    },
+    {
+      "mcpTool": "op_documents_read_lines",
+      "nativeMethod": "documents.readLines",
+      "documentation": "operation-documents-read-lines-documents-read-lines",
+      "id": "documents_read_lines",
+      "name": "Documents Read Lines",
+      "description": "Read an already-open native paged source by zero-based line and UTF-16 character, excluding an initial BOM. Builds a sparse native line index (one anchor per 1024 lines) without materializing the source. CRLF, CR, LF and Unicode scalar boundaries are respected. Returns at most 256 KiB with guarded byte and line continuations; a long line may span pages. No LSP/GUI activation; line indexing is currently noncancellable.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "character": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9223372036854775807
+          },
+          "length": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 262144
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDocumentId": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "path",
+          "line",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "dirty": {
+            "type": "boolean"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "storage": {
+            "const": "paged"
+          },
+          "positionEncoding": {
+            "const": "utf8-bytes"
+          },
+          "text": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextOffset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "character": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextLine": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextCharacter": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalLines": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "linePositionEncoding": {
+            "const": "utf16"
+          }
+        },
+        "required": [
+          "path",
+          "id",
+          "revision",
+          "dirty",
+          "bytes",
+          "storage",
+          "positionEncoding",
+          "text",
+          "offset",
+          "nextOffset",
+          "hasMore",
+          "line",
+          "character",
+          "nextLine",
+          "nextCharacter",
+          "totalLines",
+          "linePositionEncoding"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false
+    },
+    {
+      "mcpTool": "op_documents_save_paged_as",
+      "nativeMethod": "documents.savePagedAs",
+      "documentation": "operation-documents-save-paged-as-documents-save-paged-as",
+      "id": "documents_save_paged_as",
+      "name": "Documents Save Paged As",
+      "description": "Stream an already-open paged document into a NEW workspace file in an existing folder and rebind its native identity. Never overwrites a destination/open buffer; original source remains unchanged. Requires current expectedRevision and validates the original baseline and private payload. Old path-bound plans become stale. No implicit directory creation, external writes or editor Undo for the resource rebind.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "destination": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDocumentId": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "path",
+          "destination",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "dirty": {
+            "type": "boolean"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "storage": {
+            "const": "paged"
+          },
+          "positionEncoding": {
+            "const": "utf8-bytes"
+          },
+          "previousPath": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths.",
+            "maxLength": 8192,
+            "not": {
+              "pattern": "\u0000"
+            }
+          }
+        },
+        "required": [
+          "path",
+          "id",
+          "revision",
+          "dirty",
+          "bytes",
+          "storage",
+          "positionEncoding",
+          "previousPath"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 16777216
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "workspace.write"
+      ],
+      "canRunAsync": true,
+      "canCancel": false,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
     },
     {
       "mcpTool": "op_documents_prepare_byte_edit",
@@ -71877,7 +74944,7 @@
       "documentation": "operation-documents-save-paged-documents-save-paged",
       "id": "documents_save_paged",
       "name": "Documents Save Paged",
-      "description": "Explicitly stream an already-open paged document to its original workspace file using the shared atomic writer. Requires its current revision; validates private pieces, read-only status and the saved source digest before publication. No source overwrite on a known disk conflict. Noncancellable publication; no save-as, cross-process recovery or hard byte maximum is implied.",
+      "description": "Explicitly stream an already-open paged document to its original workspace file using the shared atomic writer. Requires its current revision; validates private pieces, read-only status and the saved source digest before publication. No source overwrite on a known disk conflict. Noncancellable publication; Save as is an explicit separate operation. Explicit cross-process checkpoint recovery is separate; no hard whole-file byte maximum is implied.",
       "inputSchema": {
         "type": "object",
         "properties": {

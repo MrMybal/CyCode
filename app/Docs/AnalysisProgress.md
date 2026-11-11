@@ -113,3 +113,25 @@ claimed supported. Cache discovery is bounded and reports invalid/truncated
 entries without deleting user data. New Linux/macOS, power-loss, malicious
 filesystem races and full graphical acceptance remain unverified. GitHub Actions
 remains disabled. No release or installation update follows automatically.
+
+## Full-length local campaign {#long-campaign}
+
+The explicit production runner now accepts `--max-seconds 0` to continue the
+remaining compiler inventory without a duration cutoff. Its default remains a
+bounded measurement. `--max-units 0` traverses the remaining inventory; a positive
+value is an explicitly chosen test scope. `--stop-file <path>` requests cooperative
+cancellation when that file appears, retaining the completed native checkpoint.
+The stop file is not removed. Continue in-process while possible; after shutdown,
+restore the issued checkpoint rather than restarting the prefix.
+
+```text
+python app/scripts/benchmark_unreal_campaign.py --run-native --core . --executable <Core> --clangd <clangd> --workspace <Unreal-source-root> --database <real-UBT-compile_commands.json> --output <new-directory> --checkpoint <issued-checkpoint> --max-seconds 0 --max-units 0 --stop-file <owned-stop-file>
+```
+
+The runner hashes upcoming sources in bounded batches, rather than reading every
+source before the first compiler batch. Source/database digests stream through
+64 KiB blocks. `documents.jsonl` retains all fresh observations incrementally;
+the report's `documents` contains only the latest batch. A final digest binds the
+observation log. Read-only source checks cover each observed batch. A budget/stop
+is reported pending, never whole-engine completion. This script is not an OS
+service and does not authorize leaving antivirus alerts unattended.

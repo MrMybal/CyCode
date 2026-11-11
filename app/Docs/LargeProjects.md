@@ -42,8 +42,17 @@ invalid encodings are refused, and original BOM/CRLF bytes are retained.
 Long initial import, edit preparation and save release the Engine mutex while a
 per-document I/O reservation refuses conflicting actions. These operations and
 publication are currently noncancellable; the SDK truthfully advertises that.
-Previews and transactions expire with the native Core; this profile has no LSP,
-line-based editor API, Save as, GUI adapter or crash-recovery implementation yet.
+Previews and transactions expire with the native Core. `documents_read_lines`
+adds zero-based line / UTF-16 character addressing through a sparse native index
+(one anchor per 1024 lines). It excludes an initial BOM from line coordinates,
+recognises CRLF/CR/LF and refuses surrogate halves. Pages may end inside a long
+line; follow `nextLine`/`nextCharacter` with the current revision. Byte cursors
+remain distinct. The first line index is streamed; it is not a full text buffer.
+`documents_save_paged_as` streams into a new workspace file in an existing folder,
+retains the document identity and rebinds it with a new revision. Existing files
+and open destinations are refused. The original is preserved; old path-bound
+plans become stale. Resource rebinding itself has no editor Undo.
+This profile still has no live LSP overlay or graphical adapter.
 A successful paged text edit does not establish compiler analysis of a huge file.
 
 The existing `search_text` includes unsaved paged text in literal and regex
@@ -58,6 +67,32 @@ has no LSP overlays. Global literal/regex text search still includes those edits
 native revision and real compiler command; source baselines use streaming digests,
 not a complete text copy. Dirty/busy paged buffers refuse disk-based inspections.
 This is clang-tidy/Clang Static Analyzer execution, not live clangd navigation.
+
+## Explicit durable paged recovery {#recovery}
+
+Call `documents_checkpoint_paged` with the current path/revision before a risky
+session boundary. The native owner streams an immutable full snapshot, verifies
+its digest and atomically publishes a private manifest under
+`.cycode/working-data/core-<id>`. It does not save the project source. These explicit
+checkpoints are deliberately retained after normal exit and process crashes;
+disk headroom is required. This is opt-in checkpointing, not per-keystroke autosave.
+
+After restart, `documents_paged_checkpoints` discovers up to 256 records in at most
+4096 working directories. This list checks metadata/sizes, not payload hashes.
+`documents_preview_paged_checkpoint` verifies the full payload digest and returns
+bounded UTF-8 byte pages plus `diskMatchesBaseline`. Historical revisions are not
+live edit permissions. Reopen the original through `documents_read_page`, then
+prepare `documents_restore_paged_checkpoint` with its **current** revision. Review
+and Apply through the same change owner; Undo restores the previous live snapshot.
+Neither action saves the source. Save or Save as is explicit.
+
+Restoration refuses a changed original disk baseline; its preview remains readable
+for reconciliation. Corrupt, redirected or deeply nested metadata/payloads are
+refused. Checkpoints are never silently deleted or automatically garbage-collected.
+A Windows acceptance scenario terminates its sole owned production Core after
+publication, restarts it, restores/Undo/Saves-as and checks corruption/conflicts.
+This proves process-crash recovery for an explicitly published checkpoint, not
+power-loss durability or automatic recovery of edits made since the last checkpoint.
 
 ## Compiler databases and progress {#analysis}
 

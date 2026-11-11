@@ -88,6 +88,8 @@ struct Debugger::Impl {
     uint64_t adapterEpoch=1;
     std::string activeAdapter;
     Json activeDefinition;
+    Json exceptionVerification = {{"filters", Json::array()}, {"acknowledged", false},
+                                  {"verificationReported", false}, {"breakpoints", Json::array()}};
     struct Job { std::string method; Json params; std::promise<Json> promise;uint64_t adapterEpoch=0, reloadCancellation=0; std::shared_ptr<std::atomic<bool>> cancelled; };
     std::deque<std::shared_ptr<Job>> jobs;
     std::map<std::string,std::weak_ptr<Job>> reloadJobs;
@@ -212,6 +214,9 @@ struct Debugger::Impl {
                         if (saved.contains("id") && saved.at("id") == point.at("id")) saved.update(point);
                     if (point.contains("id")) for (auto &saved : verifiedFunctions)
                         if (saved.contains("id") && saved.at("id") == point.at("id")) saved.update(point);
+                    if (point.contains("id")) for (auto &saved : exceptionVerification.at("breakpoints"))
+                        if (saved.contains("id") && saved.at("id") == point.at("id"))
+                            saved.update(debugBreakpointVerification(point, true));
                 } else if (event == "capabilities") { std::lock_guard lock(mutex); auto updated=capabilities;updated.update(body.value("capabilities",Json::object()));validateDebugCapabilities(updated);capabilities=std::move(updated);stepInTargets.expire();gotoTargets.expire();state.update(stepInTargets.snapshot());state.update(gotoTargets.snapshot()); }
             }
         }
@@ -231,7 +236,7 @@ struct Debugger::Impl {
         return reply.value("body",Json::object());
     }
     Json ask(const std::string &command, const Json &params = Json::object()) { return wait(send(command,params)); }
-    Json current() const { std::lock_guard lock(mutex); auto result = state; result["breakpoints"] = breakpoints; result["verifiedBreakpoints"] = verified; result["capabilities"] = capabilities;result["adapterRevoked"]=adapterRevoked.load(); result["functionBreakpoints"] = functionBreakpoints; result["verifiedFunctionBreakpoints"] = verifiedFunctions; result["exceptionFilters"] = exceptionFilters; return result; }
+    Json current() const { std::lock_guard lock(mutex); auto result = state; result["breakpoints"] = breakpoints; result["verifiedBreakpoints"] = verified; result["capabilities"] = capabilities;result["adapterRevoked"]=adapterRevoked.load(); result["functionBreakpoints"] = functionBreakpoints; result["verifiedFunctionBreakpoints"] = verifiedFunctions; result["exceptionFilters"] = exceptionFilters; result["exceptionBreakpointStatus"] = exceptionVerification; return result; }
     std::string phase() const { std::lock_guard lock(mutex); return state.value("state","idle"); }
     void expireTargets() {
         stepInTargets.expire(); gotoTargets.expire();
@@ -269,7 +274,9 @@ struct Debugger::Impl {
         instructionBreakpoints.reset(); update(instructionBreakpoints.snapshot());
         for (const auto &id : ownedTerminals) terminals.close(id);
         ownedTerminals.clear();
-        {std::lock_guard lock(mutex);activeAdapter.clear();activeDefinition=nullptr;adapterRevoked=false;verified=Json::object();verifiedFunctions=Json::array();}
+        {std::lock_guard lock(mutex);activeAdapter.clear();activeDefinition=nullptr;adapterRevoked=false;verified=Json::object();verifiedFunctions=Json::array();
+            exceptionVerification = {{"filters", Json::array()}, {"acknowledged", false},
+                                     {"verificationReported", false}, {"breakpoints", Json::array()}};}
         tearingDown=false;
     }
     void validateBreakpointCapabilities(const Json &points) const {
@@ -413,18 +420,22 @@ struct Debugger::Impl {
             const bool functions = method == "debug.functionBreakpoints";
             const auto next = params.at(functions ? "breakpoints" : "filters");
             if (functions) validateFunctionBreakpoints(next); else validateExceptionFilters(next);
-            Json previous, previousVerified;
+            Json previous, previousVerified, previousExceptionVerification;
             { std::lock_guard lock(mutex);
               previous = functions ? functionBreakpoints : exceptionFilters;
               previousVerified = verifiedFunctions;
+              previousExceptionVerification = exceptionVerification;
               if (params.contains("expected") && params.at("expected") != previous)
                   throw std::runtime_error("BreakpointConflict: reload advanced breakpoints before applying"); }
             const bool live = channel.running() && initialized;
             Json arguments;
             if (live) arguments = functions ? functionBreakpointArguments(next,current().at("capabilities"))
                                             : exceptionBreakpointArguments(next,current().at("capabilities"));
-            { std::lock_guard lock(mutex); if (functions) {functionBreakpoints = next;verifiedFunctions=Json::array();} else exceptionFilters = next; }
-            try { save(); } catch (...) { std::lock_guard lock(mutex); if (functions) {functionBreakpoints = previous;verifiedFunctions=previousVerified;} else exceptionFilters = previous; throw; }
+            { std::lock_guard lock(mutex); if (functions) {functionBreakpoints = next;verifiedFunctions=Json::array();} else { exceptionFilters = next;
+                  exceptionVerification = {{"filters", live ? arguments.at("filters") : next.is_null() ? Json::array() : next}, {"acknowledged", false},
+                                           {"verificationReported", false}, {"breakpoints", Json::array()}};
+              } }
+            try { save(); } catch (...) { std::lock_guard lock(mutex); if (functions) {functionBreakpoints = previous;verifiedFunctions=previousVerified;} else {exceptionFilters = previous;exceptionVerification = previousExceptionVerification;} throw; }
             if (live) {
                 const auto response = ask(functions ? "setFunctionBreakpoints" : "setExceptionBreakpoints",arguments);
                 if (functions) {
@@ -432,6 +443,10 @@ struct Debugger::Impl {
                     if (!points.is_array() || points.size() != arguments.at("breakpoints").size())
                         throw std::runtime_error("Invalid function breakpoint verification response");
                     std::lock_guard lock(mutex); verifiedFunctions = points;
+                } else {
+                    auto verification = exceptionBreakpointVerification(arguments, response);
+                    std::lock_guard lock(mutex);
+                    exceptionVerification = std::move(verification);
                 }
             }
             return current();
@@ -558,8 +573,11 @@ struct Debugger::Impl {
                 {std::lock_guard lock(mutex);verifiedFunctions=confirmed;}
             }
             const auto exceptions=exceptionBreakpointArguments(filters,supported);
-            if(!supported.value("exceptionBreakpointFilters",Json::array()).empty()||!supported.value("supportsConfigurationDoneRequest",false)||!exceptions.at("filters").empty())
-                ask("setExceptionBreakpoints",exceptions);
+            if(!supported.value("exceptionBreakpointFilters",Json::array()).empty()||!supported.value("supportsConfigurationDoneRequest",false)||!exceptions.at("filters").empty()) {
+                auto verification = exceptionBreakpointVerification(exceptions, ask("setExceptionBreakpoints",exceptions));
+                std::lock_guard lock(mutex);
+                exceptionVerification = std::move(verification);
+            }
             if (capabilities.value("supportsConfigurationDoneRequest",false)) ask("configurationDone");
             wait(launch); pump();
             if (current().value("state","") == "starting") update({{"state","running"}});

@@ -6,7 +6,7 @@
       "kind": "user-workflow",
       "target": "debug-inspection#inspect",
       "legacyId": "reference-app-docs-advanceddebugging",
-      "sourceSha256": "d3a983653f59bc07795507077b659225bf9be4e3ea6cf4f98f02f83f917c9601"
+      "sourceSha256": "6aa41a7e38e431326090b64db879da47176bcc01744f2b8e9a377a079dab2541"
     },
     {
       "source": "Docs/Agents.md",
@@ -20,7 +20,7 @@
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-architecture",
-      "sourceSha256": "a5e59266098bf988062d145ceae22fa369dcd3e897fb408cf988175ab4e1e2b2"
+      "sourceSha256": "a06aac2ac72a025bf124fc9977838cec9d8c939643114a20af4541b2140742e6"
     },
     {
       "source": "Docs/Branding.md",
@@ -62,7 +62,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-capabilitycoverage",
-      "sourceSha256": "91892a7f0371a3ead73d20be0dc95817ccc4a6edb1f944ac94ed7e7552cadac9"
+      "sourceSha256": "0fbb15b336486740deb7cf566a16d63296361934f593a17b0d0d78c67fb301fe"
     },
     {
       "source": "Docs/CargoBuilds.md",
@@ -104,14 +104,14 @@
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-coreextraction",
-      "sourceSha256": "f76a9d0b09ef022240e5140d374b58ebc82b698d2c9146049285fa909ea7c5c3"
+      "sourceSha256": "f613a4f21f5ffde5e2b8c7e2bf69cf7e46fc53fe668b1f428d44a750dfcf7e5f"
     },
     {
       "source": "Docs/CoreInstallation.md",
       "kind": "developer-reference",
       "target": "core-installation#distribution",
       "legacyId": "reference-app-docs-coreinstallation",
-      "sourceSha256": "35221772ecacaf3c5878d82fede04b5758a58cd470ef9a6c70f5f07a57f86596"
+      "sourceSha256": "230fed523ff477c030a33c7f297374f2e45e89c4f8afe0b71bfc5bd3aaadcee1"
     },
     {
       "source": "Docs/CppCounterparts.md",
@@ -440,7 +440,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-roadmap",
-      "sourceSha256": "97c2c1d69dadfa9bc8ea8b31a6e2cbf91b9ac12b09f98c0aab1d9939a96db6a5"
+      "sourceSha256": "30276228de9306f3161c7ac1f1958f6f35920dbbf9762ed37e428775cee0cf7a"
     },
     {
       "source": "Docs/RunToCursor.md",
@@ -531,7 +531,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-testing",
-      "sourceSha256": "53013daf9fbd3c804b582c5c2957484d1194fdbd226e273dd0121357dc69a2b2"
+      "sourceSha256": "7b8e830d9733c2cdc7bfe5fe419f8d0c9e117ba80690e3b595e67ee3b805b333"
     },
     {
       "source": "Docs/ToolchainReliability.md",
@@ -629,7 +629,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "0d02b368c1d783b947cf49570f18147b05083c0f4f3babc76b1343c0ba9e560b"
+      "sourceSha256": "dff56867bb8148f4368dfab148775ea759fbd7e6fc6c69d93220d586e667a7f7"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -671,14 +671,14 @@
       "kind": "developer-reference",
       "target": "analysis-progress#validation",
       "legacyId": "reference-app-docs-analysisprogress",
-      "sourceSha256": "aaa6b687cfd4bec2237514babc9d16a1f479659d3d1da0b577234a6c31f41f56"
+      "sourceSha256": "f043f08d5c4c346b4a138688db7405be978984d0f7900ac3aba2652a76216816"
     },
     {
       "source": "Docs/LargeProjects.md",
       "kind": "developer-reference",
       "target": "large-projects#storage",
       "legacyId": "reference-app-docs-largeprojects",
-      "sourceSha256": "27b662c827159227d60ee01a7f33f03ba82c9901051d76c7d9552f8b797ad93c"
+      "sourceSha256": "d197f31fafc9095254c0914f486b741ce7fa62d47a8bf7975775f6b00e128764"
     }
   ]
 }

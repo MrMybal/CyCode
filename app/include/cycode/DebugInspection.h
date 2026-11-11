@@ -12,6 +12,8 @@ nlohmann::json debugInspectionResult(const std::string &method, const nlohmann::
                                      const nlohmann::json &arguments);
 void validateFunctionBreakpoints(const nlohmann::json &points);
 nlohmann::json functionBreakpointArguments(const nlohmann::json &points, const nlohmann::json &capabilities);
+nlohmann::json exceptionBreakpointVerification(const nlohmann::json &arguments,
+                                                const nlohmann::json &response);
 void validateExceptionFilters(const nlohmann::json &filters);
 nlohmann::json exceptionBreakpointArguments(const nlohmann::json &filters,
                                             const nlohmann::json &capabilities);

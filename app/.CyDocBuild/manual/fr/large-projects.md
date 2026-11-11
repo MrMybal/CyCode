@@ -5,7 +5,7 @@ description: Données natives progressives, documents paginés pour les agents e
 section: Pour commencer
 parent: native-core
 order: 266
-sourceRevision: 1
+sourceRevision: 4
 ---
 
 ## Stockage et propriétaire {#storage}
@@ -52,8 +52,17 @@ L’import, la préparation et la sauvegarde prolongés libèrent le verrou Engi
 une réservation du document refuse les opérations concurrentes incompatibles.
 Ces opérations et la publication sont actuellement non annulables, comme déclaré
 dans le SDK. Les révisions et aperçus appartiennent au Core courant. Ce profil
-n’a pas encore de LSP, API par lignes, adaptateur GUI, Enregistrer sous ou reprise
-des éditions après crash. Une édition paginée ne prouve pas l’analyse compilateur
+n’a pas encore d’overlay LSP ni d’adaptateur graphique. `documents_read_lines`
+lit désormais par ligne et colonne UTF-16, avec un index natif d’un repère toutes
+les 1024 lignes. Le BOM initial est exclu des coordonnées ; CRLF, CR et LF sont
+reconnus et les demi-paires de substitution refusées. Une longue ligne peut
+occuper plusieurs pages : suivez `nextLine` et `nextCharacter` avec la révision.
+Les curseurs en octets restent distincts.
+`documents_save_paged_as` sauvegarde progressivement dans un nouveau fichier
+du projet et réassocie l’identité du document avec une nouvelle révision.
+Le fichier d’origine est préservé, les destinations existantes/ouvertes refusées
+et les anciens plans liés au chemin deviennent périmés. Cette réassociation
+de ressource n’a pas d’annulation d’éditeur. Une édition paginée ne prouve pas l’analyse compilateur
 d’un très gros fichier.
 
 La recherche globale existante `search_text` inclut les modifications paginées
@@ -69,6 +78,32 @@ propre avec sa révision et sa vraie commande de compilation ; les références
 utilisent des empreintes progressives plutôt qu’une copie intégrale du texte.
 Les tampons paginés modifiés/occupés refusent les inspections disque. Il s’agit
 de clang-tidy/Clang Static Analyzer, pas de navigation clangd sur le tampon paginé.
+
+## Récupération paginée explicite et persistante {#recovery}
+
+`documents_checkpoint_paged` persiste explicitement un instantané complet dans
+`.cycode/working-data/core-<id>`, par écriture progressive et manifeste privé
+atomique. Le fichier source n’est pas sauvegardé. Ces checkpoints sont conservés
+après arrêt normal et crash du processus ; ils nécessitent de l’espace disque.
+Il ne s’agit pas d’une sauvegarde automatique après chaque frappe.
+
+Après redémarrage, `documents_paged_checkpoints` découvre au plus 256 entrées
+dans 4096 dossiers. Cette liste vérifie métadonnées et tailles, pas les empreintes
+des contenus. `documents_preview_paged_checkpoint` vérifie l’empreinte complète,
+fournit des pages UTF-8 en octets et indique `diskMatchesBaseline`.
+Les révisions historiques ne donnent aucun droit d’édition courant. Rouvrez
+l’original avec `documents_read_page`, puis préparez
+`documents_restore_paged_checkpoint` avec sa révision vivante. Prévisualisation,
+Apply et Undo réutilisent le propriétaire transactionnel commun. La sauvegarde,
+ou Enregistrer sous, reste explicite ; Undo restaure l’instantané vivant précédent.
+
+La restauration refuse une référence disque d’origine modifiée ; l’aperçu reste
+consultable pour réconciliation. Contenus corrompus, redirections et métadonnées
+trop imbriquées sont refusés. Aucune suppression silencieuse ou collecte
+automatique n’est introduite. Un scénario Windows arrête brutalement son seul
+Core de production après publication, puis vérifie reprise, Undo, Enregistrer
+sous, conflits et corruption. Cela valide un checkpoint explicitement publié
+après crash du processus, pas une coupure électrique ni les frappes ultérieures.
 
 ## Bases de compilation et progression {#analysis}
 
