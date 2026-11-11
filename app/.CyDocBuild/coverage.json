@@ -20,7 +20,7 @@
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-architecture",
-      "sourceSha256": "a06aac2ac72a025bf124fc9977838cec9d8c939643114a20af4541b2140742e6"
+      "sourceSha256": "dc913d68ef94b7e700b405bb831eba1098e14194b870477d694102a0cd5db87d"
     },
     {
       "source": "Docs/Branding.md",
@@ -111,7 +111,7 @@
       "kind": "developer-reference",
       "target": "core-installation#distribution",
       "legacyId": "reference-app-docs-coreinstallation",
-      "sourceSha256": "230fed523ff477c030a33c7f297374f2e45e89c4f8afe0b71bfc5bd3aaadcee1"
+      "sourceSha256": "c6458f712d4319d2b9243e07da1d37a38154f61ea12b7d21e8f19e186e92e0d6"
     },
     {
       "source": "Docs/CppCounterparts.md",

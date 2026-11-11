@@ -5,17 +5,19 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 17
+revision: 18
 ---
 
 ## Current delivery status {#current-status}
 
-The corrected standalone 0.1.1 is installed and its MCP connection works. This
-source tree prepares local 0.1.2 with 252 public operations, paged recovery and
-the independent PagedText component. Actual Windows production evidence is in
-the maintained Core validation guides. Antivirus holds and disabled MCP states
-in the dated narrative below describe earlier attempts, not the current delivery.
-GitHub Actions remains paused; no new release publication is implied.
+Standalone distribution 0.1.2 includes 252 public operations, shared transaction
+history/commit receipts, paged recovery and the independent PagedText component.
+Its native production build and package integrity are checked without launching
+the Core or installer. Older runtime/compiler observations retain their exact
+binary provenance; new history/installer acceptance remains pending. An existing
+0.1.1 installation or process remains old until upgraded and reconnected.
+Antivirus holds in the dated narrative below describe earlier attempts.
+GitHub Actions remains paused; binaries and Setup are authored locally.
 
 
 Shared native transaction history and atomic commit receipts are now exposed to

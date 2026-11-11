@@ -5,18 +5,19 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 17
+sourceRevision: 18
 ---
 
 ## État actuel de la livraison {#current-status}
 
-Le Core autonome corrigé 0.1.1 est installé et sa connexion MCP fonctionne.
-Ces sources préparent la version locale 0.1.2 avec 252 opérations publiques,
-la récupération paginée et le composant indépendant PagedText. Les guides de
-validation conservent les preuves Windows sur le vrai Core de production.
-Les suspensions antivirus et états MCP désactivés du récit daté ci-dessous
-décrivent les anciens essais, pas la livraison courante. GitHub Actions reste
-en pause ; aucune nouvelle publication de release n’est sous-entendue.
+La distribution autonome 0.1.2 comprend 252 opérations publiques, historique
+transactionnel/reçus de commit, récupération paginée et composant PagedText.
+Compilation native de production et intégrité des paquets sont contrôlées sans
+lancer Core ni l’installateur. Les anciennes observations compilateur/exécution
+conservent leur provenance ; les nouveaux essais réels d’historique/installation
+restent à faire. Une installation ou un processus 0.1.1 reste ancien avant mise
+à niveau et reconnexion. Les suspensions antivirus du récit daté concernent les
+anciens essais. GitHub Actions reste suspendu ; binaires et Setup sont créés localement.
 
 
 L’historique transactionnel natif commun et les reçus atomiques sont accessibles

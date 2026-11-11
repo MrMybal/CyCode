@@ -5,7 +5,7 @@ description: Local Core packages, AI skill and project MCP registration.
 section: API and extensions
 parent: mcp
 order: 262
-revision: 4
+revision: 5
 ---
 
 
@@ -13,7 +13,7 @@ revision: 4
 
 CyCodeCore is a headless native service with the official CyToolsCore MCP bridge.
 It does not need the IDE, CyUI, SDL, OpenGL, a GPU model or a system Python.
-This source tree prepares standalone distribution 0.1.2, independently of the engine's
+Standalone distribution 0.1.2 is versioned independently of the engine's
 historical 0.2.3 contract version. This delivery is a development preview.
 The native --version response reports the engine contract; the package and
 CyCodeUpdater show the standalone distribution version.
@@ -31,7 +31,16 @@ CyCodeIDE, plus repeated synthetic document saves/checkpoints and revision guard
 with Kaspersky active. These scoped Windows observations are not an antivirus
 certification or exhaustive Unreal/platform acceptance. The packages are unsigned.
 
-Download the [Windows Setup or portable ZIP](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.1).
+Version 0.1.2 packages the current 252-operation catalogue, shared native
+Undo/Redo and commit receipts, paged text/recovery and the consumer-specific
+update library. It is built from its exact sourceRevision and ships the same
+verified Python/MCP bundle, ripgrep, licences and offline manual in Setup/ZIP.
+Production compilation and package integrity are checked without launching the
+Core, its MCP host or Setup. New runtime history/installer acceptance is not
+claimed; the older scoped observations above retain their original provenance.
+An installed/running 0.1.1 remains unchanged until the user upgrades and reconnects.
+
+Download the [Windows Setup or portable ZIP](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.2).
 The Setup installs per-user and offers the separate CyCodeUpdater component.
 
 ## Register a project {#connect}
