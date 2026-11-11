@@ -13,7 +13,7 @@ sourceRevision: 3
 Installez la distribution autonome et le skill IA avec [le guide d’installation](core-installation#distribution).
 
 CyCode Core expose le même Engine natif persistant aux applications et aux IA.
-Les 237 opérations métier deviennent des outils `op_<operationId>` grâce au
+Les 238 opérations métier deviennent des outils `op_<operationId>` grâce au
 véritable adaptateur MCP de CyToolsCore. Le SDK ajoute ses contrôles de tâches,
 de découverte et d’identités. Une opération déclarée ne prouve pas l’installation
 d’un moteur de langage, compilateur, débogueur, fournisseur VCS ou plugin.
@@ -104,7 +104,7 @@ généré `app/MCPMethods.json` contient chaque nom MCP, méthode native, schém
 complet d’entrée/sortie, permission, groupe exclusif et capacité de progression
 ou d’annulation, directement issus du contrat exécutable. Régénérez-le avec
 `python app/scripts/generate_mcp_reference.py` ; `--check` le vérifie sans écrire.
-La référence HTML bilingue regroupe ces mêmes 237 contrats par domaine. Elle
+La référence HTML bilingue regroupe ces mêmes 238 contrats par domaine. Elle
 ne décrit pas les fonctions C++ internes et n’expose pas les contrôles natifs
 privés d’arrêt ou d’annulation de l’hôte.
 

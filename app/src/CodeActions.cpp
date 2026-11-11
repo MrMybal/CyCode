@@ -9,6 +9,19 @@ static std::string actionText(std::string text) {
     if (text.size()>4096) { text.resize(4096);while (!text.empty() && (static_cast<unsigned char>(text.back())&0xc0)==0x80) text.pop_back();if (!text.empty() && static_cast<unsigned char>(text.back())>=0xc0) text.pop_back(); }
     return text;
 }
+static bool previewableCppTweak(const Json &action, const std::string &backend) {
+    if (backend != "cpp" || !action.contains("command") || !action.at("command").is_object()) return false;
+    const auto &command = action.at("command");
+    if (command.value("command", "") != "clangd.applyTweak") return false;
+    const auto arguments = command.value("arguments", Json());
+    if (!arguments.is_array() || arguments.size() != 1 || !arguments[0].is_object()) return false;
+    const auto &argument = arguments[0];
+    if (!argument.contains("file") || !argument.at("file").is_string() || !argument.contains("selection")) return false;
+    static const std::set<std::string> supported = {"ExtractFunction", "ExtractVariable", "InlineVariable",
+        "ExpandMacro", "ExpandAutoType", "DefineInline", "DefineOutline", "RemoveUsingNamespace",
+        "ScopifyEnum", "SwapIfBranches"};
+    return supported.contains(argument.value("tweakID", ""));
+}
 static bool passiveActionCommand(const Json &action,const std::string &backend) {
     if (!action.contains("command") || action.at("command").is_null()) return true;
     const auto &command=action.at("command");
@@ -21,13 +34,14 @@ static bool passiveActionCommand(const Json &action,const std::string &backend) 
     const auto commands=arguments[0].at("action").value("commands",Json());return commands.is_null() || (commands.is_array() && commands.empty());
 }
 Json Engine::codeActionDescriptionLocked(const Json &action,size_t index,bool resolvable,const std::string &backend) {
+    const bool tweak = previewableCppTweak(action, backend);
     const bool edit=action.contains("edit") && !action.at("edit").is_null();
-    std::string reason;bool needsResolve=!edit && resolvable;
+    std::string reason;bool needsResolve=!edit && (resolvable || tweak);
     if (action.contains("disabled") && !action.at("disabled").is_null()) {
         reason=action.at("disabled").value("reason","Disabled by the language server");
         if (reason.empty()) reason="Disabled by the language server";
     }
-    if (reason.empty() && !passiveActionCommand(action,backend)) reason="This action requires an unsupported language-server command";
+    if (reason.empty() && !tweak && !passiveActionCommand(action,backend)) reason="This action requires an unsupported language-server command";
     if (reason.empty() && edit) {
         try {
             const auto files=workspaceEditFilesLocked(action.at("edit"));
@@ -38,7 +52,7 @@ Json Engine::codeActionDescriptionLocked(const Json &action,size_t index,bool re
             }
         } catch (const std::exception &e) { reason=e.what(); }
     }
-    if (reason.empty() && !edit && !resolvable) reason="This action has no supported workspace edit";
+    if (reason.empty() && !edit && !resolvable && !tweak) reason="This action has no supported workspace edit";
     return {{"index",index},{"title",actionText(action.at("title"))},{"kind",actionText(action.value("kind",std::string{}))},
         {"preferred",action.value("isPreferred",false)},{"available",reason.empty()},{"needsResolve",reason.empty() && needsResolve},{"reason",actionText(reason)}};
 }
@@ -102,7 +116,26 @@ Json Engine::codeActionOperation(const std::string &method,const Json &params) {
     };
     const auto &initial=checked();auto action=initial.items.at(index);auto description=codeActionDescriptionLocked(action,index,initial.resolvable,language_.backend(initial.path));
     if (description.at("available")!=true) throw std::runtime_error(description.at("reason").get<std::string>());
-    if (description.at("needsResolve")==true) {
+    if (previewableCppTweak(action, language_.backend(initial.path))) {
+        if (!params.value("resolve", true)) throw std::runtime_error("This C++ transformation requires preparation");
+        auto argument = action.at("command").at("arguments").at(0);
+        if (LanguageClient::uriKey(argument.at("file")) != LanguageClient::uriKey(LanguageClient::uri(resolve(initial.path))))
+            throw std::runtime_error("C++ transformation changed its source document");
+        const auto &selection = argument.at("selection");
+        const auto &sourceText = documents_.at(initial.path).text;
+        if (utf16Offset(sourceText, selection.at("start")) > utf16Offset(sourceText, selection.at("end")))
+            throw std::runtime_error("C++ transformation has a reversed selection");
+        argument["cycodeLanguage"] = "cpp";
+        auto future = language_.request("cycode/prepareTweak", std::move(argument));
+        lock.unlock();
+        auto edit = future.get();
+        lock.lock();
+        checked();
+        action.erase("command");
+        action["edit"] = std::move(edit);
+        description = codeActionDescriptionLocked(action, index, false, "cpp");
+        if (description.at("available") != true) throw std::runtime_error(description.at("reason").get<std::string>());
+    } else if (description.at("needsResolve")==true) {
         if (!params.value("resolve",true)) throw std::runtime_error("This code action requires resolution");
         auto request=action;request["cycodeLanguage"]=language_.backend(initial.path);
         auto future=language_.request("codeAction/resolve",std::move(request));lock.unlock();auto resolved=future.get();lock.lock();checked();

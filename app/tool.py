@@ -11,6 +11,10 @@ import uuid
 from cytools_core import CyToolError, Runtime, load_manifest
 from cytools_core.transports.api import LocalClient
 from cytools_core.transports.cli import run_cli
+# An embedded interpreter may pin another installation's app in python._pth.
+# Always pair this facade with its own contracts and host, after loading the
+# official SDK from the interpreter's pinned runtime.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from contracts import METHODS, GIT_METHODS, DEBUG_MUTATIONS, DEBUG_EXECUTIONS
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,7 +28,7 @@ class NativeClient:
             test_operation=method in ('tests.discover','tests.run')
             java_reload=method == 'debug.hotReload'
             analysis_operation=method in ('analysis.prepare','language.rename')
-            build_operation=method in ('build.configure','build.run','build.presetRun','msbuild.build','msbuild.rebuild',
+            build_operation=method in ('analysis.inspect','build.configure','build.run','build.presetRun','msbuild.build','msbuild.rebuild',
                 'msbuild.clean','msbuild.restore','msbuild.evaluate','msbuild.prepare',
                 'unreal.generate','unreal.database','unreal.build','unreal.prepare','unreal.automationRun')
             # Bundled VCS providers may validate identity/mapping, inspect local

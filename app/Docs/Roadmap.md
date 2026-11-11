@@ -1,5 +1,16 @@
 # Roadmap
 
+## Core quality stage — 2026-11-11
+
+Shared atomic publication, readable MSBuild preparation, native cancellable
+clang-tidy/Clang Static Analyzer inspection and guarded clangd command-to-preview
+transformations are implemented. Explicit real SDK/compiler/debugger/JetBrains
+comparison runners distinguish evidence from declared capability. See
+[Core quality](CoreQuality.md). Full Unreal/Blueprint analysis, complete semantic
+transformations, wider debugger/remote coverage and graphical/platform acceptance
+remain separate stages, with no claim of Rider/CLion parity.
+
+
 Local C/C++ include navigation now handles inline directive comments and immediate
 backslash-LF/CRLF continuation components, retaining the physical header range.
 The shared result inspector adds explicit retry/index-refresh, path/report copying

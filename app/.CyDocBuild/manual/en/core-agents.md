@@ -13,7 +13,7 @@ revision: 3
 Install the standalone distribution and agent skill through [Core installation](core-installation#distribution).
 
 CyCode Core exposes the same persistent native Engine to applications and AI
-clients. There are 237 domain operations, each exposed as `op_<operationId>` by
+clients. There are 238 domain operations, each exposed as `op_<operationId>` by
 the official CyToolsCore MCP adapter. The SDK adds its own job, discovery, task
 and identity controls. A listed operation is a contract, not proof that a
 language server, debugger, compiler, VCS provider or plugin is installed.
@@ -99,7 +99,7 @@ before assuming availability or permissions. The generated `app/MCPMethods.json`
 contains every MCP name, native method, full input/output schema, permission,
 exclusive group and progress/cancellation flag from the executable contract.
 Regenerate it with `python app/scripts/generate_mcp_reference.py`; verify without
-writing with `--check`. The bilingual HTML API reference contains the same 237
+writing with `--check`. The bilingual HTML API reference contains the same 238
 operation contracts, grouped by domain. It is not a listing of internal C++
 functions and does not expose trusted native shutdown/cancellation controls.
 

@@ -912,7 +912,7 @@ void LanguageService::run() {
                                             }
                                         }
                                 };
-                                if (q->method == "textDocument/rename")
+                                if (q->method == "textDocument/rename" || q->method == "cycode/prepareTweak")
                                     mapVersions(response);
                                 if (q->method == "textDocument/codeAction" && response.is_array())
                                     for (auto &action : response)

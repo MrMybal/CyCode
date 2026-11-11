@@ -2,7 +2,7 @@
   "format": "cycode-agent-methods/1",
   "toolId": "cy.code",
   "source": "app/CyTool.json + app/contracts.py",
-  "contractSha256": "9f967a23fd157c153a3628c7096e2d042c6d29bcfa6113ed9660e12873e5b5b1",
+  "contractSha256": "1e87ed6bb9ce36a0e5aaf856fd95ca63e4351473e5e9e0cd5d9491f7027c15a7",
   "transport": "Official CyToolsCore MCP adapter; op_<id> submits a job, not a synchronous domain result.",
   "guide": "Docs/Agents.md",
   "persistentSources": "Workspace paths are persistent native document references, never SDK temporary input files.",
@@ -17,8 +17,208 @@
     "cy_cancel_job",
     "cy_events"
   ],
-  "operationCount": 237,
+  "operationCount": 238,
   "operations": [
+    {
+      "mcpTool": "op_analysis_inspect",
+      "nativeMethod": "analysis.inspect",
+      "documentation": "operation-analysis-inspect-analysis-inspect",
+      "id": "analysis_inspect",
+      "name": "Analysis Inspect",
+      "description": "Inspect one saved C++ translation unit using installed clang-tidy and exactly one actual workspace compilation command. Profiles include Clang Static Analyzer checks for recommended/security. Source and database guards mark changed results stale. Returns compiler byte columns, bounded actual diagnostics and output; no fixes or source writes. Cancel through build_cancel with the issued operationId. No fallback flags or claim of whole-project completeness.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "compilationDatabase": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "profile": {
+            "type": "string",
+            "enum": [
+              "recommended",
+              "security",
+              "modernize",
+              "performance",
+              "portability"
+            ]
+          },
+          "executable": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "timeoutSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 900
+          },
+          "operationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          }
+        },
+        "required": [
+          "path",
+          "expectedRevision",
+          "compilationDatabase"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "documentId": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "profile": {
+            "type": "string"
+          },
+          "compilationDatabase": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+          },
+          "executable": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "failed",
+              "stale",
+              "cancelled",
+              "timed-out",
+              "truncated"
+            ]
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "exitCode": {
+            "type": "integer"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "timedOut": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "output": {
+            "type": "string"
+          },
+          "diagnostics": {
+            "type": "array",
+            "maxItems": 2000,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Workspace reference; live document operations also accept issued untitled references. Not a temporary input artifact. Filesystem operations require actual workspace paths."
+                },
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "byteColumn": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "severity": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "line",
+                "byteColumn",
+                "severity",
+                "message",
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "externalDiagnostics": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sourceWritten": {
+            "const": false
+          },
+          "positionEncoding": {
+            "const": "utf8-byte-columns"
+          }
+        },
+        "required": [
+          "path",
+          "revision",
+          "documentId",
+          "profile",
+          "compilationDatabase",
+          "executable",
+          "status",
+          "stale",
+          "exitCode",
+          "cancelled",
+          "timedOut",
+          "truncated",
+          "output",
+          "diagnostics",
+          "externalDiagnostics",
+          "sourceWritten",
+          "positionEncoding"
+        ],
+        "additionalProperties": false
+      },
+      "resourceRequirements": {
+        "ramBytes": 536870912
+      },
+      "supportedBackends": [],
+      "permissions": [
+        "process.execute"
+      ],
+      "canRunAsync": true,
+      "canCancel": true,
+      "supportsProgress": false,
+      "exclusiveGroups": [
+        "workspace-mutations"
+      ]
+    },
     {
       "mcpTool": "op_service_status",
       "nativeMethod": "service.status",

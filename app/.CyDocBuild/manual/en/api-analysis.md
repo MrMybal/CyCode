@@ -14,6 +14,7 @@ These contracts describe the native service exposed by the official SDK/MCP inte
 
 ## Operations {#operations}
 
+- [`analysis_inspect`](doc:operation-analysis-inspect-analysis-inspect) — Inspect one saved C++ translation unit using installed clang-tidy and exactly one actual workspace compilation command.
 - [`analysis_status`](doc:operation-analysis-status-analysis-status) — Read aggregate native semantic-preparation progress without starting work.
 - [`analysis_prepare`](doc:operation-analysis-prepare-analysis-prepare) — Prepare explicit existing sources without a fixed file-count ceiling, or enumerate the active C++ compilation database (optional workspace pathPrefix).
 - [`analysis_results`](doc:operation-analysis-results-analysis-results) — Read a metadata page from the latest native preparation checkpoint.

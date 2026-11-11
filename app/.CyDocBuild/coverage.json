@@ -13,7 +13,7 @@
       "kind": "developer-reference",
       "target": "core-agents#connect",
       "legacyId": "reference-app-docs-agents",
-      "sourceSha256": "5dd0083ab8b976fae31932602c631aa4bd71f6a6b8334a2e68eb989a26b401d2"
+      "sourceSha256": "6e946c9cdd86725d05a7696e981ea47b9a0b57f7fd9c1278425c3a85136d6ec9"
     },
     {
       "source": "Docs/Architecture.md",
@@ -321,7 +321,7 @@
       "kind": "user-workflow",
       "target": "mcp#connection",
       "legacyId": "reference-app-docs-mcp",
-      "sourceSha256": "ea7bce567820ae78e062885c0d470fdb6c34af30dbf5bd6fe4c7add6197c2356"
+      "sourceSha256": "a0d826b284006fbad55cc9488efe984bb26b701377ba16f78fc618621d25a7ce"
     },
     {
       "source": "Docs/MSBuild.md",
@@ -440,7 +440,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-roadmap",
-      "sourceSha256": "b6f78b56b5f2d8b218834d683918badcca2df674a9ccc77aab8108c61c6c8b1d"
+      "sourceSha256": "418a0d7c1218758b65cdfaa971a00ddba38fbf25f7b9ea0e0be795b53a93fc4a"
     },
     {
       "source": "Docs/RunToCursor.md",
@@ -531,7 +531,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-testing",
-      "sourceSha256": "bb4df60dd730c47d29e4a3a86ae3aa4530d104f7edf4aed96f395865250a9709"
+      "sourceSha256": "8848bab8f1805081d5642c73fb4f2687dc45c178226575325379304e2ab85171"
     },
     {
       "source": "Docs/ToolchainReliability.md",
@@ -629,7 +629,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "6aa4bcf5c504b61851f5d038f415b48ea7c6c349e120eafef4c0c220c165bdd1"
+      "sourceSha256": "5d8ee9419f2238c303815b72dc5771f147691ca14c33ca61847977ba985a90e7"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -658,6 +658,13 @@
       "target": "settings#windows",
       "legacyId": "reference-app-docs-workspacesessions",
       "sourceSha256": "c3db5082455e7becdb10d069139979d53525d587e6d0e4c8993f3da19db4e661"
+    },
+    {
+      "source": "Docs/CoreQuality.md",
+      "kind": "developer-reference",
+      "target": "core-quality#validation",
+      "legacyId": "reference-app-docs-corequality",
+      "sourceSha256": "af3e9c2c7c863fe9a94274ced2a6b3d75667a3c4f3a7c3ad7f964eb77a58ee0d"
     }
   ]
 }

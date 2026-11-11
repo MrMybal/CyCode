@@ -1,3 +1,4 @@
+#include "cycode/AtomicFile.h"
 #include "cycode/ProcessText.h"
 #include "cycode/BuildSystem.h"
 #include "cycode/BuildLimits.h"
@@ -96,36 +97,7 @@ static bool within(const fs::path &base, const fs::path &path) {
     return true;
 }
 static void writeAtomic(const fs::path &path, const std::string &text) {
-    if (fs::exists(path) && read(path) == text)
-        return;
-    fs::create_directories(path.parent_path());
-    // A sibling name that does not extend the target's own name: see writeTextFileAtomic
-    // (common/src/TextFile.cpp) for the antivirus behavioural detection this avoids.
-    static std::atomic<unsigned> sequence{0};
-#ifdef _WIN32
-    const auto process = static_cast<unsigned long>(GetCurrentProcessId());
-#else
-    const auto process = static_cast<unsigned long>(::getpid());
-#endif
-    const auto temporary = path.parent_path() / (".cycode-build-" + std::to_string(process) + "-" +
-                                                 std::to_string(++sequence) + ".tmp");
-    {
-        std::ofstream out(temporary, std::ios::binary);
-        out << text;
-        out.flush();
-        if (!out) {
-            fs::remove(temporary);
-            throw std::runtime_error("Cannot write build metadata");
-        }
-    }
-#ifdef _WIN32
-    if (!MoveFileExW(temporary.c_str(), path.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
-        fs::remove(temporary);
-        throw std::runtime_error("Cannot replace build metadata");
-    }
-#else
-    fs::rename(temporary, path);
-#endif
+    writeMetadataFileAtomic(path, text);
 }
 static void ignoreGeneratedTree(const fs::path &path) {
     constexpr char text[] = "# CyCode: generated CMake build tree\n*\n";

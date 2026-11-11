@@ -1,5 +1,19 @@
 # Validation — 2026-11-08
 
+## 2026-11-11 — shared atomic I/O and C++ quality
+
+The shared atomic publication owner and MSBuild helpers compile in production.
+Real official SDK/MCP checks pass compiler navigation, three-file rename,
+variable/function/macro preview/Apply/Undo, live-header invalidation, Debug/Release
+context, an actual Clang Static Analyzer uninitialised-value finding, revision,
+read-only and disk-conflict guards, and repeated saves. CodeLLDB passes a production
+target stop/stack/memory/disassembly, stale-stop refusal, continue and owned shutdown.
+Actual JetBrains InspectCode 2025.1.5 comparisons retain differing check-suite and
+process-lifecycle limits. See [Core quality](CoreQuality.md) for reproducible runners
+and precise limits. No native CTest fixture executable or IDE GUI was launched.
+These are Windows runs with Kaspersky active, not exhaustive platform/Unreal parity.
+
+
 ## 2026-11-10 - corrected standalone Core production acceptance
 
 The owner resumed the corrected delivery and removed the obsolete blanket native

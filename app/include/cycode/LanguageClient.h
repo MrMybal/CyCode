@@ -84,6 +84,11 @@ class LanguageClient {
     std::thread reader_, writer_;
     std::atomic<bool> running_{false};
     bool initialized_ = false;
+    // clangd transformations are calculated into a preview only. applyEdit is
+    // always refused; one captured WorkspaceEdit goes through Engine guards.
+    int previewRequest_ = 0;
+    bool previewUncertain_ = false;
+    Json previewEdit_;
     bool raw_ = false;
     size_t incomingBytes_ = 0;
     int nextId_ = 1;

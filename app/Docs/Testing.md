@@ -1,5 +1,16 @@
 # Local verification and native tests
 
+## Current explicit Core validation — 2026-11-11
+
+The owner resumed the corrected Core and requested quality, compiler, debugger and
+comparative validation. The opt-in production-only runners in [Core quality](CoreQuality.md)
+exercise actual SDK/MCP, clangd, clang-tidy, CodeLLDB and JetBrains inspection tools.
+They do not launch a GUI or generate native test executables. Ordinary source checks
+stay data-only. Native CTest remains a separate explicit test-build choice; Actions
+remains disabled. The antivirus-hold paragraphs below record historical incidents,
+not the current corrected Core's explicit validation scope.
+
+
 The owner later authorised a controlled standalone production delivery. The
 installed MCP completed scoped CyCodeIDE calls, then a second Kaspersky detection
 deleted its CLI at 19:20 Europe/Paris. That attempt is interrupted, MCP is disabled,

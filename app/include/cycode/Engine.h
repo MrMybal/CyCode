@@ -61,6 +61,7 @@ class Engine {
   private:
     Json configureLanguageBackend(const Json &);
     void applyLanguageConfiguration(const std::string &, const Json &, bool prewarm);
+    Json inspectCpp(const Json &, const std::atomic<bool> *);
     Json buildOperation(const std::string &, const Json &, const std::atomic<bool> *);
     using Document = text::BufferState;
     Json documentJson(const std::string &, const Document &) const;

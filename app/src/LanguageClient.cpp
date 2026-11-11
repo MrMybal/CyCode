@@ -368,6 +368,9 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
     return true;
 }
 void LanguageClient::stop() {
+    previewRequest_ = 0;
+    previewUncertain_ = false;
+    previewEdit_ = nullptr;
     capabilities_ = Json::object(); ++semanticGeneration_; ++semanticRefreshGeneration_;
     running_ = false;
     outgoingReady_.notify_all();
@@ -451,6 +454,25 @@ int LanguageClient::request(const std::string &method, Json params,
                             std::function<void(const Json &)> callback) {
     if (!running_)
         return 0;
+    if (method == "cycode/prepareTweak") {
+        if (serverName_ != "clangd" || previewRequest_ || previewUncertain_) {
+            callback(Json{{"error", {{"code", -32602}, {"message", "Tweak preview unavailable; restart after cancellation"}}}});
+            return 0;
+        }
+        previewEdit_ = nullptr;
+        const auto command = Json{{"command", "clangd.applyTweak"}, {"arguments", Json::array({params})}};
+        previewRequest_ = request("workspace/executeCommand", command, [this, callback = std::move(callback)](const Json &result) {
+            auto captured = std::move(previewEdit_);
+            previewRequest_ = 0;
+            previewEdit_ = nullptr;
+            // clangd may report the deliberately refused applyEdit as a command
+            // failure. A single captured edit is the preparation result only.
+            if (captured.is_object()) callback(captured);
+            else callback(result.is_object() && result.contains("error") ? result :
+                Json{{"error", {{"code", -32603}, {"message", "clangd returned no preview edit"}}}});
+        });
+        return previewRequest_;
+    }
     int id = nextId_++;
     callbacks_[id] = std::move(callback);
     if (!enqueue({{"jsonrpc", "2.0"}, {"id", id}, {"method", method}, {"params", std::move(params)}})) {
@@ -460,6 +482,13 @@ int LanguageClient::request(const std::string &method, Json params,
     return id;
 }
 void LanguageClient::cancel(int id) {
+    if (id == previewRequest_) {
+        // applyEdit has no parent request ID. Refuse a new preview until restart
+        // so an old late response cannot be attributed to another operation.
+        previewUncertain_ = true;
+        previewRequest_ = 0;
+        previewEdit_ = nullptr;
+    }
     callbacks_.erase(id);
     notify("$/cancelRequest", {{"id", id}});
 }
@@ -517,7 +546,18 @@ void LanguageClient::poll() {
             } else if (method == "workspace/workspaceFolders") reply["result"] = workspaceFolders_;
             else if (method == "window/workDoneProgress/create") reply["result"] = nullptr;
             else if (method == "workspace/semanticTokens/refresh") { ++semanticGeneration_; ++semanticRefreshGeneration_; reply["result"] = nullptr; }
-            else if (method == "workspace/applyEdit") reply["result"] = {{"applied",false},{"failureReason","Use the revision-checked change preview API"}};
+            else if (method == "workspace/applyEdit") {
+                if (serverName_ == "clangd" && previewRequest_ && !previewUncertain_) {
+                    const auto candidate = message.value("params", Json::object()).value("edit", Json());
+                    if (previewEdit_.is_null() && candidate.is_object() && candidate.dump().size() <= 2 * 1024 * 1024)
+                        previewEdit_ = candidate;
+                    else {
+                        previewEdit_ = false;
+                        previewUncertain_ = true;
+                    }
+                }
+                reply["result"] = {{"applied",false},{"failureReason","Use the revision-checked change preview API"}};
+            }
             else if (method == "client/registerCapability" || method == "client/unregisterCapability")
                 reply["error"] = {{"code",-32601},{"message","Dynamic capability registration is not supported"}};
             else reply["error"] = {{"code",-32601},{"message","Unsupported client request"}};

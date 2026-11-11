@@ -88,7 +88,7 @@ Standalone packages and the reusable AI skill: [Core installation](app/Docs/Core
 
 Use [the agent guide](app/Docs/Agents.md) for persistent headless startup,
 analysis preparation, asynchronous jobs and guarded changes. The generated
-[MCP method catalogue](app/MCPMethods.json) lists all 236 native operations and
+[MCP method catalogue](app/MCPMethods.json) lists all 238 native operations and
 their complete schemas. The official CyToolsCore SDK owns MCP and permissions.
 
 ## Evidence and limits
@@ -121,3 +121,5 @@ further work. No CLion/IntelliJ parity is claimed.
 See [LICENSE](LICENSE), [COPYRIGHT](COPYRIGHT) and
 [dependency notices](app/THIRD_PARTY_NOTICES.md). Native project/text plugins keep
 their existing C ABIs; they execute as trusted code and are not interchangeable.
+
+[Core quality and reproducible validation](app/Docs/CoreQuality.md): shared atomic I/O, native C++ inspections and guarded compiler transformations.

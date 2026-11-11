@@ -1,0 +1,329 @@
+{
+  "format": "cycode-core-quality-evidence/1",
+  "date": "2026-11-11",
+  "platform": "Windows x64",
+  "sourceBaseCommit": "d21bf8bca93be450a430e17b9754e736b67e27fe",
+  "sourceState": "Local development changes on this base, not an installed release",
+  "nativeSha256": "bb1361574ae39fae991c28acb58e225159763f66e5f75d73d569c67bac7e11e1",
+  "nativeBuild": {
+    "target": "cycode_cli",
+    "configuration": "Release",
+    "BUILD_TESTING": false,
+    "CYCODE_BUILD_PRIVATE_DIAGNOSTICS": false,
+    "CYCODE_BUILD_PROVIDERS": false
+  },
+  "sdk": {
+    "name": "CyToolsCore",
+    "version": "0.10.1",
+    "domainOperations": 238,
+    "controlTools": 21,
+    "discoveredMcpTools": 259
+  },
+  "compilerAcceptance": {
+    "state": "passed",
+    "checks": {
+      "officialSdkDiscovery": 259,
+      "realMsBuildCommands": 2,
+      "analysisCoverage": {
+        "commands": 0,
+        "diagnosticClean": 3,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 0,
+        "observed": 3,
+        "outOfScope": 0,
+        "remaining": 0,
+        "translationUnits": 0
+      },
+      "compilerDefinition": true,
+      "compilerReferences": 3,
+      "mcpWarmNavigation": {
+        "samplesMilliseconds": [
+          33.564599994861055,
+          33.3424999989802,
+          34.02170000481419,
+          32.91170000011334,
+          32.75430000212509,
+          32.91639999952167,
+          32.772900005511474,
+          34.14590000465978,
+          34.12759999628179,
+          33.7876999983564,
+          39.029000006848946,
+          33.46169999713311
+        ],
+        "medianMilliseconds": 33.51314999599708,
+        "p95Milliseconds": 39.029000006848946,
+        "scope": "SDK/MCP round trip; OS caches not controlled"
+      },
+      "threeFileRenameApplyUndo": true,
+      "clangdExtractionPreviewApplyUndo": "Extract subexpression to variable",
+      "functionPreviewApplyUndo": "Extract to function",
+      "macroPreviewApplyUndo": "Expand macro 'DOUBLE_VALUE'",
+      "headerEditInvalidatesNavigation": true,
+      "actualDebugToReleaseContext": {
+        "entries": 2,
+        "macro": "QUALITY_MODE=2",
+        "diagnosticErrors": 0
+      },
+      "realStaticAnalyzer": {
+        "diagnostics": 3,
+        "codes": [
+          "",
+          "clang-analyzer-core.uninitialized.UndefReturn"
+        ]
+      },
+      "staleInspectionRevisionRejected": true,
+      "sharedAtomicSaves": 8,
+      "readOnlySavePreservedDisk": true,
+      "diskConflictPreservedExternalContent": true,
+      "originalSourcesPreserved": true,
+      "hostDrained": true
+    },
+    "sourceSha256": {
+      "model.hpp": "ff5253ce4880d737ed1dd551a759e3fdd6af4c2d046cc09ac18a0d7aab47e7e8",
+      "main.cpp": "ec68c06c7baa062330ff2fbacf8705c5d36698a755db6b1edd6be85e10886b1e",
+      "caller.cpp": "6cc3adadf99044774c376c504ee8d54490b3506803e13c76edc4b42b9a664ae2"
+    }
+  },
+  "unreal": {
+    "state": "passed",
+    "sourceSha256": {
+      "Engine/Source/Runtime/Core/Public/Misc/DateTime.h": "dc7cadfe641d2108f694ce0acb390ac326be0b316b6f35fcecd326c8625c6277",
+      "Engine/Source/Runtime/Core/Private/Misc/DateTime.cpp": "b66efe1e0c03c392f50453b831a0e2e52abeab0ed519fb8757d506ed8afe773b",
+      "Engine/Source/Runtime/Online/HTTP/Private/HttpRetrySystem.cpp": "f7c8a73a28d59fbf4d2308a3c9d09440928a4b8b6a27f9bcc46299f93d5199b7"
+    },
+    "compilationDatabaseSha256": "4265231242954cf12734235d3659ca0c0afd7dbe8378762d3dd8e21364d7b041",
+    "ubtCommands": 37679,
+    "checks": {
+      "wholeDatabaseInventory": 37557,
+      "rollingPreparationContinued": {
+        "commands": 37679,
+        "diagnosticClean": 2,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 0,
+        "observed": 2,
+        "outOfScope": 0,
+        "remaining": 37555,
+        "translationUnits": 37557
+      },
+      "dateTimeAndHttpCompilerScope": {
+        "commands": 0,
+        "diagnosticClean": 3,
+        "diagnosticErrors": 0,
+        "diagnosticUnknown": 0,
+        "observed": 3,
+        "outOfScope": 0,
+        "remaining": 0,
+        "translationUnits": 0
+      },
+      "realThreeFileRenameApplyUndo": true,
+      "unrealSourcesAndDatabasePreserved": true,
+      "hostDrained": true
+    },
+    "limits": [
+      "Scoped source regression, not exhaustive UE semantics, reflection/Blueprint analysis or Rider integration parity."
+    ]
+  },
+  "debugger": {
+    "state": "passed",
+    "scope": "Production Core --version as debuggee, installed CodeLLDB, actual SDK/MCP; no generated executable",
+    "checks": {
+      "actualStopAndStack": 5,
+      "actualDisassembly": 8,
+      "actualMemoryRead": true,
+      "staleStopRejected": true,
+      "actualContinueAndExit": true,
+      "ownedDebuggerStopped": true,
+      "hostDrained": true
+    }
+  },
+  "cancellation": {
+    "state": "passed",
+    "sourceSha256": "10f4f0bba1ff7d05873121650f4038c6e1a2e07fdc1b9f10a1dac7daaff8de0b",
+    "sourceBytes": 1577780,
+    "sourceFunctions": 25000,
+    "actualAnalyzerChildObserved": true,
+    "cancelledJobState": "Cancelled",
+    "ownedChildTerminated": true,
+    "cancellationSeconds": 1.084821300006297,
+    "buildOwnerDrained": true,
+    "sourcePreserved": true,
+    "hostDrained": true
+  },
+  "inspectionComparison": {
+    "format": "cycode-inspection-comparison/1",
+    "jetbrainsTool": "JetBrains InspectCode 2025.1.5, matching installed Rider 2025.1.5; no CLion GUI comparison",
+    "translationUnitsPerCoreSample": 2,
+    "sourceSha256": {
+      "main.cpp": "ec68c06c7baa062330ff2fbacf8705c5d36698a755db6b1edd6be85e10886b1e",
+      "caller.cpp": "6cc3adadf99044774c376c504ee8d54490b3506803e13c76edc4b42b9a664ae2"
+    },
+    "core": [
+      {
+        "seconds": 0.10441910000372445,
+        "findings": 3,
+        "codes": [
+          "",
+          "clang-analyzer-core.uninitialized.UndefReturn"
+        ],
+        "uninitializedDetected": true,
+        "statuses": [
+          "complete",
+          "complete"
+        ],
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 27959296,
+          "samples": 2,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        }
+      },
+      {
+        "seconds": 0.10003149999829475,
+        "findings": 3,
+        "codes": [
+          "",
+          "clang-analyzer-core.uninitialized.UndefReturn"
+        ],
+        "uninitializedDetected": true,
+        "statuses": [
+          "complete",
+          "complete"
+        ],
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 38584320,
+          "samples": 2,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        }
+      },
+      {
+        "seconds": 0.09809970000060275,
+        "findings": 3,
+        "codes": [
+          "",
+          "clang-analyzer-core.uninitialized.UndefReturn"
+        ],
+        "uninitializedDetected": true,
+        "statuses": [
+          "complete",
+          "complete"
+        ],
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 31375360,
+          "samples": 2,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        }
+      }
+    ],
+    "jetbrains": [
+      {
+        "seconds": 5.362044100002095,
+        "findings": 15,
+        "codes": [
+          "CppClangTidyClangDiagnosticUninitialized",
+          "CppClangTidyCppcoreguidelinesSpecialMemberFunctions",
+          "CppClangTidyMiscUseInternalLinkage",
+          "CppClassCanBeFinal",
+          "CppInconsistentNaming",
+          "CppLocalVariableMayBeConst",
+          "CppLocalVariableMightNotBeInitialized",
+          "CppParameterMayBeConst"
+        ],
+        "uninitializedDetected": true,
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 586178560,
+          "samples": 85,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        }
+      },
+      {
+        "seconds": 5.5287352000013925,
+        "findings": 15,
+        "codes": [
+          "CppClangTidyClangDiagnosticUninitialized",
+          "CppClangTidyCppcoreguidelinesSpecialMemberFunctions",
+          "CppClangTidyMiscUseInternalLinkage",
+          "CppClassCanBeFinal",
+          "CppInconsistentNaming",
+          "CppLocalVariableMayBeConst",
+          "CppLocalVariableMightNotBeInitialized",
+          "CppParameterMayBeConst"
+        ],
+        "uninitializedDetected": true,
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 565137408,
+          "samples": 89,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        }
+      },
+      {
+        "seconds": 5.474673600001552,
+        "findings": 17,
+        "codes": [
+          "CppClangTidyClangDiagnosticUninitialized",
+          "CppClangTidyClangDiagnosticWeakVtables",
+          "CppClangTidyCppcoreguidelinesSpecialMemberFunctions",
+          "CppClangTidyMiscUseInternalLinkage",
+          "CppClassCanBeFinal",
+          "CppInconsistentNaming",
+          "CppLocalVariableMayBeConst",
+          "CppLocalVariableMightNotBeInitialized",
+          "CppParameterMayBeConst"
+        ],
+        "uninitializedDetected": true,
+        "memory": {
+          "available": true,
+          "peakObservedWorkingSetSumBytes": 576012288,
+          "samples": 88,
+          "unavailableProcessObservations": 0,
+          "scope": "Owned process tree sampled every 50 ms; RSS sum may double-count shared pages, not unique physical memory"
+        }
+      }
+    ],
+    "summary": {
+      "core": {
+        "samples": 3,
+        "medianSeconds": 0.10003149999829475,
+        "p95Seconds": 0.10441910000372445
+      },
+      "jetbrains": {
+        "samples": 3,
+        "medianSeconds": 5.474673600001552,
+        "p95Seconds": 5.5287352000013925
+      }
+    },
+    "sourceAndDatabasePreserved": true,
+    "limits": [
+      "Core: persistent native service plus one clang-tidy process per translation unit; native socket API, no SDK polling.",
+      "JetBrains: new InspectCode process for each solution-wide run, reused caches after the first run.",
+      "Recommended Clang checks and JetBrains default inspections differ; counts and timings do not prove equal analysis or overall IDE superiority.",
+      "OS disk caches are not flushed; first run does not mean cold filesystem. Memory is an observed RSS sum.",
+      "Three samples on two small translation units; no controlled cold OS-cache trial.",
+      "The Core RSS series has only two observations per sample and can miss the analyzer peak. Do not infer lower physical memory use.",
+      "Diagnostic rows include notes and differing checks. Raw counts are not comparable coverage scores.",
+      "These results are not IDE responsiveness, whole-Unreal latency or Rider/CLion feature parity."
+    ]
+  },
+  "antivirus": {
+    "product": "Kaspersky",
+    "activeDuringRecordedRuns": true,
+    "newDetectionObserved": false,
+    "protectionChanged": false
+  },
+  "notValidated": [
+    "Linux/macOS execution of these changes and graphical IDE acceptance",
+    "Exhaustive semantics of all Unreal translation units; full Blueprint/asset integration",
+    "Every allowlisted transformation, resource/file operations and complete C++ refactoring coverage",
+    "Full data-flow/lifetime coverage, remote debugger configurations or complete Rider/CLion parity",
+    "A new signed installer, installed client upgrade or public release of these development changes"
+  ]
+}

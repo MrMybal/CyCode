@@ -20,7 +20,7 @@ std::string operationId(const nlohmann::json &parameters, bool required) {
 } // namespace
 bool BuildOperations::supports(const std::string &method) {
     static const std::set<std::string> methods = {
-        "build.configure", "build.run",       "build.presetRun",  "msbuild.build",       "msbuild.rebuild",
+        "analysis.inspect", "build.configure", "build.run",       "build.presetRun",  "msbuild.build",       "msbuild.rebuild",
         "msbuild.clean",   "msbuild.restore", "msbuild.evaluate", "msbuild.prepare",     "unreal.generate",
         "unreal.database", "unreal.build",    "unreal.prepare",   "unreal.automationRun"};
     return methods.contains(method);
