@@ -2,6 +2,7 @@
 #include "cycode/GitSubmodules.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
+#include "cycode/GitSafety.h"
 #include "cycode/TextEdits.h"
 #include "cycode/TextFile.h"
 #include <algorithm>
@@ -124,6 +125,7 @@ Json Engine::gitSubmodules(const std::string &method, const Json &params) {
         if (pathspecs) args.insert(args.begin(), "--literal-pathspecs");
         args.insert(args.begin(), {"git", "--no-pager", "--no-optional-locks", "-c",
                                    "submodule.recurse=false", "-C", pathUtf8(directory)});
+        hardenGitArguments(args);
         auto timeout = std::chrono::milliseconds(seconds * 1000);
         if (inspectionDeadline != std::chrono::steady_clock::time_point{}) {
             const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(

@@ -1,5 +1,6 @@
 #include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
+#include "cycode/GitSafety.h"
 #include "cycode/TextEdits.h"
 #include <algorithm>
 #include <fstream>
@@ -43,6 +44,7 @@ Json Engine::gitAdvanced(const std::string &method, const Json &params) {
     const auto &gitRoot=selected.directory;
     auto git = [&](std::vector<std::string> arguments, int seconds = 15) {
         arguments.insert(arguments.begin(),{"git","--no-pager","--literal-pathspecs","-C",pathUtf8(gitRoot),"-c","core.quotepath=false"});
+        hardenGitArguments(arguments);
         return runProcess(arguments,gitRoot,std::chrono::seconds(seconds),8*1024*1024);
     };
     auto repository = git({"rev-parse","--show-toplevel"});
@@ -104,7 +106,7 @@ Json Engine::gitAdvanced(const std::string &method, const Json &params) {
         while (std::getline(lines,line)) { auto parts = fields(trim(line),'\0'); if (parts.size() == 5) commits.push_back({{"hash",parts[0]},{"parents",parts[1]},{"author",parts[2]},{"date",parts[3]},{"subject",parts[4]}}); }
         return {{"commits",commits},{"truncated",result.truncated},{"message",result.exitCode ? result.output : ""}};
     }
-    if (method == "vcs.show") return processJson(git({"show","--no-ext-diff","--no-color",reference(params.at("revision")),"--","."}));
+    if (method == "vcs.show") return processJson(git({"show","--no-ext-diff","--no-textconv","--no-color",reference(params.at("revision")),"--","."}));
     if (method == "vcs.blame") return processJson(git({"blame","--date=short","--",gitFileArgument(root_,selected,resolve(params.at("path")))}));
     if (method == "vcs.conflicts") {
         rootOnly();

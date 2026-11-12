@@ -5,14 +5,14 @@ description: Paquets locaux, skill IA et connexion MCP par projet.
 section: API et extensions
 parent: mcp
 order: 262
-sourceRevision: 5
+sourceRevision: 6
 ---
 
 ## Distribution {#distribution}
 
 CyCodeCore fournit le moteur natif sans interface et le pont MCP officiel de
 CyToolsCore. Aucun IDE, CyUI/SDL/OpenGL, modèle GPU ou Python système n’est requis.
-La distribution autonome est en version 0.1.2 ; le contrat du moteur conserve
+La distribution autonome est en version 0.1.3 ; le contrat du moteur conserve
 sa version historique 0.2.3. Il s’agit d’une préversion de développement.
 
 Le paquet Windows x64 contient `cycode_cli.exe`, les DLL MSVC, ripgrep vérifié,
@@ -38,7 +38,14 @@ Core, son hôte MCP ni Setup. Aucun nouvel essai réel d’historique/installati
 n’est revendiqué ; les observations ciblées précédentes gardent leur provenance.
 Une installation ou un processus 0.1.1 reste inchangé avant mise à niveau/reconnexion.
 
-[Télécharger Setup ou le ZIP Windows](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.2).
+La version 0.1.3 valide chaque message reçu du serveur de langage, partage
+un index de lignes et assemble les éditions de texte en un seul passage. Les
+opérations Git partagent leurs options de sécurité : status désactive le programme
+fsmonitor du dépôt, et diff/show désactivent la conversion externe du texte. Le
+catalogue de 252 opérations et le contrat du moteur sont conservés. Compilation
+et contrôles des paquets/données ne valent pas validation native ou d'installation.
+
+[Télécharger Setup ou le ZIP Windows](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.3).
 Setup propose CyCodeUpdater comme composant séparé et optionnel.
 
 ## Connecter un projet {#connect}

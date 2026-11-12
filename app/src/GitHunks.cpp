@@ -1,5 +1,6 @@
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
+#include "cycode/GitSafety.h"
 #include "cycode/TextFile.h"
 #include <fstream>
 #include <set>
@@ -10,6 +11,7 @@ Json Engine::gitHunks(const std::string &method, const Json &params) {
     auto git = [&](std::vector<std::string> args) {
         args.insert(args.begin(), {"git", "--no-pager", "--literal-pathspecs", "-C", pathUtf8(gitRoot), "-c",
                                    "core.quotepath=true"});
+        hardenGitArguments(args);
         return runProcess(args, gitRoot, std::chrono::seconds(15), 2 * 1024 * 1024);
     };
     auto checked = [&](std::vector<std::string> args) {

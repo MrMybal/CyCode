@@ -12,7 +12,7 @@ from release_package import pe_machine, version_tuple
 from windows_installer import find_iscc, system_runtime
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 
 def sha(data):

@@ -780,8 +780,9 @@ void LanguageService::run() {
                         for (const auto &[path, version] : sent)
                             if (LanguageClient::uri(root_ / utf8Path(path)) == uri) {
                                 const auto &text = documents.at(path).text;
-                                const auto a = utf16Offset(text, q->params.at("range").at("start")),
-                                           b = utf16Offset(text, q->params.at("range").at("end"));
+                                const TextLineIndex lines(text); // one table for every diagnostic range
+                                const auto a = lines.offset(q->params.at("range").at("start")),
+                                           b = lines.offset(q->params.at("range").at("end"));
                                 for (const auto &[diagnosticUri, entries] : client.diagnostics().items()) {
                                     bool matches = false;
                                     try {
@@ -797,9 +798,8 @@ void LanguageService::run() {
                                         continue;
                                     for (const auto &entry : entries) {
                                         try {
-                                            const auto start =
-                                                           utf16Offset(text, entry.at("range").at("start")),
-                                                       end = utf16Offset(text, entry.at("range").at("end"));
+                                            const auto start = lines.offset(entry.at("range").at("start")),
+                                                       end = lines.offset(entry.at("range").at("end"));
                                             if (end < start ||
                                                 (a == b ? a < start || a > end : end <= a || b <= start))
                                                 continue;

@@ -111,7 +111,7 @@
       "kind": "developer-reference",
       "target": "core-installation#distribution",
       "legacyId": "reference-app-docs-coreinstallation",
-      "sourceSha256": "c6458f712d4319d2b9243e07da1d37a38154f61ea12b7d21e8f19e186e92e0d6"
+      "sourceSha256": "7d217890b0bcb18fc81b0fd98dceb20eceb0c54ceb61848a51be7a511baa37eb"
     },
     {
       "source": "Docs/CppCounterparts.md",

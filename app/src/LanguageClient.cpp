@@ -348,9 +348,16 @@ bool LanguageClient::startImpl(const std::filesystem::path &root, const std::vec
                                  {"formats",Json::array({"relative"})},{"overlappingTokenSupport",false},{"multilineTokenSupport",false},{"augmentsSyntaxTokens",true}}},
                              {"documentSymbol", {{"hierarchicalDocumentSymbolSupport", true}}}}}}}};
     request("initialize", std::move(initialization), [this](const Json &result) {
+        if (!result.is_object() || (result.contains("capabilities") && !result.at("capabilities").is_object())) {
+            std::lock_guard lock(mutex_);
+            error_ = "Language server initialization returned no capabilities object";
+            running_ = false;
+            return;
+        }
         if (!result.contains("error")) {
-            if (result.value("capabilities", Json::object()).value("positionEncoding", "utf-16") !=
-                "utf-16") {
+            const auto capabilities = result.value("capabilities", Json::object());
+            if (!capabilities.value("positionEncoding", Json("utf-16")).is_string() ||
+                capabilities.value("positionEncoding", "utf-16") != "utf-16") {
                 std::lock_guard lock(mutex_);
                 error_ = "Unsupported language server position encoding";
                 running_ = false;
@@ -498,7 +505,23 @@ void LanguageClient::poll() {
         std::lock_guard lock(mutex_);
         messages.swap(incoming_);
     }
+    // Server output is untrusted: one message with unexpected JSON types must not
+    // escape to the worker thread (std::terminate) nor drop the rest of the batch.
     for (auto &message : messages) {
+        try {
+            handleIncoming(message);
+        } catch (const std::exception &failure) {
+            std::lock_guard lock(mutex_);
+            logs_ += std::string("Ignored malformed language server message: ") + failure.what() + "\n";
+            if (logs_.size() > 65536)
+                logs_.erase(0, logs_.size() - 65536);
+        }
+    }
+}
+void LanguageClient::handleIncoming(Json &message) {
+    if (!message.is_object())
+        return;
+    {
         if (message.contains("id") && message["id"].is_number_integer() && !message.contains("method")) {
             auto found = callbacks_.find(message["id"].get<int>());
             if (found != callbacks_.end()) {
@@ -508,9 +531,13 @@ void LanguageClient::poll() {
                                                    : message.value("result", Json()));
             }
         } else if (message.value("method", std::string{}) == "textDocument/publishDiagnostics") {
-            auto &params = message["params"];
-            diagnostics_[params["uri"].get<std::string>()] = params["diagnostics"];
-            diagnosticVersions_[params["uri"].get<std::string>()]=params.value("version",Json());
+            const auto &params = message["params"];
+            if (!params.is_object() || !params.contains("uri") || !params.at("uri").is_string() ||
+                !params.contains("diagnostics") || !params.at("diagnostics").is_array())
+                throw std::runtime_error("publishDiagnostics requires a string uri and a diagnostics array");
+            const auto uri = params.at("uri").get<std::string>();
+            diagnostics_[uri] = params.at("diagnostics");
+            diagnosticVersions_[uri] = params.value("version", Json());
             ++diagnosticGeneration_;
         } else if (message.value("method",std::string{})==workspaceReadyNotification_ && waitForWorkspace_) {
             const auto params=message.value("params",Json::object());

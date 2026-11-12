@@ -5,12 +5,12 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 18
+sourceRevision: 19
 ---
 
 ## État actuel de la livraison {#current-status}
 
-La distribution autonome 0.1.2 comprend 252 opérations publiques, historique
+La distribution autonome 0.1.3 comprend 252 opérations publiques, historique
 transactionnel/reçus de commit, récupération paginée et composant PagedText.
 Compilation native de production et intégrité des paquets sont contrôlées sans
 lancer Core ni l’installateur. Les anciennes observations compilateur/exécution

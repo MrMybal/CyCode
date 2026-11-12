@@ -5,12 +5,12 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 18
+revision: 19
 ---
 
 ## Current delivery status {#current-status}
 
-Standalone distribution 0.1.2 includes 252 public operations, shared transaction
+Standalone distribution 0.1.3 includes 252 public operations, shared transaction
 history/commit receipts, paged recovery and the independent PagedText component.
 Its native production build and package integrity are checked without launching
 the Core or installer. Older runtime/compiler observations retain their exact

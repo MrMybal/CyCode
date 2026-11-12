@@ -1,6 +1,7 @@
 #include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
+#include "cycode/GitSafety.h"
 #include "cycode/TextEdits.h"
 #include "cycode/TextFile.h"
 #include <algorithm>
@@ -189,6 +190,7 @@ Json Engine::gitWorktreeMaintenance(const std::string &method, const Json &param
                 throw std::runtime_error("Worktree maintenance inspection exceeded 45 seconds");
             args.insert(args.begin(), {"git", "--no-pager", "--no-optional-locks", "--literal-pathspecs",
                                        "-c", "worktree.useRelativePaths=false", "-C", pathUtf8(folder)});
+            hardenGitArguments(args);
             const auto result = runProcess(
                 args, folder, std::min(std::chrono::milliseconds(15000), remaining), 2 * 1024 * 1024, nullptr,
                 {{"GIT_ALLOW_PROTOCOL", ":"}, {"GIT_TERMINAL_PROMPT", "0"}});
@@ -341,6 +343,7 @@ Json Engine::gitWorktreeMaintenance(const std::string &method, const Json &param
     auto args = reviewed.at("arguments").get<std::vector<std::string>>();
     args.insert(args.begin(), {"git", "--no-pager", "--no-optional-locks", "--literal-pathspecs", "-c",
                                "worktree.useRelativePaths=false", "-C", pathUtf8(selected.directory)});
+    hardenGitArguments(args);
     const auto result = runProcess(args, selected.directory, std::chrono::seconds(180), 2 * 1024 * 1024,
                                    nullptr, {{"GIT_ALLOW_PROTOCOL", ":"}, {"GIT_TERMINAL_PROMPT", "0"}});
     Json output = {{"exitCode", result.exitCode},
