@@ -225,13 +225,14 @@ def check(home, *, cache=None, force=False, client=None, now=None):
     stamp = time.time() if now is None else now
     previous = read_state(cache)
     age = stamp - previous.get('checkedAt', 0) if isinstance(previous.get('checkedAt', 0), (int, float)) else -1
-    if (not force and previous.get('installedVersion') == manifest['version'] and
+    installation_id = hashlib.sha256(str(ordinary(home)).encode('utf-8')).hexdigest()
+    if (not force and previous.get('installationId') == installation_id and previous.get('installedVersion') == manifest['version'] and
             previous.get('channel') == manifest.get('channel', 'preview') and
             previous.get('status') in ('available', 'up-to-date') and 0 <= age < CHECK_INTERVAL_SECONDS):
         return previous
     client = client or GitHub(github_token())
     selected = select_release(client.releases(), manifest['version'], manifest.get('channel', 'preview'))
-    result = {'format': 'cycode-core-update-state/1', 'installedVersion': manifest['version'],
+    result = {'format': 'cycode-core-update-state/1', 'installedVersion': manifest['version'], 'installationId': installation_id,
               'channel': manifest.get('channel', 'preview'), 'checkedAt': stamp,
               'status': 'available' if selected else 'up-to-date', 'release': selected}
     atomic_json(cache / 'state.json', result)
@@ -249,7 +250,7 @@ def checksum(payload, name):
     return matches[0]
 
 
-def download(home, selected, *, cache=None, client=None, cancelled=lambda: False):
+def download(home, selected, *, cache=None, client=None, cancelled=lambda: False, progress=None):
     manifest = installation(home)
     client = client or GitHub(github_token())
     # A changed release/asset requires another check and another installation offer.
@@ -286,6 +287,8 @@ def download(home, selected, *, cache=None, client=None, cancelled=lambda: False
                     raise UpdateError('Installer exceeds its advertised size')
                 digest.update(block)
                 output.write(block)
+                if progress:
+                    progress({'phase': 'download', 'bytes': total, 'total': setup['size']})
             output.flush()
             os.fsync(output.fileno())
         if total != setup['size'] or digest.hexdigest() != expected:
@@ -303,3 +306,44 @@ def download(home, selected, *, cache=None, client=None, cancelled=lambda: False
         return target
     finally:
         temporary.unlink(missing_ok=True)
+
+
+def install_update(home, selected, *, cache=None, client=None, language='en', refresh=True,
+                   cancelled=lambda: False, progress=None, runner=None, manager_state=None):
+    """Install into a fresh generation and verify activation before reporting success.
+
+    Only called after the manager's explicit installation confirmation. Existing
+    Core/MCP processes are never terminated, and no client is launched here.
+    """
+    from core_installation import installation_root, current_payload, verify_payload
+    from core_agents import Manager
+    root = installation_root(home)
+    setup = download(home, selected, cache=cache, client=client, cancelled=cancelled, progress=progress)
+    if cancelled():
+        raise UpdateError('Update cancelled before installation')
+    if progress:
+        progress({'phase': 'installer'})
+    command = [str(setup), '/DIR=' + str(root), '/MANAGERUPDATE=1', '/NORESTART',
+               '/LANG=' + ('french' if language == 'fr' else 'english')]
+    if runner is None:
+        if os.name != 'nt':
+            raise UpdateError('Automatic installation currently requires Windows')
+        runner = lambda argv: subprocess.run(argv, check=False, timeout=3600).returncode
+    code = runner(command)
+    if code != 0:
+        raise UpdateError('Installer did not complete (exit %s). Check the selected Core version before retrying.' % code)
+    selected_home = current_payload(root)
+    verify_payload(selected_home, selected['version'])
+    if ordinary(selected_home) == ordinary(home):
+        raise UpdateError('The installer did not select a new Core payload')
+    configuration = {'changes': [], 'skipped': []}
+    if refresh:
+        manager = Manager(selected_home, root=root, state=manager_state)
+        try:
+            configuration = manager.apply(manager.prepare_refresh())
+        except (ValueError, OSError) as error:
+            # Activation succeeded. Report configuration work separately instead
+            # of claiming that the verified Core installation itself failed.
+            configuration = {'changes': [], 'skipped': [str(error)], 'applied': False}
+    return {'status': 'installed', 'version': selected['version'], 'root': str(root),
+            'home': str(selected_home), 'connections': configuration, 'reloadClientsRequired': True}

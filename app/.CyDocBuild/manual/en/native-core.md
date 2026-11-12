@@ -5,12 +5,12 @@ description: Shared native documents, project analysis and persistent headless s
 section: Start here
 parent: overview
 order: 3
-revision: 19
+revision: 20
 ---
 
 ## Current delivery status {#current-status}
 
-Standalone distribution 0.1.3 includes 252 public operations, shared transaction
+Standalone distribution 0.1.4 includes 252 public operations, shared transaction
 history/commit receipts, paged recovery and the independent PagedText component.
 Its native production build and package integrity are checked without launching
 the Core or installer. Older runtime/compiler observations retain their exact
@@ -24,6 +24,9 @@ Shared native transaction history and atomic commit receipts are now exposed to
 embeddings/SDK clients. See [Undo/Redo ownership and guards](doc:large-projects#history).
 The production libraries compile on Windows; the newly added runtime history
 regressions and desktop interaction checks remain pending.
+
+CyCodeCore Manager now configures supported agent clients and installs updates in
+fresh generations. See [the manager](doc:core-manager#agents).
 
 ## Optional paged storage component {#paged-text}
 

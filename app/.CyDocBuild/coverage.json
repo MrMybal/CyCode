@@ -16,6 +16,13 @@
       "sourceSha256": "72f0eb7369f24ed319a1454c4c2be44cebc304d33fdf09516b670b244e2a7151"
     },
     {
+      "source": "Docs/AnalysisProgress.md",
+      "kind": "developer-reference",
+      "target": "analysis-progress#validation",
+      "legacyId": "reference-app-docs-analysisprogress",
+      "sourceSha256": "f043f08d5c4c346b4a138688db7405be978984d0f7900ac3aba2652a76216816"
+    },
+    {
       "source": "Docs/Architecture.md",
       "kind": "developer-reference",
       "target": "native-core#ownership",
@@ -111,7 +118,21 @@
       "kind": "developer-reference",
       "target": "core-installation#distribution",
       "legacyId": "reference-app-docs-coreinstallation",
-      "sourceSha256": "7d217890b0bcb18fc81b0fd98dceb20eceb0c54ceb61848a51be7a511baa37eb"
+      "sourceSha256": "a0c86d1ff0db6a2bb010887f40975a0a27f3f95c0ea9e91bc1857e8a4907b139"
+    },
+    {
+      "source": "Docs/CoreManager.md",
+      "kind": "user-workflow",
+      "target": "core-manager#agents",
+      "legacyId": "reference-app-docs-coremanager",
+      "sourceSha256": "506b6a1806991cf4ddb38446338720c7723da2f6a84d3897161d43119f3eebcb"
+    },
+    {
+      "source": "Docs/CoreQuality.md",
+      "kind": "developer-reference",
+      "target": "core-quality#validation",
+      "legacyId": "reference-app-docs-corequality",
+      "sourceSha256": "8bb9b3962e81f92d5cb07a03758ae904c0689c0f76ae6c5ad433b1f219619249"
     },
     {
       "source": "Docs/CppCounterparts.md",
@@ -308,6 +329,13 @@
       "target": "languages#syntax",
       "legacyId": "reference-app-docs-languages",
       "sourceSha256": "ef4b97ff002272d8569f3eff14e8e32ab6db9b521da66fabf2cc6debec935458"
+    },
+    {
+      "source": "Docs/LargeProjects.md",
+      "kind": "developer-reference",
+      "target": "large-projects#storage",
+      "legacyId": "reference-app-docs-largeprojects",
+      "sourceSha256": "b7416912c87a24295adbbd24df40e68c927bbe3e1669a80910ba7e8f33b70b35"
     },
     {
       "source": "Docs/LiveBuildOutput.md",
@@ -658,27 +686,6 @@
       "target": "settings#windows",
       "legacyId": "reference-app-docs-workspacesessions",
       "sourceSha256": "c3db5082455e7becdb10d069139979d53525d587e6d0e4c8993f3da19db4e661"
-    },
-    {
-      "source": "Docs/CoreQuality.md",
-      "kind": "developer-reference",
-      "target": "core-quality#validation",
-      "legacyId": "reference-app-docs-corequality",
-      "sourceSha256": "8bb9b3962e81f92d5cb07a03758ae904c0689c0f76ae6c5ad433b1f219619249"
-    },
-    {
-      "source": "Docs/AnalysisProgress.md",
-      "kind": "developer-reference",
-      "target": "analysis-progress#validation",
-      "legacyId": "reference-app-docs-analysisprogress",
-      "sourceSha256": "f043f08d5c4c346b4a138688db7405be978984d0f7900ac3aba2652a76216816"
-    },
-    {
-      "source": "Docs/LargeProjects.md",
-      "kind": "developer-reference",
-      "target": "large-projects#storage",
-      "legacyId": "reference-app-docs-largeprojects",
-      "sourceSha256": "b7416912c87a24295adbbd24df40e68c927bbe3e1669a80910ba7e8f33b70b35"
     }
   ]
 }

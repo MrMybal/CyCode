@@ -11,9 +11,10 @@ def main():
     counts = {'.py': 0, '.json': 0}
     failures = []
     paths = list(APP.rglob('*'))
-    companion = APP.parent / 'apps/CyCodeUpdater'
-    if companion.is_dir():
-        paths.extend(companion.rglob('*'))
+    companion = APP.parent / 'apps'
+    for name in ('CyCodeUpdater', 'CyCodeManager'):
+        if (companion / name).is_dir():
+            paths.extend((companion / name).rglob('*'))
     for path in sorted(paths):
         if path.suffix not in counts or not path.is_file():
             continue

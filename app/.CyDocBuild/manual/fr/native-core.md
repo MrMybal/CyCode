@@ -5,12 +5,12 @@ description: Documents natifs communs, analyse des projets et services persistan
 section: Pour commencer
 parent: overview
 order: 3
-sourceRevision: 19
+sourceRevision: 20
 ---
 
 ## État actuel de la livraison {#current-status}
 
-La distribution autonome 0.1.3 comprend 252 opérations publiques, historique
+La distribution autonome 0.1.4 comprend 252 opérations publiques, historique
 transactionnel/reçus de commit, récupération paginée et composant PagedText.
 Compilation native de production et intégrité des paquets sont contrôlées sans
 lancer Core ni l’installateur. Les anciennes observations compilateur/exécution
@@ -24,6 +24,9 @@ L’historique transactionnel natif commun et les reçus atomiques sont accessib
 aux intégrations/clients SDK. Voir [propriétaire Undo/Redo et gardes](doc:large-projects#history).
 Les bibliothèques de production compilent sous Windows ; les nouvelles régressions
 d’historique à l’exécution et les interactions graphiques restent à vérifier.
+
+CyCodeCore Manager configure les clients IA et installe les mises à jour dans de
+nouveaux moteurs séparés. Voir [le gestionnaire](doc:core-manager#agents).
 
 ## Composant de stockage paginé facultatif {#paged-text}
 

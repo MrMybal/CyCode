@@ -110,7 +110,8 @@ def validate_home(home, enabled):
             raise ValueError('Native Core does not match a complete installation manifest')
 
 
-def install_skill(home, destination):
+def prepare_skill(home, destination):
+    """Return guarded writes for the same skill installer, without changing files."""
     source = home / 'app/skills/cycode-core'
     files = {p.relative_to(source).as_posix(): bounded(p) for p in sorted(source.rglob('*')) if p.is_file()}
     if 'SKILL.md' not in files:
@@ -127,13 +128,18 @@ def install_skill(home, destination):
         if old is not None and old != payload and previous['files'].get(name) != digest(old):
             raise ValueError('A locally modified skill is preserved: ' + str(path))
         writes.append((path, payload, old))
+    receipt = {'format': 'cycode-skill/1', 'files': {n: digest(b) for n, b in files.items()}}
+    old = bounded(marker) if marker.exists() else None
+    writes.append((marker, (json.dumps(receipt, indent=2) + '\n').encode(), old))
+    return target, writes
+
+
+def install_skill(home, destination):
     # Preflight all files before changing any; unknown files are never removed.
+    target, writes = prepare_skill(home, destination)
     for path, payload, old in writes:
         if old != payload:
             atomic(path, payload, old)
-    receipt = {'format': 'cycode-skill/1', 'files': {n: digest(b) for n, b in files.items()}}
-    old = bounded(marker) if marker.exists() else None
-    atomic(marker, (json.dumps(receipt, indent=2) + '\n').encode(), old)
     return str(target)
 
 

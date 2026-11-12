@@ -12,7 +12,7 @@ from release_package import pe_machine, version_tuple
 from windows_installer import find_iscc, system_runtime
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.1.3'
+VERSION = '0.1.4'
 
 
 def sha(data):
@@ -32,15 +32,19 @@ def collect(root, bundle, *, agents_only=False, executable=None, build=None, out
     names = ['LICENSE', 'COPYRIGHT', 'icons/CyCode.ico', 'icons/CyCode.png',
              'app/tool.py', 'app/core_host.py', 'app/core_updates.py', 'app/contracts.py', 'app/CyTool.json',
              'app/MCPMethods.json', 'app/requirements.txt', 'app/LICENSE-CyToolsCore.txt',
+             'app/agent_config.py', 'app/agent_host.py', 'app/core_agents.py',
+             'app/core_installation.py', 'app/manager_window.py', 'apps/CyCodeManager/main.py',
              'app/THIRD_PARTY_NOTICES.md', 'app/mcp-runtime.lock.json',
              'app/scripts/install_core_agents.py', 'apps/CyCodeUpdater/main.py', 'app/Docs/Agents.md',
-             'app/Docs/CoreInstallation.md', 'app/Docs/WindowsSecurity.md',
+             'app/Docs/CoreInstallation.md', 'app/Docs/CoreManager.md', 'app/Docs/WindowsSecurity.md',
              'app/Docs/LargeProjects.md', 'app/Docs/AnalysisProgress.md',
              'app/Docs/CoreExtraction.md', 'app/Docs/AdvancedDebugging.md', 'app/Docs/CoreQuality.md',
              'app/Docs/Benchmarks/core-capacity-20261111.json',
              'app/Docs/Benchmarks/core-delivery-20261111.json']
     for name in names:
         entries[name] = read_file(root / name)
+    entries['CyCodeManager.cmd'] = (b'@echo off\r\nstart "" "%~dp0tools\\python\\pythonw.exe" -B '
+                                  b'"%~dp0apps\\CyCodeManager\\main.py"\r\n')
     skills = root / 'app/skills/cycode-core'
     for source in sorted(skills.rglob('*')):
         if source.is_file():

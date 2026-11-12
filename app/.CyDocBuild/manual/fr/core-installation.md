@@ -5,21 +5,22 @@ description: Paquets locaux, skill IA et connexion MCP par projet.
 section: API et extensions
 parent: mcp
 order: 262
-sourceRevision: 6
+sourceRevision: 7
 ---
 
 ## Distribution {#distribution}
 
 CyCodeCore fournit le moteur natif sans interface et le pont MCP officiel de
 CyToolsCore. Aucun IDE, CyUI/SDL/OpenGL, modèle GPU ou Python système n’est requis.
-La distribution autonome est en version 0.1.3 ; le contrat du moteur conserve
+La distribution autonome est en version 0.1.4 ; le contrat du moteur conserve
 sa version historique 0.2.3. Il s’agit d’une préversion de développement.
 
 Le paquet Windows x64 contient `cycode_cli.exe`, les DLL MSVC, ripgrep vérifié,
 CPython/CyToolsCore/MCP isolés, les licences, les méthodes et le skill
 `cycode-core`. Compilateurs, clangd, outils de build et autres serveurs de langage
 restent des prérequis externes. L’installateur par utilisateur utilise la même
-charge utile et permet de connecter un projet. Aucun workflow GitHub ne construit
+charge utile dans un nouveau dossier versionné. Les agents et skills se configurent
+séparément dans CyCodeCore Manager. Aucun workflow GitHub ne construit
 ces paquets.
 
 La version 0.1.1 utilise des noms temporaires indépendants pour les sauvegardes
@@ -45,89 +46,78 @@ fsmonitor du dépôt, et diff/show désactivent la conversion externe du texte. 
 catalogue de 252 opérations et le contrat du moteur sont conservés. Compilation
 et contrôles des paquets/données ne valent pas validation native ou d'installation.
 
-[Télécharger Setup ou le ZIP Windows](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.3).
-Setup propose CyCodeUpdater comme composant séparé et optionnel.
+[Télécharger Setup ou le ZIP Windows](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.4).
+Setup propose le raccourci CyCodeCore Manager. La version 0.1.4 ajoute les profils
+IA et la sélection vérifiée de nouveaux moteurs sans écraser les sessions actives.
 
 ## Connecter un projet {#connect}
 
-Depuis la racine d'une distribution **complète** :
+Ouvrir **CyCodeCore Manager > Agents et skills**. Choisir les applications, la
+portée personnelle/projet, le skill et/ou MCP, puis **Voir les modifications** et
+**Appliquer**. Un skill personnel seul ne demande aucun projet ; le MCP reste lié
+à un projet existant. La lecture seule est proposée par défaut. L’édition et les
+processus de compilation sont explicites ; VCS/plugins/paramètres restent séparés
+et les plugins natifs sont désactivés.
+
+Le [guide du gestionnaire](doc:core-manager#agents) détaille les profils et formats.
+Les autres paramètres, skills modifiés et connexions non gérées sont conservés.
+Les reçus et sauvegardes restent dans les données locales privées de l’utilisateur.
+Recharger et approuver la connexion dans le client : une configuration enregistrée
+ne prouve pas que le serveur, le skill ou une requête compilateur fonctionne.
+
+Le script Codex historique reste utilisable depuis le moteur sélectionné :
 
 ```text
 tools/python/python.exe -B app/scripts/install_core_agents.py --workspace <dossier-projet> --access edit --enable
 ```
 
-Le script copie le skill dans le répertoire de skills Codex de l'utilisateur et
-enregistre `cycode_core` dans `.codex/config.toml` du projet. Faites confiance à ce
-projet dans le client puis rechargez sa configuration MCP. Les autres clients
-peuvent reprendre la commande stdio décrite dans [le guide IA](core-agents#configuration).
+Il conserve `.codex/config.toml`, ses blocs gérés, les protections du skill et
+`agent-state`. Sans `--enable`, la connexion reste désactivée. Les options
+`--skill-only`, `--status`, `--python`, `--skill-home`, `--config` et `--state-dir`
+restent disponibles. L’enregistrement ne lance pas le Core et n’installe pas de compilateur.
 
-Sans `--enable`, le serveur reste désactivé : cela permet de préparer un paquet
-sans moteur. `--skill-only` installe uniquement les instructions. `--status
---workspace <dossier-projet>` consulte l'état sans démarrer de programme.
-`--python` et `--skill-home` permettent de choisir explicitement un runtime
-compatible et le dossier des skills. `--config <configuration-client.toml>` permet de choisir explicitement la configuration utilisateur pour ce projet fixe. Le runtime redistribuable et Setup ciblent
-actuellement Windows x64 ; les paquets Linux/macOS demandent une validation distincte.
-
-L'accès lecture est le défaut. `--access edit` autorise `workspace.write` et
-`process.execute`, avec les écritures VCS/plugins/paramètres séparées. Les plugins
-natifs sont désactivés pour cet hôte. Le script ne lance pas le Core, n'installe
-pas de compilateur et ne modifie pas l'antivirus. Une fois activé, le client MCP
-peut démarrer le service. Une configuration enregistrée ne prouve pas sa connexion.
-
-Les autres réglages du client sont conservés. Seul le bloc identifié est mis à
-jour ; les modifications locales du bloc ou du skill sont préservées pour examen.
-Sauvegardes, reçus et travaux restent dans `agent-state` de l'installation, hors
-du code source : ne publiez ni ces données ni les descripteurs d'accès privés.
-La désinstallation conserve les skills personnels, réglages de projet et travaux.
-Désactivez/supprimez la connexion du projet avant de retirer l'installation.
-
-Un hôte autonome possède ses propres buffers. Pour accéder aux documents non
-enregistrés de l'IDE, utilisez son service SDK partagé privé, décrit dans
-[le guide de connexion](core-agents#connect), plutôt que deux moteurs indépendants.
+Deux hôtes autonomes ne partagent pas leurs buffers non enregistrés. Utiliser le
+service SDK privé de l’IDE pour ses documents en mémoire ; voir [Agents](doc:core-agents#connect).
 
 ## Mettre à jour une installation active {#versioned-installation}
 
-Le Setup reste le paquet d’installation habituel. Pour une mise à jour de
-développement pendant qu’un Core fonctionne, extrayez le paquet portable vérifié
-dans un nouveau dossier versionné en conservant l’installation active. Configurez
-son `--home` et son Python privé, avec
-`--state-dir <ancienne-installation>/agent-state` pour réutiliser le reçu de
-propriété de la connexion. Le nouveau dossier reçoit son propre reçu et son
-répertoire de jobs indépendant ; le runtime actif garde ses données. Les
-enregistrements suivants peuvent utiliser le nouveau dossier sans --state-dir. Les réglages sans rapport et les skills personnalisés
-sont préservés ; le bloc MCP géré doit toujours correspondre à son empreinte.
-L’enregistrement n’arrête aucun moteur en cours d’utilisation.
+Setup installe dans `versions/<version>-<génération>`, vérifie l’inventaire complet
+puis sélectionne atomiquement `current.json`. Un ancien dossier de version choisi
+comme destination est ramené à sa racine. Les anciens moteurs, Python/MCP et le
+gestionnaire restent intacts ; aucun processus n’est arrêté de force. Réinstaller
+la même version crée aussi une nouvelle génération. Une activation échouée
+conserve la sélection précédente. Voir [les mises à jour](doc:core-manager#updates).
 
-Rechargez la connexion MCP du client pour charger le nouveau catalogue. Le
-processus précédent garde son ancien binaire jusqu’à sa déconnexion. Vérifiez
-ensuite le catalogue réel et une requête compilateur. Sources, paquet installé,
-catalogue du client et processus actif sont des versions distinctes.
+Le gestionnaire peut actualiser les connexions inchangées dont il possède le reçu,
+y compris les anciens reçus Codex. Permissions, état désactivé et skills personnels
+modifiés sont conservés. Les conflits de configuration sont distingués du succès
+de l’installation. Chaque lancement de MCP possède ses propres données SDK.
 
-## Application de mise à jour optionnelle {#updates}
+Enregistrer ou créer un checkpoint des modifications avant de recharger le client
+MCP. L’ancien processus conserve son binaire et ses buffers tant qu’il fonctionne.
+Sources, moteur sélectionné, configuration et processus actif sont des états distincts.
 
-CyCodeUpdater possède son propre raccourci dans le menu Démarrer. À son ouverture,
-il consulte les versions GitHub du Core, affiche les notes et propose le
-téléchargement vérifié puis l’installation. Une confirmation est nécessaire ;
-fermez les clients Core/MCP avant de continuer. La vérification ne lance pas le
-Core et ne remplace pas silencieusement ses fichiers.
+## Gestionnaire et vérification des mises à jour {#updates}
 
-Une option distincte, décochée par défaut, permet une vérification à l’ouverture
-de Windows. Elle vérifie au plus une fois par jour, propose l’application en cas
-de nouvelle version puis quitte. Aucun service permanent n’est installé.
+CyCodeCore Manager remplace CyCodeUpdater. Il réunit agents/skills et mises à jour,
+vérifie GitHub une fois à l’ouverture et sur demande, affiche les notes et propose
+le Setup vérifié. La tâche de vérification quotidienne au démarrage de Windows
+reste décochée par défaut. Aucun service de surveillance permanent n’est installé.
 
-Le programme accepte `--language fr`, `--check` pour une réponse JSON et
-`--background` pour la notification quotidienne. Dans le ZIP portable, lancez
-`tools/python/pythonw.exe -B apps/CyCodeUpdater/main.py`. Le remplacement manuel
-du ZIP reste possible ; la proposition automatique utilise le Setup Windows.
+Seules les versions `core-v` complètes avec Setup et empreintes sont retenues.
+Taille, SHA-256 et digest GitHub sont contrôlés. Le gestionnaire attend l’assistant
+visible puis vérifie la sélection réelle de la version demandée avant d’annoncer
+un succès. Il peut actualiser les connexions gérées puis rouvrir sa nouvelle version.
 
-Seules les versions `core-v` disposant du Setup correspondant et de
-`SHA256SUMS.txt` sont retenues. Les versions IDE, brouillons et livraisons
-incomplètes sont ignorés. Taille, SHA-256 et empreinte GitHub, lorsqu’elle est
-fournie, sont vérifiées. Pour un dépôt privé, l’outil utilise l’authentification
-GitHub Git existante, sans interaction, ou CYCODE_GITHUB_TOKEN / GH_TOKEN /
-GITHUB_TOKEN. Aucun identifiant n’est distribué ou enregistré. Une erreur réseau
-ou d’accès conserve la version installée. Le canal preview inclut les préversions
-du Core, sans garantir leur complétude.
+Pour un dépôt privé, l’authentification Git non interactive existante ou les variables
+CYCODE_GITHUB_TOKEN / GH_TOKEN / GITHUB_TOKEN sont utilisées. Aucun identifiant
+n’est distribué ou enregistré. Une erreur d’accès/réseau n’est jamais présentée
+comme une version à jour. Le canal preview ne certifie pas la complétude du Core.
+
+Le bouton de langue permet EN/FR. `--check` produit du JSON, `--list` lit les
+connexions et `--background` propose les nouveautés au plus quotidiennement.
+Dans le ZIP, ouvrir `CyCodeManager.cmd`. L’ancien point d’entrée
+`apps/CyCodeUpdater/main.py` délègue à la vue Mises à jour du gestionnaire.
 
 ## Construire les paquets localement {#package}
 

@@ -15,7 +15,8 @@ AppPublisher=Cyberalien
 AppPublisherURL=https://github.com/MrMybal/CyCode
 AppSupportURL=https://github.com/MrMybal/CyCode/issues
 AppUpdatesURL=https://github.com/MrMybal/CyCode/releases
-DefaultDirName={localappdata}\Programs\CyCodeCore
+DefaultDirName={code:DefaultRoot}
+UsePreviousAppDir=no
 DefaultGroupName=CyCodeCore
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
@@ -28,88 +29,145 @@ SolidCompression=yes
 WizardStyle=modern
 LicenseFile={#SourceDir}\LICENSE
 SetupIconFile={#SourceDir}\icons\CyCode.ico
-UninstallDisplayIcon={app}\icons\CyCode.ico
+UninstallDisplayIcon={code:PayloadDirectory}\icons\CyCode.ico
 CloseApplications=no
 RestartApplications=no
+SetupMutex=Local\CyCodeCoreSetup
 DisableProgramGroupPage=yes
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 [Components]
 Name: "core"; Description: "CyCodeCore"; Types: full compact custom; Flags: fixed
-Name: "updater"; Description: "{cm:UpdaterComponent}"; Types: full
+Name: "manager"; Description: "{cm:ManagerShortcuts}"; Types: full compact
 [Tasks]
-Name: "updaterstartup"; Description: "{cm:UpdaterStartup}"; Components: updater; Flags: unchecked
+Name: "updaterstartup"; Description: "{cm:CheckAtLogin}"; Components: manager; Flags: unchecked
 [Files]
-Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "apps\CyCodeUpdater\*"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#SourceDir}\apps\CyCodeUpdater\*"; DestDir: "{app}\apps\CyCodeUpdater"; Components: updater; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceDir}\*"; DestDir: "{code:PayloadDirectory}"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs
 [Icons]
-Name: "{group}\CyCodeUpdater"; Filename: "{app}\tools\python\pythonw.exe"; Parameters: "-B ""{app}\apps\CyCodeUpdater\main.py"" --language {cm:UpdaterLanguage}"; WorkingDir: "{app}"; IconFilename: "{app}\icons\CyCode.ico"; Components: updater
+Name: "{group}\CyCodeCore Manager"; Filename: "{code:PayloadDirectory}\tools\python\pythonw.exe"; Parameters: "-B ""{code:PayloadDirectory}\apps\CyCodeManager\main.py"" --installation-root ""{app}"" --language {cm:ManagerLanguage}"; WorkingDir: "{app}"; IconFilename: "{code:PayloadDirectory}\icons\CyCode.ico"; Components: manager
+[InstallDelete]
+Type: files; Name: "{group}\CyCodeUpdater.lnk"
+[UninstallDelete]
+Type: files; Name: "{app}\current.json"
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "CyCodeCoreUpdater"; Flags: deletevalue
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CyCodeCoreUpdater"; ValueData: """{app}\tools\python\pythonw.exe"" -B ""{app}\apps\CyCodeUpdater\main.py"" --background --language {cm:UpdaterLanguage}"; Flags: uninsdeletevalue; Components: updater; Tasks: updaterstartup
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "CyCodeCoreManager"; Flags: deletevalue
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CyCodeCoreManager"; ValueData: """{code:PayloadDirectory}\tools\python\pythonw.exe"" -B ""{code:PayloadDirectory}\apps\CyCodeManager\main.py"" --installation-root ""{app}"" --background --language {cm:ManagerLanguage}"; Flags: uninsdeletevalue; Components: manager; Tasks: updaterstartup
+[Run]
+Filename: "{code:PayloadDirectory}\tools\python\pythonw.exe"; Parameters: "-B ""{code:PayloadDirectory}\apps\CyCodeManager\main.py"" --installation-root ""{app}"" --language {cm:ManagerLanguage}"; Description: "{cm:OpenManager}"; Flags: nowait postinstall skipifsilent; Components: manager; Check: ShouldLaunchManager
 [CustomMessages]
-english.UpdaterComponent=CyCodeUpdater - GitHub updates
-french.UpdaterComponent=CyCodeUpdater - mises à jour GitHub
-english.UpdaterStartup=Check for updates when I sign in to Windows
-french.UpdaterStartup=Vérifier les mises à jour à l'ouverture de Windows
-english.UpdaterLanguage=en
-french.UpdaterLanguage=fr
-english.AgentProject=Connect an AI agent
-french.AgentProject=Connecter un agent IA
-english.AgentDescription=Choose an existing project for the local Codex MCP connection, or leave empty to install only the skill.
-french.AgentDescription=Choisissez un projet existant pour la connexion MCP locale de Codex, ou laissez vide pour installer uniquement le skill.
-english.AgentFolder=Existing project folder:
-french.AgentFolder=Dossier du projet existant :
-english.InvalidProject=Select an existing project folder or leave the field empty.
-french.InvalidProject=Choisissez un dossier de projet existant ou laissez le champ vide.
-english.RegistrationFailed=Files were installed, but agent registration failed. See INSTALL.md and register the project manually; existing settings were preserved.
-french.RegistrationFailed=Les fichiers sont installés, mais la connexion de l'agent a échoué. Consultez INSTALL.md pour la configuration manuelle ; les réglages existants ont été conservés.
+english.ManagerShortcuts=CyCodeCore Manager shortcuts
+french.ManagerShortcuts=Raccourcis CyCodeCore Manager
+english.CheckAtLogin=Check for updates when I sign in to Windows
+french.CheckAtLogin=Vérifier les mises à jour à l'ouverture de Windows
+english.ManagerLanguage=en
+french.ManagerLanguage=fr
+english.OpenManager=Open CyCodeCore Manager (agents, skills and updates)
+french.OpenManager=Ouvrir CyCodeCore Manager (agents, skills et mises à jour)
+english.ActivationFailed=The new payload could not be verified or activated. The previously selected Core is preserved. See the installation log; do not remove older versions.
+french.ActivationFailed=Le nouveau moteur n'a pas pu être vérifié ou activé. Le Core précédemment sélectionné est conservé. Consultez le journal d'installation ; ne supprimez pas les anciennes versions.
+english.RedirectedRoot=Choose an ordinary local installation directory, without links or junctions.
+french.RedirectedRoot=Choisissez un dossier local ordinaire, sans lien symbolique ni jonction.
 [Code]
-var ProjectPage: TInputQueryWizardPage;
-procedure InitializeWizard();
-begin
-  ProjectPage := CreateInputQueryPage(wpSelectDir, CustomMessage('AgentProject'),
-    CustomMessage('AgentProject'), CustomMessage('AgentDescription'));
-  ProjectPage.Add(CustomMessage('AgentFolder'), False);
-  ProjectPage.Values[0] := '';
+type TCoreGuid = record
+  D1: LongWord;
+  D2: Word;
+  D3: Word;
+  D4: array[0..7] of Byte;
 end;
-function HasProject(): Boolean;
+function CoCreateGuid(var Value: TCoreGuid): Integer;
+  external 'CoCreateGuid@ole32.dll stdcall';
+function CoreFileAttributes(Name: String): LongWord;
+  external 'GetFileAttributesW@kernel32.dll stdcall';
+var Generation: String;
+
+function NormalizeRoot(Value: String): String;
+var Parent: String;
 begin
-  Result := ProjectPage.Values[0] <> '';
+  Result := RemoveBackslashUnlessRoot(ExpandFileName(Value));
+  Parent := ExtractFileDir(Result);
+  if (CompareText(ExtractFileName(Parent), 'versions') = 0) and
+     FileExists(AddBackslash(Result) + 'core-distribution.json') then
+    Result := ExtractFileDir(Parent);
 end;
-function ProjectDirectory(Param: String): String;
+
+function DefaultRoot(Param: String): String;
+var Previous: String;
 begin
-  Result := ProjectPage.Values[0];
+  Result := ExpandConstant('{localappdata}\Programs\CyCodeCore');
+  if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{D5FE75B5-F802-4894-94C3-2FAF466183D7}_is1', 'InstallLocation', Previous) then
+    Result := NormalizeRoot(Previous);
 end;
+
+function PayloadDirectory(Param: String): String;
+begin
+  Result := AddBackslash(ExpandConstant('{app}')) + 'versions\{#AppVersion}-' + Generation;
+end;
+
+function InitializeSetup(): Boolean;
+var Id: TCoreGuid;
+begin
+  Result := CoCreateGuid(Id) = 0;
+  if Result then
+    Generation := Lowercase(Format('%.8x%.4x%.4x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x', [Id.D1,
+      Id.D2, Id.D3, Id.D4[0], Id.D4[1], Id.D4[2], Id.D4[3], Id.D4[4], Id.D4[5], Id.D4[6], Id.D4[7]]));
+end;
+
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  if (CurPageID = ProjectPage.ID) and HasProject() and not DirExists(ProjectPage.Values[0]) then begin
-    MsgBox(CustomMessage('InvalidProject'), mbError, MB_OK);
-    Result := False;
-  end;
+  if CurPageID = wpSelectDir then
+    WizardForm.DirEdit.Text := NormalizeRoot(WizardDirValue);
 end;
-procedure CurStepChanged(CurStep: TSetupStep);
-var Code: Integer; Arguments: String; Succeeded: Boolean;
+
+procedure InitializeWizard();
 begin
-  if CurStep = ssPostInstall then begin
-    Arguments := '-B "' + ExpandConstant('{app}\app\scripts\install_core_agents.py') + '"';
-    Succeeded := Exec(ExpandConstant('{app}\tools\python\python.exe'), Arguments + ' --skill-only', '',
-      SW_HIDE, ewWaitUntilTerminated, Code);
-    if not Succeeded or (Code <> 0) then begin
-      Log('CyCodeCore skill registration failed.');
-      MsgBox(CustomMessage('RegistrationFailed'), mbError, MB_OK);
+  { Normalize /DIR from old updaters too, even if the directory page is skipped. }
+  WizardForm.DirEdit.Text := NormalizeRoot(WizardDirValue);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var Item, Parent: String; Attributes: LongWord;
+begin
+  Result := '';
+  Item := NormalizeRoot(ExpandConstant('{app}'));
+  if CompareText(Item, RemoveBackslashUnlessRoot(ExpandConstant('{app}'))) <> 0 then begin
+    Result := CustomMessage('RedirectedRoot');
+    exit;
+  end;
+  Item := PayloadDirectory('');
+  if DirExists(Item) or FileExists(Item) then begin
+    Result := 'The new Core generation already exists. Restart Setup.';
+    exit;
+  end;
+  while Item <> '' do begin
+    Attributes := CoreFileAttributes(Item);
+    if (Attributes <> $FFFFFFFF) and ((Attributes and $400) <> 0) then begin
+      Result := CustomMessage('RedirectedRoot');
       exit;
     end;
-    if HasProject() then begin
-      Succeeded := Exec(ExpandConstant('{app}\tools\python\python.exe'),
-        Arguments + ' --workspace "' + ProjectPage.Values[0] + '" --access edit --enable', '',
-        SW_HIDE, ewWaitUntilTerminated, Code);
-      if not Succeeded or (Code <> 0) then begin
-        Log('CyCodeCore MCP project registration failed.');
-        MsgBox(CustomMessage('RegistrationFailed'), mbError, MB_OK);
-      end;
-    end;
+    Parent := ExtractFileDir(Item);
+    if Parent = Item then break;
+    Item := Parent;
+  end;
+end;
+
+function ShouldLaunchManager(): Boolean;
+begin
+  Result := ExpandConstant('{param:MANAGERUPDATE|0}') <> '1';
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var Code: Integer; Payload, Arguments: String; Succeeded: Boolean;
+begin
+  if CurStep = ssPostInstall then begin
+    Payload := PayloadDirectory('');
+    Arguments := '-B "' + AddBackslash(Payload) + 'app\core_installation.py" --root "' +
+      ExpandConstant('{app}') + '" --payload "' + Payload + '" --version {#AppVersion}';
+    Succeeded := Exec(AddBackslash(Payload) + 'tools\python\python.exe', Arguments, '',
+      SW_HIDE, ewWaitUntilTerminated, Code);
+    if not Succeeded or (Code <> 0) then
+      RaiseException(CustomMessage('ActivationFailed'));
   end;
 end;
