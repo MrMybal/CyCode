@@ -2,6 +2,7 @@
 #include "cycode/AtomicFile.h"
 #include "cycode/CompilerLocation.h"
 #include "cycode/Error.h"
+#include "cycode/GitSafety.h"
 #include "cycode/LanguageInfo.h"
 #include "cycode/NativeTrace.h"
 #include "cycode/NavigationLocations.h"
@@ -859,11 +860,13 @@ Json Engine::git(const std::string &method, const Json &params) {
     const auto selected = gitSelection(params);
     const auto &gitRoot = selected.directory;
     std::vector<std::string> args{"git", "--literal-pathspecs", "-C", pathUtf8(gitRoot)};
+    hardenGitArguments(args);
     if (method == "vcs.status")
         args.insert(args.end(),
                     {"status", "--porcelain=v1", "-z", "--branch", "--untracked-files=all", "--", "."});
     else if (method == "vcs.diff") {
-        args.insert(args.end(), {"diff", "--no-ext-diff", "--no-color"});
+        // --no-textconv: a repository diff driver must not run a program from .git/config.
+        args.insert(args.end(), {"diff", "--no-ext-diff", "--no-textconv", "--no-color"});
         if (params.value("staged", false))
             args.push_back("--cached");
         args.push_back("--");

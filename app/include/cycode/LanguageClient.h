@@ -81,6 +81,7 @@ class LanguageClient {
     const std::function<void()> wakeHandler_;
     void readLoop();
     void writeLoop();
+    void handleIncoming(Json &message);
     std::thread reader_, writer_;
     std::atomic<bool> running_{false};
     bool initialized_ = false;

@@ -1,6 +1,7 @@
 #include "cycode/ProcessText.h"
 #include "cycode/Engine.h"
 #include "cycode/FileTransactions.h"
+#include "cycode/GitSafety.h"
 #include "cycode/TextEdits.h"
 #include "cycode/TextFile.h"
 #include <algorithm>
@@ -50,6 +51,7 @@ Json Engine::gitWorktrees(const std::string &method, const Json &params) {
     auto git = [&](std::vector<std::string> args, int seconds = 15) {
         args.insert(args.begin(),
                     {"git", "--no-pager", "--literal-pathspecs", "-C", pathUtf8(selected.directory)});
+        hardenGitArguments(args);
         return runProcess(args, selected.directory, std::chrono::seconds(seconds), 2 * 1024 * 1024);
     };
     auto checked = [&](std::vector<std::string> args) {
