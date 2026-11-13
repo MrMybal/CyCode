@@ -45,7 +45,10 @@ class ManagedCore:
         if self.disable_plugins:arguments+=['--disable-plugins']
         arguments += [str(self.workspace),'--serve',str(self.descriptor)]
         try:
-            self.process=subprocess.Popen(arguments,stdin=subprocess.PIPE,stdout=self.log,stderr=subprocess.STDOUT,
+            # A long-lived agent service indexes its project at start (reload if persisted,
+            # otherwise a first build) while the agent prepares its first request.
+            environment={**os.environ,'CYCODE_INDEX_AT_START':os.environ.get('CYCODE_INDEX_AT_START','1')}
+            self.process=subprocess.Popen(arguments,stdin=subprocess.PIPE,stdout=self.log,stderr=subprocess.STDOUT,env=environment,
                 cwd=self.workspace,creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
             deadline=time.monotonic()+45
             while not self.descriptor.is_file():

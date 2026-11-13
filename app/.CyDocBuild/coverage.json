@@ -349,7 +349,7 @@
       "kind": "user-workflow",
       "target": "mcp#connection",
       "legacyId": "reference-app-docs-mcp",
-      "sourceSha256": "e018508bae87b00fe47f57ecbcb627eba39f4da196c212ce7eb0237c3736ab4c"
+      "sourceSha256": "6cc0136cceca585c2018ad5e5e72619e312dcaf577302c431148c92403dca5b7"
     },
     {
       "source": "Docs/MSBuild.md",

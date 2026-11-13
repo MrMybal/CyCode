@@ -5,7 +5,7 @@ description: Installer le skill, gérer les connexions et mettre à jour sans re
 section: API et extensions
 parent: core-installation
 order: 263
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 ## Agents et skills {#agents}
@@ -96,7 +96,7 @@ générations et récupérations restent disponibles ; aucun nettoyage récursif
 arrêt forcé n’est effectué. La désinstallation nécessite encore de fermer les
 clients concernés. Le ZIP possède le lanceur `CyCodeManager.cmd`.
 
-Le catalogue reste à 252 opérations et le contrat moteur à 0.2.3. Le gestionnaire
+Le catalogue compte désormais 257 opérations (cinq pour l’index du projet) ; le contrat moteur reste à 0.2.3. Le gestionnaire
 ne crée pas de nouvel éditeur, moteur sémantique ou ordonnanceur SDK.
 
 ## Vérification et limites {#validation}

@@ -31,6 +31,29 @@ Do not put workspace sources into the SDK's temporary task-file lifecycle.
 
 ## Investigate efficiently
 
+- Use the project index for project-wide lookups instead of shell grep/rg loops:
+  `op_index_symbols` to find where a type, function, field, macro or console
+  variable is declared (fuzzy/CamelHump names, `Scope::Name`, or an empty query
+  with `paths` to list a folder), `op_index_outline` for one file's structure,
+  and `op_search_text` for text, narrowed with `paths`/`extensions`, summarized
+  with `output:"files"` and paged with `nextCursor`. Each match names its
+  enclosing declaration; add `context` (2-4) to see the surrounding lines.
+- `op_index_symbols` comes from a fast lexical scanner (no preprocessor or
+  template resolution). When a task needs every definition of a name, confirm
+  the list with one `op_search_text` for that name before answering.
+- A `search_text` result with `engine:"index"` and `coverage.filteredByIndex:true`
+  already covers every indexed file (same matches as ripgrep with the Core's
+  ignore rules): do not repeat that search with shell rg. `engine:"scan"` or a
+  `fallback` means the index was not used; `coverage.complete:false` lists what
+  was skipped.
+- Quote code with `op_index_read` instead of shell reads: `symbol` returns the
+  whole body of a function or type found by the index (`"FCCDManager::Init"`),
+  `ranges` reads up to 20 line ranges at once, each with the functions/types it
+  crosses. Use `op_index_outline` to locate lines in a large file.
+- Batch work to save round trips: one `op_search_text` with `queries` (up to 10)
+  instead of several searches, one `op_index_read` with `ranges` or `symbol`
+  instead of several reads, generous `count` rather than many small pages. The first use on a large project builds
+  the index (reported cost); later sessions reload it in seconds.
 - Narrow by project, path, document or symbol before requesting large results.
   Page `workspace_files` using both `generation` and `indexRevision` guards.
 - Read live documents and use their current revision and zero-based UTF-16

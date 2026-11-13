@@ -5,7 +5,7 @@ description: Persistent Core, complete MCP contracts and guarded code changes.
 section: API and extensions
 parent: mcp
 order: 261
-revision: 5
+revision: 6
 ---
 
 ## Connect {#connect}
@@ -13,7 +13,7 @@ revision: 5
 Install the standalone distribution and agent skill through [Core installation](core-installation#distribution).
 
 CyCode Core exposes the same persistent native Engine to applications and AI
-clients. There are 252 domain operations, each exposed as `op_<operationId>` by
+clients. There are 257 domain operations, each exposed as `op_<operationId>` by
 the official CyToolsCore MCP adapter. The SDK adds its own job, discovery, task
 and identity controls. A listed operation is a contract, not proof that a
 language server, debugger, compiler, VCS provider or plugin is installed.
@@ -99,14 +99,14 @@ before assuming availability or permissions. The generated `app/MCPMethods.json`
 contains every MCP name, native method, full input/output schema, permission,
 exclusive group and progress/cancellation flag from the executable contract.
 Regenerate it with `python app/scripts/generate_mcp_reference.py`; verify without
-writing with `--check`. The bilingual HTML API reference contains the same 252
+writing with `--check`. The bilingual HTML API reference contains the same 257
 operation contracts, grouped by domain. It is not a listing of internal C++
 functions and does not expose trusted native shutdown/cancellation controls.
 
 | Need | Operations to discover |
 | --- | --- |
 | Context and preparation | `service_status`, `analysis_status`, `analysis_prepare`, `language_status` |
-| Files and text | `workspace_files`, `workspace_refresh`, `workspace_include`, `search_text`, `documents_*`, `sources_*` |
+| Files and text | `index_symbols`, `index_outline`, `index_read`, `search_text`, `index_prepare`, `index_status`, `workspace_files`, `workspace_refresh`, `workspace_include`, `documents_*`, `sources_*` |
 | Code intelligence | `language_definition`, `language_declaration`, `language_type_definition`, `language_references`, `language_symbols`, `language_document_symbols`, `language_complete`, `language_hover`, hierarchy and diagnostic operations |
 | Changes | `language_rename`, formatting/code-action operations, `changes_preview`, `changes_apply`, `changes_undo` |
 | Builds and execution | `toolchains_*`, `build_*`, `msbuild_*`, `unreal_*`, `project_*`, `tests_*`, `terminal_*`, `debug_*` |
@@ -115,6 +115,31 @@ functions and does not expose trusted native shutdown/cancellation controls.
 
 These are discovery groups, not wildcard MCP calls. Use exact names and schemas
 from the catalogue, including prerequisites and confirmation fields.
+
+## Search with the project index {#index}
+
+Core keeps a persistent project index (in the project's git-ignored `.cycode/index`, or in
+`CYCODE_INDEX_DIR`, which the agent host sets to its own state folder). Use it before
+reading files one by one:
+
+- `index_symbols` finds classes, functions, methods, fields, enums, macros and
+  console variables by name, with Rider-style ranking (`FPBDJS` finds
+  `FPBDJointSolver`) and `Scope::Name` queries. An empty query with `paths` lists
+  the types and functions of a folder.
+- `index_outline` summarizes one file: nested declarations with line ranges,
+  counts per kind and its includes.
+- `search_text` finds text through the index, with the enclosing function or type
+  for every match, `paths`/`extensions` filters, `output:"files"` summaries and
+  `nextCursor` pages; `context` adds the surrounding lines. Check `engine` and
+  `coverage` in the result.
+- `index_read` returns numbered lines and the functions or types they cross:
+  one range, up to 20 `ranges`, or the whole body of a `symbol` in one call.
+  `search_text` also takes up to 10 `queries`. Grouping saves round trips.
+
+The first use on a large project builds the index; `index_prepare` reports that
+cost in `lastBuild`, later sessions reload it in seconds and changes are applied
+incrementally. These are lexical results: confirm exact definitions and
+references with `language_*` operations when it matters.
 
 ## Run jobs {#jobs}
 

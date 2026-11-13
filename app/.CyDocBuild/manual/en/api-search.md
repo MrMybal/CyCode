@@ -14,4 +14,4 @@ These contracts describe the native service exposed by the official SDK/MCP inte
 
 ## Operations {#operations}
 
-- [`search_text`](doc:operation-search-text-search-text) — Search project text.
+- [`search_text`](doc:operation-search-text-search-text) — Search project text through the persistent native project index, one query or up to 10 queries per call (queries), each match with its enclosing function/type and optional context lines.

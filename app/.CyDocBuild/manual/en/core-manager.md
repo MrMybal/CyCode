@@ -5,7 +5,7 @@ description: Install skills, manage client connections and update without replac
 section: API and extensions
 parent: core-installation
 order: 263
-revision: 1
+revision: 2
 ---
 
 ## Agents and skills {#agents}
@@ -98,7 +98,7 @@ recursive cleanup or forced process termination. Uninstalling still requires
 closing clients using that installation. Personal client settings and backups are
 retained. The portable package can launch the manager with `CyCodeManager.cmd`.
 
-The 252 native operations and engine contract 0.2.3 are unchanged. These management
+The engine contract 0.2.3 is unchanged; the catalogue now has 257 native operations (five project-index operations). These management
 features do not implement another editor, semantic engine or SDK scheduler.
 
 ## Verification and limits {#validation}
