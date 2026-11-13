@@ -6,12 +6,46 @@ to every other canonical operation; it does not maintain another scheduler.
 """
 from __future__ import annotations
 import copy
+import os
+import time
 
 CODE_OPERATIONS = frozenset('''service_status language_status workspace_files search_text
     documents_read documents_read_page documents_read_lines language_definition language_references
     language_hover language_document_symbols language_symbols language_symbol_resolve
-    analysis_prepare analysis_status analysis_results'''.split())
+    analysis_prepare analysis_status analysis_results index_symbols index_outline index_read'''.split())
 GATEWAY = 'core_invoke'
+TERMINAL = frozenset(('Completed', 'Failed', 'Cancelled'))
+# What an agent uses from an SDK job: everything else (client/session/workspace identities,
+# timestamps, sharing, reservations) stays available through the full profile.
+JOB_FIELDS = ('jobId', 'operationId', 'state', 'outputs', 'error', 'progress')
+
+
+def search_byte_budget():
+    # Compact profile: search_text pages stop at a whole row within this many bytes (with
+    # nextCursor) unless the caller sets maxBytes; MCP clients otherwise cut long tool results
+    # in the middle (Codex: tool_output_token_limit), losing rows without a cursor.
+    try:
+        return max(0, min(1 << 26, int(os.environ.get('CYCODE_MCP_SEARCH_BYTES', '16000'))))
+    except ValueError:
+        return 16000
+
+
+def brief_job(job):
+    if not isinstance(job, dict) or 'jobId' not in job:
+        return job
+    value = {key: job[key] for key in JOB_FIELDS if key in job and job[key] not in (None, [], {})}
+    if value.get('state') in TERMINAL:
+        value.pop('progress', None)
+    return value
+
+
+def inline_wait_seconds():
+    # Compact profile: return the finished job from the submitting call when the real SDK
+    # job ends within this budget, saving the model one cy_get_job round trip per operation.
+    try:
+        return max(0.0, min(110.0, float(os.environ.get('CYCODE_MCP_INLINE_WAIT', '20'))))
+    except ValueError:
+        return 20.0
 
 
 class ProfileClient:
@@ -32,7 +66,7 @@ class ProfileClient:
 
     def _gateway(self):
         return {'id': GATEWAY, 'name': 'Invoke another Core operation',
-            'description': 'Invoke a canonical operation discovered once with cy_list_operations, then cy_describe_operation. Actual validation, permissions and jobs are enforced by CyToolsCore.',
+            'description': 'Invoke a canonical operation discovered once with cy_list_operations, then cy_describe_operation. Actual validation, permissions and jobs are enforced by CyToolsCore. Like other code-profile tools, it returns the finished job (outputs) when it ends within the inline wait; otherwise poll cy_get_job.',
             'inputSchema': {'type': 'object', 'properties': {
                 'operationId': {'type': 'string', 'minLength': 1}, 'parameters': {'type': 'object'}},
                 'required': ['operationId', 'parameters'], 'additionalProperties': False},
@@ -62,7 +96,25 @@ class ProfileClient:
                     or envelope['operationId'] not in self.operations or not isinstance(envelope['parameters'], dict)):
                 raise CyToolError('InvalidParameters', 'Choose a canonical operation and its exact parameters')
             parameters = {**parameters, 'operationId': envelope['operationId'], 'parameters': envelope['parameters']}
-        return self.client.call(method, **parameters)
+        if (method == 'SubmitJob' and parameters.get('operationId') == 'search_text'
+                and isinstance(parameters.get('parameters'), dict) and 'maxBytes' not in parameters['parameters']
+                and search_byte_budget()):
+            parameters = {**parameters, 'parameters': {**parameters['parameters'], 'maxBytes': search_byte_budget()}}
+        result = self.client.call(method, **parameters)
+        if method == 'SubmitJob' and isinstance(result, dict) and result.get('jobId') and result.get('state') not in TERMINAL:
+            # The SDK still owns the job, its validation, permissions and lifetime: this only
+            # reads it back through GetJob. A slower job is returned as submitted (poll cy_get_job).
+            deadline, delay = time.monotonic() + inline_wait_seconds(), 0.01
+            while time.monotonic() < deadline:
+                time.sleep(delay)
+                delay = min(delay * 2, 0.2)
+                current = self.client.call('GetJob', jobId=result['jobId'])
+                if current.get('state') in TERMINAL:
+                    return brief_job(current)
+            return brief_job(self.client.call('GetJob', jobId=result['jobId']))
+        if method in ('SubmitJob', 'GetJob'):
+            return brief_job(result)
+        return result
 
 
 def client_profile(client, profile):

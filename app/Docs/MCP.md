@@ -3,8 +3,9 @@
 ## Current native Core agent integration
 
 The current source contract has **257 native operations** through the real
-CyToolsCore SDK/MCP adapter. The default **code** presentation advertises 16 common
-operations plus `op_core_invoke` and 21 SDK controls (38 tools); **full** retains
+CyToolsCore SDK/MCP adapter. The default **code** presentation advertises 19 common
+operations (including the project index `index_symbols` / `index_outline` /
+`index_read`) plus `op_core_invoke` and 21 SDK controls (41 tools); **full** retains
 all individual operation names (278 tools). See [Project index](#project-index) below. Discovery is cached per connection;
 the compact index omits schemas until the selected `cy_describe_operation` call.
 Read [Core Manager](CoreManager.md#mcp-profile) for the gateway contract and
@@ -57,11 +58,17 @@ disables it; a directory inside the workspace (other than `.cycode`) is refused.
   `index_read` returns numbered line ranges with the declarations they cross: one
   range, up to 20 `ranges`, or the body of a `symbol` found by the index;
   `search_text` accepts up to 10 `queries` per call. Batching saves agent round
-  trips. A persisted index is reloaded when the Core starts.
+  trips. The compact MCP profile returns a job that ends within 20 s directly
+  (`CYCODE_MCP_INLINE_WAIT`), so no `cy_get_job` is needed for it; a persisted
+  index is reloaded when the Core starts. Its job results keep `jobId`,
+  `operationId`, `state`, `outputs`, `error` and running `progress` (the full
+  profile returns the whole SDK job).
 * **Bounded pages.** `maxBytes` bounds the serialized rows of one `search_text`
   response (a `queries` batch shares one budget). An indexed page stops at a whole
   row with `truncated`, `budget.reached` and `nextCursor`; a scan fallback keeps
-  the leading rows and reports the cut. A cursor names
+  the leading rows and reports the cut. The compact MCP profile applies 16000
+  bytes unless the call sets `maxBytes` (`CYCODE_MCP_SEARCH_BYTES`; 0 disables), so
+  a client such as Codex never receives a result cut in the middle. A cursor names
   its last returned match, so a page that ends on a file boundary resumes at the
   start of the next file.
 * **Freshness.** WorkspaceMonitor reports change paths; each query first applies

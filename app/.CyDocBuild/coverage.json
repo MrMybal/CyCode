@@ -125,7 +125,7 @@
       "kind": "user-workflow",
       "target": "core-manager#agents",
       "legacyId": "reference-app-docs-coremanager",
-      "sourceSha256": "611cd501f17a2f8414bb5b1eccf41f135d9c5d532b24671f1c8a8e9ed555d876"
+      "sourceSha256": "7361ebc45519510d96dc49a0102a727ce20d57e7ba9b1f1eb447d69cafc07f2f"
     },
     {
       "source": "Docs/CoreQuality.md",
@@ -349,7 +349,7 @@
       "kind": "user-workflow",
       "target": "mcp#connection",
       "legacyId": "reference-app-docs-mcp",
-      "sourceSha256": "84825a353e792dcd76966d907865b90ba22f83b770d668c85327f391fb41cdbc"
+      "sourceSha256": "446d639200ef8e9d46f00171f702763e817532c5cc4c51a849a97383e72db851"
     },
     {
       "source": "Docs/MSBuild.md",

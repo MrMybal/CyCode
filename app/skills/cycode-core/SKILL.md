@@ -30,9 +30,11 @@ An idle/lazy backend with available:false has not necessarily failed: inspect it
 configured state and run an appropriate authorised compiler request before
 reporting an installed backend as unavailable.
 
-Domain tools accept native arguments inside `parameters`. They return an issued
-`jobId`; poll `cy_get_job` until terminal, then inspect `outputs` or the structured
-error. Cancel your own job through `cy_cancel_job`. Never guess IDs or revisions.
+Domain tools accept native arguments inside `parameters`. They return the job with
+its issued `jobId`; in the default code profile a job that finishes within about
+20 s comes back already `Completed` (or `Failed`) with its `outputs`, so read them
+directly. Poll `cy_get_job` only while `state` is still queued or running, then
+inspect `outputs` or the structured error. Cancel your own job through `cy_cancel_job`. Never guess IDs or revisions.
 Do not put workspace sources into the SDK's temporary task-file lifecycle.
 
 ## Investigate efficiently
@@ -44,6 +46,10 @@ Do not put workspace sources into the SDK's temporary task-file lifecycle.
   and `op_search_text` for text, narrowed with `paths`/`extensions`, summarized
   with `output:"files"` and paged with `nextCursor`. Each match names its
   enclosing declaration; add `context` (2-4) to see the surrounding lines.
+  Search pages are bounded (about 16 KB by default): `truncated` with
+  `budget.reached` means more rows wait behind `nextCursor`, not that the
+  search failed. Follow the cursor or narrow `paths`/`extensions` before
+  concluding that something is absent.
 - `op_index_symbols` comes from a fast lexical scanner (no preprocessor or
   template resolution). When a task needs every definition of a name, confirm
   the list with one `op_search_text` for that name before answering.

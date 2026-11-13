@@ -38,8 +38,8 @@ after installing/selecting a different version. `language_status` now distinguis
 ## Compact MCP discovery {#mcp-profile}
 
 New/refreshed managed connections default to **Code (compact)**. It advertises
-16 common code operations, one `op_core_invoke` gateway and 21 official SDK
-controls: **38 tools instead of 278**. Choose **Full catalogue** for existing
+19 common code operations, one `op_core_invoke` gateway and 21 official SDK
+controls: **41 tools instead of 278**. Choose **Full catalogue** for existing
 clients requiring individual names for all 257 native operations.
 
 For an unadvertised capability, read `cy_list_operations` once, then fetch only

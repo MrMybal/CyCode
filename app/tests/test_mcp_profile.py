@@ -5,11 +5,12 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
 
 APP = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(APP))
-from mcp_profile import ProfileClient, CODE_OPERATIONS, GATEWAY, client_profile
+from mcp_profile import ProfileClient, CODE_OPERATIONS, GATEWAY, JOB_FIELDS, brief_job, client_profile
 from cytools_core import Runtime, CyToolError
 from cytools_core.transports.api import LocalClient
 from cytools_core.transports.mcp import create_server
@@ -30,9 +31,14 @@ class Profiles(unittest.TestCase):
         self.addCleanup(self.runtime.close)
         def unused(context, parameters):
             raise AssertionError('This process-free fixture must not invoke another operation')
+        self.searches = []
+        def search(context, parameters):
+            self.searches.append(dict(parameters))
+            return {'matches': [], 'truncated': False}
         for operation in DESCRIPTOR['operations']:
             self.runtime.register(operation['id'], (lambda context, parameters: DOCUMENT)
-                if operation['id'] in ('documents_read', 'documents_replace') else unused)
+                if operation['id'] in ('documents_read', 'documents_replace')
+                else search if operation['id'] == 'search_text' else unused)
         self.runtime.start()
         self.principal = self.runtime.authenticate(self.runtime.create_client('reader')['token'])
         self.local = LocalClient(self.runtime, self.principal)
@@ -68,6 +74,32 @@ class Profiles(unittest.TestCase):
         with self.assertRaises(CyToolError):
             LocalClient(self.runtime, stranger).call('GetJob', jobId=job['jobId'])
 
+    def test_compact_submission_returns_the_finished_sdk_job(self):
+        # One model round trip instead of SubmitJob + cy_get_job when the real job ends quickly.
+        job = self.invoke('documents_read', {'path': 'main.cpp'})
+        self.assertEqual(job['state'], 'Completed', job)
+        self.assertEqual(job['outputs'], DOCUMENT)
+        full = LocalClient(self.runtime, self.principal).call('GetJob', jobId=job['jobId'])
+        # The compact result keeps what an agent uses; identities and timestamps stay in the full job.
+        self.assertEqual(job, brief_job(full))
+        self.assertLessEqual(set(job), set(JOB_FIELDS))
+        self.assertTrue(set(full) - set(job))
+        self.assertEqual(self.compact.call('GetJob', jobId=job['jobId']), job)
+        direct = self.compact.call('SubmitJob', sessionId=self.session, operationId='documents_read',
+                                   parameters={'path': 'main.cpp'})
+        self.assertEqual((direct['state'], direct['outputs']), ('Completed', DOCUMENT))
+
+    def test_compact_search_gets_a_byte_budget_unless_the_caller_sets_one(self):
+        self.compact.call('SubmitJob', sessionId=self.session, operationId='search_text', parameters={'query': 'Foo'})
+        self.invoke('search_text', {'query': 'Bar', 'maxBytes': 0})
+        self.local.call('SubmitJob', sessionId=self.session, operationId='search_text', parameters={'query': 'Baz'})
+        for _ in range(100):
+            if len(self.searches) == 3:
+                break
+            time.sleep(0.05)
+        budgets = {s['query']: s.get('maxBytes') for s in self.searches}
+        self.assertEqual(budgets, {'Foo': 16000, 'Bar': 0, 'Baz': None})
+
     def test_invalid_gateway_envelopes_are_refused(self):
         for envelope in (None, {}, {'operationId': [], 'parameters': {}},
                          {'operationId': 'unknown', 'parameters': {}},
@@ -92,7 +124,7 @@ class Profiles(unittest.TestCase):
         metrics = {'fullTools': len(full), 'compactTools': len(compact), 'fullBytes': size(full), 'compactBytes': size(compact)}
         print('MCP_METADATA ' + json.dumps(metrics))
         self.assertEqual(len(full), 278)
-        self.assertEqual(len(compact), 38)
+        self.assertEqual(len(compact), 41)
         self.assertLess(size(compact), size(full) / 4)
         self.assertIn('op_core_invoke', {t.name for t in compact})
 

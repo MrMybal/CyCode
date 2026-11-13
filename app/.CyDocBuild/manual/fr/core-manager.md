@@ -39,9 +39,9 @@ démarrage à la première requête. Un compilateur reste nécessaire pour compi
 
 ## Découverte MCP compacte {#mcp-profile}
 
-Les connexions nouvelles/actualisées utilisent **Code (compact)** : 16 opérations
+Les connexions nouvelles/actualisées utilisent **Code (compact)** : 19 opérations
 courantes, la passerelle `op_core_invoke` et 21 contrôles officiels du SDK, soit
-**38 outils au lieu de 278**. **Catalogue complet** conserve les noms individuels
+**41 outils au lieu de 278**. **Catalogue complet** conserve les noms individuels
 des 257 opérations pour les clients qui les exigent.
 
 Pour une capacité non annoncée, consulter une seule fois `cy_list_operations`,
