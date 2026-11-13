@@ -91,7 +91,7 @@ class Profiles(unittest.TestCase):
         size = lambda tools: len(json.dumps([t.model_dump(exclude_none=True) for t in tools], ensure_ascii=False).encode('utf-8'))
         metrics = {'fullTools': len(full), 'compactTools': len(compact), 'fullBytes': size(full), 'compactBytes': size(compact)}
         print('MCP_METADATA ' + json.dumps(metrics))
-        self.assertEqual(len(full), 273)
+        self.assertEqual(len(full), 278)
         self.assertEqual(len(compact), 38)
         self.assertLess(size(compact), size(full) / 4)
         self.assertIn('op_core_invoke', {t.name for t in compact})

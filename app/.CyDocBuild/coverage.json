@@ -13,7 +13,7 @@
       "kind": "developer-reference",
       "target": "core-agents#connect",
       "legacyId": "reference-app-docs-agents",
-      "sourceSha256": "5c224e5f42f92ae7ed2d4d3953fc8eacd95485b0b28d1bf7f0f459749ee4fcaf"
+      "sourceSha256": "9714fd6eea91eedaf16f9a699d97a980961cae922bcfd2f8fd937f434ab2cf41"
     },
     {
       "source": "Docs/AnalysisProgress.md",
@@ -125,7 +125,7 @@
       "kind": "user-workflow",
       "target": "core-manager#agents",
       "legacyId": "reference-app-docs-coremanager",
-      "sourceSha256": "e721246baef31b7d25160c3eb35b84b3fff9370ee9a0939b8a3532655f50996a"
+      "sourceSha256": "611cd501f17a2f8414bb5b1eccf41f135d9c5d532b24671f1c8a8e9ed555d876"
     },
     {
       "source": "Docs/CoreQuality.md",
@@ -349,7 +349,7 @@
       "kind": "user-workflow",
       "target": "mcp#connection",
       "legacyId": "reference-app-docs-mcp",
-      "sourceSha256": "1fb457ba6bd0bb21394ef1513bb25568b02bf89993c5bee3231e246137bc26cf"
+      "sourceSha256": "84825a353e792dcd76966d907865b90ba22f83b770d668c85327f391fb41cdbc"
     },
     {
       "source": "Docs/MSBuild.md",

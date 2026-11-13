@@ -23,6 +23,7 @@
 #include "cycode/UnrealProject.h"
 #include "cycode/UserSnippets.h"
 #include "cycode/WorkspaceFileIndex.h"
+#include "cycode/CodeIndex.h"
 #include "cycode/WorkspaceMonitor.h"
 #include "cycode/text/DocumentState.h"
 #include <condition_variable>
@@ -44,6 +45,7 @@ class Engine {
     Json userSnippetDraft(const Json &);
     Json relatedFiles(const Json &, bool included = false);
     Json searchText(const Json &, const std::atomic<bool> *cancellation = nullptr);
+    Json indexOperation(const std::string &, const Json &, const std::atomic<bool> *cancellation = nullptr);
     void configureLanguage(const std::string &executable, bool enabled = true, bool prewarm = true);
     Json prepareUnrealAnalysis(const Json &, const std::atomic<bool> *cancellation = nullptr);
     Json languageStatus();
@@ -91,6 +93,9 @@ class Engine {
     Json recoveryStatus();
     WorkspaceMonitor monitor_;
     WorkspaceFileIndex fileIndex_;
+    CodeIndex codeIndex_;
+    Json searchTextScan(const Json &, const std::atomic<bool> *cancellation);
+    bool waitForIndex(const Json &, const std::atomic<bool> *cancellation);
     std::mutex workspacePollMutex_, filesMutex_;
     uint64_t polledWorkspaceRevision_ = 0, filesIndexRevision_ = 0;
     std::chrono::steady_clock::time_point lastWorkspacePoll_{};

@@ -42,7 +42,7 @@ void WorkspaceFileIndex::scan(uint64_t revision) noexcept {
     auto last=std::chrono::steady_clock::now();
     try {
         const auto result=runProcessStreamed({"rg","--files","--hidden","--no-require-git","-0",
-            "-g","!.git","-g","!runtime","-g","!data","-g","!.cycode"},root_,abortProcess_,
+            "-g","!.git","-g","!/runtime","-g","!/data","-g","!.cycode"},root_,abortProcess_,
             [&](std::string_view chunk) {
                 if(abortProcess_)return;
                 try {

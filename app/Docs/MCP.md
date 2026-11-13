@@ -2,10 +2,10 @@
 
 ## Current native Core agent integration
 
-The current source contract has **252 native operations** through the real
+The current source contract has **257 native operations** through the real
 CyToolsCore SDK/MCP adapter. The default **code** presentation advertises 16 common
 operations plus `op_core_invoke` and 21 SDK controls (38 tools); **full** retains
-all individual operation names (273 tools). Discovery is cached per connection;
+all individual operation names (278 tools). See [Project index](#project-index) below. Discovery is cached per connection;
 the compact index omits schemas until the selected `cy_describe_operation` call.
 Read [Core Manager](CoreManager.md#mcp-profile) for the gateway contract and
 `CYCODE_MCP_PROFILE` / `--mcp-profile code|full`. Jobs, permissions, canonical
@@ -26,6 +26,59 @@ metadata is now typed without opening the surrounding schema. Full corrected
 plugin/shutdown/runtime-integrity/uninstall acceptance remains pending; this
 partial result is not a complete installed-MCP pass. See Finalization.md.
 
+
+
+### Project index
+
+`search_text`, `index_symbols`, `index_outline`, `index_read`, `index_prepare` and
+`index_status` share one persistent native index (`app/src/CodeIndex.cpp`, `SymbolScanner.cpp`).
+It is stored in `CYCODE_INDEX_DIR` when set (one folder per canonical workspace
+root), otherwise in the project's own `.cycode/index`, created on the first build
+with a `.gitignore` that ignores everything in it; `.cycode` is excluded from
+search, enumeration and monitoring. When that folder cannot be created (read-only
+project), the per-user cache is used (`%LOCALAPPDATA%\CyCode\index` /
+`$XDG_CACHE_HOME/cycode/index`); `index_status` reports `storage`. Opening a project
+writes nothing; only the first index build creates the folder.
+The agent host sets `CYCODE_INDEX_DIR` to `<state>/index`. `CYCODE_INDEX=off`
+disables it; a directory inside the workspace (other than `.cycode`) is refused.
+
+* **Content.** The ripgrep file list with the same ignore rules as the scan path
+  (`.git`/`.cycode` at any depth, `runtime/` and `data/` only at the root), in
+  immutable shards of at most 8192 files / 64 MiB: folded trigram posting lists,
+  file stamps and the declarations of C/C++/HLSL/ISPC/C#/Python-family sources.
+  Files above 64 MiB are kept unindexed and verified directly; binary files (NUL
+  in the first 8 KiB) are skipped like ripgrep.
+* **Queries.** A literal or the required literals of each top-level regex
+  alternative select candidates; every match is verified on current bytes with
+  PCRE2 (UTF, caseless unless `caseSensitive`). Queries without a usable 3-byte
+  literal verify every indexed file and report `coverage.filteredByIndex:false`.
+  Results carry the enclosing declaration, optional `context` lines,
+  `paths`/`extensions` filters, `output:"files"` summaries and a `nextCursor`.
+  `index_read` returns numbered line ranges with the declarations they cross: one
+  range, up to 20 `ranges`, or the body of a `symbol` found by the index;
+  `search_text` accepts up to 10 `queries` per call. Batching saves agent round
+  trips. A persisted index is reloaded when the Core starts.
+* **Bounded pages.** `maxBytes` bounds the serialized rows of one `search_text`
+  response (a `queries` batch shares one budget). An indexed page stops at a whole
+  row with `truncated`, `budget.reached` and `nextCursor`; a scan fallback keeps
+  the leading rows and reports the cut. A cursor names
+  its last returned match, so a page that ends on a file boundary resumes at the
+  start of the next file.
+* **Freshness.** WorkspaceMonitor reports change paths; each query first applies
+  them as an overlay (new, modified, deleted files and directories). A restart or
+  an overflowed change log reconciles every file stamp. Overlays above 2048 files
+  are compacted into a new shard generation. Unsaved buffers supersede disk;
+  dirty paged documents make `search_text` use the scan path.
+* **Fallback.** Without `waitMs`, `engine:"auto"` waits up to 30 s for the reload
+  of a persisted index. An interactive host (the IDE) never waits for a first
+  build: it starts in the background, ripgrep answers meanwhile and the build
+  pauses during that scan. An agent service started with `CYCODE_INDEX_AT_START=1`
+  waits up to 90 s for a first build announcing at most 2 minutes left. Otherwise
+  the ripgrep scan returns with `engine:"scan"` and `fallback`; `engine:"index"`
+  waits instead.
+* **Scope.** The structural scanner is lexical (no preprocessor, overload or
+  template resolution). Exact definitions/references remain clangd's role.
+  Linux/macOS builds of this index have not been run.
 
 ## Current source acceptance — 2026-11-09
 

@@ -39,8 +39,8 @@ after installing/selecting a different version. `language_status` now distinguis
 
 New/refreshed managed connections default to **Code (compact)**. It advertises
 16 common code operations, one `op_core_invoke` gateway and 21 official SDK
-controls: **38 tools instead of 273**. Choose **Full catalogue** for existing
-clients requiring individual names for all 252 native operations.
+controls: **38 tools instead of 278**. Choose **Full catalogue** for existing
+clients requiring individual names for all 257 native operations.
 
 For an unadvertised capability, read `cy_list_operations` once, then fetch only
 its exact `cy_describe_operation` schema. Call `op_core_invoke` with
@@ -144,7 +144,7 @@ recursive cleanup or forced process termination. Uninstalling still requires
 closing clients using that installation. Personal client settings and backups are
 retained. The portable package can launch the manager with `CyCodeManager.cmd`.
 
-The 252 native operations and engine contract 0.2.3 are unchanged. These management
+The engine contract 0.2.3 is unchanged; the catalogue now has 257 native operations (five project-index operations). These management
 features do not implement another editor, semantic engine or SDK scheduler.
 
 ## Verification and limits {#validation}

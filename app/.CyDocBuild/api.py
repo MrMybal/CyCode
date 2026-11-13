@@ -17,7 +17,8 @@ GROUPS = {
     'search': ('Text search', 'Recherche de texte'), 'recovery': ('Document recovery', 'Récupération des documents'),
     'toolchains': ('Toolchains', 'Chaînes d’outils'), 'plugins': ('Native extensions', 'Extensions natives'),
     'snippets': ('Insertion snippets', 'Extraits personnalisés'),
-    'service': ('Core service', 'Service Core'), 'analysis': ('Analysis preparation', 'Préparation de l’analyse')
+    'service': ('Core service', 'Service Core'), 'analysis': ('Analysis preparation', 'Préparation de l’analyse'),
+    'index': ('Project index', 'Index du projet')
 }
 FIELD = {
     'path': ('Document or resource path in the permitted workspace.', 'Chemin du document ou de la ressource dans l’espace de travail autorisé.'),

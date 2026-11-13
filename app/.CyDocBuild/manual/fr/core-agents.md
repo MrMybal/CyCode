@@ -13,7 +13,7 @@ sourceRevision: 6
 Installez la distribution autonome et le skill IA avec [le guide d’installation](core-installation#distribution).
 
 CyCode Core expose le même Engine natif persistant aux applications et aux IA.
-Les 252 opérations restent canoniques. Le profil Code par défaut annonce les
+Les 257 opérations restent canoniques. Le profil Code par défaut annonce les
 outils courants ; les autres passent par `op_core_invoke(parameters={operationId,
 parameters})` après lecture unique du schéma choisi. Le profil Full conserve tous
 les noms `op_<operationId>` : choisir `CYCODE_MCP_PROFILE=full` ou
@@ -109,7 +109,7 @@ généré `app/MCPMethods.json` contient chaque nom MCP, méthode native, schém
 complet d’entrée/sortie, permission, groupe exclusif et capacité de progression
 ou d’annulation, directement issus du contrat exécutable. Régénérez-le avec
 `python app/scripts/generate_mcp_reference.py` ; `--check` le vérifie sans écrire.
-La référence HTML bilingue regroupe ces mêmes 252 contrats par domaine. Elle
+La référence HTML bilingue regroupe ces mêmes 257 contrats par domaine. Elle
 ne décrit pas les fonctions C++ internes et n’expose pas les contrôles natifs
 privés d’arrêt ou d’annulation de l’hôte.
 
@@ -125,6 +125,33 @@ privés d’arrêt ou d’annulation de l’hôte.
 
 Ces groupes servent à la découverte ; les jokers ne sont pas des appels MCP.
 Utilisez les noms et schémas exacts du catalogue, avec leurs prérequis et confirmations.
+
+## Rechercher avec l’index du projet {#index}
+
+Core conserve un index persistant du projet (dans `.cycode/index` du projet, ignoré par Git, ou dans
+`CYCODE_INDEX_DIR`, que l’hôte des agents place dans son propre dossier d’état). Utilisez-le
+avant de lire les fichiers un par un :
+
+- `index_symbols` trouve classes, fonctions, méthodes, champs, enums, macros et
+  variables console par leur nom, avec un classement à la Rider (`FPBDJS` trouve
+  `FPBDJointSolver`) et des requêtes `Portée::Nom`. Une requête vide avec `paths`
+  liste les types et fonctions d’un dossier.
+- `index_outline` résume un fichier : déclarations imbriquées avec leurs lignes,
+  nombre par type et inclusions.
+- `search_text` cherche du texte via l’index, avec la fonction ou le type englobant
+  de chaque résultat, les filtres `paths`/`extensions`, le résumé `output:"files"`
+  et les pages `nextCursor` ; `context` ajoute les lignes voisines. Vérifiez
+  `engine` et `coverage` dans la réponse.
+- `index_read` renvoie des lignes numérotées et les fonctions ou types qu’elles
+  traversent : une plage, jusqu’à 20 `ranges`, ou le corps entier d’un `symbol`
+  en un appel. `search_text` accepte aussi jusqu’à 10 `queries`. Grouper les
+  demandes évite des allers-retours.
+
+La première utilisation sur un gros projet construit l’index ; `index_prepare`
+indique ce coût dans `lastBuild`, les sessions suivantes le rechargent en quelques
+secondes et les modifications sont appliquées au fil de l’eau. Ces résultats sont
+lexicaux : confirmez les définitions et références exactes avec les opérations
+`language_*` quand c’est important.
 
 ## Suivre les tâches {#jobs}
 

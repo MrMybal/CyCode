@@ -49,7 +49,7 @@ class ProfileClient:
             return value
         if method == 'ListOperations':
             # One inexpensive index; exact input/output schemas are fetched for
-            # the selected operation, not 252 times for every catalogue read.
+            # the selected operation, not 257 times for every catalogue read.
             return [{'id': o['id'], 'name': o['name'], 'description': o['description'].split('. ')[0][:120],
                      'permissions': o.get('permissions', [])} for o in self.operations.values()]
         if method == 'DescribeOperation' and parameters.get('operationId') == GATEWAY:

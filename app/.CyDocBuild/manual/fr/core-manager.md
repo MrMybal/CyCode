@@ -41,8 +41,8 @@ démarrage à la première requête. Un compilateur reste nécessaire pour compi
 
 Les connexions nouvelles/actualisées utilisent **Code (compact)** : 16 opérations
 courantes, la passerelle `op_core_invoke` et 21 contrôles officiels du SDK, soit
-**38 outils au lieu de 273**. **Catalogue complet** conserve les noms individuels
-des 252 opérations pour les clients qui les exigent.
+**38 outils au lieu de 278**. **Catalogue complet** conserve les noms individuels
+des 257 opérations pour les clients qui les exigent.
 
 Pour une capacité non annoncée, consulter une seule fois `cy_list_operations`,
 puis le schéma précis avec `cy_describe_operation`. Appeler `op_core_invoke` avec
@@ -145,7 +145,7 @@ générations et récupérations restent disponibles ; aucun nettoyage récursif
 arrêt forcé n’est effectué. La désinstallation nécessite encore de fermer les
 clients concernés. Le ZIP possède le lanceur `CyCodeManager.cmd`.
 
-Le catalogue reste à 252 opérations et le contrat moteur à 0.2.3. Le gestionnaire
+Le catalogue compte désormais 257 opérations (cinq pour l’index du projet) ; le contrat moteur reste à 0.2.3. Le gestionnaire
 ne crée pas de nouvel éditeur, moteur sémantique ou ordonnanceur SDK.
 
 ## Vérification et limites {#validation}

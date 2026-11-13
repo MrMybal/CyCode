@@ -11,6 +11,7 @@
 #include <cerrno>
 #include <csignal>
 #include <fcntl.h>
+#include <poll.h>
 #include <sys/wait.h>
 #include <unistd.h>
 extern char **environ;
@@ -133,7 +134,9 @@ static ProcessResult runProcessImpl(const std::vector<std::string> &argv, const 
 #ifdef _WIN32
     SECURITY_ATTRIBUTES security{sizeof(security), nullptr, TRUE};
     HANDLE reader = nullptr, writer = nullptr;
-    if (!CreatePipe(&reader, &writer, &security, 0)) {
+    // 1 MiB pipe buffer: the default (~4 KiB) made large outputs (ripgrep file lists,
+    // build logs) advance one small buffer per wait of the poll loop below.
+    if (!CreatePipe(&reader, &writer, &security, 1024 * 1024)) {
         result.output = "Cannot create process pipe";
         return result;
     }
@@ -234,17 +237,20 @@ static ProcessResult runProcessImpl(const std::vector<std::string> &argv, const 
     CloseHandle(pi.hThread);
     for (;;) {
         DWORD available = 0;
-        char buffer[8192];
+        char buffer[65536];
+        bool received = false;
         while (PeekNamedPipe(reader, nullptr, 0, nullptr, &available, nullptr) && available) {
             DWORD read = 0;
             if (!ReadFile(reader, buffer, std::min<DWORD>(available, sizeof(buffer)), &read, nullptr) ||
                 !read)
                 break;
             append(buffer, read);
+            received = true;
             if (result.truncated || (cancellation && cancellation->load()))
                 break;
         }
-        if (WaitForSingleObject(pi.hProcess, 10) == WAIT_OBJECT_0) {
+        // Wait only when the pipe was idle; a producer that keeps writing is drained continuously.
+        if (WaitForSingleObject(pi.hProcess, received ? 0 : 10) == WAIT_OBJECT_0) {
             // A descendant may still own a writer: never wait for EOF here.
             while (PeekNamedPipe(reader, nullptr, 0, nullptr, &available, nullptr) && available) {
                 DWORD read = 0;
@@ -405,7 +411,9 @@ static ProcessResult runProcessImpl(const std::vector<std::string> &argv, const 
             };
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // Wake as soon as output arrives instead of a fixed 10 ms sleep per pipe buffer.
+        pollfd ready{pipes[0], POLLIN, 0};
+        (void)::poll(&ready, 1, 10);
     }
     close(pipes[0]);
     result.exitCode = WIFEXITED(status) ? WEXITSTATUS(status) : 128 + WTERMSIG(status);

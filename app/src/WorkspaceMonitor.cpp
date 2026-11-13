@@ -5,6 +5,8 @@
 #include <cctype>
 #include <condition_variable>
 #include <cstddef>
+#include <deque>
+#include <vector>
 #include <map>
 #include <mutex>
 #include <thread>
@@ -22,16 +24,26 @@ bool ignoreFile(const std::filesystem::path &path) {
     return name == ".gitignore" || name == ".ignore";
 }
 bool ignored(const std::filesystem::path &path) {
+    // Same exclusions as workspace enumeration: .git/.cycode at any depth,
+    // runtime/ and data/ only at the workspace root (src/data/x.cpp is project code).
+    bool first = true;
     for (const auto &part : path) {
         auto name = pathUtf8(part);
 #ifdef _WIN32
         for (auto &c : name)
             c = char(std::tolower(static_cast<unsigned char>(c)));
 #endif
-        if (name == ".git" || name == "runtime" || name == ".cycode" || name == "data")
+        if (name == ".git" || name == ".cycode" || (first && (name == "runtime" || name == "data")))
             return true;
+        first = false;
     }
     return false;
+}
+std::string relativeKey(const std::filesystem::path &path) {
+    auto key = pathUtf8(path);
+    for (auto &c : key)
+        if (c == '\\') c = '/';
+    return key;
 }
 } // namespace
 struct WorkspaceMonitor::State {
@@ -39,6 +51,9 @@ struct WorkspaceMonitor::State {
     mutable std::mutex mutex;
     std::condition_variable initialized;
     uint64_t revision = 1, indexRevision = 1;
+    // Bounded change log: (revision, path). Entries at or below `logFloor` are unknown.
+    std::deque<std::pair<uint64_t, std::string>> log;
+    uint64_t logFloor = 1;
     std::string backend = "polling", error;
     bool started = false;
     std::jthread worker;
@@ -65,11 +80,18 @@ struct WorkspaceMonitor::State {
         if (worker.joinable())
             worker.join();
     }
-    void signal(bool structural) {
+    void signal(bool structural, const std::vector<std::string> &paths = {}, bool overflow = false) {
         std::lock_guard lock(mutex);
         ++revision;
         if (structural)
             ++indexRevision;
+        if (overflow || log.size() + paths.size() > 65536) {
+            log.clear();
+            logFloor = revision;
+            return;
+        }
+        for (const auto &path : paths)
+            log.emplace_back(revision, path);
     }
     void ready(const char *name) {
         std::lock_guard lock(mutex);
@@ -125,17 +147,18 @@ struct WorkspaceMonitor::State {
                     break;
                 }
                 if (!bytes) {
-                    signal(true);
+                    signal(true, {}, true);
                     continue;
                 } // Overflow: force a full reconciliation.
-                bool changed = false, structural = false;
+                bool changed = false, structural = false, overflow = false;
+                std::vector<std::string> paths;
                 for (size_t offset = 0; offset + sizeof(FILE_NOTIFY_INFORMATION) <= bytes;) {
                     const auto *entry =
                         reinterpret_cast<const FILE_NOTIFY_INFORMATION *>(buffer.data() + offset);
                     constexpr auto header = offsetof(FILE_NOTIFY_INFORMATION, FileName);
                     if (entry->FileNameLength % sizeof(wchar_t) ||
                         offset + header + entry->FileNameLength > bytes) {
-                        changed = structural = true;
+                        changed = structural = overflow = true;
                         break;
                     }
                     const auto path = std::filesystem::path(
@@ -143,17 +166,18 @@ struct WorkspaceMonitor::State {
                     if (!ignored(path)) {
                         changed = true;
                         structural |= entry->Action != FILE_ACTION_MODIFIED || ignoreFile(path);
+                        paths.push_back(relativeKey(path));
                     }
                     if (!entry->NextEntryOffset)
                         break;
                     if (entry->NextEntryOffset < header || offset + entry->NextEntryOffset >= bytes) {
-                        changed = structural = true;
+                        changed = structural = overflow = true;
                         break;
                     }
                     offset += entry->NextEntryOffset;
                 }
                 if (changed)
-                    signal(structural);
+                    signal(structural, paths, overflow);
             }
         }
         if (failed) {
@@ -220,8 +244,26 @@ struct WorkspaceMonitor::State {
                         break;
                     }
             }
-            if (next != previous)
-                signal(structural);
+            if (next != previous) {
+                std::vector<std::string> paths;
+                auto a = previous.begin(), b = next.begin();
+                while (a != previous.end() || b != next.end()) {
+                    if (b == next.end() || (a != previous.end() && a->first < b->first)) {
+                        paths.push_back(relativeKey(utf8Path(a->first)));
+                        ++a;
+                    } else if (a == previous.end() || b->first < a->first) {
+                        paths.push_back(relativeKey(utf8Path(b->first)));
+                        ++b;
+                    } else {
+                        if (a->second != b->second)
+                            paths.push_back(relativeKey(utf8Path(a->first)));
+                        ++a;
+                        ++b;
+                    }
+                }
+                // The polling scan stops at 200000 entries: beyond that it cannot see every change.
+                signal(structural, paths, next.size() >= 200000);
+            }
             previous = std::move(next);
         }
     }
@@ -233,5 +275,16 @@ WorkspaceMonitor::Snapshot WorkspaceMonitor::snapshot() const {
     std::lock_guard lock(state_->mutex);
     return {state_->revision, state_->indexRevision, state_->backend, state_->error};
 }
-void WorkspaceMonitor::invalidate() { state_->signal(true); }
+void WorkspaceMonitor::invalidate() { state_->signal(true, {}, true); }
+WorkspaceMonitor::Changes WorkspaceMonitor::changesSince(uint64_t revision) const {
+    std::lock_guard lock(state_->mutex);
+    Changes changes;
+    changes.revision = state_->revision;
+    changes.complete = revision >= state_->logFloor && revision <= state_->revision;
+    if (!changes.complete)
+        return changes;
+    for (auto entry = state_->log.rbegin(); entry != state_->log.rend() && entry->first > revision; ++entry)
+        changes.paths.push_back(entry->second);
+    return changes;
+}
 } // namespace cycode

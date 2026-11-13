@@ -1,4 +1,5 @@
 #include "cycode/Engine.h"
+#include <cstring>
 #include "cycode/AtomicFile.h"
 #include "cycode/CompilerLocation.h"
 #include "cycode/Error.h"
@@ -36,7 +37,8 @@ static void validateText(const std::string &text) { validateEditorText(text); }
 static std::string normalize(std::string text) { return normalizeEditorText(text); }
 Engine::Engine(std::filesystem::path root, std::filesystem::path languagePreferencesDirectory,
                std::filesystem::path userSnippetsDirectory)
-    : monitor_(workspaceRoot(root)), fileIndex_(workspaceRoot(root)), root_(workspaceRoot(root)),
+    : monitor_(workspaceRoot(root)), fileIndex_(workspaceRoot(root)), codeIndex_(workspaceRoot(root), monitor_),
+      root_(workspaceRoot(root)),
       entry_(std::filesystem::canonical(root)), recovery_(root_), solution_(inspectSolution(root)),
       build_(root_, [this](const std::string &path) { return resolve(path); }),
       msbuild_(root_, entry_, [this](const std::string &path) { return resolve(path); }),
@@ -138,11 +140,15 @@ Engine::Engine(std::filesystem::path root, std::filesystem::path languagePrefere
         }
         eventWorkerFinished_ = true;
     });
+    // Reload a persisted project index now (load + stat reconciliation, seconds), so the
+    // first search of a new session does not fall back to a scan. A first build stays lazy.
+    codeIndex_.warmStart();
 }
 Engine::~Engine() {
     NativeTraceScope trace(NativeTraceEvent::EngineShutdown);
     shuttingDown_ = true;
     fileIndex_.stop();
+    codeIndex_.stop();
     debugger_.requestShutdown();
     eventWorker_.request_stop();
     eventWake_.notify_all();
@@ -576,21 +582,464 @@ Json Engine::files(const Json &params) {
             {"complete", snapshot.complete},
             {"indexError", snapshot.error}};
 }
+namespace {
+// While an interactive ripgrep scan runs, a background index build pauses between files.
+struct ForegroundScan {
+    explicit ForegroundScan(CodeIndex &index) : index(index) { index.foregroundBegin(); }
+    ~ForegroundScan() { index.foregroundEnd(); }
+    ForegroundScan(const ForegroundScan &) = delete;
+    ForegroundScan &operator=(const ForegroundScan &) = delete;
+    CodeIndex &index;
+};
+size_t searchByteBudget(const Json &params) {
+    return size_t(std::clamp<int64_t>(params.value("maxBytes", int64_t(0)), 0, int64_t(64) << 20));
+}
+// Scan results have no cursor: keep the leading rows within the byte budget (at least one) and
+// report the cut, so a client never receives a response silently chopped in the middle.
+bool keepWithinBudget(Json &rows, size_t maxBytes, size_t &used) {
+    if (!maxBytes || !rows.is_array()) return false;
+    Json kept = Json::array();
+    bool cut = false;
+    for (auto &row : rows) {
+        const auto size = row.dump().size() + 1;
+        if (!kept.empty() && used + size > maxBytes) {
+            cut = true;
+            break;
+        }
+        used += size;
+        kept.push_back(std::move(row));
+    }
+    rows = std::move(kept);
+    return cut;
+}
+} // namespace
+
 Json Engine::searchText(const Json &params, const std::atomic<bool> *cancellation) {
+    if (params.contains("queries")) {
+        // Several searches in one call (same filters/limits), one result block per query.
+        const auto &queries = params.at("queries");
+        if (!queries.is_array() || queries.empty() || queries.size() > 10 || params.contains("query"))
+            throw NativeError(ErrorCode::InvalidParams, "queries must list 1 to 10 strings (instead of query)");
+        Json results = Json::array();
+        bool truncated = false, allIndexed = true;
+        // While the index is not usable, run ONE multi-pattern ripgrep for every query instead of
+        // one full scan per query; lines are attributed per query with the index matcher.
+        const auto engine = params.value("engine", std::string("auto"));
+        std::vector<std::string> list;
+        for (const auto &query : queries) {
+            if (!query.is_string() || query.get_ref<const std::string &>().empty())
+                throw NativeError(ErrorCode::InvalidParams, "queries entries must be non-empty strings");
+            list.push_back(query.get<std::string>());
+        }
+        bool unsaved = false;
+        {
+            std::lock_guard guard(mutex_);
+            for (const auto &[path, doc] : documents_)
+                unsaved |= doc.dirty;
+            unsaved |= !untitled_.empty();
+            for (const auto &[path, doc] : pagedDocuments_)
+                unsaved |= doc.knownDirty;
+        }
+        if (engine == "scan" || (engine == "auto" && !unsaved && !waitForIndex(params, cancellation))) {
+            const bool sensitive = params.value("caseSensitive", false), regex = params.value("regex", false);
+            const auto limit = size_t(std::clamp(params.value("limit", 500), 1, 5000));
+            std::vector<std::string> args{"rg", "--json", "--hidden", "--no-require-git", "-g", "!.git", "-g",
+                                          "!/runtime", "-g", "!/data", "-g", "!.cycode"};
+            if (!sensitive)
+                args.push_back("--ignore-case");
+            if (!regex)
+                args.push_back("--fixed-strings");
+            if (params.contains("extensions"))
+                for (const auto &extension : params.at("extensions")) {
+                    auto value = extension.get<std::string>();
+                    if (value.find_first_of("*?[]{}!/\\") != std::string::npos || value.size() > 32)
+                        throw NativeError(ErrorCode::InvalidParams, "extensions must be plain file extensions");
+                    if (!value.starts_with("."))
+                        value.insert(value.begin(), '.');
+                    args.insert(args.end(), {"--iglob", "*" + value});
+                }
+            for (const auto &query : list)
+                args.insert(args.end(), {"-e", query});
+            args.push_back("--");
+            if (params.contains("paths") && !params.at("paths").empty()) {
+                for (const auto &prefix : params.at("paths"))
+                    args.push_back(pathUtf8(resolve(prefix.get<std::string>()).lexically_relative(root_)));
+            } else
+                args.push_back(".");
+            const ForegroundScan foreground(codeIndex_);
+            const auto scan = runProcess(args, root_, std::chrono::seconds(60), 32 * 1024 * 1024, cancellation);
+            if (scan.cancelled)
+                return {{"results", Json::array()}, {"matches", Json::array()}, {"truncated", false}, {"cancelled", true}};
+            if (scan.exitCode > 1 && !scan.truncated && !scan.timedOut)
+                throw std::runtime_error(scan.output);
+            std::vector<std::tuple<std::string, uint32_t, std::string>> lines;
+            std::istringstream stream(scan.output);
+            std::string row;
+            while (std::getline(stream, row)) {
+                const auto item = Json::parse(row, nullptr, false);
+                if (item.is_discarded() || item.value("type", "") != "match")
+                    continue;
+                const auto &d = item.at("data");
+                if (!d.at("path").contains("text") || !d.at("lines").contains("text"))
+                    continue;
+                auto path = d.at("path").at("text").get<std::string>();
+                std::replace(path.begin(), path.end(), '\\', '/');
+                if (path.starts_with("./"))
+                    path.erase(0, 2);
+                lines.emplace_back(std::move(path), d.at("line_number").get<uint32_t>(),
+                                   d.at("lines").at("text").get<std::string>());
+            }
+            auto attributed = attributeScanLines(list, regex, sensitive, lines, limit);
+            const auto status = codeIndex_.status();
+            Json brief = {{"phase", status.at("phase")}, {"ready", status.at("ready")}};
+            if (status.contains("progress"))
+                brief["progress"] = status.at("progress");
+            const auto maxBytes = searchByteBudget(params);
+            size_t used = 0;
+            for (auto &block : attributed) {
+                if (keepWithinBudget(block["matches"], maxBytes, used)) {
+                    block["truncated"] = true;
+                    block["budgetReached"] = true;
+                }
+                block["engine"] = "scan";
+                block["fallback"] = engine == "scan" ? "requested" : "index-not-ready";
+                block["coverage"] = {{"complete", !scan.truncated && !scan.timedOut && !block.at("truncated").get<bool>()},
+                                     {"filteredByIndex", false}, {"combinedScan", true}};
+                block["nextCursor"] = nullptr;
+                truncated |= block.at("truncated").get<bool>();
+            }
+            Json result = {{"results", attributed}, {"matches", Json::array()}, {"truncated", truncated || scan.truncated},
+                           {"timedOut", scan.timedOut}, {"engine", "scan"}, {"index", brief}};
+            if (maxBytes)
+                result["budget"] = {{"maxBytes", maxBytes}, {"usedBytes", used}};
+            if (engine != "scan")
+                result["fallback"] = "index-not-ready";
+            return result;
+        }
+        // One byte budget for the whole batch: half of it is reserved in equal shares, so a broad
+        // first query cannot starve the others, and each query may use what is left minus the
+        // shares still reserved for the queries after it. The batch stays within maxBytes, apart
+        // from the one row a page always returns.
+        const auto maxBytes = searchByteBudget(params);
+        const size_t share = maxBytes / (2 * queries.size());
+        size_t used = 0, index = 0;
+        for (const auto &query : queries) {
+            auto single = params;
+            single.erase("queries");
+            single["query"] = query;
+            const size_t reserved = share * (queries.size() - ++index);
+            if (maxBytes)
+                single["maxBytes"] = std::max<size_t>({maxBytes - std::min(used + reserved, maxBytes), share, 1});
+            auto result = searchText(single, cancellation);
+            if (result.contains("budget"))
+                used += result.at("budget").value("usedBytes", size_t(0));
+            truncated |= result.value("truncated", false);
+            allIndexed &= result.value("engine", std::string()) == "index";
+            Json block = {{"query", query}, {"engine", result.value("engine", std::string())},
+                          {"truncated", result.value("truncated", false)}, {"matches", result.at("matches")},
+                          {"nextCursor", result.value("nextCursor", Json())}};
+            for (const auto *key : {"files", "coverage", "fallback"})
+                if (result.contains(key))
+                    block[key] = result.at(key);
+            if (result.contains("budget") && result.at("budget").value("reached", false))
+                block["budgetReached"] = true;
+            results.push_back(std::move(block));
+        }
+        Json batch = {{"results", results}, {"matches", Json::array()}, {"truncated", truncated},
+                      {"engine", allIndexed ? "index" : "scan"}};
+        if (maxBytes)
+            batch["budget"] = {{"maxBytes", maxBytes}, {"usedBytes", used}};
+        return batch;
+    }
+    if (!params.contains("query"))
+        throw NativeError(ErrorCode::InvalidParams, "query or queries is required");
+    const auto engine = params.value("engine", std::string("auto"));
+    if (engine != "auto" && engine != "index" && engine != "scan")
+        throw NativeError(ErrorCode::InvalidParams, "engine must be auto, index or scan");
+    if (params.at("query").get<std::string>().empty())
+        return {{"matches", Json::array()}, {"truncated", false}, {"engine", "none"}, {"nextCursor", nullptr}};
+    std::string fallback;
+    if (engine != "scan") {
+        if (codeIndex_.disabled())
+            fallback = "index-disabled";
+        else {
+            std::map<std::string, std::string> unsaved;
+            bool pagedDirty = false;
+            {
+                std::lock_guard guard(mutex_);
+                for (const auto &[path, doc] : documents_)
+                    if (doc.dirty)
+                        unsaved[path] = doc.text;
+                for (const auto &[path, doc] : untitled_)
+                    unsaved[path] = doc.text;
+                for (const auto &[path, doc] : pagedDocuments_)
+                    pagedDirty |= doc.knownDirty;
+            }
+            if (pagedDirty)
+                fallback = "unsaved-paged-documents";
+            else {
+                const bool usable = engine == "index"
+                                        ? codeIndex_.ready(std::chrono::milliseconds(std::clamp<int64_t>(
+                                                               params.value("waitMs", int64_t(600000)), 0, 3600000)),
+                                                           cancellation)
+                                        : waitForIndex(params, cancellation);
+                if (usable)
+                    return codeIndex_.searchText(params, unsaved, cancellation);
+                fallback = "index-not-ready";
+            }
+        }
+        if (engine == "index")
+            throw NativeError(ErrorCode::BackendUnavailable, "Project index unavailable: " + fallback,
+                              {{"index", codeIndex_.status()}});
+    }
+    if (params.contains("cursor") && !params.at("cursor").is_null())
+        throw NativeError(ErrorCode::InvalidParams, "cursor pagination requires the project index (engine index/auto)");
+    auto result = searchTextScan(params, cancellation);
+    result["engine"] = "scan";
+    if (!fallback.empty())
+        result["fallback"] = fallback;
+    if (engine != "scan") {
+        const auto status = codeIndex_.status();
+        Json brief = {{"phase", status.at("phase")}, {"ready", status.at("ready")}};
+        if (status.contains("progress"))
+            brief["progress"] = status.at("progress");
+        if (status.contains("disabledReason"))
+            brief["disabledReason"] = status.at("disabledReason");
+        if (!status.at("ready").get<bool>() && !status.contains("disabledReason"))
+            brief["advice"] = "The project index is being prepared (see progress.etaSeconds). This result is a full "
+                              "ripgrep scan; for many searches, wait with index_prepare or retry search_text later "
+                              "rather than scanning with shell tools.";
+        result["index"] = std::move(brief);
+    }
+    result["coverage"] = {{"complete", !result.value("truncated", false) && !result.value("timedOut", false) &&
+                                           !result.value("cancelled", false)},
+                          {"filteredByIndex", false}};
+    result["nextCursor"] = nullptr;
+    if (params.value("output", std::string("matches")) == "files") {
+        std::map<std::string, Json> files;
+        for (const auto &match : result.at("matches")) {
+            auto &entry = files[match.at("path").get<std::string>()];
+            if (entry.is_null())
+                entry = {{"path", match.at("path")}, {"matches", 0}, {"firstLine", match.at("line")},
+                         {"moreInFile", false}, {"symbols", Json::array()}};
+            entry["matches"] = entry["matches"].get<int>() + 1;
+        }
+        result["files"] = Json::array();
+        for (auto &[path, entry] : files)
+            result["files"].push_back(std::move(entry));
+        result["matches"] = Json::array();
+    }
+    if (const auto maxBytes = searchByteBudget(params)) {
+        size_t used = 0;
+        const bool cut = keepWithinBudget(result[result.contains("files") ? "files" : "matches"], maxBytes, used);
+        if (cut) {
+            result["truncated"] = true;
+            result["coverage"]["complete"] = false;
+        }
+        result["budget"] = {{"maxBytes", maxBytes}, {"usedBytes", used}, {"reached", cut}};
+    }
+    return result;
+}
+// engine=auto: an explicit waitMs wins. Otherwise wait 30 s for the reload of a persisted
+// generation. A first build is waited for (up to 90 s, when it announces at most 2 minutes
+// left) only in an agent service that started it at launch (CYCODE_INDEX_AT_START=1): an
+// interactive host such as the IDE starts the build in the background and searches with
+// ripgrep meanwhile, as before the index existed.
+bool Engine::waitForIndex(const Json &params, const std::atomic<bool> *cancellation) {
+    if (params.contains("waitMs"))
+        return codeIndex_.ready(
+            std::chrono::milliseconds(std::clamp<int64_t>(params.value("waitMs", int64_t(0)), 0, 3600000)), cancellation);
+    if (codeIndex_.persisted())
+        return codeIndex_.ready(std::chrono::seconds(30), cancellation);
+    if (!CodeIndex::startsAtLaunch())
+        return codeIndex_.ready(std::chrono::milliseconds(0), cancellation);
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(90);
+    while (!codeIndex_.ready(std::chrono::seconds(1), cancellation)) {
+        if (cancellation && cancellation->load())
+            return false;
+        const auto status = codeIndex_.status();
+        const auto phase = status.value("phase", std::string());
+        if (phase == "failed" || phase == "disabled" || std::chrono::steady_clock::now() >= deadline)
+            return false;
+        if (status.contains("progress") && status.at("progress").contains("etaSeconds") &&
+            status.at("progress").at("etaSeconds").get<double>() > 120)
+            return false;
+    }
+    return true;
+}
+Json Engine::indexOperation(const std::string &method, const Json &params, const std::atomic<bool> *cancellation) {
+    if (method == "index.status")
+        return codeIndex_.status();
+    if (method == "index.prepare")
+        return codeIndex_.prepare(params, cancellation);
+    if (method == "index.outline" || method == "index.read") {
+        // One workspace file: the live buffer when it is open, otherwise disk.
+        struct Loaded {
+            std::string key, text;
+            Json source;
+            uint64_t revision = 0;
+        };
+        auto load = [&](const std::string &path) {
+            Loaded doc;
+            const auto file = resolve(path);
+            doc.key = pathUtf8(file.lexically_relative(root_));
+            doc.source = "disk";
+            {
+                std::lock_guard guard(mutex_);
+                if (const auto found = documents_.find(doc.key); found != documents_.end()) {
+                    doc.text = found->second.text;
+                    doc.revision = found->second.revision;
+                    doc.source = found->second.dirty ? "unsaved-buffer" : "open-document";
+                }
+            }
+            if (doc.source == "disk") {
+                std::error_code ec;
+                if (!std::filesystem::is_regular_file(file, ec))
+                    throw NativeError(ErrorCode::FileSystemError, "Not a workspace file: " + path);
+                const auto size = std::filesystem::file_size(file, ec);
+                if (ec || size > 16 * 1024 * 1024)
+                    throw NativeError(ErrorCode::CapacityExceeded, "Reads are limited to files of 16 MiB");
+                std::ifstream input(file, std::ios::binary);
+                doc.text.assign(std::istreambuf_iterator<char>(input), {});
+            }
+            return doc;
+        };
+        auto annotate = [](Json result, const Loaded &doc) {
+            result["textSource"] = doc.source;
+            if (doc.revision)
+                result["revision"] = doc.revision;
+            return result;
+        };
+        if (method == "index.outline") {
+            const auto doc = load(params.at("path").get<std::string>());
+            return annotate(outlineText(doc.key, doc.text, size_t(std::clamp(params.value("limit", 2000), 1, 20000))), doc);
+        }
+        // index.read: one range, several ranges, or the body of a declaration found by the index.
+        size_t budget = 1500; // numbered lines returned by one call
+        auto readRange = [&](const std::string &path, int64_t line, int64_t count) {
+            const auto doc = load(path);
+            const auto take = std::min<size_t>(size_t(std::clamp<int64_t>(count, 1, 600)), budget);
+            if (!take)
+                throw NativeError(ErrorCode::CapacityExceeded, "index.read returns at most 1500 lines per call");
+            auto result = readNumberedLines(doc.key, doc.text, size_t(std::max<int64_t>(1, line)), take);
+            budget -= std::min<size_t>(budget, result.at("endLine").get<size_t>() + 1 - result.at("startLine").get<size_t>());
+            return annotate(std::move(result), doc);
+        };
+        if (params.contains("symbol")) {
+            const auto query = params.at("symbol").get<std::string>();
+            if (query.empty() || query.size() > 256)
+                throw NativeError(ErrorCode::InvalidParams, "symbol must be a name or Scope::Name of at most 256 bytes");
+            const auto wait = std::chrono::milliseconds(std::clamp<int64_t>(params.value("waitMs", int64_t(600000)), 0, 3600000));
+            if (codeIndex_.disabled() || !codeIndex_.ready(wait, cancellation))
+                throw NativeError(ErrorCode::BackendUnavailable, "Project index is not ready; retry or call index.prepare",
+                                  {{"index", codeIndex_.status()}});
+            Json lookup = {{"query", query}, {"limit", 20}};
+            if (params.contains("path"))
+                lookup["paths"] = Json::array({params.at("path")});
+            const auto found = codeIndex_.symbols(lookup, cancellation).at("symbols");
+            auto name = query;
+            for (const auto *separator : {"::", "."})
+                if (const auto at = name.rfind(separator); at != std::string::npos)
+                    name = name.substr(at + std::strlen(separator));
+            // Prefer a definition with a body whose name is exactly the requested one.
+            const Json *best = nullptr;
+            int bestRank = -1;
+            for (const auto &row : found) {
+                const bool exact = row.at("name").get<std::string>() == name;
+                const bool body = row.at("endLine").get<int64_t>() > row.at("line").get<int64_t>();
+                const int rank = (exact ? 4 : 0) + (body ? 2 : 0) + (row.value("declaration", false) ? 0 : 1);
+                if (rank > bestRank) {
+                    best = &row;
+                    bestRank = rank;
+                }
+            }
+            if (!best)
+                throw NativeError(ErrorCode::InvalidParams, "No indexed declaration matches " + query);
+            const auto before = std::clamp<int64_t>(params.value("before", 3), 0, 50);
+            const auto first = std::max<int64_t>(1, best->at("line").get<int64_t>() - before);
+            const auto last = best->at("endLine").get<int64_t>();
+            auto result = readRange(best->at("path").get<std::string>(), first,
+                                    std::clamp<int64_t>(last - first + 1, 1, params.value("count", int64_t(600))));
+            result["symbol"] = *best;
+            Json others = Json::array();
+            for (const auto &row : found)
+                if (&row != best && others.size() < 5)
+                    others.push_back({{"name", row.at("name")}, {"kind", row.at("kind")}, {"path", row.at("path")},
+                                      {"line", row.at("line")}});
+            result["otherCandidates"] = others;
+            return result;
+        }
+        if (params.contains("ranges")) {
+            const auto &ranges = params.at("ranges");
+            if (!ranges.is_array() || ranges.empty() || ranges.size() > 20)
+                throw NativeError(ErrorCode::InvalidParams, "ranges must list 1 to 20 {path, line, count} objects");
+            // One unreadable range is reported in place; it does not discard the other reads.
+            Json reads = Json::array();
+            size_t failed = 0;
+            for (const auto &range : ranges) {
+                try {
+                    reads.push_back(readRange(range.at("path").get<std::string>(), range.value("line", int64_t(1)),
+                                              range.value("count", int64_t(120))));
+                } catch (const std::exception &error) {
+                    ++failed;
+                    reads.push_back({{"path", range.value("path", std::string())}, {"error", error.what()}});
+                }
+            }
+            if (failed == ranges.size())
+                throw NativeError(ErrorCode::InvalidParams, "No requested range could be read",
+                                  {{"reads", reads}});
+            return {{"reads", reads}, {"remainingLineBudget", budget}, {"failedRanges", failed}};
+        }
+        return readRange(params.at("path").get<std::string>(), params.value("line", int64_t(1)),
+                         params.value("count", int64_t(120)));
+    }
+    if (method == "index.symbols") {
+        const auto wait = std::chrono::milliseconds(
+            std::clamp<int64_t>(params.value("waitMs", int64_t(600000)), 0, 3600000));
+        if (codeIndex_.disabled())
+            throw NativeError(ErrorCode::BackendUnavailable, "Project index disabled", {{"index", codeIndex_.status()}});
+        if (!codeIndex_.ready(wait, cancellation))
+            throw NativeError(ErrorCode::BackendUnavailable,
+                              "Project index is not ready; call index.prepare or retry with a larger waitMs",
+                              {{"index", codeIndex_.status()}});
+        return codeIndex_.symbols(params, cancellation);
+    }
+    throw NativeError(ErrorCode::UnsupportedOperation, "Unknown index operation");
+}
+Json Engine::searchTextScan(const Json &params, const std::atomic<bool> *cancellation) {
     auto query = params.at("query").get<std::string>();
     if (query.empty())
         return {{"matches", Json::array()}, {"truncated", false}};
     auto limit = std::clamp(params.value("limit", 500), 1, 5000);
     bool sensitive = params.value("caseSensitive", false);
     bool regex = params.value("regex", false);
+    // runtime/ and data/ are excluded only at the workspace root; nested folders with
+    // those names are ordinary project content.
     std::vector<std::string> args{"rg", "--json", "--hidden", "--no-require-git",
-                                  "-g", "!.git",  "-g",       "!runtime",
-                                  "-g", "!data",  "-g",       "!.cycode"};
+                                  "-g", "!.git",  "-g",       "!/runtime",
+                                  "-g", "!/data", "-g",       "!.cycode"};
     if (!sensitive)
         args.push_back("--ignore-case");
     if (!regex)
         args.push_back("--fixed-strings");
-    args.insert(args.end(), {"--", query, "."});
+    if (params.contains("maxPerFile"))
+        args.insert(args.end(), {"--max-count", std::to_string(std::clamp(params.value("maxPerFile", 1000), 1, 5000))});
+    if (params.contains("extensions"))
+        for (const auto &extension : params.at("extensions")) {
+            auto value = extension.get<std::string>();
+            if (value.find_first_of("*?[]{}!/\\") != std::string::npos || value.size() > 32)
+                throw NativeError(ErrorCode::InvalidParams, "extensions must be plain file extensions");
+            if (!value.starts_with("."))
+                value.insert(value.begin(), '.');
+            args.insert(args.end(), {"--iglob", "*" + value});
+        }
+    args.insert(args.end(), {"--", query});
+    if (params.contains("paths") && !params.at("paths").empty()) {
+        for (const auto &prefix : params.at("paths"))
+            args.push_back(pathUtf8(resolve(prefix.get<std::string>()).lexically_relative(root_)));
+    } else
+        args.push_back(".");
+    const ForegroundScan foreground(codeIndex_);
     auto result = runProcess(args, root_, std::chrono::seconds(15), 8 * 1024 * 1024, cancellation);
     if (result.cancelled)
         return {{"matches", Json::array()}, {"truncated", false}, {"cancelled", true}};
@@ -1218,6 +1667,9 @@ Json Engine::dispatch(const std::string &method, const Json &params) {
         return files(params);
     if (method == "search.text")
         return searchText(params);
+    if (method == "index.status" || method == "index.prepare" || method == "index.symbols" ||
+        method == "index.outline" || method == "index.read")
+        return indexOperation(method, params);
     if (method == "plugins.list")
         return plugins_.describe();
     if (method == "plugins.configure") {

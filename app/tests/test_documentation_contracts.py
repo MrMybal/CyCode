@@ -23,6 +23,20 @@ class DocumentationContracts(unittest.TestCase):
     def test_current_guides_have_reviewed_coverage(self):
         self.assertTrue(VERIFY.verify_source_coverage())
 
+    def test_every_operation_has_a_french_api_description(self):
+        # The manual generator (run by the IDE release build) refuses a catalogue with an
+        # untranslated or stale operation; catch it here instead of in the IDE build.
+        operations = {op['id'] for op in json.loads((APP / 'CyTool.json').read_text('utf-8'))['operations']}
+        translated = json.loads((APP / '.CyDocBuild/api-fr.json').read_text('utf-8'))
+        self.assertEqual(set(translated), operations)
+        self.assertTrue(all(isinstance(text, str) and text.strip() for text in translated.values()))
+        # Each operation page is filed under the API group named by its id prefix; a prefix
+        # without a group page fails the CyDoc navigation check ("Missing navigation parent").
+        spec = importlib.util.spec_from_file_location('cycode_documentation_api', APP / '.CyDocBuild/api.py')
+        api = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(api)
+        self.assertEqual({identity.split('_')[0] for identity in operations} - set(api.GROUPS), set())
+
     def test_changed_source_requires_review_without_rewriting_metadata(self):
         source = self.app / 'Docs/Guide.md'
         source.write_text('Reviewed guide.\n', encoding='utf-8')
