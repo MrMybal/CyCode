@@ -1,5 +1,29 @@
 # Validation — 2026-11-08
 
+## 2026-11-12 — compact MCP, private clangd and CyUI Manager
+
+Windows x64 Release production builds of Core/CLI and the separate CyUI Manager
+succeed with BUILD_TESTING=OFF. Manager selects only CyUI Core, at the pinned
+revision in apps/CyCodeManager/cyui-source.lock.json. No project UI or native test
+executable is launched for this change; Linux/macOS and visual/keyboard/DPI
+acceptance of the new host remain pending. No Actions workflow is run or enabled.
+
+Process-free Python/SDK cases cover the actual official MCP catalogue projection,
+canonical schema/permission/job-owner enforcement, reviewed-plan conflicts and
+expiry, client ownership/refresh, archive path guards, preferences and update
+orchestration. The official adapter advertises 38 versus 273 tools, serialized
+as 108,132 versus 1,570,677 bytes (93.1% less). This is discovery payload evidence,
+not a new model-token, task-latency or semantic-quality benchmark.
+
+The official clangd 23.1.0 Windows archive passes pinned size/SHA-256 verification.
+A private runtime-only integration extracts and verifies all 354 files
+(101,011,414 bytes), retains resource headers/license, reuses the installation and
+refuses a modified resource while preserving the current selection. It changes
+no PATH, registry, installed Core or project. No clangd/Core binary is executed.
+Read-only antivirus observations report no new detection during these production
+build/data steps; that is not a security certification. No other chat's IDE
+interface work is part of this change.
+
 ## 2026-11-11 — embedded service lifecycle access
 
 `Bridge::serviceStatus() const` now exposes the existing project service's

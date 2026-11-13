@@ -13,7 +13,7 @@
       "kind": "developer-reference",
       "target": "core-agents#connect",
       "legacyId": "reference-app-docs-agents",
-      "sourceSha256": "72f0eb7369f24ed319a1454c4c2be44cebc304d33fdf09516b670b244e2a7151"
+      "sourceSha256": "5c224e5f42f92ae7ed2d4d3953fc8eacd95485b0b28d1bf7f0f459749ee4fcaf"
     },
     {
       "source": "Docs/AnalysisProgress.md",
@@ -41,7 +41,7 @@
       "kind": "user-workflow",
       "target": "build#configure",
       "legacyId": "reference-app-docs-build",
-      "sourceSha256": "84789f2f319e973d89f7f13d73da310b607a0ca030fb98ce0a14142f784ae250"
+      "sourceSha256": "9462003ed6fc5e43ea5cfed047bfcd3833ac7c51444952740b88c518afe71048"
     },
     {
       "source": "Docs/BuildCancellation.md",
@@ -118,14 +118,14 @@
       "kind": "developer-reference",
       "target": "core-installation#distribution",
       "legacyId": "reference-app-docs-coreinstallation",
-      "sourceSha256": "a0c86d1ff0db6a2bb010887f40975a0a27f3f95c0ea9e91bc1857e8a4907b139"
+      "sourceSha256": "21339df22838e26bef655b7183889b64ea333ab275accc716e2e77bedc67d519"
     },
     {
       "source": "Docs/CoreManager.md",
       "kind": "user-workflow",
       "target": "core-manager#agents",
       "legacyId": "reference-app-docs-coremanager",
-      "sourceSha256": "506b6a1806991cf4ddb38446338720c7723da2f6a84d3897161d43119f3eebcb"
+      "sourceSha256": "e721246baef31b7d25160c3eb35b84b3fff9370ee9a0939b8a3532655f50996a"
     },
     {
       "source": "Docs/CoreQuality.md",
@@ -349,7 +349,7 @@
       "kind": "user-workflow",
       "target": "mcp#connection",
       "legacyId": "reference-app-docs-mcp",
-      "sourceSha256": "e018508bae87b00fe47f57ecbcb627eba39f4da196c212ce7eb0237c3736ab4c"
+      "sourceSha256": "1fb457ba6bd0bb21394ef1513bb25568b02bf89993c5bee3231e246137bc26cf"
     },
     {
       "source": "Docs/MSBuild.md",
@@ -657,7 +657,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "321f91a96227882dbba944fdd8ff4864d5040a658d17009b2678da275d20509e"
+      "sourceSha256": "19311a8392c457e13b3ef56c9eb90f3e6e510eb29535579795dcd3e6513be0f9"
     },
     {
       "source": "Docs/VersionControl.md",

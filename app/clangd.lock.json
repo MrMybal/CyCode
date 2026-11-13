@@ -1,0 +1,9 @@
+{
+  "version": "23.1.0",
+  "platform": "windows-x64",
+  "source": "https://github.com/clangd/clangd/releases/tag/23.1.0",
+  "license": "Apache-2.0 WITH LLVM-exception",
+  "url": "https://github.com/clangd/clangd/releases/download/23.1.0/clangd-windows-23.1.0.zip",
+  "size": 29690805,
+  "sha256": "23412a240756a162e7b98a282f36aa2a23a88db5ce16a0cbc4fef7253768c810"
+}

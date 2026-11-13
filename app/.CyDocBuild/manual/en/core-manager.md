@@ -5,8 +5,54 @@ description: Install skills, manage client connections and update without replac
 section: API and extensions
 parent: core-installation
 order: 263
-revision: 1
+revision: 2
 ---
+
+The current source replaces the old Win32 form with a standalone **CyUI Core**
+desktop host. Agents/skills, dependencies and updates have separate views.
+English/French, five themes, compact/comfortable density and DPI use CyUI's shared
+controls. Preferences are retained per installation. Core itself remains UI-free.
+
+## Private dependencies {#dependencies}
+
+**Dependencies** detects clangd, ripgrep, Git, CMake, .NET, clang-tidy and lldb-dap
+without executing them. A missing clangd opens this view on the first snapshot.
+Other optional tools link to their official downloads; their installers are not
+silently run. Compilers/build tools remain necessary for the corresponding tasks.
+
+**Install private clangd** offers the official Windows x64 release **23.1.0**:
+29,690,805 bytes downloaded, 101,011,414 bytes extracted, including built-in
+headers and `LICENSE.TXT`. The executable alone is 51,872,768 bytes. Review the
+source, destination and Apache-2.0 WITH LLVM-exception license before confirming.
+CyToolsCore downloads with pinned size/SHA-256, resumption, progress and cancellation.
+Archive paths are validated before extraction; files are verified before selection.
+
+The destination is `<CyCodeCore>/dependencies/clangd/23.1.0/`, beside `versions/`.
+`dependencies/clangd/current.json` selects an immutable version, so updating Core
+retains the tool. No global PATH, registry or existing LLVM installation changes.
+Explicit `CYCODE_CLANGD` overrides retain priority; otherwise native Core prefers
+this private selection before bundled/PATH/system locations. Reload MCP clients
+after installing/selecting a different version. `language_status` now distinguishes
+`executablePresent`/`requiresInstallation` from an idle, lazily started backend.
+
+## Compact MCP discovery {#mcp-profile}
+
+New/refreshed managed connections default to **Code (compact)**. It advertises
+16 common code operations, one `op_core_invoke` gateway and 21 official SDK
+controls: **38 tools instead of 273**. Choose **Full catalogue** for existing
+clients requiring individual names for all 252 native operations.
+
+For an unadvertised capability, read `cy_list_operations` once, then fetch only
+its exact `cy_describe_operation` schema. Call `op_core_invoke` with
+`parameters: {operationId: "<canonical-id>", parameters: {...}}`. The official
+SDK validates the actual operation's schema, permissions, resources and job owner;
+the gateway grants no extra permission. Reuse advertised/discovered schemas and
+avoid repeated complete discovery and speculative polling. `CYCODE_MCP_PROFILE`
+or `--mcp-profile code|full` selects the presentation without changing native APIs.
+
+With the pinned official SDK, serialized tool metadata measures **108,132 bytes**
+for Code versus **1,570,677 bytes** for Full (93.1% less). These are byte counts,
+not model token counts or a new agent speed benchmark.
 
 ## Agents and skills {#agents}
 
@@ -103,11 +149,13 @@ features do not implement another editor, semantic engine or SDK scheduler.
 
 ## Verification and limits {#validation}
 
-The GUI targets Windows and follows system controls, keyboard focus and DPI.
-Source/file contracts, owned-window smoke checks and production packaging are
+The CyUI desktop host currently targets Windows/Direct3D 11 and uses CyUI keyboard
+navigation, theme roles and DPI-scaled dimensions. Current Windows production
+compilation and process-free SDK/file tests are
 separate from acceptance in each agent application. Claude/Cursor/Copilot/Gemini
 live connections and Linux/macOS management windows are not claimed as tested.
-Core's native runtime/desktop validation retains its existing provenance.
+Visual/runtime acceptance of the new UI is pending. Core's earlier native
+runtime/desktop validation retains its original provenance.
 
 ## Client references {#references}
 

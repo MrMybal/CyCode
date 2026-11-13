@@ -362,7 +362,39 @@ without copying CyUI widgets. Some optional CyUI decorations still consult that
 Windows-only state and remain omitted outside Windows. Do not represent that
 library limit as complete cross-platform icon parity.
 
-## Redistributable MCP runtime
+## Standalone CyUI Manager
+
+The Core stays headless. Build the separate Windows desktop target with:
+
+```text
+python app/scripts/build_manager.py --cyui-source PATH_TO_CLEAN_CYUI --dependencies PATH_TO_CORE_DEPS --build runtime/manager-build
+```
+
+`--cmake PATH_TO_CMAKE` supports a compiler installation outside PATH. Without
+`--cyui-source`, the helper clones the exact revision from
+`apps/CyCodeManager/cyui-source.lock.json` into the dependency cache, using existing
+Git authentication. It never resets an existing checkout. Only `CyUI::Core` is
+selected; Demo, Audio, Gallery and tests are off. A single vendored Dear ImGui
+target is provided through `CYUI_IMGUI_TARGET`; Win32/DX11 use system libraries.
+No CyUI/ImGui dependency enters `cycode_core` or `cycode_cli`.
+
+Standalone packaging additionally requires:
+
+```text
+python app/scripts/package_core.py --revision SOURCE_SHA --executable PATH_TO_CLI --build PATH_TO_CORE_BUILD --manager-executable runtime/manager-build/Release/CyCodeManager.exe --cyui-source PATH_TO_CLEAN_CYUI --mcp-bundle PATH_TO_VERIFIED_MCP_BUNDLE --tools-root PATH_TO_VERIFIED_TOOLS --output runtime/core-package
+```
+
+Add `--installer` to build Setup locally. Packaging includes the same native
+Manager and CyUI/ImGui/font notices in ZIP and Setup. The dependency installer
+lock is `app/clangd.lock.json`; clangd is downloaded only after confirmation in
+Manager, outside immutable Core payloads. No GitHub Actions are needed or enabled.
+
+Process-free checks can run with the bundled SDK interpreter and an explicit
+`app/tests` entry on `sys.path`: `test_mcp_profile`, `test_core_dependencies`,
+`test_manager_backend`, `test_core_manager`, `test_core_manager_updates` and
+`test_core_updates`. They do not launch Core, a compiler fixture, client or Setup.
+
+## Redistributable MCP runtime (authoring)
 
 The Windows release packager requires a verified app-owned runtime under
 runtime/mcp-bundles/<lock fingerprint>. It never copies an existing venv or

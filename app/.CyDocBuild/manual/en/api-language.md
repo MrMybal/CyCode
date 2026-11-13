@@ -25,7 +25,7 @@ These contracts describe the native service exposed by the official SDK/MCP inte
 - [`language_configure`](doc:operation-language-configure-language-configure) — Enable, restart or disable a built-in or plugin language server in this trusted workspace.
 - [`language_preferences`](doc:operation-language-preferences-language-preferences) — Read and refresh per-workspace language preferences from application-owned local storage.
 - [`language_preferences_forget`](doc:operation-language-preferences-forget-language-preferences-forget) — Forget one saved language preference with an expected revision.
-- [`language_status`](doc:operation-language-status-language-status) — Inspect all shared language servers, availability, advertised methods and published UTF-16 diagnostics.
+- [`language_status`](doc:operation-language-status-language-status) — Inspect shared language servers without starting them.
 - [`language_highlight`](doc:operation-language-highlight-language-highlight) — Read semantic color classifications from the shared language server and current live document.
 - [`language_complete`](doc:operation-language-complete-language-complete) — Request completion items from live buffers.
 - [`language_completion_resolve`](doc:operation-language-completion-resolve-language-completion-resolve) — Resolve an item issued by language_complete using the actual server.

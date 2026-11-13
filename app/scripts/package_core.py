@@ -25,7 +25,7 @@ def read_file(path, limit=64 * 1024 * 1024):
     return path.read_bytes()
 
 
-def collect(root, bundle, *, agents_only=False, executable=None, build=None, output=None, tools_root=None, documentation=None):
+def collect(root, bundle, *, agents_only=False, executable=None, build=None, output=None, tools_root=None, documentation=None, manager_executable=None, cyui_source=None):
     if not agents_only and (executable is None or not executable.is_file()):
         raise ValueError('The existing production Core is missing. Packaging never rebuilds or substitutes a binary.')
     entries = {}
@@ -33,7 +33,9 @@ def collect(root, bundle, *, agents_only=False, executable=None, build=None, out
              'app/tool.py', 'app/core_host.py', 'app/core_updates.py', 'app/contracts.py', 'app/CyTool.json',
              'app/MCPMethods.json', 'app/requirements.txt', 'app/LICENSE-CyToolsCore.txt',
              'app/agent_config.py', 'app/agent_host.py', 'app/core_agents.py',
-             'app/core_installation.py', 'app/manager_window.py', 'apps/CyCodeManager/main.py',
+             'app/core_installation.py', 'app/manager_window.py', 'app/manager_backend.py',
+             'app/core_dependencies.py', 'app/clangd.lock.json', 'app/mcp_profile.py', 'apps/CyCodeManager/main.py',
+             'apps/CyCodeManager/cyui-source.lock.json',
              'app/THIRD_PARTY_NOTICES.md', 'app/mcp-runtime.lock.json',
              'app/scripts/install_core_agents.py', 'apps/CyCodeUpdater/main.py', 'app/Docs/Agents.md',
              'app/Docs/CoreInstallation.md', 'app/Docs/CoreManager.md', 'app/Docs/WindowsSecurity.md',
@@ -61,6 +63,19 @@ def collect(root, bundle, *, agents_only=False, executable=None, build=None, out
             if pe_machine(stream) != 0x8664:
                 raise ValueError('A Windows x64 production Core is required')
         entries['cycode_cli.exe'] = read_file(executable)
+        if manager_executable is None or cyui_source is None:
+            raise ValueError('Build the CyUI Manager and supply --manager-executable and --cyui-source')
+        ui_lock = json.loads(read_file(root / 'apps/CyCodeManager/cyui-source.lock.json'))
+        actual = subprocess.check_output(['git', '-c', 'safe.directory=' + cyui_source.resolve().as_posix(),
+            '-C', str(cyui_source), 'rev-parse', 'HEAD'], text=True).strip()
+        if actual != ui_lock['revision']:
+            raise ValueError('Manager notices require the exact pinned CyUI source')
+        with manager_executable.open('rb') as stream:
+            if pe_machine(stream) != 0x8664: raise ValueError('A Windows x64 Manager is required')
+        entries['CyCodeManager.exe'] = read_file(manager_executable)
+        for source, target in [('LICENSE', 'CyUI.txt'), ('third_party/imgui/LICENSE.txt', 'Dear-ImGui.txt'),
+                               ('third_party/jetbrains-mono/OFL.txt', 'JetBrains-Mono.txt')]:
+            entries['apps/CyCodeManager/licenses/' + target] = read_file(cyui_source / source)
         if build is None:
             raise ValueError('The production build directory is required for its MSVC runtime')
         entries.update(system_runtime(build, 'Release', output))
@@ -144,6 +159,8 @@ def main():
     parser.add_argument('--iscc', type=Path)
     parser.add_argument('--tools-root', type=Path, help='Existing verified ripgrep installation; never downloaded by this command')
     parser.add_argument('--documentation', type=Path, help='Verified complete local CyDoc export')
+    parser.add_argument('--manager-executable', type=Path, help='Built production CyUI Manager')
+    parser.add_argument('--cyui-source', type=Path, help='Pinned Manager CyUI source, for license notices')
     args = parser.parse_args()
     if args.agents_only and args.installer:
         parser.error('--installer requires the real native Core')
@@ -156,7 +173,8 @@ def main():
     lock = json.loads(read_file(ROOT / 'app/mcp-runtime.lock.json'))
     bundle = args.mcp_bundle or ROOT / 'runtime/mcp-bundles' / lock_digest(lock)
     entries = collect(ROOT, bundle, agents_only=args.agents_only, executable=args.executable,
-                      build=args.build, output=args.output, tools_root=args.tools_root, documentation=args.documentation)
+                      build=args.build, output=args.output, tools_root=args.tools_root, documentation=args.documentation,
+                      manager_executable=args.manager_executable, cyui_source=args.cyui_source)
     record = manifest(entries, args.version, args.revision, agents_only=args.agents_only)
     entries['core-distribution.json'] = (json.dumps(record, indent=2) + '\n').encode('utf-8')
     entries['INSTALL.md'] = entries['app/Docs/CoreInstallation.md']

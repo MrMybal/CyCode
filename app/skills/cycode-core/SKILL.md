@@ -16,9 +16,15 @@ Find the configured `cycode_core` server (the client may prefix its tool names).
 If its tools are unavailable, read `references/connection.md`; do not invent
 calls, launch a replacement host implicitly or report the service as connected.
 
-Read the real `cy_describe`, `cy_list_operations`, `cy_describe_operation` and
-`cy_can_run` results before using an operation. Start with `op_service_status`
-and `op_language_status`. Server readiness does not mean that every source is
+Use the schemas already advertised by the connected tools. Do not repeatedly
+fetch the full catalogue. The default code profile exposes common operations;
+call `cy_list_operations` once only when looking for another capability, then
+`cy_describe_operation` for that operation's exact contract. Advanced operations
+remain accessible through `op_core_invoke(parameters={operationId, parameters})`;
+the real SDK enforces the selected operation's permissions and resources.
+Use `cy_can_run` for an actual dependency/resource doubt, not as an obligatory
+extra call before every read. Reuse discovered schemas for this connection.
+Start with `op_service_status` and `op_language_status`. Server readiness does not mean that every source is
 indexed. A registered tool does not prove its compiler/server is installed.
 An idle/lazy backend with available:false has not necessarily failed: inspect its
 configured state and run an appropriate authorised compiler request before

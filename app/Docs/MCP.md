@@ -2,9 +2,14 @@
 
 ## Current native Core agent integration
 
-The current source contract exposes **243 native operations** through the real
-CyToolsCore SDK/MCP adapter. Three additions provide service status and semantic
-preparation/status; job ownership and cancellation remain SDK controls.
+The current source contract has **252 native operations** through the real
+CyToolsCore SDK/MCP adapter. The default **code** presentation advertises 16 common
+operations plus `op_core_invoke` and 21 SDK controls (38 tools); **full** retains
+all individual operation names (273 tools). Discovery is cached per connection;
+the compact index omits schemas until the selected `cy_describe_operation` call.
+Read [Core Manager](CoreManager.md#mcp-profile) for the gateway contract and
+`CYCODE_MCP_PROFILE` / `--mcp-profile code|full`. Jobs, permissions, canonical
+input/output validation and scheduling always remain in the real SDK.
 `app/core_host.py` can own one persistent production CLI without the IDE.
 Read [Agents.md](Agents.md) for startup, workflow and safety semantics;
 [the generated catalogue](../MCPMethods.json) contains every exact method and

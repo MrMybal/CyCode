@@ -100,7 +100,7 @@ class ManagerFiles(unittest.TestCase):
         self.assertEqual(len(self.manager.receipts()), len(clients) - 1)
 
     def test_refresh_changes_generation_preserves_permissions_and_unrelated_settings(self):
-        self.manager.apply(self.manager.prepare(['codex', 'cursor'], self.project, access='edit'))
+        self.manager.apply(self.manager.prepare(['codex', 'cursor'], self.project, access='edit', mcp_profile='full'))
         codex = self.project / '.codex/config.toml'
         codex.write_text('model="keep"\n' + codex.read_text(), encoding='utf-8')
         second = self.context(self.payload('0.1.5', 'b'))
@@ -108,6 +108,7 @@ class ManagerFiles(unittest.TestCase):
         server = tomllib.loads(codex.read_text())['mcp_servers']['cycode_core']
         self.assertIn(str(second.home), server['command'])
         self.assertEqual(server['env']['CYCODE_PERMISSIONS'], 'workspace.write,process.execute')
+        self.assertEqual(server['env']['CYCODE_MCP_PROFILE'], 'full')
         self.assertEqual(tomllib.loads(codex.read_text())['model'], 'keep')
         self.assertTrue(self.home.exists())
         self.assertTrue(list(self.state.rglob('*.before')))

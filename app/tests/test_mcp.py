@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 APP = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(APP))
 from tool import NativeClient, create_runtime
@@ -157,6 +158,11 @@ class NativeIntegration(unittest.TestCase):
         asyncio.run(scenario())
 
     def setUp(self):
+        # This opt-in native suite validates the complete canonical catalogue.
+        # The process-free compact-profile suite covers discovery/gateway guards.
+        self.profile_environment = patch.dict(os.environ, {'CYCODE_MCP_PROFILE': 'full'})
+        self.profile_environment.start()
+        self.addCleanup(self.profile_environment.stop)
         self.temporary = tempfile.TemporaryDirectory(prefix='cycode-mcp-')
         self.directory = Path(self.temporary.name)
         self.workspace = self.directory / 'workspace été test'

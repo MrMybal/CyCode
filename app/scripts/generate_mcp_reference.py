@@ -23,6 +23,8 @@ def catalogue():
         'source':'app/CyTool.json + app/contracts.py',
         'contractSha256':hashlib.sha256(json.dumps(operations,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
         'transport':'Official CyToolsCore MCP adapter; op_<id> submits a job, not a synchronous domain result.',
+        'mcpPresentation': {'default': 'code', 'full': 'All individual op_<id> tools.',
+            'code': 'Common individual tools plus op_core_invoke(parameters={operationId,parameters}) for other canonical operations. Fetch only the selected cy_describe_operation contract.'},
         'guide':'Docs/Agents.md','persistentSources':'Workspace paths are persistent native document references, never SDK temporary input files.',
         'discovery':['cy_describe','cy_list_operations','cy_describe_operation','cy_can_run'],
         'jobs':['cy_get_job','cy_cancel_job','cy_events'],

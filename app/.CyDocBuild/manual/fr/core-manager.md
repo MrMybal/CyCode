@@ -5,8 +5,57 @@ description: Installer le skill, gérer les connexions et mettre à jour sans re
 section: API et extensions
 parent: core-installation
 order: 263
-sourceRevision: 1
+sourceRevision: 2
 ---
+
+Le gestionnaire des sources actuelles utilise **CyUI Core** dans une application
+distincte du moteur. Il propose les vues agents/skills, dépendances et mises à
+jour, en anglais/français, avec cinq thèmes, deux densités et adaptation au DPI.
+Les préférences sont conservées par installation. Le Core reste sans interface.
+
+## Dépendances privées {#dependencies}
+
+La vue **Dépendances** détecte clangd, ripgrep, Git, CMake, .NET, clang-tidy et
+lldb-dap sans les exécuter. Si clangd est absent, elle s’ouvre au premier état
+chargé. Les autres outils facultatifs renvoient aux téléchargements officiels ;
+leurs installateurs ne sont pas lancés automatiquement.
+
+**Installer clangd pour Core** propose la version officielle Windows x64
+**23.1.0** : **29 690 805 octets** à télécharger et **101 011 414 octets** extraits,
+en-têtes intégrés et `LICENSE.TXT` compris. Le seul exécutable représente
+51 872 768 octets. Vérifier la source, la destination et accepter la licence
+Apache-2.0 WITH LLVM-exception avant de confirmer. CyToolsCore fournit le
+téléchargement vérifié en taille/SHA-256, la reprise, la progression et l’annulation.
+Les chemins de l’archive sont contrôlés avant extraction, les fichiers avant sélection.
+
+La destination est `<CyCodeCore>/dependencies/clangd/23.1.0/`, à côté de
+`versions/`. `dependencies/clangd/current.json` sélectionne une version conservée
+lors des mises à jour du Core. Aucun changement du PATH global, du registre ou
+des installations LLVM existantes. `CYCODE_CLANGD` reste prioritaire ; sinon le
+Core préfère cette version privée aux emplacements embarqués/PATH/système.
+Recharger les clients MCP après changement de version. `language_status` distingue
+désormais `executablePresent`/`requiresInstallation` d’un serveur en attente de
+démarrage à la première requête. Un compilateur reste nécessaire pour compiler.
+
+## Découverte MCP compacte {#mcp-profile}
+
+Les connexions nouvelles/actualisées utilisent **Code (compact)** : 16 opérations
+courantes, la passerelle `op_core_invoke` et 21 contrôles officiels du SDK, soit
+**38 outils au lieu de 273**. **Catalogue complet** conserve les noms individuels
+des 252 opérations pour les clients qui les exigent.
+
+Pour une capacité non annoncée, consulter une seule fois `cy_list_operations`,
+puis le schéma précis avec `cy_describe_operation`. Appeler `op_core_invoke` avec
+`parameters: {operationId: "<identifiant-canonique>", parameters: {...}}`.
+Le véritable SDK valide les paramètres, permissions, ressources et propriétaires
+de jobs de l’opération réelle. La passerelle n’ajoute aucun droit. Réutiliser les
+schémas déjà reçus et éviter les découvertes complètes répétées ou le polling
+spéculatif. Choisir `CYCODE_MCP_PROFILE` ou `--mcp-profile code|full` sans modifier
+l’API native.
+
+Avec le SDK épinglé, les métadonnées sérialisées représentent **108 132 octets**
+en mode Code contre **1 570 677 octets** en mode complet, soit 93,1 % de moins.
+Ce sont des octets, pas un nouveau résultat de mesure des tokens ou de la vitesse IA.
 
 ## Agents et skills {#agents}
 
@@ -101,11 +150,13 @@ ne crée pas de nouvel éditeur, moteur sémantique ou ordonnanceur SDK.
 
 ## Vérification et limites {#validation}
 
-La fenêtre Windows utilise les contrôles système, le focus clavier et le DPI.
-Tests de fichiers, contrôles de fenêtre et paquets de production sont distincts
+La nouvelle fenêtre Windows/Direct3D 11 utilise CyUI, sa navigation clavier, ses
+rôles de couleurs et ses dimensions adaptées au DPI. Compilation de production et
+tests de fichiers/SDK sans processus natif sont distincts
 de l’acceptation dans chaque application IA. Les connexions réelles des clients
 Claude/Cursor/Copilot/Gemini et les fenêtres Linux/macOS ne sont pas revendiquées
-comme testées. Les validations natives du moteur conservent leur provenance.
+comme testées. La validation visuelle et l’exécution de cette nouvelle interface
+restent à faire. Les anciennes validations natives conservent leur provenance.
 
 ## Références des clients {#references}
 

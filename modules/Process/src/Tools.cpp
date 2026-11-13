@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <fstream>
+#include <nlohmann/json.hpp>
 #include <sstream>
 #include <stdexcept>
 #ifdef _WIN32
@@ -125,6 +127,29 @@ std::string toolPath(const std::string &name) {
     if (override.is_absolute()) candidates.push_back(override);
     const auto filename = executableName(name);
     auto root = installationRoot();
+    if (name == "clangd") {
+        // Installation-scoped side-by-side tool versions survive Core updates.
+        // No global PATH/registry write and no recursive discovery on a query.
+        for (auto owned : {environment("CYCODE_CORE_HOME"), root}) {
+            if (!owned.is_absolute()) continue;
+            if (owned.parent_path().filename() == "versions") owned = owned.parent_path().parent_path();
+            const auto folder = owned / "dependencies/clangd";
+            const auto pointer = folder / "current.json";
+            std::error_code ec;
+            const auto bytes = fs::file_size(pointer, ec);
+            if (ec || bytes > 4096) continue;
+            try {
+                std::ifstream input(pointer, std::ios::binary);
+                const auto selected = nlohmann::json::parse(input);
+                const auto version = selected.value("version", std::string{});
+                const bool safe = !version.empty() && version.size() < 64 && version.front() != '.' && version.back() != '.' &&
+                    version.find("..") == std::string::npos && std::count(version.begin(), version.end(), '.') == 2 &&
+                    std::all_of(version.begin(), version.end(), [](unsigned char c) { return c == '.' || (c >= '0' && c <= '9'); });
+                if (selected.value("format", "") == "cycode-clangd/1" && safe)
+                    candidates.push_back(folder / version / "bin" / filename);
+            } catch (const std::exception &) { /* A broken selection never becomes a guessed path. */ }
+        }
+    }
     // Release archives keep their explicitly packaged tools outside the private
     // development runtime. Environment overrides still take precedence.
     if (!root.empty()) candidates.push_back(root / "tools" / filename);

@@ -11,8 +11,11 @@ CyCodeCore Manager shows the standalone distribution version.
 
 The Windows x64 portable package contains `cycode_cli.exe`, its MSVC runtime,
 verified ripgrep, isolated CPython/CyToolsCore/MCP, licences, exact method schemas
-and the `cycode-core` skill. Compilers, clangd, build tools and other language
-servers remain external prerequisites. Linking a Core does not install them.
+and the `cycode-core` skill. Compilers, build tools and other language servers
+remain prerequisites. The current source Manager adds reviewed private clangd
+installation under `<CyCodeCore>/dependencies/clangd/`, without changing Windows
+PATH or replacing LLVM. See [dependencies](CoreManager.md#dependencies) for sizes
+and semantics. Older published packages require an upgrade to gain this feature.
 The per-user Setup uses the same payload in a fresh versioned directory.
 Agent/skill configuration is performed separately in CyCodeCore Manager. No package is built by a GitHub workflow.
 

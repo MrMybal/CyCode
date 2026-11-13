@@ -5,7 +5,7 @@ description: Core persistant, contrats MCP complets et modifications protégées
 section: API et extensions
 parent: mcp
 order: 261
-sourceRevision: 5
+sourceRevision: 6
 ---
 
 ## Se connecter {#connect}
@@ -13,8 +13,13 @@ sourceRevision: 5
 Installez la distribution autonome et le skill IA avec [le guide d’installation](core-installation#distribution).
 
 CyCode Core expose le même Engine natif persistant aux applications et aux IA.
-Les 252 opérations métier deviennent des outils `op_<operationId>` grâce au
-véritable adaptateur MCP de CyToolsCore. Le SDK ajoute ses contrôles de tâches,
+Les 252 opérations restent canoniques. Le profil Code par défaut annonce les
+outils courants ; les autres passent par `op_core_invoke(parameters={operationId,
+parameters})` après lecture unique du schéma choisi. Le profil Full conserve tous
+les noms `op_<operationId>` : choisir `CYCODE_MCP_PROFILE=full` ou
+`--mcp-profile full` pour les anciens clients qui les exigent.
+Voir [les profils du gestionnaire](core-manager#mcp-profile).
+Le véritable SDK CyToolsCore ajoute ses contrôles de tâches,
 de découverte et d’identités. Une opération déclarée ne prouve pas l’installation
 d’un moteur de langage, compilateur, débogueur, fournisseur VCS ou plugin.
 

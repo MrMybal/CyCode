@@ -114,6 +114,7 @@ class Manager:
                         or not isinstance(record.get('id'), str) or not re.fullmatch('[a-f0-9]{24}', record['id'])
                         or record['id'] != path.stem or record.get('client') not in CLIENTS
                         or record.get('access') not in ('read', 'edit') or record.get('scope') not in ('user', 'project')
+                        or record.get('mcpProfile', 'code') not in ('code', 'full')
                         or type(record.get('enabled')) is not bool
                         or any(not isinstance(record.get(key), str) or not record[key] for key in ('home', 'workspace', 'config', 'server'))):
                     raise ValueError('Invalid manager receipt: ' + str(path))
@@ -172,7 +173,8 @@ class Manager:
         arguments = ['-B', '-X', 'utf8', str(self.home / 'app/agent_host.py'),
                      '--workspace', record['workspace'], '--state', str(jobs)]
         environment = {'CYCODE_CORE_HOME': str(self.home),
-                       'CYCODE_PERMISSIONS': 'workspace.write,process.execute' if record['access'] == 'edit' else ''}
+                       'CYCODE_PERMISSIONS': 'workspace.write,process.execute' if record['access'] == 'edit' else '',
+                       'CYCODE_MCP_PROFILE': record.get('mcpProfile', 'code'), 'GIT_OPTIONAL_LOCKS': '0'}
         expected = record.get('managedHash')
         if record['client'] == 'codex':
             parsed = tomllib.loads(text)
@@ -220,11 +222,13 @@ class Manager:
                              'project': record['workspace'], 'action': 'remove' if remove else 'connect',
                              'access': record['access'], 'reloadRequired': True})
 
-    def prepare(self, clients, workspace=None, *, scope='project', skill=True, mcp=True, access='read'):
+    def prepare(self, clients, workspace=None, *, scope='project', skill=True, mcp=True, access='read', mcp_profile='code'):
         if not clients or len(set(clients)) != len(clients) or any(c not in CLIENTS for c in clients):
             raise ValueError('Choose supported agent applications')
         if access not in ('read', 'edit') or not (skill or mcp):
             raise ValueError('Choose skill and/or MCP with explicit access')
+        if mcp_profile not in ('code', 'full'):
+            raise ValueError('Unknown MCP profile')
         workspace = shared.ordinary(workspace).resolve(strict=True) if workspace else None
         if (mcp or scope == 'project') and (workspace is None or not workspace.is_dir()):
             raise ValueError('Choose an existing project for the MCP connection')
@@ -255,7 +259,8 @@ class Manager:
                 'client': client, 'root': str(self.root), 'config': str(config), 'server': server,
                 'begin': '# BEGIN CyCodeCore managed MCP: ' + identity,
                 'end': '# END CyCodeCore managed MCP: ' + identity}
-            record = {**record, 'workspace': str(workspace), 'scope': scope, 'access': access, 'enabled': True}
+            record = {**record, 'workspace': str(workspace), 'scope': scope, 'access': access,
+                      'mcpProfile': mcp_profile, 'enabled': True}
             # Claude Code and Copilot share .mcp.json; one identical managed server suffices.
             if identity in {p.stem for p in plan.writes if p.parent == self.state / 'connections'}:
                 continue

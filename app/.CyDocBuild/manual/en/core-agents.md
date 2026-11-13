@@ -5,7 +5,7 @@ description: Persistent Core, complete MCP contracts and guarded code changes.
 section: API and extensions
 parent: mcp
 order: 261
-revision: 5
+revision: 6
 ---
 
 ## Connect {#connect}
@@ -13,8 +13,12 @@ revision: 5
 Install the standalone distribution and agent skill through [Core installation](core-installation#distribution).
 
 CyCode Core exposes the same persistent native Engine to applications and AI
-clients. There are 252 domain operations, each exposed as `op_<operationId>` by
-the official CyToolsCore MCP adapter. The SDK adds its own job, discovery, task
+clients. There are 252 canonical operations. Code (the default) advertises common
+tools and offers the remainder through `op_core_invoke(parameters={operationId,
+parameters})`, after fetching the chosen schema once. Full retains every
+`op_<operationId>` name. Select `CYCODE_MCP_PROFILE=full` or `--mcp-profile full`
+for older clients requiring all individual names. See [Manager profiles](core-manager#mcp-profile).
+The official CyToolsCore SDK adds its own job, discovery, task
 and identity controls. A listed operation is a contract, not proof that a
 language server, debugger, compiler, VCS provider or plugin is installed.
 

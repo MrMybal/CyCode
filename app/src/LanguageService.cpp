@@ -33,11 +33,6 @@ bool LanguageService::supportsCpp(const std::string &path) {
 std::string LanguageService::defaultExecutable() {
     if (auto resolved = toolPath("clangd"); !resolved.empty())
         return resolved;
-#ifdef _WIN32
-    auto installed = std::filesystem::path("C:/Program Files/LLVM/bin/clangd.exe");
-    if (std::filesystem::exists(installed))
-        return pathUtf8(installed);
-#endif
     return "clangd";
 }
 std::string LanguageService::managedExecutable() {
@@ -365,6 +360,17 @@ Json LanguageService::status() const {
     // A configured launch is not proof that a backend exists or initialized.
     result["configured"] = (backend_=="cpp" || managed_) ? !executable_.empty() : !argv_.empty();
     result["available"] = enabled_ && !reconfigure_ && result.value("running",false);
+    result["launchAttempted"] = result.value("launchAttempted", false);
+    if (backend_ == "cpp") {
+        auto selected = executable_;
+        if (!utf8Path(selected).is_absolute()) selected = toolPath(selected);
+        std::error_code error;
+        const bool present = !selected.empty() && std::filesystem::is_regular_file(utf8Path(selected), error) && !error;
+        result["executable"] = selected;
+        result["executablePresent"] = present;
+        result["requiresInstallation"] = enabled_ && !present;
+        result["installationHint"] = present ? "" : "Open CyCodeManager > Dependencies to install a private clangd. No global PATH change is required.";
+    }
     if(!enabled_)result["state"]="disabled";
     else if(reconfigure_)result["state"]="reconfiguring";
     else if(!result.contains("state"))result["state"]="idle";

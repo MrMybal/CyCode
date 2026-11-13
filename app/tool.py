@@ -149,6 +149,20 @@ def create_runtime(data_dir, **options):
 
 def main(argv=None):
     args = list(sys.argv[1:] if argv is None else argv)
+    if os.name == 'nt' and not os.environ.get('PROCESSOR_ARCHITECTURE'):
+        from core_dependencies import host_architecture
+        os.environ['PROCESSOR_ARCHITECTURE'] = host_architecture()
+    profile = os.environ.get('CYCODE_MCP_PROFILE', 'code')
+    if '--mcp-profile' in args:
+        position = args.index('--mcp-profile')
+        if position + 1 >= len(args):
+            raise ValueError('--mcp-profile requires code or full')
+        profile = args[position + 1]
+        del args[position:position + 2]
+        # ManagedCore recurses into this entry point.
+        os.environ['CYCODE_MCP_PROFILE'] = profile
+    if profile not in ('code', 'full'):
+        raise ValueError('Unknown MCP profile')
     if '--core-workspace' in args:
         from core_host import ManagedCore
         parser=argparse.ArgumentParser(add_help=False)
@@ -211,10 +225,25 @@ def main(argv=None):
             raise SystemExit('Unsupported CyCode Core service descriptor')
         from cytools_core.transports.http import HTTPClient
         from cytools_core.transports.mcp import serve
-        asyncio.run(serve(HTTPClient(descriptor['url'], descriptor['editToken' if options.access == 'edit' else 'readToken'])))
+        from mcp_profile import client_profile
+        asyncio.run(serve(client_profile(HTTPClient(descriptor['url'], descriptor['editToken' if options.access == 'edit' else 'readToken']), profile)))
         return 0
     if '--data-dir' not in args:
         args = ['--data-dir', str(ROOT / 'data' / 'jobs'), *args]
+    if args[-1:] == ['mcp'] and '--connect' in args:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--data-dir')
+        parser.add_argument('--connect', required=True)
+        parser.add_argument('command', choices=['mcp'])
+        options = parser.parse_args(args)
+        token = os.environ.get('CYTOOLS_TOKEN', '')
+        if not token:
+            raise ValueError('Set CYTOOLS_TOKEN for the selected client')
+        from cytools_core.transports.http import HTTPClient
+        from cytools_core.transports.mcp import serve
+        from mcp_profile import client_profile
+        asyncio.run(serve(client_profile(HTTPClient(options.connect, token), profile)))
+        return 0
     if args[-1:] == ['mcp'] and '--connect' not in args:
         directory = args[args.index('--data-dir') + 1]
         runtime = create_runtime(directory)
@@ -224,7 +253,8 @@ def main(argv=None):
             credentials = runtime.create_client('CyCode MCP', permissions)
             client = LocalClient(runtime, runtime.authenticate(credentials['token']))
             from cytools_core.transports.mcp import serve
-            asyncio.run(serve(client))
+            from mcp_profile import client_profile
+            asyncio.run(serve(client_profile(client, profile)))
             return 0
         finally:
             runtime.close()

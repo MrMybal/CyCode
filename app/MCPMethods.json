@@ -2,8 +2,13 @@
   "format": "cycode-agent-methods/1",
   "toolId": "cy.code",
   "source": "app/CyTool.json + app/contracts.py",
-  "contractSha256": "0b0acf3d0f17bbcb47906b73d40a9b2954788bbefa4d6a117110f27c5e791314",
+  "contractSha256": "d8b08ab62b56dd82bf0999f59f4a42857e895f1898c711d312e012e96b977f94",
   "transport": "Official CyToolsCore MCP adapter; op_<id> submits a job, not a synchronous domain result.",
+  "mcpPresentation": {
+    "default": "code",
+    "full": "All individual op_<id> tools.",
+    "code": "Common individual tools plus op_core_invoke(parameters={operationId,parameters}) for other canonical operations. Fetch only the selected cy_describe_operation contract."
+  },
   "guide": "Docs/Agents.md",
   "persistentSources": "Workspace paths are persistent native document references, never SDK temporary input files.",
   "discovery": [
@@ -77109,6 +77114,18 @@
           "compilationDatabase": {
             "type": "string"
           },
+          "executable": {
+            "type": "string"
+          },
+          "executablePresent": {
+            "type": "boolean"
+          },
+          "requiresInstallation": {
+            "type": "boolean"
+          },
+          "installationHint": {
+            "type": "string"
+          },
           "synchronizedRevisions": {
             "type": "object",
             "additionalProperties": {
@@ -77445,6 +77462,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -77757,6 +77786,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -78073,6 +78114,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -78385,6 +78438,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -78701,6 +78766,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -79013,6 +79090,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -79329,6 +79418,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -79641,6 +79742,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -79957,6 +80070,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -80269,6 +80394,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -80596,6 +80733,18 @@
                   "type": "string"
                 },
                 "compilationDatabase": {
+                  "type": "string"
+                },
+                "executable": {
+                  "type": "string"
+                },
+                "executablePresent": {
+                  "type": "boolean"
+                },
+                "requiresInstallation": {
+                  "type": "boolean"
+                },
+                "installationHint": {
                   "type": "string"
                 },
                 "synchronizedRevisions": {
@@ -81235,6 +81384,18 @@
           "compilationDatabase": {
             "type": "string"
           },
+          "executable": {
+            "type": "string"
+          },
+          "executablePresent": {
+            "type": "boolean"
+          },
+          "requiresInstallation": {
+            "type": "boolean"
+          },
+          "installationHint": {
+            "type": "string"
+          },
           "synchronizedRevisions": {
             "type": "object",
             "additionalProperties": {
@@ -81571,6 +81732,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -81883,6 +82056,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -82199,6 +82384,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -82511,6 +82708,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -82827,6 +83036,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -83139,6 +83360,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -83455,6 +83688,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -83767,6 +84012,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -84083,6 +84340,18 @@
                   "compilationDatabase": {
                     "type": "string"
                   },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
+                    "type": "string"
+                  },
                   "synchronizedRevisions": {
                     "type": "object",
                     "additionalProperties": {
@@ -84395,6 +84664,18 @@
                     "type": "string"
                   },
                   "compilationDatabase": {
+                    "type": "string"
+                  },
+                  "executable": {
+                    "type": "string"
+                  },
+                  "executablePresent": {
+                    "type": "boolean"
+                  },
+                  "requiresInstallation": {
+                    "type": "boolean"
+                  },
+                  "installationHint": {
                     "type": "string"
                   },
                   "synchronizedRevisions": {
@@ -84722,6 +85003,18 @@
                   "type": "string"
                 },
                 "compilationDatabase": {
+                  "type": "string"
+                },
+                "executable": {
+                  "type": "string"
+                },
+                "executablePresent": {
+                  "type": "boolean"
+                },
+                "requiresInstallation": {
+                  "type": "boolean"
+                },
+                "installationHint": {
                   "type": "string"
                 },
                 "synchronizedRevisions": {

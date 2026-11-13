@@ -5,8 +5,12 @@
 For the standalone package, local installer and agent skill, read [Core installation](CoreInstallation.md).
 
 CyCode Core exposes the same persistent native Engine to applications and AI
-clients. There are 252 domain operations, each exposed as `op_<operationId>` by
-the official CyToolsCore MCP adapter. The SDK adds its own job, discovery, task
+clients. There are 252 canonical domain operations. The default Code profile
+advertises common operations directly and offers the remainder through
+`op_core_invoke(parameters={operationId, parameters})`, after fetching the chosen
+operation's schema once. Full exposes every `op_<operationId>` name. Select
+`CYCODE_MCP_PROFILE=full` or `--mcp-profile full` for older clients expecting the
+complete individual catalogue. The SDK adds its own job, discovery, task
 and identity controls. A listed operation is a contract, not proof that a
 language server, debugger, compiler, VCS provider or plugin is installed.
 

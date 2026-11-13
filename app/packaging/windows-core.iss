@@ -45,7 +45,7 @@ Name: "updaterstartup"; Description: "{cm:CheckAtLogin}"; Components: manager; F
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{code:PayloadDirectory}"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs
 [Icons]
-Name: "{group}\CyCodeCore Manager"; Filename: "{code:PayloadDirectory}\tools\python\pythonw.exe"; Parameters: "-B ""{code:PayloadDirectory}\apps\CyCodeManager\main.py"" --installation-root ""{app}"" --language {cm:ManagerLanguage}"; WorkingDir: "{app}"; IconFilename: "{code:PayloadDirectory}\icons\CyCode.ico"; Components: manager
+Name: "{group}\CyCodeCore Manager"; Filename: "{code:PayloadDirectory}\CyCodeManager.exe"; Parameters: "--installation-root ""{app}"" --language {cm:ManagerLanguage}"; WorkingDir: "{app}"; IconFilename: "{code:PayloadDirectory}\icons\CyCode.ico"; Components: manager
 [InstallDelete]
 Type: files; Name: "{group}\CyCodeUpdater.lnk"
 [UninstallDelete]
@@ -55,7 +55,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "CyCodeCoreManager"; Flags: deletevalue
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CyCodeCoreManager"; ValueData: """{code:PayloadDirectory}\tools\python\pythonw.exe"" -B ""{code:PayloadDirectory}\apps\CyCodeManager\main.py"" --installation-root ""{app}"" --background --language {cm:ManagerLanguage}"; Flags: uninsdeletevalue; Components: manager; Tasks: updaterstartup
 [Run]
-Filename: "{code:PayloadDirectory}\tools\python\pythonw.exe"; Parameters: "-B ""{code:PayloadDirectory}\apps\CyCodeManager\main.py"" --installation-root ""{app}"" --language {cm:ManagerLanguage}"; Description: "{cm:OpenManager}"; Flags: nowait postinstall skipifsilent; Components: manager; Check: ShouldLaunchManager
+Filename: "{code:PayloadDirectory}\CyCodeManager.exe"; Parameters: "--installation-root ""{app}"" --language {cm:ManagerLanguage}"; Description: "{cm:OpenManager}"; Flags: nowait postinstall skipifsilent; Components: manager; Check: ShouldLaunchManager
 [CustomMessages]
 english.ManagerShortcuts=CyCodeCore Manager shortcuts
 french.ManagerShortcuts=Raccourcis CyCodeCore Manager
@@ -63,8 +63,8 @@ english.CheckAtLogin=Check for updates when I sign in to Windows
 french.CheckAtLogin=Vérifier les mises à jour à l'ouverture de Windows
 english.ManagerLanguage=en
 french.ManagerLanguage=fr
-english.OpenManager=Open CyCodeCore Manager (agents, skills and updates)
-french.OpenManager=Ouvrir CyCodeCore Manager (agents, skills et mises à jour)
+english.OpenManager=Open CyCodeCore Manager (agents, dependencies and updates)
+french.OpenManager=Ouvrir CyCodeCore Manager (agents, dépendances et mises à jour)
 english.ActivationFailed=The new payload could not be verified or activated. The previously selected Core is preserved. See the installation log; do not remove older versions.
 french.ActivationFailed=Le nouveau moteur n'a pas pu être vérifié ou activé. Le Core précédemment sélectionné est conservé. Consultez le journal d'installation ; ne supprimez pas les anciennes versions.
 english.RedirectedRoot=Choose an ordinary local installation directory, without links or junctions.

@@ -5,6 +5,18 @@ CyCode's original source is licensed under [GNU GPL v3 only](../LICENSE)
 Dependencies retain their original licenses. Copies are in licenses/ or the
 corresponding runtime package, as detailed below.
 
+The standalone **CyCodeManager** uses only CyUI Core, pinned to
+`0ba1ba663b4b2bf46d066a32829bc91ea2743cba` by
+`apps/CyCodeManager/cyui-source.lock.json`. Its MIT CyUI/Dear ImGui and SIL OFL
+JetBrains Mono notices ship in `apps/CyCodeManager/licenses/`. The native Core
+does not link these UI libraries. The older UI rows below retain their original
+application/archive provenance.
+
+An optional private clangd 23.1.0 installation retains upstream `LICENSE.TXT`
+(Apache-2.0 WITH LLVM-exception) and built-in resource headers. Its official
+download URL, size and SHA-256 are pinned in `app/clangd.lock.json`; it is neither
+a bundled compiler toolchain nor an implicit global LLVM installation.
+
 | Component | License | Source |
 |---|---|---|
 | PCRE2 10.49 | BSD-3-Clause WITH PCRE2-exception, [local notice](licenses/PCRE2.txt) | https://github.com/PCRE2Project/pcre2, commit 6f9d7c1373262c541324a16a358785b33ef116cf; app/dependencies.lock.json; static UTF-8 snippet matching, JIT/tools/tests disabled |

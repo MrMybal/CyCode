@@ -195,6 +195,7 @@ LANGUAGE_PREFERENCES_STATUS = schema({'available':BOOL,'revision':PREFERENCES_RE
 LANGUAGE_SERVER = schema({'ready':BOOL, 'running':BOOL, 'error':STRING,'logs':STRING, 'diagnostics':{'type':'object'}, 'name':STRING, 'enabled':BOOL, 'available':BOOL,'plugin':STRING,'languages':ARRAY,'arguments':{'type':'array','items':STRING},'settings':{'type':'object'},
                          'diagnosticGeneration':{'type':'integer','minimum':0}, 'epoch':NONNEGATIVE,
                          'configured':BOOL,'initialized':BOOL,'launchAttempted':BOOL,'state':STRING,'compilationDatabase':STRING,
+                         'executable':STRING,'executablePresent':BOOL,'requiresInstallation':BOOL,'installationHint':STRING,
                          'synchronizedRevisions':{'type':'object','additionalProperties':schema({'revision':REVISION,'id':NONNEGATIVE,'lspVersion':REVISION},('revision','id','lspVersion'))},
                          'analysis':schema({'backend':STRING,'projectIndexCompleteness':STRING,'openDocuments':NONNEGATIVE,'synchronizedDocuments':NONNEGATIVE,'versionBoundDiagnosticDocuments':NONNEGATIVE,'synchronizationMeaning':STRING},
                             ('backend','projectIndexCompleteness')),

@@ -5,7 +5,7 @@ description: Paquets locaux, skill IA et connexion MCP par projet.
 section: API et extensions
 parent: mcp
 order: 262
-sourceRevision: 7
+sourceRevision: 8
 ---
 
 ## Distribution {#distribution}
@@ -17,8 +17,12 @@ sa version historique 0.2.3. Il s’agit d’une préversion de développement.
 
 Le paquet Windows x64 contient `cycode_cli.exe`, les DLL MSVC, ripgrep vérifié,
 CPython/CyToolsCore/MCP isolés, les licences, les méthodes et le skill
-`cycode-core`. Compilateurs, clangd, outils de build et autres serveurs de langage
-restent des prérequis externes. L’installateur par utilisateur utilise la même
+`cycode-core`. Compilateurs, outils de build et autres serveurs de langage restent
+nécessaires. Le gestionnaire des sources actuelles propose l’installation privée
+de clangd dans `<CyCodeCore>/dependencies/clangd/`, sans modifier le PATH Windows
+ni LLVM. Voir [les dépendances](core-manager#dependencies) pour la taille et la
+sélection ; un ancien paquet doit être mis à jour pour bénéficier de cette option.
+L’installateur par utilisateur utilise la même
 charge utile dans un nouveau dossier versionné. Les agents et skills se configurent
 séparément dans CyCodeCore Manager. Aucun workflow GitHub ne construit
 ces paquets.
