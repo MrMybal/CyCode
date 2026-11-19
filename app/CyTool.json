@@ -4,7 +4,7 @@
   "id": "cy.code",
   "name": "CyCode Core",
   "version": "0.2.3",
-  "description": "Native C++ Core services, shared by applications and CyToolsCore MCP.",
+  "description": "Native C++ Core services, shared by applications and the native CyMCPSDK registry.",
   "vendor": "Cyberalien",
   "author": "Cyberalien",
   "executable": "python app/tool.py",
@@ -392,7 +392,7 @@
     {
       "id": "analysis_status",
       "name": "Analysis Status",
-      "description": "Read aggregate native semantic-preparation progress without starting work. A completed preparation proves the stated source-file scope, not exhaustive whole-project semantic coverage. Per-job ownership, polling and cancellation remain CyToolsCore cy_get_job/cy_cancel_job.",
+      "description": "Read aggregate native semantic-preparation progress without starting work. A completed preparation proves the stated source-file scope, not exhaustive whole-project semantic coverage. Per-job ownership, polling and cancellation remain native core_job_get/core_job_cancel (legacy cy_get_job/cy_cancel_job).",
       "inputSchema": {
         "type": "object",
         "properties": {},

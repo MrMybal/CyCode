@@ -5,8 +5,12 @@ description: Retrouvez les signatures, schémas et règles d’édition partagé
 section: Travailler dans CyCode
 order: 270
 parent: plugins
-sourceRevision: 2
+sourceRevision: 4
 ---
+
+
+
+> Les exemples avec enveloppe parameters ci-dessous utilisent code/full. Le mode compact natif reçoit `{"name":"<id>","arguments":{...}}`.
 
 ## Contrat des opérations {#contract}
 

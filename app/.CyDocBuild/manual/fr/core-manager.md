@@ -5,8 +5,10 @@ description: Installer le skill, gérer les connexions et mettre à jour sans re
 section: API et extensions
 parent: core-installation
 order: 263
-sourceRevision: 2
+sourceRevision: 4
 ---
+
+
 
 Le gestionnaire des sources actuelles utilise **CyUI Core** dans une application
 distincte du moteur. Il propose les vues agents/skills, dépendances et mises à
@@ -24,7 +26,7 @@ leurs installateurs ne sont pas lancés automatiquement.
 **23.1.0** : **29 690 805 octets** à télécharger et **101 011 414 octets** extraits,
 en-têtes intégrés et `LICENSE.TXT` compris. Le seul exécutable représente
 51 872 768 octets. Vérifier la source, la destination et accepter la licence
-Apache-2.0 WITH LLVM-exception avant de confirmer. CyToolsCore fournit le
+Apache-2.0 WITH LLVM-exception avant de confirmer. CyMCPSDK fournit le
 téléchargement vérifié en taille/SHA-256, la reprise, la progression et l’annulation.
 Les chemins de l’archive sont contrôlés avant extraction, les fichiers avant sélection.
 
@@ -39,23 +41,13 @@ démarrage à la première requête. Un compilateur reste nécessaire pour compi
 
 ## Découverte MCP compacte {#mcp-profile}
 
-Les connexions nouvelles/actualisées utilisent **Code (compact)** : 19 opérations
-courantes, la passerelle `op_core_invoke` et 21 contrôles officiels du SDK, soit
-**41 outils au lieu de 278**. **Catalogue complet** conserve les noms individuels
-des 257 opérations pour les clients qui les exigent.
-
-Pour une capacité non annoncée, consulter une seule fois `cy_list_operations`,
-puis le schéma précis avec `cy_describe_operation`. Appeler `op_core_invoke` avec
-`parameters: {operationId: "<identifiant-canonique>", parameters: {...}}`.
-Le véritable SDK valide les paramètres, permissions, ressources et propriétaires
-de jobs de l’opération réelle. La passerelle n’ajoute aucun droit. Réutiliser les
-schémas déjà reçus et éviter les découvertes complètes répétées ou le polling
-spéculatif. Choisir `CYCODE_MCP_PROFILE` ou `--mcp-profile code|full` sans modifier
-l’API native.
-
-Avec le SDK épinglé, les métadonnées sérialisées représentent **108 132 octets**
-en mode Code contre **1 570 677 octets** en mode complet, soit 93,1 % de moins.
-Ce sont des octets, pas un nouveau résultat de mesure des tokens ou de la vitesse IA.
+Les nouvelles connexions utilisent **Outils à la demande (compact)** : cinq outils
+CyMCPSDK découvrent et appellent toutes les opérations canoniques. **Catalogue
+complet** sélectionne `direct-full` ; les connexions `code`/`full` existantes gardent
+leurs enveloppes de jobs et droits au rafraîchissement. Rechercher une capacité,
+charger uniquement son schéma, puis appeler `cy_tools_call` et réutiliser ce schéma.
+Voir [l’intégration native](native-automation#operations) pour les paramètres,
+les tâches durables, les morceaux, le cache, les notifications et les mesures.
 
 ## Agents et skills {#agents}
 
@@ -73,7 +65,7 @@ aucun agent ni skill personnel à lui seul.
 5. Recharger/approuver la connexion dans le client. La présence d’un fichier ne
    prouve pas qu’un outil MCP a été chargé ou utilisé.
 
-Le pont MCP reste celui de CyToolsCore. Le lanceur attribue un dossier de jobs SDK
+Le pont MCP utilise CyMCPSDK natif. Le lanceur attribue un dossier de jobs SDK
 distinct à chaque hôte ; plusieurs clients et générations ne partagent pas les
 données d’un runtime encore vivant. Le gestionnaire ne démarre pas Core pendant
 la préparation ou l’application d’une configuration.

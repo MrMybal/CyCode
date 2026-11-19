@@ -92,7 +92,9 @@ class ManagerFiles(unittest.TestCase):
         config = tomllib.loads((self.project / '.codex/config.toml').read_text('utf-8'))
         server = config['mcp_servers']['cycode_core']
         self.assertEqual(server['env']['CYCODE_PERMISSIONS'], '')
-        self.assertIn('agent_host.py', ' '.join(server['args']))
+        self.assertIn('--connection-state', server['args'])
+        self.assertTrue(server['command'].endswith('cycode_cli.exe' if __import__('os').name == 'nt' else 'cycode_cli'))
+        self.assertEqual(server['env']['CYCODE_MCP_PROFILE'], 'compact')
         self.assertEqual(len(json.loads((self.project / '.mcp.json').read_text())['mcpServers']), 1)
         text = path.read_text()
         self.assertIn('// retained', text)

@@ -1,5 +1,7 @@
 # CyCode native architecture and source integration
 
+> Current source integration: [native CyMCPSDK CLI/MCP](NativeAutomation.md). The default is the five-tool compact gateway; Core has no chat or Python MCP runtime. Release-specific procedures below are retained for compatibility/history.
+
 CyCode is the shared native C++20 library and headless service. CyCodeIDE owns the
 desktop presentation; CyCodeReader owns its standalone editor presentation. The
 existing Engine, language backends, project adapters, native plugins and guarded

@@ -37,7 +37,7 @@ class Backend:
             return self.manager.prepare(request['clients'], Path(request['project']) if request.get('project') else None,
                 scope=request.get('scope', 'project'), access=request.get('access', 'read'),
                 skill=request.get('skill', True), mcp=request.get('mcp', True),
-                mcp_profile=request.get('mcpProfile', 'code'))
+                mcp_profile=request.get('mcpProfile', 'compact'))
         if action == 'agents.refresh':
             return self.manager.prepare_refresh()
         if action == 'agents.remove':

@@ -5,54 +5,35 @@ description: Core persistant, contrats MCP complets et modifications protégées
 section: API et extensions
 parent: mcp
 order: 261
-sourceRevision: 6
+sourceRevision: 8
 ---
+
+
 
 ## Se connecter {#connect}
 
 Installez la distribution autonome et le skill IA avec [le guide d’installation](core-installation#distribution).
 
-CyCode Core expose le même Engine natif persistant aux applications et aux IA.
-Les 257 opérations restent canoniques. Le profil Code par défaut annonce les
-outils courants ; les autres passent par `op_core_invoke(parameters={operationId,
-parameters})` après lecture unique du schéma choisi. Le profil Full conserve tous
-les noms `op_<operationId>` : choisir `CYCODE_MCP_PROFILE=full` ou
-`--mcp-profile full` pour les anciens clients qui les exigent.
-Voir [les profils du gestionnaire](core-manager#mcp-profile).
-Le véritable SDK CyToolsCore ajoute ses contrôles de tâches,
-de découverte et d’identités. Une opération déclarée ne prouve pas l’installation
-d’un moteur de langage, compilateur, débogueur, fournisseur VCS ou plugin.
+CyCode Core 0.1.5 expose ses 257 opérations dans le registre CyMCPSDK natif.
+Le mode compact annonce cinq outils : `cy_tools_search` recherche une capacité,
+`cy_tools_describe` charge son schéma et `cy_tools_call` appelle son nom canonique.
+`direct-full` expose directement les noms ; `code`/`full` conservent les anciens
+`op_<id>` et contrôles de jobs.
 
-Depuis les sources avec l’environnement SDK privé déjà préparé :
-
-```sh
-python -B -X utf8 app/tool.py --core-workspace <dossier-projet> --core-executable <cycode_cli-fiable> --disable-native-plugins --data-dir <dossier-jobs-prive> mcp
+```text
+cycode_cli --sdk --workspace <dossier-projet> --connection-state <etat-prive> --disable-plugins mcp
 ```
 
-Utilisez l’interpréteur isolé préparé par `app/scripts/setup_runtime.py` ; la
-distribution Windows du bureau utilise son interpréteur embarqué. Cette commande
-lance un Core de production sans interface, le conserve entre les requêtes et
-l’arrête proprement à la fermeture MCP. Elle ne télécharge aucun binaire.
-`--core-executable` est facultatif si le CLI compilé se trouve à côté de
-l’application ou dans son dossier de build runtime. `CYCODE_CORE_EXECUTABLE`
-permet aussi un choix explicite par l’hôte. La racine du projet est fixée par
-l’hôte de confiance, jamais par un paramètre d’opération envoyé par l’IA.
+Aucun serveur MCP Python n’est requis. L’hôte fixe le projet et les droits ;
+la lecture seule est le réglage initial. Les autorisations d’édition, VCS,
+processus, plugins et paramètres restent séparées. L’index aide aux recherches
+sans clangd ; la navigation compilateur nécessite un serveur installé et le
+véritable contexte de compilation. La disponibilité n’établit pas une couverture
+sémantique exhaustive.
 
-Le MCP autonome est en lecture seule par défaut. L’hôte peut fournir une liste
-explicite dans `CYCODE_PERMISSIONS`, par exemple `workspace.write,process.execute`.
-Les écritures VCS, plugins natifs et paramètres utilisateur possèdent leurs
-propres autorisations : consultez le champ `permissions` de chaque opération.
-Désactivez les plugins natifs si seuls les services intégrés sont nécessaires.
-
-Pour un IDE actif, copiez sa configuration MCP : `--bridge-config
-<descripteur-service-prive> --access read mcp` utilise son véritable service SDK
-partagé. Choisissez `edit` uniquement avec autorisation. Un hôte sans interface
-peut démarrer ce même service officiel avec `--core-service --service-descriptor
-<fichier-prive> --data-dir <dossier-jobs-prive>`, en complément des deux options
-de démarrage du Core. Gardez ce processus actif ; l’arrêt de son hôte natif
-possédé termine le service. Ne publiez ni descripteur ni jeton d’identité.
-Deux runtimes MCP autonomes ne partagent pas leurs jobs simplement parce qu’ils
-utilisent le même projet.
+`--native-descriptor FICHIER` réutilise l’Engine existant et ses buffers non sauvés.
+`--bridge-config FICHIER --access read|edit mcp` utilise son service HTTP privé.
+Ne publiez pas les jetons. Voir [le guide natif](native-automation#connect).
 
 ### Configuration du client {#configuration}
 
@@ -64,19 +45,14 @@ clients utilisent un format extérieur différent ; conservez l’exécutable et
 {
   "mcpServers": {
     "cycode": {
-      "command": "<private-python>",
+      "command": "<cycode_cli-fiable>",
       "args": [
-        "-B",
-        "-X",
-        "utf8",
-        "<CyCode>/app/tool.py",
-        "--core-workspace",
-        "<project-directory>",
-        "--core-executable",
-        "<trusted-cycode_cli>",
-        "--disable-native-plugins",
-        "--data-dir",
-        "<private-job-directory>",
+        "--sdk",
+        "--workspace",
+        "<dossier-projet>",
+        "--connection-state",
+        "<etat-prive>",
+        "--disable-plugins",
         "mcp"
       ],
       "env": {

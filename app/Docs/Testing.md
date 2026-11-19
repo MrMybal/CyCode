@@ -1,5 +1,12 @@
 # Local verification and native tests
 
+Current native SDK acceptance is explicit: `verify_native_automation.py` and
+`verify_automation_transports.py` launch the production CLI plus an external
+MCP development client. Use the documented new fixture directories and binary
+arguments. They compile no fixture program. Source/data checks remain process-free;
+no workflow is needed. See [NativeAutomation](NativeAutomation.md).
+
+
 The progressive-capacity stage adds [paged native text and storage](LargeProjects.md):
 streamed compiler database digests/commands, incremental format-2 checkpoint pages,
 immutable transaction payloads on private disk and four guarded paged-document

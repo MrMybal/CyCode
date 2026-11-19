@@ -5,27 +5,31 @@ description: Paquets locaux, skill IA et connexion MCP par projet.
 section: API et extensions
 parent: mcp
 order: 262
-sourceRevision: 8
+sourceRevision: 10
 ---
+
+
 
 ## Distribution {#distribution}
 
-CyCodeCore fournit le moteur natif sans interface et le pont MCP officiel de
-CyToolsCore. Aucun IDE, CyUI/SDL/OpenGL, modèle GPU ou Python système n’est requis.
-La distribution autonome est en version 0.1.4 ; le contrat du moteur conserve
-sa version historique 0.2.3. Il s’agit d’une préversion de développement.
+CyCodeCore 0.1.5 est un service natif sans interface avec **CyMCPSDK 0.7.0**.
+La version du paquet est indépendante du contrat historique 0.2.3 affiché par
+`cycode_cli --version`. Le Core et son MCP ne nécessitent ni fenêtre IDE, ni
+serveur Python, ni modèle GPU, ni tchat intégré.
 
-Le paquet Windows x64 contient `cycode_cli.exe`, les DLL MSVC, ripgrep vérifié,
-CPython/CyToolsCore/MCP isolés, les licences, les méthodes et le skill
-`cycode-core`. Compilateurs, outils de build et autres serveurs de langage restent
-nécessaires. Le gestionnaire des sources actuelles propose l’installation privée
-de clangd dans `<CyCodeCore>/dependencies/clangd/`, sans modifier le PATH Windows
-ni LLVM. Voir [les dépendances](core-manager#dependencies) pour la taille et la
-sélection ; un ancien paquet doit être mis à jour pour bénéficier de cette option.
-L’installateur par utilisateur utilise la même
-charge utile dans un nouveau dossier versionné. Les agents et skills se configurent
-séparément dans CyCodeCore Manager. Aucun workflow GitHub ne construit
-ces paquets.
+Setup et le ZIP portable contiennent le CLI natif, le Manager CyUI, les DLL MSVC,
+ripgrep, le skill IA, les schémas exacts et le lecteur CyDoc hors ligne EN/FR.
+Seule la bibliothèque standard Python est incluse pour le Manager et les anciens
+scripts. Les nouvelles connexions MCP lancent directement le CLI ; la passerelle
+compacte atteint les 257 opérations. Résultats et anciennes identités sont conservés
+par la migration documentée ; une action interrompue n’est jamais rejouée automatiquement.
+
+Compilateurs, serveurs de langage, adaptateurs de débogage et clients VCS restent
+externes. Le Manager propose l’installation privée de clangd à côté des versions
+du Core, sans modifier PATH ni LLVM. Les paquets Windows x64 sont des préversions
+non signées. L’exécution et le packaging Linux/macOS restent à valider.
+
+### Anciennes distributions {#history}
 
 La version 0.1.1 utilise des noms temporaires indépendants pour les sauvegardes
 atomiques. Le CLI de production passe les recherches MCP et la navigation clangd
@@ -50,7 +54,7 @@ fsmonitor du dépôt, et diff/show désactivent la conversion externe du texte. 
 catalogue de 252 opérations et le contrat du moteur sont conservés. Compilation
 et contrôles des paquets/données ne valent pas validation native ou d'installation.
 
-[Télécharger Setup ou le ZIP Windows](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.4).
+[Télécharger Setup ou le ZIP Windows](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.5).
 Setup propose le raccourci CyCodeCore Manager. La version 0.1.4 ajoute les profils
 IA et la sélection vérifiée de nouveaux moteurs sans écraser les sessions actives.
 
@@ -129,10 +133,10 @@ Compilez le Core séparément avec les tests désactivés. Le packaging utilise 
 binaire de production existant et accepté, sans l'exécuter :
 
 ```text
-python app/scripts/package_core.py --revision <commit-source-propre-exact> --build <dossier-build> --executable <dossier-build>/app/Release/cycode_cli.exe --mcp-bundle <runtime-verifie> --output <nouveau-dossier-sortie> --installer
+python app/scripts/package_core.py --revision <commit-source-propre-exact> --build <dossier-build> --executable <dossier-build>/app/Release/cycode_cli.exe --manager-bundle <runtime-verifie> --output <nouveau-dossier-sortie> --installer
 ```
 
-Le runtime suit `app/mcp-runtime.lock.json` et son vérificateur commun. Inno Setup
+Le runtime suit `app/manager-runtime.lock.json` et son vérificateur commun. Inno Setup
 6.7+ est nécessaire pour `--installer`. Aucun exécutable graphique ni ancien
 updater n'est nécessaire. Le ZIP et Setup ont une identité CyCodeCore distincte
 des anciennes versions de l'application. `SHA256SUMS.txt` accompagne les fichiers.
@@ -140,7 +144,7 @@ des anciennes versions de l'application. `SHA256SUMS.txt` accompagne les fichier
 La préparation sans moteur doit être explicite :
 
 ```text
-python app/scripts/package_core.py --revision <commit-source-exact> --mcp-bundle <runtime-verifie> --output <nouveau-dossier-sortie> --agents-only
+python app/scripts/package_core.py --revision <commit-source-exact> --manager-bundle <runtime-verifie> --output <nouveau-dossier-sortie> --agents-only
 ```
 
 Le manifeste indique `state: agents-only` ; `--installer` est refusé dans ce mode.

@@ -210,19 +210,19 @@ struct Manager {
                 cyui::property(tr("Scope").c_str()); changed |= ImGui::Combo("##scope", &scope, scopes, 2);
                 a = tr("Read only"); b = tr("Read, edit and build"); const char* rights[]{a.c_str(), b.c_str()};
                 cyui::property(tr("Access").c_str()); changed |= ImGui::Combo("##access", &access, rights, 2);
-                a = tr("Code (compact)"); b = tr("Full catalogue"); const char* profiles[]{a.c_str(), b.c_str()};
+                a = tr("On-demand tools (compact)"); b = tr("Full catalogue"); const char* profiles[]{a.c_str(), b.c_str()};
                 cyui::property(tr("MCP catalogue").c_str()); changed |= ImGui::Combo("##profile", &profile, profiles, 2);
                 cyui::endProperties();
             }
             changed |= ImGui::Checkbox(trLabel("Install skill").c_str(), &skill); ImGui::SameLine();
             changed |= ImGui::Checkbox(trLabel("Configure MCP").c_str(), &mcp);
-            cyui::textDim("%s", tr("Code exposes common tools. Other operations remain available on demand.").c_str());
+            cyui::textDim("%s", tr("Compact exposes five discovery tools. Load only the selected operation schema.").c_str());
             if (changed) preview = Json::object();
             if (cyui::primaryButton(trLabel("Preview changes").c_str())) {
                 Json selected = Json::array();
                 for (std::size_t i = 0; i < available.size() && i < clients.size(); ++i) if (clients[i]) selected.push_back(available[i]["id"]);
                 start({{"action", "agents.prepare"}, {"clients", selected}, {"project", project.data()}, {"scope", scope ? "user" : "project"},
-                    {"access", access ? "edit" : "read"}, {"skill", skill}, {"mcp", mcp}, {"mcpProfile", profile ? "full" : "code"}});
+                    {"access", access ? "edit" : "read"}, {"skill", skill}, {"mcp", mcp}, {"mcpProfile", profile ? "direct-full" : "compact"}});
             }
         } cyui::endCard();
         if (preview.contains("plan")) {

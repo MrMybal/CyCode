@@ -83,14 +83,13 @@ def managed_config(before, block, previous_hash=None):
 
 def block_for(home, workspace, interpreter, data, access, enabled):
     quote = lambda value: json.dumps(str(value), ensure_ascii=False)
-    arguments = ['-B', '-X', 'utf8', str(home / 'app/tool.py'), '--core-workspace',
-                 str(workspace), '--core-executable', str(home / 'cycode_cli.exe'),
-                 '--disable-native-plugins', '--data-dir', str(data), 'mcp']
+    arguments = ['--sdk', '--workspace', str(workspace), '--disable-plugins',
+                 '--connection-state', str(data), 'mcp']
     return '\n'.join([BEGIN, '[mcp_servers.cycode_core]',
-        'command = ' + quote(interpreter), 'args = ' + json.dumps(arguments, ensure_ascii=False),
+        'command = ' + quote(home / ('cycode_cli.exe' if os.name == 'nt' else 'cycode_cli')), 'args = ' + json.dumps(arguments, ensure_ascii=False),
         'enabled = ' + str(enabled).lower(), 'startup_timeout_sec = 60',
         'tool_timeout_sec = 120', '[mcp_servers.cycode_core.env]',
-        'CYCODE_CORE_HOME = ' + quote(home),
+        'CYCODE_CORE_HOME = ' + quote(home), 'CYCODE_MCP_PROFILE = "compact"',
         'CYCODE_PERMISSIONS = ' + quote('workspace.write,process.execute' if access == 'edit' else ''), END])
 
 

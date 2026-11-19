@@ -1,2 +1,1 @@
-# Install the CyToolsCore wheel or local checkout first.
-cytools-core[mcp]==0.10.1
+# Core CLI/MCP is native CyMCPSDK. Manager/compatibility scripts use Python stdlib only.

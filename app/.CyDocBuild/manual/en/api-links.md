@@ -5,12 +5,16 @@ description: Find operation signatures, schemas and shared editing rules.
 section: Work in CyCode
 order: 270
 parent: plugins
-revision: 2
+revision: 4
 ---
+
+
+
+> The parameter-envelope examples below use legacy code/full. Native compact calls use `{"name":"<id>","arguments":{...}}`.
 
 ## Operation contract {#contract}
 
-The following service subpages list the actual operations declared by CyCode. Each operation documents its identifier, parameters and input/output schemas. These identifiers are not direct C++ function names. Invoke them through CyToolsCore or the MCP adapter; native plugins use their advertised host methods.
+The following service subpages list the actual operations declared by CyCode. Each operation documents its identifier, parameters and input/output schemas. These identifiers are not direct C++ function names. Invoke the canonical name through CyMCPSDK `cy_tools_call`, or use `op_<id>` in legacy code/full; native plugins use their advertised host methods.
 
 Optional parameters are marked `?`. `expectedRevision` must come from a fresh document read; issued preview/session/plan IDs must come from the corresponding native request. Do not manufacture these values or reuse them after changing their source context.
 

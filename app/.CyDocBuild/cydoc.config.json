@@ -145,6 +145,7 @@
     "reference-app-docs-coremanager": "core-manager#agents",
     "reference-app-docs-corequality": "core-quality#validation",
     "reference-app-docs-analysisprogress": "analysis-progress#validation",
-    "reference-app-docs-largeprojects": "large-projects#storage"
+    "reference-app-docs-largeprojects": "large-projects#storage",
+    "reference-app-docs-nativeautomation": "native-automation#connect"
   }
 }

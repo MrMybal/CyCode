@@ -7,6 +7,9 @@
 #include "cycode/Updates.h"
 #include <iostream>
 #include <limits>
+#ifdef CYCODE_HAS_AUTOMATION
+#include "cycode/Automation.h"
+#endif
 #ifdef _WIN32
 // clang-format off
 #include <windows.h>
@@ -31,6 +34,11 @@ int main(int argc, char **argv) {
 #else
         for (int i = 0; i < argc; ++i)
             arguments.emplace_back(argv[i]);
+#endif
+#ifdef CYCODE_HAS_AUTOMATION
+        for (const auto& argument : arguments)
+            if (argument == "--sdk" || argument == "--mcp" || argument == "--sdk-download" || argument == "--help" || argument == "-h")
+                return cycode::automation::runCli(arguments);
 #endif
         bool disablePlugins=false, diagnosticTrace=false;
 #ifdef CYCODE_PRIVATE_DIAGNOSTICS

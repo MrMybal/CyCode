@@ -1,5 +1,7 @@
 # CyCodeCore Manager
 
+> Current source integration: [native CyMCPSDK CLI/MCP](NativeAutomation.md). The default is the five-tool compact gateway; Core has no chat or Python MCP runtime. Release-specific procedures below are retained for compatibility/history.
+
 The current source replaces the old Win32 form with a standalone **CyUI Core**
 desktop host. Agents/skills, dependencies and updates have separate views.
 English/French, five themes, compact/comfortable density and DPI use CyUI's shared
@@ -16,7 +18,7 @@ silently run. Compilers/build tools remain necessary for the corresponding tasks
 29,690,805 bytes downloaded, 101,011,414 bytes extracted, including built-in
 headers and `LICENSE.TXT`. The executable alone is 51,872,768 bytes. Review the
 source, destination and Apache-2.0 WITH LLVM-exception license before confirming.
-CyToolsCore downloads with pinned size/SHA-256, resumption, progress and cancellation.
+CyMCPSDK native HTTPS downloads with pinned size/SHA-256, resumption, progress and cancellation.
 Archive paths are validated before extraction; files are verified before selection.
 
 The destination is `<CyCodeCore>/dependencies/clangd/23.1.0/`, beside `versions/`.
@@ -29,22 +31,13 @@ after installing/selecting a different version. `language_status` now distinguis
 
 ## Compact MCP discovery {#mcp-profile}
 
-New/refreshed managed connections default to **Code (compact)**. It advertises
-19 common code operations, one `op_core_invoke` gateway and 21 official SDK
-controls: **41 tools instead of 278**. Choose **Full catalogue** for existing
-clients requiring individual names for all 257 native operations.
-
-For an unadvertised capability, read `cy_list_operations` once, then fetch only
-its exact `cy_describe_operation` schema. Call `op_core_invoke` with
-`parameters: {operationId: "<canonical-id>", parameters: {...}}`. The official
-SDK validates the actual operation's schema, permissions, resources and job owner;
-the gateway grants no extra permission. Reuse advertised/discovered schemas and
-avoid repeated complete discovery and speculative polling. `CYCODE_MCP_PROFILE`
-or `--mcp-profile code|full` selects the presentation without changing native APIs.
-
-With the pinned official SDK, serialized tool metadata measures **108,132 bytes**
-for Code versus **1,570,677 bytes** for Full (93.1% less). These are byte counts,
-not model token counts or a new agent speed benchmark.
+New managed connections default to **On-demand tools (compact)**: five official
+CyMCPSDK gateway tools. Search by capability, describe only the chosen canonical
+operation and call it through `cy_tools_call`. **Full catalogue** selects direct
+canonical tools. Existing `code`/`full` receipts retain their legacy job envelopes
+and existing permissions when refreshed. All profiles use the same native registry.
+See [native automation](NativeAutomation.md) for independent resource/cache/metrics
+options, connection syntax, durable recovery and measured validation.
 
 ## Agents and skills {#agents}
 

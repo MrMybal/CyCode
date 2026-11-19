@@ -1,4 +1,4 @@
-"""Real native executable, CyTools runtime and official MCP SDK integration."""
+"""Production native CyMCPSDK host and external official MCP client integration."""
 import asyncio
 import json
 import os

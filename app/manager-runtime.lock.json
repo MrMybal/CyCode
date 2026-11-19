@@ -1,0 +1,12 @@
+{
+  "format": 2,
+  "platform": "windows-x64",
+  "purpose": "manager-stdlib",
+  "python": {
+    "version": "3.13.17",
+    "abi": "cp313",
+    "url": "https://www.python.org/ftp/python/3.13.17/python-3.13.17-embeddable-amd64.zip",
+    "sha256": "0ba1ee4bfcbdc3a559d27e2e9ce76d04a7839947a23f46375872c755c0d463b8"
+  },
+  "payloadSha256": "af2bd8b12b6e308d0dfb2a12393a16363f23460e0b9fc6e7e505d59af37c6d2a"
+}

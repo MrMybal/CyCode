@@ -5,23 +5,35 @@ description: Connect to the running IDE with a read or editing identity.
 section: Work in CyCode
 order: 260
 parent: plugins
-revision: 6
+revision: 8
 ---
+
+
 
 ## Connect {#connection}
 
-Windows packages built from this revision include the real CyToolsCore companion and its isolated Python/MCP runtime. No system Python or startup download is required. Open the MCP panel and copy the connection configuration for this running IDE instance into your MCP client.
+Core 0.1.5 uses native CyMCPSDK 0.7.0. Use Manager to configure a project-bound,
+read-only connection, or launch the native CLI with `--sdk --workspace <project>
+--connection-state <private-root> --disable-plugins mcp`. No Python MCP server or
+embedded chat is required. Attaching through `--native-descriptor FILE` reuses
+an already-open Engine; `--bridge-config FILE --access read|edit mcp` connects to
+its private shared HTTP service. Do not publish endpoint tokens.
 
-Released versions through 0.2.3 and Linux/macOS source builds still need the separate development runtime. Building the desktop alone does not prepare the redistributable environment; use the documented packaging command.
+## Operations and results {#operations}
 
-The default configuration is read-only. Select editing access deliberately for document writes, version-control changes, process execution or plugin calls. Each application instance has its own connection context. Do not share private endpoint/identity files.
+Five default MCP tools discover and call all 257 canonical operations. Search
+with `cy_tools_search`, load one contract with `cy_tools_describe`, then call
+`cy_tools_call` with `{"name":"documents_read","arguments":{"path":"Source/main.cpp"}}`.
+Large results provide private resources with complete chunk reads. Default access
+is read-only; host permissions and installed tools govern edits and other actions.
+Read actual document revisions, preview/apply native transactions and save explicitly.
 
-## Jobs and documents {#operations}
-
-The official MCP adapter exposes `op_<operationId>`, `cy_get_job`, `cy_events` and `cy_cancel_job`. A submitted job is not its completed result: wait for Completed, Failed or Cancelled. For process results, also inspect `exitCode`, `timedOut` and `truncated`.
-
-Reads and writes use the same native documents as the editor. Read a fresh revision before replacing text; save explicitly afterward. Workspace source documents are persistent references, not disposable task artifacts. The [public operation reference](doc:api-links#contract) documents parameters and results.
+Mutations and explicit jobs keep durable results across restarts. Interrupted
+actions are never automatically replayed. Legacy `code`/`full` profiles retain
+`op_<id>`, `cy_get_job`, `cy_cancel_job` and their job envelopes.
 
 ## Headless Core {#headless}
 
-The [AI integration guide](doc:core-agents#connect) documents standalone Core startup, all 243 operation contracts, permissions, jobs, analysis preparation, navigation and guarded refactorings.
+See [native automation](native-automation#connect), [agent workflows](core-agents#connect)
+and [the public contracts](api-links#contract) for exact schemas, permissions,
+project index, semantic prerequisites, persistence and independent tuning options.

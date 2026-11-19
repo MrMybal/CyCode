@@ -2,20 +2,23 @@
   "format": "cycode-agent-methods/1",
   "toolId": "cy.code",
   "source": "app/CyTool.json + app/contracts.py",
-  "contractSha256": "62f167db64845f4c166163f7e1bd2c311ecb87bf36a96f6a30ae1494d3d1ab75",
-  "transport": "Official CyToolsCore MCP adapter; op_<id> submits a job, not a synchronous domain result.",
+  "contractSha256": "f3e4d0c01dabca7acbad9fc187d0523ed8b8da28280c4c3cd8369ccded4d9f5f",
+  "transport": "Native CyMCPSDK registry. Compact/direct-full return domain results; legacy code/full op_<id> submits a durable job.",
   "mcpPresentation": {
-    "default": "code",
+    "default": "compact",
+    "compact": "Five official CyMCPSDK gateway tools; search, describe, call and private resource reads/grep.",
+    "direct-full": "Canonical native operations with direct results.",
     "full": "All individual op_<id> tools.",
     "code": "Common individual tools plus op_core_invoke(parameters={operationId,parameters}) for other canonical operations. Fetch only the selected cy_describe_operation contract."
   },
   "guide": "Docs/Agents.md",
   "persistentSources": "Workspace paths are persistent native document references, never SDK temporary input files.",
   "discovery": [
-    "cy_describe",
-    "cy_list_operations",
-    "cy_describe_operation",
-    "cy_can_run"
+    "cy_tools_search",
+    "cy_tools_describe",
+    "cy_tools_call",
+    "cy_resources_read",
+    "cy_resources_grep"
   ],
   "jobs": [
     "cy_get_job",
@@ -350,7 +353,7 @@
       "documentation": "operation-analysis-status-analysis-status",
       "id": "analysis_status",
       "name": "Analysis Status",
-      "description": "Read aggregate native semantic-preparation progress without starting work. A completed preparation proves the stated source-file scope, not exhaustive whole-project semantic coverage. Per-job ownership, polling and cancellation remain CyToolsCore cy_get_job/cy_cancel_job.",
+      "description": "Read aggregate native semantic-preparation progress without starting work. A completed preparation proves the stated source-file scope, not exhaustive whole-project semantic coverage. Per-job ownership, polling and cancellation remain native core_job_get/core_job_cancel (legacy cy_get_job/cy_cancel_job).",
       "inputSchema": {
         "type": "object",
         "properties": {},

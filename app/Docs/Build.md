@@ -1,5 +1,7 @@
 # C/C++ toolchains and CMake
 
+> Current source integration: [native CyMCPSDK CLI/MCP](NativeAutomation.md). The default is the five-tool compact gateway; Core has no chat or Python MCP runtime. Release-specific procedures below are retained for compatibility/history.
+
 RelatedFiles.cpp joins cycode_core; its fixture joins the existing opt-in core test
 target. NavigationUI reuses existing Core/Commands. No executable target, external
 dependency or CyUI module is added; ordinary builds keep BUILD_TESTING=OFF.

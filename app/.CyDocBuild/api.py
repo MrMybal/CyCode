@@ -77,7 +77,7 @@ def generate():
             stem = identity.rsplit('_', 1)[0]
             relations = [{'key': other['id'], 'name': other['id']} for other in operations if other['id'] != identity and other['id'].rsplit('_', 1)[0] == stem][:8]
             signature = identity + '({' + ', '.join(p['name'] + ('?' if p['optional'] else '') + ': ' + p['type'] for p in parameters) + '}) -> JSON'
-            contract = t('Use the official MCP tool `op_' + identity + '` through a connected CyToolsCore client. This is an operation contract, not a C++ function. Read the [shared request and transaction rules](doc:api-links#contract) before making changes.', 'Utilisez l’outil MCP officiel `op_' + identity + '` depuis un client CyToolsCore connecté. Il s’agit d’un contrat d’opération, pas d’une fonction C++. Consultez les [règles communes des requêtes et transactions](doc:api-links#contract) avant toute modification.')
+            contract = t('Use the official MCP tool `op_' + identity + '` in legacy code/full, or call the canonical name with cy_tools_call in native compact mode. This is an operation contract, not a C++ function. Read the [shared request and transaction rules](doc:api-links#contract) before making changes.', 'Utilisez l’outil MCP officiel `op_' + identity + '` en mode historique code/full, ou le nom canonique avec cy_tools_call en mode compact natif. Il s’agit d’un contrat d’opération, pas d’une fonction C++. Consultez les [règles communes des requêtes et transactions](doc:api-links#contract) avant toute modification.')
             # Large schemas remain complete and readable, but do not need tens
             # of thousands of Prism spans in every locale's startup payload.
             def block(schema):

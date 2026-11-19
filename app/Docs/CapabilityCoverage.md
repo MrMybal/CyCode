@@ -4,12 +4,12 @@ The progressive-capacity stage adds [paged native text and storage](LargeProject
 streamed compiler databases, incremental checkpoint pages and disk-backed native
 transactions. Paged documents now add sparse line/UTF-16 reads, exclusive Save as
 and explicit durable checkpoint preview/restoration through Apply/Undo. The public
-SDK catalogue has 249 operations. Graphical/LSP adapters and automatic per-keystroke
+SDK catalogue has 257 operations. Graphical/LSP adapters and automatic per-keystroke
 recovery remain separate; ordinary GUI/LSP buffers retain their compatibility policy.
 No hardware-unlimited or exhaustive Unreal claim follows.
 
 
-| Capability | Native UI | CyTools/MCP | State |
+| Capability | Native UI | CyMCPSDK/MCP | State |
 |---|---|---|---|
 | Embedded service lifecycle | Const `Bridge::serviceStatus()` / `text::SessionBridge::serviceStatus()` on the existing host | Existing `service_status` contract unchanged | Reads the endpoint's same native owner, preserving project context/uptime and text-only analysis capability. No C++ descriptor RPC client or new SDK operation. See [Native integration](CoreExtraction.md#embedded-c-service-status). |
 | Persistent compiler traversal | New view integration pending | analysis_prepare/checkpoints/results/status through the same native owner and official SDK | Opt-in paged checkpoints, OS lease, compiler digest, historical-proof invalidation, per-file errors/timing and explicit pending budgets. Windows real 162-unit and scoped Unreal runs; full-engine/current-proof, GUI and new Linux/macOS execution unverified. See [Progress](AnalysisProgress.md). |

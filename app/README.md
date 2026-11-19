@@ -94,7 +94,7 @@ pending; see [Diagnostics](Docs/DiagnosticNavigation.md) and
 
 Native C++20 IDE foundation using CyUI and Dear ImGui, with SDL3 windowing/rendering,
 a syntax-aware text editor, cancellable ripgrep search, Git, native plugins, clangd
-completion/diagnostics, definition/reference navigation and a CyToolsCore MCP
+completion/diagnostics, definition/reference navigation and a native CyMCPSDK MCP
 companion. Project license: [GNU GPL v3 only](../LICENSE), SPDX `GPL-3.0-only`.
 Copyright (c) 2026 Cyberalien; see [COPYRIGHT](../COPYRIGHT).
 
@@ -400,6 +400,8 @@ selection with package/kind executable guards. See [Cargo workspaces](Docs/Cargo
 for controls, path boundaries and pending expanded runtime acceptance.
 See [Project tasks](Docs/ProjectTasks.md) for exact scope and remaining adapters.
 
+> Source update: CLI/MCP now uses native **CyMCPSDK 0.7.0**. No chat or Python MCP server. Published 0.1.4 packages predate this migration. See [native automation](Docs/NativeAutomation.md).
+
 ## Build
 
 Build > Cancel build covers CMake, MSBuild and explicit Unreal operations, with
@@ -444,33 +446,35 @@ python app/scripts/package_windows.py --build runtime/build-vs
 The package has a source/dependency manifest and SHA256SUMS.txt. Prepare the
 redistributable MCP first with prepare_mcp_runtime.py; see Docs/Build.md. New
 Windows packages include the app-local MSVC runtime, verified ripgrep and pinned
-Python/CyToolsCore/MCP environment. An OpenGL 3.3 driver is still required.
+stdlib-only Manager Python environment. An OpenGL 3.3 driver is still required.
 Language servers, compilers and debugger adapters remain separate prerequisites.
 Development venvs, credentials, user settings and dependency source trees are
 excluded. Public releases through 0.2.3 predate the bundled MCP environment.
 
 Downloaded archives are pinned by revision and SHA-256 in dependencies.lock.json.
-The fetch script never modifies CyUI or CyToolsCore. Build output is under runtime/;
+The fetch script never modifies CyUI or a local CyMCPSDK checkout. Build output is under runtime/;
 the build script copies the desktop executable to the installation root.
 For a core/CLI/plugin build without CyUI: python app/scripts/build.py --core-only.
 Ordinary builds do not compile or launch native tests. See [local testing](Docs/Testing.md)
 for source-only checks, isolated test builds and the current antivirus interruption.
 
-GitHub Actions resolves the exact shared-editor and SDK source commits. Public
+GitHub Actions remains paused. Historical CI used exact shared-editor and SDK source commits. Public
 source dependencies need no additional credential; a private Reader checkout can
 use CYCODE_READER_READ_TOKEN with read access. Never commit that token or include
 it in a package. Finalization.md records actual completed platform matrices;
 configuration alone does not establish a pass.
 
-For the source/development runtime (or older packages), obtain the actual CyToolsCore 0.10.1 wheel:
+Current CLI/MCP builds compile the pinned native CyMCPSDK source:
 
 ```sh
-python app/scripts/setup_runtime.py --core-wheel /absolute/path/to/cytools_core-0.10.1-py3-none-any.whl
+python app/scripts/build.py --core-only --no-install --cymcp-source <clean-sdk-checkout>
+python app/scripts/prepare_manager_runtime.py
 ```
 
-The default wheel location is the sibling CyToolsCore/dist checkout. This is a local
-development dependency, not an invented public package repository. No SDK source,
-environment or machine-specific D: path is copied into the repository.
+The second command prepares pinned CPython stdlib for Manager only. No Python SDK
+wheel, pip runtime or chat is required. See [native automation](Docs/NativeAutomation.md)
+for current launch/attach commands, permissions, jobs and packaging. The following
+IDE run notes are preserved as historical references to the separate IDE repository.
 
 ## Run
 
@@ -552,6 +556,6 @@ navigation and Roslyn formatting through actual desktop commands and captures.
 - [Roadmap](Docs/Roadmap.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 
-CyUI and CyToolsCore must be made accessible with their licenses and fixed revisions
+CyUI and CyMCPSDK must be made accessible with their licenses and fixed revisions
 before this repository can be built publicly. Do not publish runtime/, data/ or
 connection descriptors. Native plugins are trusted code, not sandboxed extensions.

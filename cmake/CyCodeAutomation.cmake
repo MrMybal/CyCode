@@ -1,0 +1,41 @@
+# The automation adapter is optional for embedders and never links graphical/AI modules.
+set(CYCODE_CYMCP_SOURCE "" CACHE PATH "Clean local CyMCPSDK source checkout")
+file(READ "${CYCODE_ROOT}/app/cymcp-source.lock.json" _cycode_cymcp_lock)
+string(JSON _cycode_cymcp_revision GET "${_cycode_cymcp_lock}" revision)
+if(NOT CYCODE_CYMCP_SOURCE)
+  set(CYCODE_CYMCP_SOURCE "${CYCODE_DEPS}/cymcp-${_cycode_cymcp_revision}")
+endif()
+if(NOT EXISTS "${CYCODE_CYMCP_SOURCE}/include/cymcp/mcp.hpp")
+  message(FATAL_ERROR "CyMCPSDK sources missing. Pass -DCYCODE_CYMCP_SOURCE=<local checkout> or prepare the pinned dependency.")
+endif()
+find_package(Git REQUIRED)
+execute_process(COMMAND "${GIT_EXECUTABLE}" -c "safe.directory=${CYCODE_CYMCP_SOURCE}"
+  -C "${CYCODE_CYMCP_SOURCE}" rev-parse HEAD OUTPUT_VARIABLE _cymcp_actual
+  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
+if(NOT _cymcp_actual STREQUAL _cycode_cymcp_revision)
+  message(FATAL_ERROR "CyMCPSDK does not match app/cymcp-source.lock.json; preserve the checkout and review/update the pin.")
+endif()
+execute_process(COMMAND "${GIT_EXECUTABLE}" -c "safe.directory=${CYCODE_CYMCP_SOURCE}"
+  -C "${CYCODE_CYMCP_SOURCE}" status --porcelain --untracked-files=no OUTPUT_VARIABLE _cymcp_dirty
+  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
+if(_cymcp_dirty)
+  message(FATAL_ERROR "Use a clean CyMCPSDK checkout. Local SDK changes are preserved.")
+endif()
+foreach(_module AI LOCAL CHAT_UI CHAT_APP EXAMPLES TESTS BENCHMARKS)
+  set(CYMCP_BUILD_${_module} OFF CACHE BOOL "Unused by the headless Core" FORCE)
+endforeach()
+foreach(_module PLATFORM HTTP MCP)
+  set(CYMCP_BUILD_${_module} ON CACHE BOOL "Native automation dependency" FORCE)
+endforeach()
+add_subdirectory("${CYCODE_CYMCP_SOURCE}" "${CMAKE_CURRENT_BINARY_DIR}/cymcp")
+add_library(cycode_automation STATIC
+  src/automation/Schema.cpp src/automation/Jobs.cpp src/automation/Host.cpp
+  src/automation/Cli.cpp src/automation/NativeClient.cpp src/automation/Artifact.cpp)
+add_library(CyCode::Automation ALIAS cycode_automation)
+target_include_directories(cycode_automation PUBLIC "${CYCODE_ROOT}/app/include")
+target_compile_features(cycode_automation PUBLIC cxx_std_20)
+target_compile_definitions(cycode_automation PRIVATE CYCODE_CYMCP_REVISION="${_cycode_cymcp_revision}")
+target_link_libraries(cycode_automation PUBLIC CyCode::Core CyMCP::MCP)
+if(MSVC)
+  target_compile_options(cycode_automation PRIVATE /utf-8 /W4 /EHsc /permissive-)
+endif()

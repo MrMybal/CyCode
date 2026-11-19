@@ -1,4 +1,4 @@
-"""Application-owned native host lifecycle; CyToolsCore still owns MCP/jobs/identity."""
+"""Application-owned native Engine lifecycle; CyMCPSDK hosts automation."""
 import os
 import json
 import sys

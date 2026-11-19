@@ -5,23 +5,37 @@ description: Connectez-vous à l’IDE actif avec une identité de lecture ou d�
 section: Travailler dans CyCode
 order: 260
 parent: plugins
-sourceRevision: 6
+sourceRevision: 8
 ---
+
+
 
 ## Se connecter {#connection}
 
-Les paquets Windows construits depuis cette révision incluent le véritable compagnon CyToolsCore et son environnement Python/MCP isolé. Aucun Python système ni téléchargement au démarrage n’est requis. Ouvrez le panneau MCP et copiez dans votre client la configuration de connexion de cette instance active de l’IDE.
+Le Core 0.1.5 utilise CyMCPSDK 0.7.0 natif. Le Manager configure une connexion
+liée à un projet et en lecture seule. Le lancement manuel utilise
+`--sdk --workspace <projet> --connection-state <etat-prive> --disable-plugins mcp`.
+Aucun serveur MCP Python ni tchat intégré n’est requis. `--native-descriptor FICHIER`
+réutilise un Engine ouvert ; `--bridge-config FICHIER --access read|edit mcp`
+rejoint son service HTTP privé. Ne publiez pas les jetons de connexion.
 
-Les versions publiées jusqu’à 0.2.3 et les compilations Linux/macOS nécessitent encore le runtime de développement séparé. Compiler le bureau seul ne prépare pas l’environnement redistribuable ; utilisez la commande de packaging documentée.
+## Opérations et résultats {#operations}
 
-La configuration par défaut est en lecture seule. Sélectionnez volontairement l’accès en édition pour modifier les documents ou le contrôle de versions, exécuter des processus ou appeler des plugins. Chaque instance possède son propre contexte de connexion. Ne partagez pas les fichiers privés d’identités ou de points de connexion.
+Les cinq outils MCP découvrent et appellent les 257 opérations canoniques.
+`cy_tools_search` recherche une capacité, `cy_tools_describe` charge son contrat,
+puis `cy_tools_call` reçoit par exemple
+`{"name":"documents_read","arguments":{"path":"Source/main.cpp"}}`.
+Les gros résultats sont récupérables intégralement par ressources privées et
+morceaux. Les droits de l’hôte et outils installés gouvernent les actions.
+Relisez les révisions, prévisualisez/appliquez les transactions et enregistrez explicitement.
 
-## Tâches et documents {#operations}
-
-L’adaptateur MCP officiel expose `op_<operationId>`, `cy_get_job`, `cy_events` et `cy_cancel_job`. La soumission d’une tâche n’est pas son résultat final : attendez Completed, Failed ou Cancelled. Pour un résultat de processus, examinez aussi `exitCode`, `timedOut` et `truncated`.
-
-Les lectures et écritures utilisent les mêmes documents natifs que l’éditeur. Relisez une révision courante avant de remplacer le texte, puis enregistrez explicitement. Les sources de l’espace de travail sont des références persistantes, pas des artefacts temporaires de tâches. La [référence publique des opérations](doc:api-links#contract) décrit les paramètres et résultats.
+Les mutations et tâches explicites gardent leurs résultats au redémarrage.
+Une action interrompue n’est jamais rejouée automatiquement. Les profils
+historiques `code`/`full` conservent `op_<id>`, `cy_get_job`, `cy_cancel_job`
+et leurs enveloppes de jobs.
 
 ## Core sans interface {#headless}
 
-Le [guide d’intégration IA](doc:core-agents#connect) décrit le démarrage du Core autonome, les 243 contrats, les permissions, tâches, préparations d’analyse, navigations et modifications protégées.
+Consultez [l’intégration native](native-automation#connect), [les workflows IA](core-agents#connect)
+et [les contrats publics](api-links#contract) pour les schémas, droits, index du
+projet, prérequis sémantiques, persistance et réglages indépendants.

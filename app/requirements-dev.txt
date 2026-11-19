@@ -1,0 +1,2 @@
+# External MCP client used only by explicitly requested acceptance tests. Never shipped.
+mcp==1.30.0

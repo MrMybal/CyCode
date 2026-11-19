@@ -1,0 +1,92 @@
+{
+  "date": "2026-11-19",
+  "sdk": {
+    "repository": "https://github.com/MrMybal/CyMCPSDK.git",
+    "revision": "791d4d7d7680213b282ec8529d248a10f8494d77",
+    "version": "0.7.0",
+    "modules": [
+      "Core",
+      "Platform",
+      "Http",
+      "MCP"
+    ],
+    "chat": false
+  },
+  "productionBuilds": [
+    "Windows x64 Release CLI/Core",
+    "Windows x64 Release CyUI Manager"
+  ],
+  "buildTesting": false,
+  "nativeFixturesCompiled": false,
+  "githubActionsUsed": false,
+  "acceptance": {
+    "core": {
+      "platform": "win32",
+      "sdkRevision": "791d4d7d7680213b282ec8529d248a10f8494d77",
+      "checks": [
+        "legacy-version",
+        "legacy-native-dispatch",
+        "cli-operation-description",
+        "cli-indexed-search",
+        "cli-read-only-denied",
+        "cli-invalid-schema",
+        "official-mcp-five-tool-discovery",
+        "mcp-real-index-and-native-engine",
+        "live-instance-utf8-edit-denial-revision-and-no-save",
+        "full-canonical-pattern-enforcement",
+        "native-paged-preview-apply-undo-redo-no-save",
+        "complete-large-result-chunks-disk-spool-and-private-owner",
+        "legacy-op-job-contract-and-live-state",
+        "expired-handle-rejects-without-action-replay",
+        "real-build-job-cancellation-releases-native-worker",
+        "durable-job-identity-restart-and-owner-isolation",
+        "metadata-only-telemetry"
+      ],
+      "nativeFixtureExecutablesCompiled": false,
+      "actionsUsed": false,
+      "workspaceUnchangedOnDisk": true
+    },
+    "http": {
+      "platform": "win32",
+      "checks": [
+        "separate-http-roles-real-live-state-no-principal-escalation",
+        "official-streamable-http-mcp-and-native-invalidation-before-ttl",
+        "concurrent-proxies-use-one-live-engine-with-independent-local-state",
+        "old-python-command-proxies-to-shared-native-http-service",
+        "native-auto-import-old-credentials-results-interrupted-no-replay"
+      ],
+      "actionsUsed": false,
+      "sourceUnchangedOnDisk": true
+    }
+  },
+  "sourceChecks": {
+    "manager": 16,
+    "managerBundle": 5,
+    "legacyMigration": 2,
+    "dependencyGuards": 6
+  },
+  "documentation": {
+    "localisedPages": 680,
+    "locales": [
+      "en",
+      "fr"
+    ],
+    "dom": "routing/search/six themes/media/Escape/accessibility passed; no browser was opened"
+  },
+  "pending": [
+    "Linux/macOS execution",
+    "Manager visual interaction acceptance",
+    "No comparative agent-token/Unreal campaign performed by this migration"
+  ],
+  "dependencyDownload": {
+    "artifact": "clangd 23.1.0 official Windows zip",
+    "size": 29690805,
+    "sha256": "23412a240756a162e7b98a282f36aa2a23a88db5ce16a0cbc4fef7253768c810",
+    "resumedRange": true,
+    "verifiedCache": true,
+    "clangdExecuted": false
+  },
+  "testedProductionCliSha256": "f8ccdd20d86a2820be879ef3f20e62494a5bbc78265f55a6b135d89e8bcd2939",
+  "packagedBinaryValidated": true,
+  "integrationChecks": 22
+}

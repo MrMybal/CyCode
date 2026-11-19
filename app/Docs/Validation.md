@@ -1,5 +1,25 @@
 # Validation — 2026-11-08
 
+## 2026-11-19 — native CyMCPSDK migration
+
+See [the source integration](NativeAutomation.md) and the metadata-only
+[acceptance report](Benchmarks/cymcp-migration-20261119.json). Windows x64 Release
+Core/CLI and CyUI Manager compile with tests disabled. Real CLI, stdio MCP and
+Streamable HTTP MCP cover indexed search, live UTF-8 buffers, read/edit refusal,
+revision guards, paged Apply/Undo/Redo, complete private chunk/spool recovery,
+expired handles, native CMake cancellation, durable job/credential restart and
+old SQLite interrupted-job conversion without replay. Native event metadata
+updates its SDK resource before the configured 60s TTL. The old Python command
+forwards to that same running instance. Downloaded clangd bytes pass the pinned
+size/hash, resumed range transfer and cache check; clangd is not executed.
+
+Twenty-nine process-free data cases pass; the bilingual local export and DOM
+routing/search/themes/media/Escape/accessibility checks pass. No native fixture
+executable is compiled, no GUI application opened, no Actions started and no
+installed user configuration changed. Linux/macOS execution, graphical Manager acceptance and new agent-token/Unreal
+comparisons are outside this validation. Historical evidence below is retained.
+
+
 ## 2026-11-12 — compact MCP, private clangd and CyUI Manager
 
 Windows x64 Release production builds of Core/CLI and the separate CyUI Manager

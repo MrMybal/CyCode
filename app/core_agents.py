@@ -1,6 +1,6 @@
 """Client-specific agent configuration, owned skills and reviewed file changes.
 
-This configures clients only. CyToolsCore remains the sole SDK/MCP runtime.
+This configures clients only. The native CyMCPSDK host owns automation.
 """
 from __future__ import annotations
 
@@ -114,7 +114,7 @@ class Manager:
                         or not isinstance(record.get('id'), str) or not re.fullmatch('[a-f0-9]{24}', record['id'])
                         or record['id'] != path.stem or record.get('client') not in CLIENTS
                         or record.get('access') not in ('read', 'edit') or record.get('scope') not in ('user', 'project')
-                        or record.get('mcpProfile', 'code') not in ('code', 'full')
+                        or record.get('mcpProfile', 'code') not in ('compact', 'direct-full', 'code', 'full')
                         or type(record.get('enabled')) is not bool
                         or any(not isinstance(record.get(key), str) or not record[key] for key in ('home', 'workspace', 'config', 'server'))):
                     raise ValueError('Invalid manager receipt: ' + str(path))
@@ -169,9 +169,9 @@ class Manager:
         profile = CLIENTS[record['client']]
         generation = shared.digest(str(self.home).encode())[:16]
         jobs = self.state / 'jobs' / record['id'] / generation
-        command = str(self.home / 'tools/python/python.exe')
-        arguments = ['-B', '-X', 'utf8', str(self.home / 'app/agent_host.py'),
-                     '--workspace', record['workspace'], '--state', str(jobs)]
+        command = str(self.home / ('cycode_cli.exe' if os.name == 'nt' else 'cycode_cli'))
+        arguments = ['--sdk', '--workspace', record['workspace'], '--connection-state', str(jobs),
+                     '--disable-plugins', 'mcp']
         environment = {'CYCODE_CORE_HOME': str(self.home),
                        'CYCODE_PERMISSIONS': 'workspace.write,process.execute' if record['access'] == 'edit' else '',
                        'CYCODE_MCP_PROFILE': record.get('mcpProfile', 'code'), 'GIT_OPTIONAL_LOCKS': '0'}
@@ -222,12 +222,12 @@ class Manager:
                              'project': record['workspace'], 'action': 'remove' if remove else 'connect',
                              'access': record['access'], 'reloadRequired': True})
 
-    def prepare(self, clients, workspace=None, *, scope='project', skill=True, mcp=True, access='read', mcp_profile='code'):
+    def prepare(self, clients, workspace=None, *, scope='project', skill=True, mcp=True, access='read', mcp_profile='compact'):
         if not clients or len(set(clients)) != len(clients) or any(c not in CLIENTS for c in clients):
             raise ValueError('Choose supported agent applications')
         if access not in ('read', 'edit') or not (skill or mcp):
             raise ValueError('Choose skill and/or MCP with explicit access')
-        if mcp_profile not in ('code', 'full'):
+        if mcp_profile not in ('compact', 'direct-full', 'code', 'full'):
             raise ValueError('Unknown MCP profile')
         workspace = shared.ordinary(workspace).resolve(strict=True) if workspace else None
         if (mcp or scope == 'project') and (workspace is None or not workspace.is_dir()):

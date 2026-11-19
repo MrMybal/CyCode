@@ -7,7 +7,7 @@ inline void registerManagerLocale() {
         {"Project", "Projet"}, {"Scope", "Portée"}, {"This project", "Ce projet"}, {"My user account", "Mon compte utilisateur"},
         {"Access", "Accès"}, {"Read only", "Lecture seule"}, {"Read, edit and build", "Lecture, édition et compilation"},
         {"Install skill", "Installer le skill"}, {"Configure MCP", "Configurer le MCP"}, {"Browse", "Parcourir"},
-        {"MCP catalogue", "Catalogue MCP"}, {"Code (compact)", "Code (compact)"}, {"Full catalogue", "Catalogue complet"},
+        {"MCP catalogue", "Catalogue MCP"}, {"On-demand tools (compact)", "Outils à la demande (compact)"}, {"Full catalogue", "Catalogue complet"},
         {"Preview changes", "Voir les modifications"}, {"Apply reviewed changes", "Appliquer les modifications vérifiées"},
         {"Managed connections", "Connexions gérées"}, {"Refresh connections", "Actualiser les connexions"},
         {"Remove connection", "Retirer la connexion"}, {"Refresh", "Actualiser"}, {"Ready", "Prêt"},
@@ -30,7 +30,7 @@ inline void registerManagerLocale() {
         {"Git repositories", "Dépôts Git"}, {"CMake projects", "Projets CMake"}, {"C#/.NET projects", "Projets C#/.NET"},
         {"C++ inspections", "Inspections C++"}, {"Native debugging", "Débogage natif"},
         {"Skill instructions and Core tools are separate. Reload your client after applying a connection.", "Les instructions du skill et les outils Core sont distincts. Rechargez votre client après application d’une connexion."},
-        {"Code exposes common tools. Other operations remain available on demand.", "Code expose les outils courants. Les autres opérations restent accessibles à la demande."},
+        {"Compact exposes five discovery tools. Load only the selected operation schema.", "Compact expose cinq outils de découverte. Chargez seulement le schéma de l’opération choisie."},
         {"An idle language server is not necessarily missing.", "Un serveur de langage en attente n’est pas nécessairement absent."},
         {"Stopping download. Complete or cancel any visible installer.", "Arrêt du téléchargement. Terminez ou annulez tout installateur visible."}
     });

@@ -56,6 +56,8 @@ def build_commands(args, cmake, ninja, editor):
                  f'-DCMAKE_BUILD_TYPE={args.configuration}',
 
                  '-DCYCODE_BUILD_GUI=OFF',
+                 '-DCYCODE_BUILD_AUTOMATION=ON',
+                 *(['-DCYCODE_CYMCP_SOURCE=' + str(args.cymcp_source)] if getattr(args, 'cymcp_source', None) else []),
                  f'-DBUILD_TESTING={"ON" if args.build_tests else "OFF"}']
     compile_command = [cmake, '--build', str(build), '--config', args.configuration,
                        '--parallel', '4']
@@ -83,6 +85,7 @@ def main():
     mode.add_argument('--core-only', action='store_true')
     mode.add_argument('--reader-only', action='store_true', help='Deprecated: CyCodeReader now has its own repository/build')
     parser.add_argument('--configuration', default='Release')
+    parser.add_argument('--cymcp-source', type=Path, help='Clean CyMCPSDK source at app/cymcp-source.lock.json; local sources preferred')
     parser.add_argument('--cyui', type=Path, help='Clean checkout at app/cyui-source.lock.json (default: pinned cache)')
     parser.add_argument('--editor-root', type=Path, help='Deprecated and ignored: Core does not depend on Reader')
     parser.add_argument('--distribution', action='store_true', help='Build packaged GUI/CLI without downloading optional language/debug toolchains')
@@ -109,6 +112,8 @@ def main():
                           'testCommand': test_command(args, cmake, build) if args.run_tests else None,
                           'installsExecutable': not (args.core_only or args.no_install or args.build_tests)}, indent=2))
         return 0
+    from prepare_cymcp import ensure_source
+    args.cymcp_source = ensure_source(args.cymcp_source)
     editor = None
     args.core_only = True
     if not args.core_only and not args.reader_only and not args.distribution:

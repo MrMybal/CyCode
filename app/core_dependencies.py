@@ -160,16 +160,15 @@ def install(home, *, root=None, accepted=False, cancelled=lambda: False, progres
     with management_lock(folder):
         destination = ordinary(folder / lock['version'])
         if not destination.exists():
-            # Real CyToolsCore downloader: bounded known size, resumable transfer,
-            # SHA-256 validation and its own cancellation/progress implementation.
-            from cytools_core.downloads import DownloadManager
+            from native_sdk import download_artifact
+            from core_host import find_core
             class Cancellation:
                 def check(self):
                     if cancelled(): raise RuntimeError('clangd download cancelled')
-            download = DownloadManager(ordinary(folder / 'downloads'), use_shared_cache=False).download(
-                'clangd-' + lock['version'] + '.zip', lock['url'], sha256=lock['sha256'], size=lock['size'],
-                cancellation=Cancellation(),
-                progress=(lambda received, total: progress({'phase': 'download', 'downloaded': received, 'total': total})) if progress else None)
+            download = download_artifact(find_core(home / ('cycode_cli.exe' if os.name == 'nt' else 'cycode_cli')),
+                {'url': lock['url'], 'sha256': lock['sha256'], 'size': lock['size'],
+                 'destination': str(ordinary(folder / 'downloads' / ('clangd-' + lock['version'] + '.zip')))},
+                cancelled=cancelled, progress=progress)
             if download['state'] != 'Completed': raise RuntimeError('clangd download did not complete')
             if shutil.disk_usage(folder).free < MAX_EXPANDED + lock['size']:
                 raise ValueError('Not enough free space to stage clangd safely')

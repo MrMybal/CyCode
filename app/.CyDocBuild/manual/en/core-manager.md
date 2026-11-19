@@ -5,8 +5,10 @@ description: Install skills, manage client connections and update without replac
 section: API and extensions
 parent: core-installation
 order: 263
-revision: 2
+revision: 4
 ---
+
+
 
 The current source replaces the old Win32 form with a standalone **CyUI Core**
 desktop host. Agents/skills, dependencies and updates have separate views.
@@ -24,7 +26,7 @@ silently run. Compilers/build tools remain necessary for the corresponding tasks
 29,690,805 bytes downloaded, 101,011,414 bytes extracted, including built-in
 headers and `LICENSE.TXT`. The executable alone is 51,872,768 bytes. Review the
 source, destination and Apache-2.0 WITH LLVM-exception license before confirming.
-CyToolsCore downloads with pinned size/SHA-256, resumption, progress and cancellation.
+CyMCPSDK native HTTPS downloads with pinned size/SHA-256, resumption, progress and cancellation.
 Archive paths are validated before extraction; files are verified before selection.
 
 The destination is `<CyCodeCore>/dependencies/clangd/23.1.0/`, beside `versions/`.
@@ -37,22 +39,13 @@ after installing/selecting a different version. `language_status` now distinguis
 
 ## Compact MCP discovery {#mcp-profile}
 
-New/refreshed managed connections default to **Code (compact)**. It advertises
-19 common code operations, one `op_core_invoke` gateway and 21 official SDK
-controls: **41 tools instead of 278**. Choose **Full catalogue** for existing
-clients requiring individual names for all 257 native operations.
-
-For an unadvertised capability, read `cy_list_operations` once, then fetch only
-its exact `cy_describe_operation` schema. Call `op_core_invoke` with
-`parameters: {operationId: "<canonical-id>", parameters: {...}}`. The official
-SDK validates the actual operation's schema, permissions, resources and job owner;
-the gateway grants no extra permission. Reuse advertised/discovered schemas and
-avoid repeated complete discovery and speculative polling. `CYCODE_MCP_PROFILE`
-or `--mcp-profile code|full` selects the presentation without changing native APIs.
-
-With the pinned official SDK, serialized tool metadata measures **108,132 bytes**
-for Code versus **1,570,677 bytes** for Full (93.1% less). These are byte counts,
-not model token counts or a new agent speed benchmark.
+New connections default to **On-demand tools (compact)**: five CyMCPSDK gateway
+tools discover and invoke every canonical operation. **Full catalogue** selects
+`direct-full`; existing `code`/`full` registrations keep their legacy job envelopes
+and permissions when refreshed. Search, describe one selected operation and call
+it through `cy_tools_call`; retain its schema instead of rediscovering the catalogue.
+See [native automation](native-automation#operations) for parameters, durable jobs,
+resource chunks, cache, notifications and metadata-only metrics.
 
 ## Agents and skills {#agents}
 
@@ -71,7 +64,7 @@ and never writes an agent configuration or installs a personal skill by itself.
 5. Trust/reload the connection in the selected client. File configuration is not
    proof that a client loaded the server, activated a skill or used a native tool.
 
-The same official CyToolsCore MCP adapter is used for every client. A small
+The same native CyMCPSDK MCP adapter is used for every client. A small
 launcher allocates a separate SDK job-data directory for each host invocation;
 clients and old/new generations never silently reuse a live SDK data root.
 The manager never starts Core while preparing or applying configurations.

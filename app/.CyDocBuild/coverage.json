@@ -13,7 +13,7 @@
       "kind": "developer-reference",
       "target": "core-agents#connect",
       "legacyId": "reference-app-docs-agents",
-      "sourceSha256": "9714fd6eea91eedaf16f9a699d97a980961cae922bcfd2f8fd937f434ab2cf41"
+      "sourceSha256": "2bb9ba93da8f0d0256ee88bc35ecfb5ed53e77cd364ed37c6c8c661df82353f3"
     },
     {
       "source": "Docs/AnalysisProgress.md",
@@ -27,7 +27,7 @@
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-architecture",
-      "sourceSha256": "dc913d68ef94b7e700b405bb831eba1098e14194b870477d694102a0cd5db87d"
+      "sourceSha256": "8d532a32d33b2899d58043df65c9856104b51fa9931b24a39b042a6d635e5cd3"
     },
     {
       "source": "Docs/Branding.md",
@@ -41,7 +41,7 @@
       "kind": "user-workflow",
       "target": "build#configure",
       "legacyId": "reference-app-docs-build",
-      "sourceSha256": "9462003ed6fc5e43ea5cfed047bfcd3833ac7c51444952740b88c518afe71048"
+      "sourceSha256": "941931cf2df6a97dae1e4a9dbc95a856be5ce7d9a0ddce3fdab024876f1056bc"
     },
     {
       "source": "Docs/BuildCancellation.md",
@@ -69,7 +69,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-capabilitycoverage",
-      "sourceSha256": "169b15f58915c6c38ea01198c240bccc33bcfbcf1364a613b06472cf902d754b"
+      "sourceSha256": "8f3c545e6deb0d7f3d7e37f7ccbc95e7ba2d95d9f06a8864c4dd90fd3a072932"
     },
     {
       "source": "Docs/CargoBuilds.md",
@@ -111,21 +111,21 @@
       "kind": "developer-reference",
       "target": "native-core#ownership",
       "legacyId": "reference-app-docs-coreextraction",
-      "sourceSha256": "afda527658a8afb000aa903eb4645e2c6933b1f1df3cc06e06929ce0723078f6"
+      "sourceSha256": "59ab10d5e2c82f18ce0d000c8afc5a0bbba291102a30d2e21605a273697941dc"
     },
     {
       "source": "Docs/CoreInstallation.md",
       "kind": "developer-reference",
       "target": "core-installation#distribution",
       "legacyId": "reference-app-docs-coreinstallation",
-      "sourceSha256": "21339df22838e26bef655b7183889b64ea333ab275accc716e2e77bedc67d519"
+      "sourceSha256": "a58466f722b6d44c7e6899e08eee81f8befb37f915dec8c395b62f7a776516c9"
     },
     {
       "source": "Docs/CoreManager.md",
       "kind": "user-workflow",
       "target": "core-manager#agents",
       "legacyId": "reference-app-docs-coremanager",
-      "sourceSha256": "7361ebc45519510d96dc49a0102a727ce20d57e7ba9b1f1eb447d69cafc07f2f"
+      "sourceSha256": "6bf78b833812c407f9233dee8119145aa1727602b19b04a97781bf7f9f305ee9"
     },
     {
       "source": "Docs/CoreQuality.md",
@@ -559,7 +559,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-testing",
-      "sourceSha256": "7b8e830d9733c2cdc7bfe5fe419f8d0c9e117ba80690e3b595e67ee3b805b333"
+      "sourceSha256": "811509ef7c168876f4a9c78167db71b8f6bf4a274ea45f0ba21d8a1edbb282eb"
     },
     {
       "source": "Docs/ToolchainReliability.md",
@@ -657,7 +657,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "19311a8392c457e13b3ef56c9eb90f3e6e510eb29535579795dcd3e6513be0f9"
+      "sourceSha256": "9bd488629c436cfd5a8401ca62c3cb1d5e512c19f651af7722e286f2bc768e8b"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -686,6 +686,13 @@
       "target": "settings#windows",
       "legacyId": "reference-app-docs-workspacesessions",
       "sourceSha256": "c3db5082455e7becdb10d069139979d53525d587e6d0e4c8993f3da19db4e661"
+    },
+    {
+      "source": "Docs/NativeAutomation.md",
+      "kind": "developer-reference",
+      "target": "native-automation#connect",
+      "legacyId": "reference-app-docs-nativeautomation",
+      "sourceSha256": "2f87507fe72df509ae65b29c0fdde7e33a1163bd022955509a2bce72f74b7074"
     }
   ]
 }

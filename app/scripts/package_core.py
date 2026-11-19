@@ -7,12 +7,12 @@ import subprocess
 import tempfile
 import zipfile
 
-from mcp_bundle import load_bundle, lock_digest
+from manager_bundle import load_bundle, lock_digest
 from release_package import pe_machine, version_tuple
 from windows_installer import find_iscc, system_runtime
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.1.4'
+VERSION = '0.1.5'
 
 
 def sha(data):
@@ -31,18 +31,19 @@ def collect(root, bundle, *, agents_only=False, executable=None, build=None, out
     entries = {}
     names = ['LICENSE', 'COPYRIGHT', 'icons/CyCode.ico', 'icons/CyCode.png',
              'app/tool.py', 'app/core_host.py', 'app/core_updates.py', 'app/contracts.py', 'app/CyTool.json',
-             'app/MCPMethods.json', 'app/requirements.txt', 'app/LICENSE-CyToolsCore.txt',
+             'app/MCPMethods.json', 'app/requirements.txt', 'app/cymcp-source.lock.json',
+             'app/native_sdk.py', 'app/native_client.py', 'app/sdk_cli.py', 'app/scripts/migrate_legacy_jobs.py',
              'app/agent_config.py', 'app/agent_host.py', 'app/core_agents.py',
              'app/core_installation.py', 'app/manager_window.py', 'app/manager_backend.py',
-             'app/core_dependencies.py', 'app/clangd.lock.json', 'app/mcp_profile.py', 'apps/CyCodeManager/main.py',
+             'app/core_dependencies.py', 'app/clangd.lock.json', 'apps/CyCodeManager/main.py',
              'apps/CyCodeManager/cyui-source.lock.json',
-             'app/THIRD_PARTY_NOTICES.md', 'app/mcp-runtime.lock.json',
+             'app/THIRD_PARTY_NOTICES.md', 'app/manager-runtime.lock.json',
              'app/scripts/install_core_agents.py', 'apps/CyCodeUpdater/main.py', 'app/Docs/Agents.md',
-             'app/Docs/CoreInstallation.md', 'app/Docs/CoreManager.md', 'app/Docs/WindowsSecurity.md',
+             'app/Docs/CoreInstallation.md', 'app/Docs/NativeAutomation.md', 'app/Docs/CoreManager.md', 'app/Docs/WindowsSecurity.md',
              'app/Docs/LargeProjects.md', 'app/Docs/AnalysisProgress.md',
              'app/Docs/CoreExtraction.md', 'app/Docs/AdvancedDebugging.md', 'app/Docs/CoreQuality.md',
              'app/Docs/Benchmarks/core-capacity-20261111.json',
-             'app/Docs/Benchmarks/core-delivery-20261111.json']
+             'app/Docs/Benchmarks/core-delivery-20261111.json', 'app/Docs/Benchmarks/cymcp-migration-20261119.json']
     for name in names:
         entries[name] = read_file(root / name)
     entries['CyCodeManager.cmd'] = (b'@echo off\r\nstart "" "%~dp0tools\\python\\pythonw.exe" -B '
@@ -51,10 +52,10 @@ def collect(root, bundle, *, agents_only=False, executable=None, build=None, out
     for source in sorted(skills.rglob('*')):
         if source.is_file():
             entries['app/skills/cycode-core/' + source.relative_to(skills).as_posix()] = read_file(source)
-    for name in ('CyToolsCore.txt', 'MCP-Python.txt', 'Monocypher.txt', 'nlohmann-json.txt',
+    for name in ('CyMCPSDK.txt', 'cpp-httplib.txt', 'PicoSHA2.txt', 'Monocypher.txt', 'nlohmann-json.txt',
                  'PCRE2.txt', 'utf8proc.txt', 'libvterm.txt', 'TinyXML2.txt'):
         entries['app/licenses/' + name] = read_file(root / 'app/licenses' / name)
-    lock = json.loads(entries['app/mcp-runtime.lock.json'])
+    lock = json.loads(entries['app/manager-runtime.lock.json'])
     entries.update(load_bundle(bundle, lock))
     if not agents_only:
         if executable is None or not executable.is_file():
@@ -150,7 +151,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--version', default=VERSION)
     parser.add_argument('--revision', required=True, help='Exact clean source commit being packaged')
-    parser.add_argument('--mcp-bundle', type=Path)
+    parser.add_argument('--manager-bundle', '--mcp-bundle', dest='manager_bundle', type=Path, help='Verified stdlib-only Manager bundle (old flag retained)')
     parser.add_argument('--build', type=Path)
     parser.add_argument('--executable', type=Path)
     parser.add_argument('--output', type=Path, required=True)
@@ -170,8 +171,8 @@ def main():
     if head != args.revision or dirty.strip():
         raise ValueError('Commit the reviewed sources first; revision must match the clean checkout being packaged')
     args.output.mkdir(parents=True, exist_ok=True)
-    lock = json.loads(read_file(ROOT / 'app/mcp-runtime.lock.json'))
-    bundle = args.mcp_bundle or ROOT / 'runtime/mcp-bundles' / lock_digest(lock)
+    lock = json.loads(read_file(ROOT / 'app/manager-runtime.lock.json'))
+    bundle = args.manager_bundle or ROOT / 'runtime/manager-bundles' / lock_digest(lock)
     entries = collect(ROOT, bundle, agents_only=args.agents_only, executable=args.executable,
                       build=args.build, output=args.output, tools_root=args.tools_root, documentation=args.documentation,
                       manager_executable=args.manager_executable, cyui_source=args.cyui_source)

@@ -1,9 +1,19 @@
 # Local connection
 
-The standalone installation contains the real CyToolsCore MCP adapter, its
-isolated Python runtime, native Core, operation catalogue and this skill. It
-does not need a CyCodeIDE window. `CYCODE_CORE_HOME` identifies the installation;
-`app/Docs/Agents.md` and `app/MCPMethods.json` there describe the exact contracts.
+Current sources compile the pinned CyMCPSDK registry/CLI/MCP natively. No chat,
+Python MCP runtime or CyToolsCore is needed. Manager/old launchers use only Python
+stdlib. Published packages predating this migration may still use the old SDK.
+`CYCODE_CORE_HOME` selects the trusted installation; read its
+`app/Docs/NativeAutomation.md` and `app/MCPMethods.json` for the actual version.
+
+```text
+cycode_cli --sdk --workspace <project> --connection-state <private-state> --disable-plugins mcp
+```
+
+This advertises five compact gateway tools by default. Permissions are host
+settings (`CYCODE_PERMISSIONS`); read-only is the default. For an existing live
+Engine, use `--native-descriptor FILE`; `--bridge-config FILE --access read|edit`
+connects to the authenticated shared HTTP service. Do not publish credentials.
 
 From that installation, register a trusted project without starting the host:
 

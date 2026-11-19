@@ -1,47 +1,31 @@
 # CyCode Core for AI agents
 
+> Current source integration: [native CyMCPSDK CLI/MCP](NativeAutomation.md). The default is the five-tool compact gateway; Core has no chat or Python MCP runtime. Release-specific procedures below are retained for compatibility/history.
+
 ## Connect {#connect}
 
 For the standalone package, local installer and agent skill, read [Core installation](CoreInstallation.md).
 
-CyCode Core exposes the same persistent native Engine to applications and AI
-clients. There are 257 canonical domain operations. The default Code profile
-advertises common operations directly and offers the remainder through
-`op_core_invoke(parameters={operationId, parameters})`, after fetching the chosen
-operation's schema once. Full exposes every `op_<operationId>` name. Select
-`CYCODE_MCP_PROFILE=full` or `--mcp-profile full` for older clients expecting the
-complete individual catalogue. The SDK adds its own job, discovery, task
-and identity controls. A listed operation is a contract, not proof that a
-language server, debugger, compiler, VCS provider or plugin is installed.
+CyCode Core 0.1.5 exposes all 257 canonical operations through its native
+CyMCPSDK registry. Default compact discovery has five tools: search for a capability
+with `cy_tools_search`, load one schema with `cy_tools_describe`, then invoke its
+canonical name with `cy_tools_call`. `direct-full` exposes canonical tools directly.
+Legacy `code`/`full` retain `op_<id>` and job controls for existing clients.
 
-From a source checkout with the private SDK runtime already prepared:
-
-```sh
-python -B -X utf8 app/tool.py --core-workspace <project-directory> --core-executable <trusted-cycode_cli> --disable-native-plugins --data-dir <private-job-directory> mcp
+```text
+cycode_cli --sdk --workspace <project-directory> --connection-state <private-state> --disable-plugins mcp
 ```
 
-Use the isolated interpreter prepared by `app/scripts/setup_runtime.py`; the
-Windows desktop distribution uses its bundled interpreter. This command starts
-one production native Core without a GUI, retains it across requests, and drains
-it when MCP closes. It never downloads a binary. `--core-executable` is optional
-when a built CLI is discoverable beside the application or in its runtime build
-directory. `CYCODE_CORE_EXECUTABLE` is another explicit host setting. The project
-root is fixed by the trusted host, never by an AI operation parameter.
+No Python MCP server is required. The host fixes the project and permissions;
+read-only is the default. Document/VCS/process/plugin/settings permissions remain
+separate and installed external backends govern availability. The index supports
+project lookup without clangd; compiler navigation needs a real language server
+and compilation context. Native readiness is not exhaustive semantic coverage.
 
-Standalone MCP is read-only by default. The host can set `CYCODE_PERMISSIONS` to
-an explicit comma-separated list such as `workspace.write,process.execute`.
-VCS writes, native plugin execution and user settings have separate permissions;
-read each operation's `permissions` before enabling them. Disabling native
-plugins is recommended when the agent only needs built-in code services.
-
-For an existing IDE, copy its MCP configuration instead: `--bridge-config
-<private-service-descriptor> --access read mcp` uses its actual shared SDK
-service. Choose `edit` only when authorised. Headless hosts may start that same
-official shared service with `--core-service --service-descriptor <private-file>
---data-dir <private-job-directory>` together with the two Core startup options.
-Keep that service process alive and stop its owned native host to drain it.
-Do not publish endpoint descriptors or read/edit identity tokens. Two standalone
-MCP runtimes do not share jobs merely because they use the same project.
+Attach with `--native-descriptor FILE` to reuse an existing Engine and its unsaved
+buffers, or use `--bridge-config FILE --access read|edit mcp` for its private shared
+HTTP service. Never publish descriptor tokens. See the current native automation
+guide for options and the complete canonical contract resources.
 
 ### Client configuration {#configuration}
 
@@ -53,19 +37,14 @@ outer configuration format; keep the same executable and argv.
 {
   "mcpServers": {
     "cycode": {
-      "command": "<private-python>",
+      "command": "<trusted-cycode_cli>",
       "args": [
-        "-B",
-        "-X",
-        "utf8",
-        "<CyCode>/app/tool.py",
-        "--core-workspace",
+        "--sdk",
+        "--workspace",
         "<project-directory>",
-        "--core-executable",
-        "<trusted-cycode_cli>",
-        "--disable-native-plugins",
-        "--data-dir",
-        "<private-job-directory>",
+        "--connection-state",
+        "<private-state>",
+        "--disable-plugins",
         "mcp"
       ],
       "env": {

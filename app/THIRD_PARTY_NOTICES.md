@@ -38,8 +38,10 @@ a bundled compiler toolchain nor an implicit global LLVM installation.
 | Eclipse JDT LS | EPL-2.0 and included component terms | https://github.com/eclipse-jdtls/eclipse.jdt.ls |
 | SDL3 | zlib | https://github.com/libsdl-org/SDL |
 | nlohmann/json | MIT | https://github.com/nlohmann/json |
-| CyToolsCore | MIT | Owner's CyToolsCore wheel/check-out; public repository not configured |
-| MCP Python SDK | MIT | https://github.com/modelcontextprotocol/python-sdk |
+| CyMCPSDK 0.7.0 | MIT | https://github.com/MrMybal/CyMCPSDK ; revision in cymcp-source.lock.json |
+| cpp-httplib (CyMCPSDK HTTP) | MIT | app/licenses/cpp-httplib.txt |
+| PicoSHA2 (CyMCPSDK hashing) | MIT | app/licenses/PicoSHA2.txt |
+| MCP Python SDK (development client only, not distributed) | MIT | https://github.com/modelcontextprotocol/python-sdk |
 | ripgrep | MIT / Unlicense | https://github.com/BurntSushi/ripgrep |
 | libvterm | MIT | https://www.leonerd.org.uk/code/libvterm/ |
 | CodeLLDB | MIT | https://github.com/vadimcn/codelldb |
@@ -63,10 +65,9 @@ web-languages/package-lock.json. Their runtime archives/package trees preserve
 their upstream license files and transitive components. Node.js and Java are
 external prerequisites, not redistributed runtimes. Public binary distribution
 still requires a complete transitive license/notice audit of these packages.
-The private Python environment also includes the dependencies declared by the real
-CyToolsCore/MCP wheels. Their installed dist-info metadata and license files are
-preserved by pip. They are not replaced by CyCode's project license.
-The private environment and SDK wheel are not committed to this repository.
+New Manager bundles contain only the pinned CPython standard library. Historical
+Python SDK environments remain separate and are not redistributed by this source
+revision. Upstream notices are not replaced by CyCode's project license.
 
 CyUI's repository is currently private; its GitHub license link requires repository
 access. The MIT license is also included locally so reading it does not require
@@ -147,55 +148,16 @@ mapped to CyUI's public icon codepoints and the family renamed. Codicons' origin
 license is retained in `app/resources/fonts/Codicons-LICENSE.txt`. This resource
 does not redistribute Microsoft's Windows Segoe fonts. CyUI itself is unchanged.
 
-## Bundled MCP environment (new Windows packages)
+## Native automation and Manager runtime
 
-The official CPython 3.13.17 embedded distribution is pinned from python.org in
-mcp-runtime.lock.json. Its complete LICENSE.txt ships in tools/python, covering
-Python/PSF and the original bundled component notices. No system Python is copied.
-CyToolsCore 0.10.1 is MIT at published commit
-05352e1d2f58f423fa2ad57b8eec48d2609f2626. Its 53 package files match that source;
-source checkout line endings are normalized. Original SDK/dependency license files
-remain in Lib/site-packages/<distribution>.dist-info/licenses or the upstream
-license paths. Generated RECORD files describe the actual installed locations.
+CyMCPSDK 0.7.0 is compiled from the exact clean source revision recorded in
+app/cymcp-source.lock.json. Only Core, Platform, Http and MCP are linked. MIT
+notices for the SDK, cpp-httplib, PicoSHA2 and nlohmann JSON accompany the package.
+No CyMCPSDK AI, Local, ChatUI, ChatApp or graphical/provider components are included.
 
-The exact wheel hashes/URLs, source pin and installed-payload hash are recorded
-in app/mcp-runtime.lock.json and tools/python/cycode-runtime.json. Only dependency
-CLI entrypoint scripts and pywin32's unrelated GUI/service launchers, plus the
-upstream SDK manual, are omitted; the application's own CyDoc help remains bundled.
-Authoring setuptools/wheel and downloaded wheel archives are not distributed.
-The separate licenses below remain applicable; CyCode's GPL does not replace them.
-
-| Distribution | Version | Upstream declared license |
-|---|---|---|
-| annotated-types | 0.8.0 | MIT |
-| anyio | 4.16.0 | MIT |
-| attrs | 26.1.0 | MIT |
-| certifi | 2026.10.23 | MPL-2.0 |
-| cffi | 2.1.1 | MIT-0 |
-| click | 8.5.1 | BSD-3-Clause |
-| cryptography | 50.0.2 | Apache-2.0 OR BSD-3-Clause |
-| cytools-core | 0.10.1 | MIT |
-| h11 | 0.16.0 | MIT |
-| httpcore | 1.0.9 | BSD-3-Clause |
-| httpx | 0.28.1 | BSD-3-Clause |
-| httpx-sse | 0.4.3 | MIT |
-| idna | 3.20 | BSD-3-Clause |
-| jsonschema | 4.26.0 | MIT |
-| jsonschema-specifications | 2025.9.1 | MIT |
-| mcp | 1.30.0 | MIT |
-| psutil | 7.2.2 | BSD-3-Clause |
-| pycparser | 3.12 | BSD-3-Clause |
-| pydantic | 2.14.3 | MIT |
-| pydantic_core | 2.50.4 | MIT |
-| pydantic-settings | 2.16.2 | MIT |
-| PyJWT | 2.15.1 | MIT |
-| python-dotenv | 1.2.4 | BSD-3-Clause |
-| python-multipart | 0.0.33 | Apache-2.0 |
-| pywin32 | 312 | PSF |
-| referencing | 0.37.0 | MIT |
-| rpds-py | 2026.9.1 | MIT |
-| sse-starlette | 3.7.0 | BSD-3-Clause |
-| starlette | 1.10.0 | BSD-3-Clause |
-| typing_extensions | 4.16.0 | PSF-2.0 |
-| typing-inspection | 0.4.5 | MIT |
-| uvicorn | 0.54.0 | BSD-3-Clause |
+CPython 3.13.17 is pinned from python.org in app/manager-runtime.lock.json for
+Manager and compatibility scripts only. Its original LICENSE.txt is redistributed
+under tools/python and covers Python/PSF and bundled component notices. No system
+Python, site-packages, SDK wheels or Python MCP implementation is redistributed.
+The dev-only external MCP client is listed separately in requirements-dev.txt.
+Historical releases before this migration used a different Python SDK runtime.
