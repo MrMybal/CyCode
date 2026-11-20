@@ -5,7 +5,7 @@ description: Persistent Core, complete MCP contracts and guarded code changes.
 section: API and extensions
 parent: mcp
 order: 261
-revision: 8
+revision: 9
 ---
 
 
@@ -14,7 +14,7 @@ revision: 8
 
 Install the standalone distribution and agent skill through [Core installation](core-installation#distribution).
 
-CyCode Core 0.1.5 exposes all 257 canonical operations through its native
+CyCode Core 0.1.6 exposes all 257 canonical operations through its native
 CyMCPSDK registry. Default compact discovery has five tools: search for a capability
 with `cy_tools_search`, load one schema with `cy_tools_describe`, then invoke its
 canonical name with `cy_tools_call`. `direct-full` exposes canonical tools directly.
@@ -25,8 +25,8 @@ cycode_cli --sdk --workspace <project-directory> --connection-state <private-sta
 ```
 
 No Python MCP server is required. The host fixes the project and permissions;
-read-only is the default. Document/VCS/process/plugin/settings permissions remain
-separate and installed external backends govern availability. The index supports
+Free is the default in current sources. Controlled profiles retain separate
+document/VCS/process/plugin/settings permissions and installed external backends govern availability. The index supports
 project lookup without clangd; compiler navigation needs a real language server
 and compilation context. Native readiness is not exhaustive semantic coverage.
 

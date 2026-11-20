@@ -49,7 +49,7 @@ def main():
     cli = [str(exe),'--sdk','--data-dir',str(fixture/'cli'),'--workspace',str(workspace)]
     checked('cli-operation-description', cli+['describe-operation','index_symbols'])
     checked('cli-indexed-search', cli+['invoke','search_text','{"query":"answer","engine":"index","waitMs":20000}'])
-    checked('cli-read-only-denied', cli+['invoke','documents_replace',json.dumps({'path':'main.cpp','expectedRevision':1,'text':'denied'})],1)
+    checked('cli-read-only-denied', cli+['--local-access-profile','local-controlled','invoke','documents_replace',json.dumps({'path':'main.cpp','expectedRevision':1,'text':'denied'})],1)
     checked('cli-invalid-schema', cli+['invoke','documents_read','{"path":7}'],1)
     log=(fixture/'native.log').open('wb')
     native=subprocess.Popen([str(exe),'--disable-plugins',str(workspace),'--serve',str(descriptor)],stdin=subprocess.PIPE,stdout=log,stderr=log,env=environment)
@@ -218,7 +218,7 @@ def main():
         allowed={'stage','name','status','elapsed_ms','input_bytes','output_bytes','cache_hit','timestamp_ms'}
         assert all(set(json.loads(line))<=allowed for line in telemetry.splitlines())
         reports.append('metadata-only-telemetry')
-        result={'platform':sys.platform,'sdkRevision':'791d4d7d7680213b282ec8529d248a10f8494d77','checks':reports,
+        result={'platform':sys.platform,'sdkRevision':json.loads((APP/'cymcp-source.lock.json').read_text('utf-8'))['revision'],'checks':reports,
             'nativeFixtureExecutablesCompiled':False,'actionsUsed':False,'workspaceUnchangedOnDisk':source.read_bytes()==baseline.encode('utf-8')}
         (fixture/'report.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
         print(json.dumps(result,indent=2))

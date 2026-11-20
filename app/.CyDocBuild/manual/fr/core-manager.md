@@ -5,7 +5,7 @@ description: Installer le skill, gérer les connexions et mettre à jour sans re
 section: API et extensions
 parent: core-installation
 order: 263
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 
@@ -162,3 +162,7 @@ Voir les formats officiels :
 [skills](https://code.visualstudio.com/docs/agent-customization/agent-skills),
 [Gemini MCP](https://geminicli.com/docs/tools/mcp-server/) et
 [skills](https://geminicli.com/docs/cli/skills/).
+
+## Accès MCP local {#access-profiles}
+
+Le sélecteur **Profil MCP local** propose Free (défaut), Local contrôlé, Jeton seul et Protégé. L’actualisation conserve les profils explicites. Les connexions sans choix migrent vers Free ; les anciens droits lecture/édition explicites restent contrôlés. Le jeton HTTP est indépendant de la découverte compacte/complète. Voir [le tableau des profils](native-automation#access-profiles).

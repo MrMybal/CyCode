@@ -5,14 +5,14 @@ description: Paquets locaux, skill IA et connexion MCP par projet.
 section: API et extensions
 parent: mcp
 order: 262
-sourceRevision: 10
+sourceRevision: 11
 ---
 
 
 
 ## Distribution {#distribution}
 
-CyCodeCore 0.1.5 est un service natif sans interface avec **CyMCPSDK 0.7.0**.
+CyCodeCore 0.1.6 est un service natif sans interface avec **CyMCPSDK 0.7.2**.
 La version du paquet est indépendante du contrat historique 0.2.3 affiché par
 `cycode_cli --version`. Le Core et son MCP ne nécessitent ni fenêtre IDE, ni
 serveur Python, ni modèle GPU, ni tchat intégré.
@@ -54,7 +54,7 @@ fsmonitor du dépôt, et diff/show désactivent la conversion externe du texte. 
 catalogue de 252 opérations et le contrat du moteur sont conservés. Compilation
 et contrôles des paquets/données ne valent pas validation native ou d'installation.
 
-[Télécharger Setup ou le ZIP Windows](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.5).
+[Télécharger Setup ou le ZIP Windows](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.6).
 Setup propose le raccourci CyCodeCore Manager. La version 0.1.4 ajoute les profils
 IA et la sélection vérifiée de nouveaux moteurs sans écraser les sessions actives.
 

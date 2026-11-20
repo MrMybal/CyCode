@@ -44,6 +44,46 @@ class JsonConfiguration(unittest.TestCase):
 
 
 class ManagerFiles(unittest.TestCase):
+    def test_default_profile_is_free_for_every_client_and_survives_refresh(self):
+        clients = [key for key, client in agents.CLIENTS.items() if client.project_config]
+        self.manager.apply(self.manager.prepare(clients, self.project))
+        for row in self.manager.receipts():
+            self.assertEqual(row['accessProfile'], 'free')
+            self.assertIn('CYCODE_MCP_ACCESS_PROFILE', Path(row['config']).read_text('utf-8'))
+        self.manager.apply(self.manager.prepare_refresh())
+        self.assertTrue(all(row['accessProfile'] == 'free' for row in self.manager.receipts()))
+
+    def test_explicit_profiles_and_legacy_rights_are_preserved(self):
+        for profile in ('free', 'local-controlled', 'token-only', 'protected'):
+            self.manager.apply(self.manager.prepare(['codex'], self.project, access_profile=profile))
+            self.manager.apply(self.manager.prepare(['codex'], self.project))
+            self.manager.apply(self.manager.prepare_refresh())
+            self.assertEqual(self.manager.receipts()[0]['accessProfile'], profile)
+        row = self.manager.receipts()[0]
+        path = Path(row['_receipt'])
+        stored = json.loads(path.read_text('utf-8'))
+        stored.pop('accessProfile')
+        stored['access'] = 'read'
+        path.write_text(json.dumps(stored), encoding='utf-8')
+        self.manager.apply(self.manager.prepare_refresh())
+        self.assertEqual(self.manager.receipts()[0]['accessProfile'], 'local-controlled')
+
+    def test_receipt_without_any_access_choice_migrates_to_free(self):
+        self.manager.apply(self.manager.prepare(['codex'], self.project))
+        row = self.manager.receipts()[0]
+        path = Path(row['_receipt'])
+        stored = json.loads(path.read_text('utf-8'))
+        stored.pop('accessProfile')
+        stored.pop('access')
+        path.write_text(json.dumps(stored), encoding='utf-8')
+        self.manager.apply(self.manager.prepare_refresh())
+        self.assertEqual(self.manager.receipts()[0]['accessProfile'], 'free')
+
+    def test_unknown_profile_is_refused_without_writes(self):
+        with self.assertRaises(ValueError):
+            self.manager.prepare(['codex'], self.project, access_profile='unknown')
+        self.assertFalse((self.project / '.codex/config.toml').exists())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

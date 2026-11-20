@@ -5,15 +5,15 @@ description: CyMCPSDK, recherche indexée, tâches durables et ressources privé
 section: API et extensions
 parent: core-agents
 order: 264
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Connexion native {#connect}
 
-Les sources actuelles utilisent **CyMCPSDK 0.7.0**, révision
-`791d4d7d7680213b282ec8529d248a10f8494d77`. Seuls Core, Platform, Http et MCP sont
+Les sources actuelles utilisent **CyMCPSDK 0.7.2**, révision
+`e562c731a146d599e3404718ea8414bb5b96b66d`. Seuls Core, Platform, Http et MCP sont
 compilés. AI, Local et ChatUI sont désactivés. Le Core reste sans interface,
-sans tchat et sans serveur MCP Python. La distribution autonome 0.1.5 inclut cette intégration native.
+sans tchat et sans serveur MCP Python. La distribution autonome 0.1.6 inclut les quatre profils d’accès et choisit Free par défaut.
 
 ```text
 cycode_cli --sdk --workspace <projet> --connection-state <dossier-prive> --disable-plugins mcp
@@ -39,13 +39,26 @@ chargés et appelez une opération réelle ainsi :
 ```
 
 `direct-full` expose les noms canoniques. `code`/`full` conservent les anciens
-`op_<id>` et contrôles de tâches. L’accès est en lecture seule par défaut ; les
-droits du lanceur gouvernent édition, VCS, processus, plugins et paramètres.
+`op_<id>` et contrôles de tâches. Free est le défaut ; les profils contrôlés
+appliquent les droits du lanceur à l’édition, VCS, processus, plugins et paramètres.
 Relisez les révisions, prévisualisez/appliquez les transactions et enregistrez
 uniquement sur demande. `--native-descriptor FICHIER` agit sur les documents non
 enregistrés et l’Undo/Redo de l’Engine existant. `serve --service-descriptor FICHIER`
 publie des connexions HTTP privées de lecture/édition ;
-`--bridge-config FICHIER --access read|edit mcp` s’y connecte. Gardez les jetons privés.
+`--bridge-config FICHIER --access read|edit mcp` s’y connecte. Protégé et Jeton seul exigent un jeton ; Free demande uniquement l’adresse.
+
+## Profils d’accès local {#access-profiles}
+
+Les sources choisissent **Free** lorsqu’aucun accès n’est sélectionné. L’adresse locale `/mcp` suffit au client HTTP pour appeler toutes les opérations enregistrées sans autre confirmation. Arguments, révisions, chemins du projet et racines d’import/export configurées restent validés.
+
+| Profil | Jeton HTTP | Politique des opérations |
+|---|---|---|
+| Free (par défaut) | Aucun | Toutes les opérations enregistrées |
+| Local contrôlé | Aucun | Droits de l’hôte |
+| Jeton seul | Requis | Toutes les opérations enregistrées |
+| Protégé | Requis | Droits de l’hôte |
+
+Choisir `--local-access-profile free|local-controlled|token-only|protected` ou `CYCODE_MCP_ACCESS_PROFILE`. Le serveur écoute sur `127.0.0.1`. Les profils explicites et anciens droits lecture/édition sont conservés ; les configurations sans choix migrent vers Free. Le profil du serveur est enregistré dans son `local-access.json` privé et repris au redémarrage. Les arguments et variables explicites sont prioritaires. Le jeton concerne HTTP ; stdio utilise déjà l’identité locale de l’hôte. Setup et le ZIP portable 0.1.6 incluent cette mise à jour ; 0.1.5 a introduit l’intégration native initiale.
 
 ## Résultats et optimisations {#results}
 

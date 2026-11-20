@@ -113,11 +113,13 @@ class Manager:
                         or record.get('root') != str(self.root)
                         or not isinstance(record.get('id'), str) or not re.fullmatch('[a-f0-9]{24}', record['id'])
                         or record['id'] != path.stem or record.get('client') not in CLIENTS
-                        or record.get('access') not in ('read', 'edit') or record.get('scope') not in ('user', 'project')
+                        or record.get('access', 'read') not in ('read', 'edit') or record.get('scope') not in ('user', 'project')
                         or record.get('mcpProfile', 'code') not in ('compact', 'direct-full', 'code', 'full')
                         or type(record.get('enabled')) is not bool
                         or any(not isinstance(record.get(key), str) or not record[key] for key in ('home', 'workspace', 'config', 'server'))):
                     raise ValueError('Invalid manager receipt: ' + str(path))
+                record['accessProfile'] = shared.local_access_profile(record)
+                record.setdefault('access', 'read')
                 record['_receipt'] = str(path)
                 result[record['id']] = record
         # Discover old issued registrations without writing configurations or receipts.
@@ -174,7 +176,8 @@ class Manager:
                      '--disable-plugins', 'mcp']
         environment = {'CYCODE_CORE_HOME': str(self.home),
                        'CYCODE_PERMISSIONS': 'workspace.write,process.execute' if record['access'] == 'edit' else '',
-                       'CYCODE_MCP_PROFILE': record.get('mcpProfile', 'code'), 'GIT_OPTIONAL_LOCKS': '0'}
+                       'CYCODE_MCP_PROFILE': record.get('mcpProfile', 'code'),
+                       'CYCODE_MCP_ACCESS_PROFILE': shared.local_access_profile(record), 'GIT_OPTIONAL_LOCKS': '0'}
         expected = record.get('managedHash')
         if record['client'] == 'codex':
             parsed = tomllib.loads(text)
@@ -217,15 +220,16 @@ class Manager:
         else:
             record = {k: v for k, v in record.items() if not k.startswith('_')}
             record.update(home=str(self.home), managedHash=owned_hash, legacy=False)
+            record['accessProfile'] = shared.local_access_profile(record)
             plan.put(receipt, (json.dumps(record, indent=2) + '\n').encode(), previous)
         plan.summary.append({'client': CLIENTS[record['client']].name, 'config': str(path),
                              'project': record['workspace'], 'action': 'remove' if remove else 'connect',
                              'access': record['access'], 'reloadRequired': True})
 
-    def prepare(self, clients, workspace=None, *, scope='project', skill=True, mcp=True, access='read', mcp_profile='compact'):
+    def prepare(self, clients, workspace=None, *, scope='project', skill=True, mcp=True, access=None, mcp_profile='compact', access_profile=None):
         if not clients or len(set(clients)) != len(clients) or any(c not in CLIENTS for c in clients):
             raise ValueError('Choose supported agent applications')
-        if access not in ('read', 'edit') or not (skill or mcp):
+        if access not in (None, 'read', 'edit') or not (skill or mcp):
             raise ValueError('Choose skill and/or MCP with explicit access')
         if mcp_profile not in ('compact', 'direct-full', 'code', 'full'):
             raise ValueError('Unknown MCP profile')
@@ -259,7 +263,14 @@ class Manager:
                 'client': client, 'root': str(self.root), 'config': str(config), 'server': server,
                 'begin': '# BEGIN CyCodeCore managed MCP: ' + identity,
                 'end': '# END CyCodeCore managed MCP: ' + identity}
-            record = {**record, 'workspace': str(workspace), 'scope': scope, 'access': access,
+            choice = dict(record)
+            if access is not None:
+                choice['access'] = access
+            if access_profile is not None:
+                choice['accessProfile'] = access_profile
+            selected_profile = shared.local_access_profile(choice)
+            record = {**record, 'workspace': str(workspace), 'scope': scope, 'access': choice.get('access', 'read'),
+                      'accessProfile': selected_profile,
                       'mcpProfile': mcp_profile, 'enabled': True}
             # Claude Code and Copilot share .mcp.json; one identical managed server suffices.
             if identity in {p.stem for p in plan.writes if p.parent == self.state / 'connections'}:

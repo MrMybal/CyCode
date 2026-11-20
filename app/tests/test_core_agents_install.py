@@ -15,6 +15,15 @@ import package_core as package
 
 
 class AgentInstallation(unittest.TestCase):
+    def test_default_free_and_explicit_profile_survive_updates(self):
+        first = self.configure()
+        self.assertEqual(first['accessProfile'], 'free')
+        chosen = self.configure(access_profile='protected')
+        self.assertEqual(chosen['accessProfile'], 'protected')
+        self.assertEqual(self.configure()['accessProfile'], 'protected')
+        server = tomllib.loads((self.workspace / '.codex/config.toml').read_text('utf-8'))['mcp_servers']['cycode_core']
+        self.assertEqual(server['env']['CYCODE_MCP_ACCESS_PROFILE'], 'protected')
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
@@ -54,7 +63,7 @@ class AgentInstallation(unittest.TestCase):
         self.assertEqual(result['mcp_servers']['other']['command'], 'other')
         server = result['mcp_servers']['cycode_core']
         self.assertEqual(server['env']['CYCODE_PERMISSIONS'], 'workspace.write,process.execute')
-        self.assertIn('--disable-native-plugins', server['args'])
+        self.assertIn('--disable-plugins', server['args'])
         self.assertFalse(server['enabled'])
         self.assertTrue(list((self.home / 'agent-state').rglob('config-before-*.toml')))
 
@@ -93,7 +102,7 @@ class AgentInstallation(unittest.TestCase):
         self.assertEqual(result['home'],str(next_home.resolve()))
         self.assertFalse(result['executed'])
         next_config=parsed['mcp_servers']['cycode_core']
-        data_path=next_config['args'][next_config['args'].index('--data-dir')+1]
+        data_path=next_config['args'][next_config['args'].index('--connection-state')+1]
         self.assertTrue(Path(data_path).resolve().is_relative_to(next_home.resolve()))
         self.assertEqual(install.configure(next_home,self.workspace,Path(sys.executable),self.skills),result)
     def test_locally_edited_managed_block_is_not_overwritten(self):

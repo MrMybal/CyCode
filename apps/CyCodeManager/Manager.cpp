@@ -97,8 +97,9 @@ struct Manager {
     std::shared_ptr<Progress> progress = std::make_shared<Progress>();
     std::array<char, 32768> project{};
     std::array<bool, 16> clients{};
-    int page = 0, scope = 0, access = 0, profile = 0, connection = -1, theme = 0;
+    int page = 0, scope = 0, access = 0, accessProfile = 0, profile = 0, connection = -1, theme = 0;
     bool skill = true, mcp = true, refreshConnections = true, acceptLicense = false, compact = false;
+    bool accessProfileSelected = false, accessSelected = false;
     bool closing = false, startupCheck = true;
     bool explicitLanguage = false, explicitPage = false, preferencesLoaded = false, preferencesDirty = false;
     std::string status = "Ready", error, activeAction;
@@ -208,8 +209,15 @@ struct Manager {
                 if (cyui::button(trLabel("Browse").c_str())) { const auto path = chooseFolder(window); if (!path.empty()) { strcpy_s(project.data(), project.size(), path.c_str()); changed = true; } }
                 auto a = tr("This project"), b = tr("My user account"); const char* scopes[]{a.c_str(), b.c_str()};
                 cyui::property(tr("Scope").c_str()); changed |= ImGui::Combo("##scope", &scope, scopes, 2);
+                const std::array<std::string, 4> accessLabels{tr("Free"), tr("Local controlled"), tr("Token only"), tr("Protected")};
+                const char* accessItems[]{accessLabels[0].c_str(), accessLabels[1].c_str(), accessLabels[2].c_str(), accessLabels[3].c_str()};
+                cyui::property(tr("Local MCP profile").c_str());
+                if (ImGui::Combo("##accessProfile", &accessProfile, accessItems, 4)) { changed = true; accessProfileSelected = true; }
+                ImGui::BeginDisabled(accessProfile == 0 || accessProfile == 2);
                 a = tr("Read only"); b = tr("Read, edit and build"); const char* rights[]{a.c_str(), b.c_str()};
-                cyui::property(tr("Access").c_str()); changed |= ImGui::Combo("##access", &access, rights, 2);
+                cyui::property(tr("Access").c_str());
+                if (ImGui::Combo("##access", &access, rights, 2)) { changed = true; accessSelected = true; }
+                ImGui::EndDisabled();
                 a = tr("On-demand tools (compact)"); b = tr("Full catalogue"); const char* profiles[]{a.c_str(), b.c_str()};
                 cyui::property(tr("MCP catalogue").c_str()); changed |= ImGui::Combo("##profile", &profile, profiles, 2);
                 cyui::endProperties();
@@ -221,8 +229,11 @@ struct Manager {
             if (cyui::primaryButton(trLabel("Preview changes").c_str())) {
                 Json selected = Json::array();
                 for (std::size_t i = 0; i < available.size() && i < clients.size(); ++i) if (clients[i]) selected.push_back(available[i]["id"]);
-                start({{"action", "agents.prepare"}, {"clients", selected}, {"project", project.data()}, {"scope", scope ? "user" : "project"},
-                    {"access", access ? "edit" : "read"}, {"skill", skill}, {"mcp", mcp}, {"mcpProfile", profile ? "direct-full" : "compact"}});
+                Json request{{"action", "agents.prepare"}, {"clients", selected}, {"project", project.data()}, {"scope", scope ? "user" : "project"},
+                    {"skill", skill}, {"mcp", mcp}, {"mcpProfile", profile ? "direct-full" : "compact"}};
+                if (accessProfileSelected) request["accessProfile"] = std::array{"free", "local-controlled", "token-only", "protected"}[accessProfile];
+                if (accessSelected) request["access"] = access ? "edit" : "read";
+                start(std::move(request));
             }
         } cyui::endCard();
         if (preview.contains("plan")) {

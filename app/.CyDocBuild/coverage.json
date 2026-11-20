@@ -13,7 +13,7 @@
       "kind": "developer-reference",
       "target": "core-agents#connect",
       "legacyId": "reference-app-docs-agents",
-      "sourceSha256": "2bb9ba93da8f0d0256ee88bc35ecfb5ed53e77cd364ed37c6c8c661df82353f3"
+      "sourceSha256": "3d8941b9e2eefa37995157c1f6cf0157a5a337ed088c6ff9efad9677c3212bcc"
     },
     {
       "source": "Docs/AnalysisProgress.md",
@@ -118,14 +118,14 @@
       "kind": "developer-reference",
       "target": "core-installation#distribution",
       "legacyId": "reference-app-docs-coreinstallation",
-      "sourceSha256": "a58466f722b6d44c7e6899e08eee81f8befb37f915dec8c395b62f7a776516c9"
+      "sourceSha256": "bff1f5376c5f2d4ffbd2053c7814b76da7adf3f563c63471d952225e27b55473"
     },
     {
       "source": "Docs/CoreManager.md",
       "kind": "user-workflow",
       "target": "core-manager#agents",
       "legacyId": "reference-app-docs-coremanager",
-      "sourceSha256": "6bf78b833812c407f9233dee8119145aa1727602b19b04a97781bf7f9f305ee9"
+      "sourceSha256": "f73172df6fd80cecb2bf05988dc5e636bcebc151233e5c5441c935a727d42ce3"
     },
     {
       "source": "Docs/CoreQuality.md",
@@ -657,7 +657,7 @@
       "kind": "developer-reference",
       "target": "limits#limits",
       "legacyId": "reference-app-docs-validation",
-      "sourceSha256": "9bd488629c436cfd5a8401ca62c3cb1d5e512c19f651af7722e286f2bc768e8b"
+      "sourceSha256": "3953e6b1a1a44dff539913979d8e92d09888f0609669bb7bda5aa95ed7f1b29d"
     },
     {
       "source": "Docs/VersionControl.md",
@@ -692,7 +692,7 @@
       "kind": "developer-reference",
       "target": "native-automation#connect",
       "legacyId": "reference-app-docs-nativeautomation",
-      "sourceSha256": "2f87507fe72df509ae65b29c0fdde7e33a1163bd022955509a2bce72f74b7074"
+      "sourceSha256": "c87715cc8b5eb004ccfd4ad9db5a69bd10a1937cf22daa85ce1b28b25ba3986f"
     }
   ]
 }

@@ -1,8 +1,8 @@
 # Native automation with CyMCPSDK
 
-This source revision replaces the Python CyToolsCore server with **CyMCPSDK 0.7.0**,
-revision `791d4d7d7680213b282ec8529d248a10f8494d77` (see `app/cymcp-source.lock.json`).
-Standalone distribution 0.1.5 includes this migration. Its package version is independent of the historical engine contract version 0.2.3.
+Current sources use **CyMCPSDK 0.7.2**, revision
+`e562c731a146d599e3404718ea8414bb5b96b66d` (see `app/cymcp-source.lock.json`).
+Standalone distribution 0.1.6 includes the four local access profiles and defaults to Free. Version 0.1.5 introduced the native integration. The package version is independent of the historical engine contract version 0.2.3.
 Core remains headless. There is no chat, Conversation, AI provider or ChatUI.
 
 ## Build and ownership
@@ -63,23 +63,45 @@ an old-configuration shim. New clients do not load either Python entry.
 
 ## Permissions and existing instances
 
-Default access is read-only. Select explicit `--permissions` such as
-`workspace.write,process.execute`; VCS, plugin and settings writes retain their
-own canonical permissions. `--access edit` explicitly selects document/VCS/process/
-plugin rights. Managed read/edit profiles preserve the narrower existing grants
-when refreshed. `--owner` is for a trusted local operator, never generated for agents.
+The default local profile is **Free**, independently of compact/full tool discovery.
+It uses `LocalAccessProfile::free`, a registry with `Policy::allow_all()` and
+`LocalHttpServer::UnauthenticatedLoopback` bound to `127.0.0.1`. An MCP client needs
+only the `/mcp` URL, without a token or another operation confirmation. Native
+schemas, revision guards, workspace boundaries and configured import/export roots
+still apply. Free exposes the registered operations to other local processes.
+
+| `--local-access-profile` | HTTP token | Registered operations |
+|---|---|---|
+| `free` (default) | No | All |
+| `local-controlled` | No | Host permissions |
+| `token-only` | Required | All |
+| `protected` | Required | Host permissions |
+
+`CYCODE_MCP_ACCESS_PROFILE` supplies the same setting. Existing explicit profiles
+are preserved. Without a selected profile, an explicit legacy `--access read|edit`,
+`--permissions` or `CYCODE_PERMISSIONS` keeps controlled behavior; an unset
+configuration migrates to Free. Server state records the selected profile in
+`local-access.json`, reused on restart. Explicit arguments/environment override it.
+In controlled modes, `--permissions workspace.write,process.execute` grants only
+those rights; `--access edit` selects document/VCS/process/plugin rights. Manager
+refresh preserves existing profiles, rights and disabled connections. `--owner`
+retains the trusted local-operator flow. Stdio connections use the host's local
+identity; the token requirement in the table concerns HTTP.
 Host roots and credentials cannot be changed through operation JSON.
 
 Use `--native-descriptor <private-native.json>` to act on an Engine already owned
 by an IDE/Reader; unsaved text, native plans and Undo history remain in that owner.
 No second Engine is started in this mode. Use `serve --service-descriptor FILE`
-to publish separate read/edit loopback HTTP endpoints. Their private descriptor
+to publish read/edit loopback HTTP endpoints. Their private descriptor
 retains `url`, `readToken`, `editToken` and adds `readUrl`, `editUrl`, `mcpReadUrl`,
-`mcpEditUrl`. `--bridge-config FILE --access read|edit mcp` connects to that actual
-service; `--connect URL` uses `CYMCP_TOKEN` (`CYTOOLS_TOKEN` is a legacy alias).
+`mcpEditUrl`, plus `localAccessProfile`, `requireToken` and `controlOperations`.
+`--bridge-config FILE --access read|edit mcp` connects to that actual
+service; `--connect URL` accepts a base URL, `/mcp` or `/v1`, with `CYMCP_TOKEN`
+only for token profiles (`CYTOOLS_TOKEN` is a legacy alias).
 The old `/v1` job protocol is kept. Tokens bind a trusted endpoint identity;
 caller-supplied principal fields never grant rights. SDK origins/bearer checks
-remain enabled. The SDK has one token per HTTP endpoint, so roles use separate ports.
+remain enabled. Protected roles use separate ports and tokens; Free permits all
+registered operations on either port and its descriptor contains empty tokens.
 A shared role credential shares job/resource ownership: issue separate services/
 credentials when independent actors need isolation. Never publish descriptors.
 

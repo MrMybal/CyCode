@@ -38,7 +38,7 @@ a bundled compiler toolchain nor an implicit global LLVM installation.
 | Eclipse JDT LS | EPL-2.0 and included component terms | https://github.com/eclipse-jdtls/eclipse.jdt.ls |
 | SDL3 | zlib | https://github.com/libsdl-org/SDL |
 | nlohmann/json | MIT | https://github.com/nlohmann/json |
-| CyMCPSDK 0.7.0 | MIT | https://github.com/MrMybal/CyMCPSDK ; revision in cymcp-source.lock.json |
+| CyMCPSDK 0.7.2 | MIT | https://github.com/MrMybal/CyMCPSDK ; revision in cymcp-source.lock.json |
 | cpp-httplib (CyMCPSDK HTTP) | MIT | app/licenses/cpp-httplib.txt |
 | PicoSHA2 (CyMCPSDK hashing) | MIT | app/licenses/PicoSHA2.txt |
 | MCP Python SDK (development client only, not distributed) | MIT | https://github.com/modelcontextprotocol/python-sdk |
@@ -150,7 +150,7 @@ does not redistribute Microsoft's Windows Segoe fonts. CyUI itself is unchanged.
 
 ## Native automation and Manager runtime
 
-CyMCPSDK 0.7.0 is compiled from the exact clean source revision recorded in
+CyMCPSDK 0.7.2 is compiled from the exact clean source revision recorded in
 app/cymcp-source.lock.json. Only Core, Platform, Http and MCP are linked. MIT
 notices for the SDK, cpp-httplib, PicoSHA2 and nlohmann JSON accompany the package.
 No CyMCPSDK AI, Local, ChatUI, ChatApp or graphical/provider components are included.

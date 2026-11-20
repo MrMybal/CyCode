@@ -32,6 +32,23 @@ std::set<std::string> permissions(const std::string& text) {
     while (std::getline(input, value, ',')) if (!value.empty()) result.insert(value);
     return result;
 }
+cymcp::LocalAccessProfile accessProfile(std::string name) {
+    std::replace(name.begin(), name.end(), '_', '-');
+    if (name == "free") return cymcp::LocalAccessProfile::free;
+    if (name == "local-controlled") return cymcp::LocalAccessProfile::local_controlled;
+    if (name == "token-only") return cymcp::LocalAccessProfile::token_only;
+    if (name == "protected" || name == "protected-access") return cymcp::LocalAccessProfile::protected_access;
+    throw cymcp::Error("InvalidArguments", "Choose free, local-controlled, token-only or protected local access");
+}
+std::string accessProfileName(cymcp::LocalAccessProfile profile) {
+    switch (profile) {
+    case cymcp::LocalAccessProfile::free: return "free";
+    case cymcp::LocalAccessProfile::local_controlled: return "local-controlled";
+    case cymcp::LocalAccessProfile::token_only: return "token-only";
+    case cymcp::LocalAccessProfile::protected_access: return "protected";
+    }
+    throw cymcp::Error("InvalidArguments", "Unknown local access profile");
+}
 std::filesystem::path cataloguePath(const std::string& executable) {
     const auto binary = std::filesystem::absolute(utf8Path(executable)).parent_path();
     for (const auto& path : {binary / "app/MCPMethods.json", binary / "MCPMethods.json",
@@ -72,11 +89,13 @@ struct NativeOwner {
 Json httpCall(const std::string& url, const std::string& token, const std::string& method, const Json& p) {
     cymcp::HttpRequest request;
     request.url = url; request.method = "POST";
-    request.headers = {{"Authorization", "Bearer " + token}, {"Content-Type", "application/json"}};
+    request.headers = {{"Content-Type", "application/json"}};
+    if (!token.empty()) request.headers["Authorization"] = "Bearer " + token;
     request.body = Json({{"protocolVersion", "1.0"}, {"id", 1}, {"method", method}, {"params", p}}).dump();
     request.max_response_bytes = 32 * 1024 * 1024; request.timeout = std::chrono::hours(25);
     const auto response = cymcp::HttpClient().perform(request);
-    if (response.status != 200) throw cymcp::Error("ConnectionFailed", "Local SDK HTTP request failed with status " + std::to_string(response.status));
+    if (response.status != 200) throw cymcp::Error(response.status == 401 ? "AuthenticationRequired" : "ConnectionFailed",
+        "Local SDK HTTP request failed with status " + std::to_string(response.status));
     const auto result = cymcp::parse_json(response.body, 32 * 1024 * 1024);
     if (result.contains("error")) throw OperationError(result.at("error"));
     return result.at("result");
@@ -95,10 +114,11 @@ void printHelp() {
         "  Commands: describe, list-operations, describe-operation ID, invoke ID [JSON],\n"
         "            can-run ID [JSON], estimate ID [JSON], mcp, stdio, serve, create-client\n"
         "  Inputs: --params JSON | --params-file FILE; --timeout SECONDS\n"
-        "  Permissions: --permissions CSV (default read-only); --access read|edit\n"
+        "  Local access: --local-access-profile free|local-controlled|token-only|protected (default free)\n"
+        "  Controlled permissions: --permissions CSV; --access read|edit\n"
         "  MCP: --mcp-profile compact|direct-full|code|full (code/full preserve legacy jobs)\n"
         "  Existing instance: --native-descriptor FILE | --bridge-config FILE --access read|edit\n"
-        "  HTTP: --service-descriptor PRIVATE_FILE; --connect URL with CYMCP_TOKEN\n"
+        "  HTTP: --service-descriptor PRIVATE_FILE; --connect URL (CYMCP_TOKEN for token profiles)\n"
         "  Independent options: --mcp-cache-ttl-ms N, --mcp-spool DIR, --mcp-telemetry FILE,\n"
         "       --mcp-notifications, --mcp-inline-bytes N, --mcp-result-ttl-seconds N,\n"
         "       --mcp-result-memory-bytes N, --mcp-result-disk-bytes N\n"
@@ -113,6 +133,8 @@ int runCli(const std::vector<std::string>& arguments) {
         Options options;
         options.profile = environment("CYCODE_MCP_PROFILE", "compact");
         options.permissions = permissions(environment("CYCODE_PERMISSIONS"));
+        std::string localProfile = environment("CYCODE_MCP_ACCESS_PROFILE");
+        bool explicitPermissions = std::getenv("CYCODE_PERMISSIONS") != nullptr;
         std::filesystem::path workspace, nativeDescriptor, serviceDescriptor, bridgeConfig, connectionState;
         std::string access = "read", connect, token = environment("CYMCP_TOKEN", environment("CYTOOLS_TOKEN"));
         std::string command, jsonText = "{}", inputFile, backendId, modelId;
@@ -147,10 +169,11 @@ int runCli(const std::vector<std::string>& arguments) {
             else if (argument == "--service-descriptor") serviceDescriptor = utf8Path(value());
             else if (argument == "--bridge-config") bridgeConfig = utf8Path(value());
             else if (argument == "--mcp-profile") options.profile = value();
-            else if (argument == "--permissions") options.permissions = permissions(value());
-            else if (argument == "--access") access = value();
+            else if (argument == "--local-access-profile") localProfile = value();
+            else if (argument == "--permissions") { options.permissions = permissions(value()); explicitPermissions = true; }
+            else if (argument == "--access") { access = value(); explicitPermissions = true; }
             else if (argument == "--disable-native-plugins" || argument == "--disable-plugins") disablePlugins = true;
-            else if (argument == "--owner") wireOwner = true;
+            else if (argument == "--owner") { wireOwner = true; explicitPermissions = true; }
             else if (argument == "--connect") connect = value();
             else if (argument == "--params") jsonText = value();
             else if (argument == "--params-file") inputFile = value();
@@ -187,6 +210,16 @@ int runCli(const std::vector<std::string>& arguments) {
         }
         if (options.state.empty()) options.state = installationRoot() / "data/jobs";
         options.state = std::filesystem::absolute(options.state);
+        const auto profilePath = options.state / "local-access.json";
+        if (localProfile.empty() && explicitPermissions)
+            localProfile = command == "serve" ? "protected" : "local-controlled";
+        if (localProfile.empty() && std::filesystem::exists(profilePath)) {
+            const auto saved = readJson(profilePath, 65536);
+            if (saved.value("format", "") != "cycode-local-access/1")
+                throw cymcp::Error("InvalidState", "Unknown local access settings format");
+            localProfile = saved.value("profile", "free");
+        }
+        options.localAccessProfile = accessProfile(localProfile.empty() ? "free" : localProfile);
         if (options.catalogue.empty()) options.catalogue = cataloguePath(arguments.front());
         if (options.profile != "compact" && options.profile != "direct-full" && options.profile != "code" && options.profile != "full")
             throw cymcp::Error("InvalidArguments", "Unknown MCP presentation profile");
@@ -198,7 +231,9 @@ int runCli(const std::vector<std::string>& arguments) {
             const auto descriptor = readJson(bridgeConfig, 65536);
             if (descriptor.value("protocol", "") != "cycode-core/1") throw cymcp::Error("InvalidEndpoint", "Unsupported service descriptor");
             connect = descriptor.value(access == "edit" ? "editUrl" : "readUrl", descriptor.value("url", ""));
-            token = descriptor.at(access == "edit" ? "editToken" : "readToken");
+            token = descriptor.value(access == "edit" ? "editToken" : "readToken", "");
+            if (localProfile.empty())
+                options.localAccessProfile = accessProfile(descriptor.value("localAccessProfile", "protected"));
         }
         if (!connect.empty() && !explicitState && connectionState.empty())
             options.state = options.state.parent_path() / "proxy-sessions" / cymcp::random_token(16);
@@ -209,7 +244,13 @@ int runCli(const std::vector<std::string>& arguments) {
             return owner->call(method, p, c);
         };
         if (!connect.empty()) {
-            if (token.empty()) throw cymcp::Error("AuthenticationRequired", "Set CYMCP_TOKEN for the selected service");
+            // Accept the address shown by an MCP client, including /mcp or the base URL.
+            const auto parsed = cymcp::parse_url(connect);
+            if (parsed.target == "/mcp") connect.replace(connect.size() - 4, 4, "/v1");
+            else if (parsed.target.empty() || parsed.target == "/") {
+                while (connect.ends_with('/')) connect.pop_back();
+                connect += "/v1";
+            }
             auto remote = httpCall(connect, token, "DescribeTool", Json::object());
             const auto localCatalogue = readJson(options.catalogue);
             for (auto& operation : remote.at("operations")) if (!operation.contains("nativeMethod")) {
@@ -338,11 +379,13 @@ int runCli(const std::vector<std::string>& arguments) {
             return 0;
         } else if (command == "serve") {
             std::signal(SIGINT, onSignal); std::signal(SIGTERM, onSignal);
-            const auto readToken = cymcp::random_token(32), editToken = cymcp::random_token(32);
+            const auto settings = cymcp::local_access_settings(options.localAccessProfile);
+            const auto readToken = settings.require_token ? cymcp::random_token(32) : std::string{};
+            const auto editToken = settings.require_token ? cymcp::random_token(32) : std::string{};
             host.addPrincipal("service-read", {});
             host.addPrincipal("service-edit", {"workspace.write", "vcs.write", "process.execute", "plugins.execute"});
-            // Separate authenticated endpoints: the SDK intentionally has one token
-            // per endpoint. Never reinterpret an untrusted principal JSON field.
+            // Controlled roles keep separate endpoints; permissive profiles allow
+            // every registered operation on either endpoint. JSON cannot grant roles.
             std::shared_ptr<cymcp::McpServer> mcp = host.mcpServer();
             auto endpoint = [&](const std::string& role) {
                 return [&, role, mcp](const Json& input, const cymcp::CallContext& incoming) -> Json {
@@ -356,19 +399,27 @@ int runCli(const std::vector<std::string>& arguments) {
                     }
                 };
             };
-            cymcp::LocalHttpServer reader(readToken, endpoint("service-read")), editor(editToken, endpoint("service-edit"));
-            const auto readPort = reader.start(port), editPort = editor.start(0);
+            auto server = [&](const std::string& credential, const std::string& role) {
+                if (settings.require_token)
+                    return std::make_unique<cymcp::LocalHttpServer>(credential, endpoint(role));
+                return std::make_unique<cymcp::LocalHttpServer>(cymcp::LocalHttpServer::UnauthenticatedLoopback{}, endpoint(role));
+            };
+            auto reader = server(readToken, "service-read"), editor = server(editToken, "service-edit");
+            const auto readPort = reader->start(port), editPort = editor->start(0);
             const auto readBase = "http://127.0.0.1:" + std::to_string(readPort);
             const auto editBase = "http://127.0.0.1:" + std::to_string(editPort);
             if (serviceDescriptor.empty()) throw cymcp::Error("InvalidArguments", "Use --service-descriptor to publish private endpoint credentials");
             saveJson(serviceDescriptor, {{"protocol", "cycode-core/1"}, {"sdk", "CyMCPSDK"},
                 {"url", readBase + "/v1"}, {"readUrl", readBase + "/v1"}, {"editUrl", editBase + "/v1"},
                 {"mcpReadUrl", readBase + "/mcp"}, {"mcpEditUrl", editBase + "/mcp"},
+                {"localAccessProfile", accessProfileName(options.localAccessProfile)},
+                {"requireToken", settings.require_token}, {"controlOperations", settings.control_operations},
                 {"readToken", readToken}, {"editToken", editToken}});
-            std::cerr << "CyCodeCore SDK endpoints ready; credentials are in the private descriptor\n";
+            saveJson(profilePath, {{"format", "cycode-local-access/1"}, {"profile", accessProfileName(options.localAccessProfile)}});
+            std::cerr << "CyCodeCore SDK endpoints ready; local access profile: " << accessProfileName(options.localAccessProfile) << '\n';
             while (!interrupted && (nativeDescriptor.empty() || std::filesystem::exists(nativeDescriptor)))
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            mcp->cancel_all(); host.stop(); editor.stop(); reader.stop();
+            mcp->cancel_all(); host.stop(); editor->stop(); reader->stop();
             std::filesystem::remove(serviceDescriptor);
             return 0;
         } else throw cymcp::Error("InvalidArguments", "Unknown automation command; use --help");

@@ -5,7 +5,7 @@ description: Install skills, manage client connections and update without replac
 section: API and extensions
 parent: core-installation
 order: 263
-revision: 4
+revision: 5
 ---
 
 
@@ -162,3 +162,7 @@ Profile formats are based on the publishers' documentation:
 and [skills](https://code.visualstudio.com/docs/agent-customization/agent-skills),
 [Gemini MCP](https://geminicli.com/docs/tools/mcp-server/) and
 [skills](https://geminicli.com/docs/cli/skills/).
+
+## Local MCP access {#access-profiles}
+
+The **Local MCP profile** selector offers Free (default), Local controlled, Token only and Protected. Existing explicit profiles are retained during refresh. Connections with no chosen profile migrate to Free; legacy explicit read/edit permissions remain controlled. HTTP token requirements are separate from compact/full discovery. See [the profile table](native-automation#access-profiles).

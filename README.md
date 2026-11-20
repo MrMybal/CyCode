@@ -11,8 +11,8 @@
     </td>
     <td width="300" align="right" valign="top">
       <p><sub>Project license</sub><br><a href="LICENSE"><strong>GPL-3.0-only</strong></a></p>
-      <p><sub>Published Core package</sub><br><a href="https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.5"><strong>0.1.5</strong></a><br><strong>DEVELOPMENT PREVIEW</strong></p>
-      <p><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.5/CyCodeCore-0.1.5-windows-x64-setup.exe"><strong>Install CyCodeCore</strong></a><br><sub>Windows x64</sub><br><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.5/CyCodeCore-0.1.5-windows-x64.zip">Portable ZIP</a></p>
+      <p><sub>Published Core package</sub><br><a href="https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.6"><strong>0.1.6</strong></a><br><strong>DEVELOPMENT PREVIEW</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.6/CyCodeCore-0.1.6-windows-x64-setup.exe"><strong>Install CyCodeCore</strong></a><br><sub>Windows x64</sub><br><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.6/CyCodeCore-0.1.6-windows-x64.zip">Portable ZIP</a></p>
     </td>
   </tr>
 </table>
@@ -23,11 +23,11 @@ A native C++20 code engine for **AI agents, developer tools and editors**. Use
 the same document, project and language services through a C++ library, a
 persistent command-line service or the native CyMCPSDK registry/CLI/MCP bridge.
 
-> **DEVELOPMENT PREVIEW · Core package 0.1.5**
+> **DEVELOPMENT PREVIEW · Core package 0.1.6**
 >
 > The published Windows Setup and portable ZIP are for the standalone Core.
-> Version 0.1.5 includes native CyMCPSDK automation, the 257-operation catalogue and shared native transactions.
-> Read the [release notes and limitations](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.5).
+> Version 0.1.6 includes CyMCPSDK 0.7.2, Free local MCP access and four selectable access profiles, the 257-operation catalogue and shared native transactions.
+> Read the [release notes and limitations](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.6).
 
 
 
@@ -46,7 +46,7 @@ The source snapshot adds shared `CyCode::PagedText`, guarded line/UTF-16 reads,
 exclusive Save as and explicit paged crash recovery. Its canonical catalogue has
 257 public operations. See [large text and projects](app/Docs/LargeProjects.md),
 [persistent analysis](app/Docs/AnalysisProgress.md) and
-[native integration](app/Docs/CoreExtraction.md). The 0.1.5 Windows package is built from these maintained native sources.
+[native integration](app/Docs/CoreExtraction.md). The 0.1.6 Windows package is built from these maintained native sources.
 Installing and reloading a client are separate from updating a source checkout.
 
 The Core runs without CyUI, SDL, ImGui, OpenGL or an IDE window. Applications
@@ -79,12 +79,12 @@ Large-project work is documented separately; the full Unreal campaign is incompl
 
 ## Installation
 
-1. [Download CyCodeCore Setup for Windows x64](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.5/CyCodeCore-0.1.5-windows-x64-setup.exe) and install it for the
+1. [Download CyCodeCore Setup for Windows x64](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.6/CyCodeCore-0.1.6-windows-x64-setup.exe) and install it for the
    current user. No administrator account or system Python is required.
 2. Open **CyCodeCore Manager** to install the skill and configure supported agent clients,
    or review/install updates. Setup uses a fresh versioned payload and preserves running sessions.
    Checking at Windows sign-in is a separate, initially unchecked option.
-3. For a portable installation, [extract the complete ZIP](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.5/CyCodeCore-0.1.5-windows-x64.zip).
+3. For a portable installation, [extract the complete ZIP](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.6/CyCodeCore-0.1.6-windows-x64.zip).
    Keep its runtime, `app/`, tools, notices and documentation beside the engine.
 
 The complete package includes the native CLI, app-local MSVC runtime, isolated
@@ -97,8 +97,9 @@ targets Windows x64; Linux/macOS execution and packaging need separate validatio
 Open **CyCodeCore Manager > Agents and skills**. Select Codex, Claude Code,
 Cursor, VS Code/Copilot, Gemini CLI or the Claude Desktop MCP profile. Choose
 personal/project scope, skill and/or MCP, then preview and apply the file changes.
-An MCP connection binds an existing project and starts read-only unless editing
-and builds are explicitly selected. Reload the client after configuration.
+An MCP connection binds an existing project. The default is **Free**:
+local HTTP clients connect by address alone and can call every exposed operation.
+Local controlled, Token only and Protected remain selectable. Reload the client after configuration.
 
 ### What an AI can access
 
@@ -108,8 +109,9 @@ guarded changes, builds, tests, debugging, version control and native extensions
 Use `cy_tools_search`, load one schema with `cy_tools_describe`, then invoke the
 operation with `cy_tools_call`. Large results use private, chunked resources.
 
-The host selects the project and permissions. Read-only is the default; edits,
-processes, VCS, plugins and settings keep their separate rights. External language
+The host selects the project and access profile. Free permits registered operations;
+controlled profiles retain separate edit/process/VCS/plugin/settings rights. Argument,
+revision and file validation always apply. External language
 servers and build/debug tools must be installed for their corresponding services.
 Core has no embedded chat. [Native CLI/MCP guide](app/Docs/NativeAutomation.md).
 
@@ -136,7 +138,7 @@ cmake -S . -B runtime/core -DBUILD_TESTING=OFF
 cmake --build runtime/core --config Release --target cycode_cli
 ```
 
-Use the `core-v0.1.5` tag to reproduce the published preview's source.
+Use the `core-v0.1.6` tag to reproduce the published preview's source.
 Ordinary builds do not run native tests or launch an application. GitHub Actions
 is paused. See [native integration](https://github.com/MrMybal/CyCode/blob/main/app/Docs/CoreExtraction.md) for component
 selection, embedding and the persistent stdio/loopback service. The source API is
@@ -186,7 +188,7 @@ Core build. The component table is an index, not a replacement for full notices.
 
 ## References
 
-- [Published Core release and checksums](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.5) · [All releases](https://github.com/MrMybal/CyCode/releases).
+- [Published Core release and checksums](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.6) · [All releases](https://github.com/MrMybal/CyCode/releases).
 - [Native Core source](https://github.com/MrMybal/CyCode/tree/main) · [Issue tracker](https://github.com/MrMybal/CyCode/issues).
 - [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE) · [CyCodeReader](https://github.com/MrMybal/CyCodeReader).
 - [English manual](https://mrmybal.github.io/CyCode/Documentation.html#/en/overview) · [Manuel en français](https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview).

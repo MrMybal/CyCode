@@ -6,6 +6,8 @@ inline void registerManagerLocale() {
         {"Local preview", "Aperçu local"},
         {"Project", "Projet"}, {"Scope", "Portée"}, {"This project", "Ce projet"}, {"My user account", "Mon compte utilisateur"},
         {"Access", "Accès"}, {"Read only", "Lecture seule"}, {"Read, edit and build", "Lecture, édition et compilation"},
+        {"Local MCP profile", "Profil MCP local"}, {"Free", "Libre (Free)"}, {"Local controlled", "Local contrôlé"},
+        {"Token only", "Jeton seul"}, {"Protected", "Protégé"},
         {"Install skill", "Installer le skill"}, {"Configure MCP", "Configurer le MCP"}, {"Browse", "Parcourir"},
         {"MCP catalogue", "Catalogue MCP"}, {"On-demand tools (compact)", "Outils à la demande (compact)"}, {"Full catalogue", "Catalogue complet"},
         {"Preview changes", "Voir les modifications"}, {"Apply reviewed changes", "Appliquer les modifications vérifiées"},

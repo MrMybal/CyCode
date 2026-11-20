@@ -57,9 +57,10 @@ struct Host::Impl {
         }
         principals[options.principal] = options.permissions;
         principals["local"] = options.permissions; // SDK's stdio transport principal
-        auto policy = cymcp::Policy([this](const cymcp::CallContext& c, const std::string& name, const Json&) {
+        auto policy = cymcp::local_access_settings(options.localAccessProfile).control_operations
+            ? cymcp::Policy([this](const cymcp::CallContext& c, const std::string& name, const Json&) {
             return allowed(name, c) ? cymcp::Decision::allow : cymcp::Decision::deny;
-        });
+        }) : cymcp::Policy::allow_all();
         canonical = std::make_shared<cymcp::Registry>(policy);
         legacyView = std::make_shared<cymcp::Registry>(policy);
         if (options.notifications) {
@@ -211,6 +212,7 @@ struct Host::Impl {
         return context;
     }
     bool allowed(std::string name, const cymcp::CallContext& incoming) const {
+        if (!cymcp::local_access_settings(options.localAccessProfile).control_operations) return true;
         const auto context = resolved(incoming);
         if (name == "cy_import_file" && !hasRight(context.principal, "files.import")) return false;
         if (name == "cy_export_job" && !hasRight(context.principal, "files.export")) return false;
@@ -225,6 +227,7 @@ struct Host::Impl {
         return true;
     }
     bool hasRight(const std::string& who, const std::string& right) const {
+        if (!cymcp::local_access_settings(options.localAccessProfile).control_operations) return true;
         std::lock_guard lock(principalMutex);
         const auto found = principals.find(who);
         return found != principals.end() && (found->second.contains("*") || found->second.contains(right));

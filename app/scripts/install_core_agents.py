@@ -14,6 +14,17 @@ BEGIN = '# BEGIN CyCode Core managed MCP'
 END = '# END CyCode Core managed MCP'
 SERVER = 'cycode_core'
 MAX_CONFIG = 1024 * 1024
+ACCESS_PROFILES = ('free', 'local-controlled', 'token-only', 'protected')
+
+
+def local_access_profile(record):
+    """Preserve a recorded profile or explicit legacy rights; migrate unset to Free."""
+    profile = record.get('accessProfile')
+    if profile is None:
+        profile = 'local-controlled' if record.get('access') in ('read', 'edit') else 'free'
+    if profile not in ACCESS_PROFILES:
+        raise ValueError('Unknown local MCP access profile')
+    return profile
 
 
 def digest(data):
@@ -81,7 +92,7 @@ def managed_config(before, block, previous_hash=None):
     return result.encode('utf-8')
 
 
-def block_for(home, workspace, interpreter, data, access, enabled):
+def block_for(home, workspace, interpreter, data, access, enabled, access_profile=None):
     quote = lambda value: json.dumps(str(value), ensure_ascii=False)
     arguments = ['--sdk', '--workspace', str(workspace), '--disable-plugins',
                  '--connection-state', str(data), 'mcp']
@@ -90,6 +101,7 @@ def block_for(home, workspace, interpreter, data, access, enabled):
         'enabled = ' + str(enabled).lower(), 'startup_timeout_sec = 60',
         'tool_timeout_sec = 120', '[mcp_servers.cycode_core.env]',
         'CYCODE_CORE_HOME = ' + quote(home), 'CYCODE_MCP_PROFILE = "compact"',
+        'CYCODE_MCP_ACCESS_PROFILE = ' + quote(local_access_profile({'access': access, 'accessProfile': access_profile})),
         'CYCODE_PERMISSIONS = ' + quote('workspace.write,process.execute' if access == 'edit' else ''), END])
 
 
@@ -142,7 +154,7 @@ def install_skill(home, destination):
     return str(target)
 
 
-def configure(home, workspace, interpreter, skill_home, access='read', enabled=False, state_dir=None, config_path=None):
+def configure(home, workspace, interpreter, skill_home, access=None, enabled=False, state_dir=None, config_path=None, access_profile=None):
     home = ordinary(home).resolve(strict=True)
     workspace = ordinary(workspace).resolve(strict=True)
     if not workspace.is_dir():
@@ -166,7 +178,16 @@ def configure(home, workspace, interpreter, skill_home, access='read', enabled=F
         if (owned.get('format') != 'cycode-agent-connection/1' or
                 owned.get('workspace') != str(workspace) or owned.get('config') != str(config)):
             raise ValueError('Unowned registration state preserved: ' + str(current_receipt))
-    block = block_for(home, workspace, interpreter, current_state / 'jobs', access, enabled)
+    choice = dict(previous)
+    if access is not None:
+        choice['access'] = access
+    if access_profile is not None:
+        choice['accessProfile'] = access_profile
+    selected_profile = local_access_profile(choice)
+    access = choice.get('access', 'read')
+    if access not in ('read', 'edit'):
+        raise ValueError('Unknown controlled access')
+    block = block_for(home, workspace, interpreter, current_state / 'jobs', access, enabled, selected_profile)
     updated = managed_config(before, block, previous.get('managedBlockSha256'))
     # Refuse conflicts before copying the skill or touching project settings.
     skill = install_skill(home, ordinary(skill_home))
@@ -178,7 +199,7 @@ def configure(home, workspace, interpreter, skill_home, access='read', enabled=F
         atomic(config, updated, before)
     receipt = {'format': 'cycode-agent-connection/1', 'workspace': str(workspace),
                'home': str(home), 'config': str(config), 'skill': skill,
-               'enabled': enabled, 'access': access, 'nativePresent': (home / 'cycode_cli.exe').is_file(),
+               'enabled': enabled, 'access': access, 'accessProfile': selected_profile, 'nativePresent': (home / 'cycode_cli.exe').is_file(),
                'managedBlockSha256': digest(block.encode('utf-8')), 'executed': False}
     old = bounded(receipt_file) if receipt_file.exists() else None
     payload = (json.dumps(receipt, indent=2) + '\n').encode('utf-8')
@@ -197,7 +218,8 @@ def main(argv=None):
     parser.add_argument('--skill-home', type=Path, default=Path(os.environ.get('CODEX_HOME', Path.home() / '.codex')) / 'skills')
     parser.add_argument('--state-dir', type=Path, help='Existing registration-state root when switching to a versioned installation; preserves ownership checks')
     parser.add_argument('--config', type=Path, help='Explicit client config; default is project-scoped .codex/config.toml')
-    parser.add_argument('--access', choices=('read', 'edit'), default='read')
+    parser.add_argument('--access', choices=('read', 'edit'))
+    parser.add_argument('--local-access-profile', choices=ACCESS_PROFILES)
     parser.add_argument('--enable', action='store_true')
     parser.add_argument('--skill-only', action='store_true')
     parser.add_argument('--status', action='store_true')
@@ -217,7 +239,8 @@ def main(argv=None):
                          'nativePresent': (args.home / 'cycode_cli.exe').is_file(), 'executed': False}))
         return 0
     result = configure(args.home, args.workspace, args.python or args.home / 'tools/python/python.exe',
-                       args.skill_home, args.access, args.enable, state_dir=args.state_dir, config_path=args.config)
+                       args.skill_home, args.access, args.enable, state_dir=args.state_dir, config_path=args.config,
+                       access_profile=args.local_access_profile)
     print(json.dumps(result, indent=2))
     return 0
 

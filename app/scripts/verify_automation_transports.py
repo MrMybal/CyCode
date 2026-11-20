@@ -50,7 +50,8 @@ def main():
         ready(native_path,native);direct=NativeClient(native_path)
         service_path=root/'service.json'
         service=spawn(['--sdk','--native-descriptor',str(native_path),'--data-dir',str(root/'service'),
-            '--service-descriptor',str(service_path),'--mcp-notifications','--mcp-cache-ttl-ms','60000','serve'],'service')
+            '--service-descriptor',str(service_path),'--local-access-profile','protected',
+            '--mcp-notifications','--mcp-cache-ttl-ms','60000','serve'],'service')
         ready(service_path,service);d=json.loads(service_path.read_text('utf-8'))
         assert d['readUrl']!=d['editUrl'] and d['readToken']!=d['editToken']
         def wire(access,method,parameters,extra=None):

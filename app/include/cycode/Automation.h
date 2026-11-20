@@ -2,6 +2,7 @@
 #include <cymcp/core.hpp>
 #include <cymcp/resources.hpp>
 #include <cymcp/mcp.hpp>
+#include <cymcp/http.hpp>
 #include <filesystem>
 #include <memory>
 #include <set>
@@ -14,6 +15,7 @@ struct Options {
     std::filesystem::path state, catalogue, spoolDirectory, telemetryFile, importRoot, exportRoot;
     std::string profile = "compact", principal = "local";
     std::set<std::string> permissions;
+    cymcp::LocalAccessProfile localAccessProfile = cymcp::LocalAccessProfile::free;
     bool notifications = false, routeNative = true;
     std::size_t workers = 4, queueCapacity = 128;
     std::size_t jobDiskBytes = 1024ULL * 1024 * 1024;

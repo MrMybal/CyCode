@@ -5,15 +5,15 @@ description: CyMCPSDK, indexed search, durable jobs and private resources.
 section: API and extensions
 parent: core-agents
 order: 264
-revision: 2
+revision: 3
 ---
 
 ## Native connection {#connect}
 
-Current sources use **CyMCPSDK 0.7.0**, revision
-`791d4d7d7680213b282ec8529d248a10f8494d77`. Core, Platform, Http and MCP are compiled;
+Current sources use **CyMCPSDK 0.7.2**, revision
+`e562c731a146d599e3404718ea8414bb5b96b66d`. Core, Platform, Http and MCP are compiled;
 AI, Local and ChatUI are off. Core remains headless, with no chat or Python MCP server.
-Standalone distribution 0.1.5 includes this native integration.
+Standalone distribution 0.1.6 includes all four access profiles and defaults to Free.
 
 ```text
 cycode_cli --sdk --workspace <project> --connection-state <private-root> --disable-plugins mcp
@@ -38,12 +38,25 @@ Retain discovered schemas and call one real operation with:
 ```
 
 `direct-full` exposes canonical names. Legacy `code`/`full` retain `op_<id>` and
-job controls. Read-only is the default; explicit host permissions govern edits,
-VCS, processes, plugins and settings. Read current revisions, preview and apply
+job controls. Free is the default; controlled profiles use host permissions for
+edits, VCS, processes, plugins and settings. Read current revisions, preview and apply
 native transactions, then save only when requested. Attaching with
 `--native-descriptor FILE` uses the existing Engine's unsaved state and Undo/Redo.
 `serve --service-descriptor FILE` publishes private read/edit HTTP endpoints;
-`--bridge-config FILE --access read|edit mcp` connects to them. Keep credentials private.
+`--bridge-config FILE --access read|edit mcp` connects to them. Protected and Token only require credentials; Free needs only the URL.
+
+## Local access profiles {#access-profiles}
+
+Current sources select **Free** when no access choice exists. HTTP clients connect to the local `/mcp` address alone and can call every registered operation without another confirmation. Arguments, revisions, workspace paths and configured import/export roots remain validated.
+
+| Profile | HTTP token | Operation policy |
+|---|---|---|
+| Free (default) | None | All registered operations |
+| Local controlled | None | Host permissions |
+| Token only | Required | All registered operations |
+| Protected | Required | Host permissions |
+
+Choose `--local-access-profile free|local-controlled|token-only|protected` or `CYCODE_MCP_ACCESS_PROFILE`. Servers bind to `127.0.0.1`. Existing explicit profiles and legacy read/edit permissions are preserved; unset configurations migrate to Free. The selected server profile is saved in its private `local-access.json` and restored at restart. Explicit CLI/environment settings take precedence. Token requirements apply to HTTP; stdio already uses the host local identity. Setup and the portable ZIP for 0.1.6 include this update; 0.1.5 introduced the initial native integration.
 
 ## Results and optimizations {#results}
 

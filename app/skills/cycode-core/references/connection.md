@@ -10,10 +10,13 @@ stdlib. Published packages predating this migration may still use the old SDK.
 cycode_cli --sdk --workspace <project> --connection-state <private-state> --disable-plugins mcp
 ```
 
-This advertises five compact gateway tools by default. Permissions are host
-settings (`CYCODE_PERMISSIONS`); read-only is the default. For an existing live
+This advertises five compact gateway tools by default. Current source builds default
+to Free (`CYCODE_MCP_ACCESS_PROFILE=free`): an HTTP client connects by address alone
+and may call every registered operation. Controlled profiles retain host permissions
+(`CYCODE_PERMISSIONS`); explicit legacy read/edit choices are preserved. For an existing live
 Engine, use `--native-descriptor FILE`; `--bridge-config FILE --access read|edit`
-connects to the authenticated shared HTTP service. Do not publish credentials.
+connects to the shared HTTP service. Protected and Token only require credentials.
+Do not publish credentials. Native argument, revision and file guards still apply.
 
 From that installation, register a trusted project without starting the host:
 
@@ -22,7 +25,8 @@ tools/python/python.exe -B app/scripts/install_core_agents.py --workspace <proje
 ```
 
 The command installs the skill and adds only a managed `cycode_core` MCP block
-to that project's `.codex/config.toml`. Read access is the default; edit adds
+to that project's `.codex/config.toml`. No access choice selects Free; explicit read
+selects Local controlled, and explicit edit adds
 workspace writes and process execution, not VCS/plugin/settings writes. Native
 plugins are disabled. Existing unrelated client settings are preserved. A
 modified existing managed block or skill is retained and requires review.

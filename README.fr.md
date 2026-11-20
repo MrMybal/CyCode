@@ -11,8 +11,8 @@
     </td>
     <td width="300" align="right" valign="top">
       <p><sub>Licence du projet</sub><br><a href="LICENSE"><strong>GPL-3.0-only</strong></a></p>
-      <p><sub>Paquet Core publié</sub><br><a href="https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.5"><strong>0.1.5</strong></a><br><strong>PRÉVERSION DE DÉVELOPPEMENT</strong></p>
-      <p><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.5/CyCodeCore-0.1.5-windows-x64-setup.exe"><strong>Installer CyCodeCore</strong></a><br><sub>Windows x64</sub><br><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.5/CyCodeCore-0.1.5-windows-x64.zip">ZIP portable</a></p>
+      <p><sub>Paquet Core publié</sub><br><a href="https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.6"><strong>0.1.6</strong></a><br><strong>PRÉVERSION DE DÉVELOPPEMENT</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.6/CyCodeCore-0.1.6-windows-x64-setup.exe"><strong>Installer CyCodeCore</strong></a><br><sub>Windows x64</sub><br><a href="https://github.com/MrMybal/CyCode/releases/download/core-v0.1.6/CyCodeCore-0.1.6-windows-x64.zip">ZIP portable</a></p>
     </td>
   </tr>
 </table>
@@ -24,11 +24,11 @@ Un moteur de code natif C++20 pour les **agents IA, outils de développement et
 accessibles par bibliothèque C++, service en ligne de commande persistant ou
 registre CLI/MCP natif CyMCPSDK.
 
-> **PRÉVERSION DE DÉVELOPPEMENT · Paquet Core 0.1.5**
+> **PRÉVERSION DE DÉVELOPPEMENT · Paquet Core 0.1.6**
 >
 > L’installateur et le ZIP Windows publiés concernent le Core autonome.
-> La version 0.1.5 inclut CyMCPSDK natif, le catalogue de 257 opérations et les transactions natives communes.
-> Consulter les [notes de version et limites connues](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.5).
+> La version 0.1.6 inclut CyMCPSDK 0.7.2, l’accès MCP local Free et quatre profils au choix, le catalogue de 257 opérations et les transactions natives communes.
+> Consulter les [notes de version et limites connues](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.6).
 
 
 
@@ -48,7 +48,7 @@ lecture protégée par lignes/UTF-16, Enregistrer sous exclusif et récupératio
 paginée explicite après crash. Le catalogue canonique expose 257 opérations
 publiques. Voir [les grands textes et projets](app/Docs/LargeProjects.md),
 [l’analyse persistante](app/Docs/AnalysisProgress.md) et
-[l’intégration native](app/Docs/CoreExtraction.md). Le paquet Windows 0.1.5 provient de ces sources natives maintenues.
+[l’intégration native](app/Docs/CoreExtraction.md). Le paquet Windows 0.1.6 provient de ces sources natives maintenues.
 Installer et reconnecter un client restent distincts de la mise à jour des sources.
 
 Le Core fonctionne sans CyUI, SDL, ImGui, OpenGL ni fenêtre d’IDE. Les applications
@@ -84,12 +84,12 @@ les grands projets est documenté séparément ; la campagne complète Unreal re
 
 ## Installation
 
-1. [Télécharger l’installateur CyCodeCore pour Windows x64](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.5/CyCodeCore-0.1.5-windows-x64-setup.exe) et installer
+1. [Télécharger l’installateur CyCodeCore pour Windows x64](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.6/CyCodeCore-0.1.6-windows-x64-setup.exe) et installer
    pour l’utilisateur actuel. Aucun compte administrateur ni Python système n’est nécessaire.
 2. Ouvrir **CyCodeCore Manager** pour installer le skill, configurer les clients IA
    et gérer les mises à jour. Setup crée un nouveau moteur versionné et conserve les sessions actives.
    La vérification à l’ouverture de Windows reste une option distincte, décochée par défaut.
-3. Pour une installation portable, [extraire le ZIP complet](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.5/CyCodeCore-0.1.5-windows-x64.zip).
+3. Pour une installation portable, [extraire le ZIP complet](https://github.com/MrMybal/CyCode/releases/download/core-v0.1.6/CyCodeCore-0.1.6-windows-x64.zip).
    Conserver le runtime, `app/`, les outils, notices et documentation à côté du moteur.
 
 Le paquet complet inclut le CLI natif, le runtime MSVC local, l’environnement
@@ -104,8 +104,9 @@ derniers changements demandent une validation séparée. Voir le
 Ouvrir **CyCodeCore Manager > Agents et skills**. Choisir Codex, Claude Code,
 Cursor, VS Code/Copilot, Gemini CLI ou le profil MCP Claude Desktop, puis la portée
 personnelle/projet et le skill et/ou MCP. Prévisualiser les chemins avant application.
-Une connexion MCP reste liée à un projet existant, en lecture seule par défaut.
-L’édition et la compilation demandent un choix explicite. Recharger le client ensuite.
+Une connexion MCP reste liée à un projet existant. Le profil est **Free**
+par défaut : l’adresse HTTP locale suffit pour appeler toutes les opérations exposées.
+Local contrôlé, Jeton seul et Protégé restent disponibles. Recharger le client ensuite.
 
 ### Ce que l’IA peut utiliser
 
@@ -116,9 +117,9 @@ versions et extensions. `cy_tools_search` recherche une capacité,
 `cy_tools_describe` charge son schéma et `cy_tools_call` l’exécute. Les gros
 résultats restent lisibles intégralement par ressources privées et morceaux.
 
-L’hôte choisit le projet et les droits. La lecture seule est le réglage initial ;
-édition, processus, VCS, plugins et paramètres conservent leurs autorisations
-propres. Les serveurs de langage et outils de compilation/débogage nécessaires
+L’hôte choisit le projet et le profil d’accès. Free autorise les opérations enregistrées ;
+les profils contrôlés gardent les droits d’édition, processus, VCS, plugins et paramètres.
+Arguments, révisions et fichiers restent validés. Les serveurs de langage et outils de compilation/débogage nécessaires
 doivent être installés. Aucun tchat n’est ajouté au Core.
 [Guide CLI/MCP natif](app/Docs/NativeAutomation.md).
 
@@ -146,7 +147,7 @@ cmake -S . -B runtime/core -DBUILD_TESTING=OFF
 cmake --build runtime/core --config Release --target cycode_cli
 ```
 
-Utiliser le tag `core-v0.1.5` pour reproduire les sources de la préversion publiée.
+Utiliser le tag `core-v0.1.6` pour reproduire les sources de la préversion publiée.
 Les builds ordinaires ne lancent ni tests natifs ni application. GitHub Actions
 reste désactivé. Le [guide d’intégration native](https://github.com/MrMybal/CyCode/blob/main/app/Docs/CoreExtraction.md)
 décrit les composants, l’intégration et le service persistant stdio/loopback.
@@ -199,7 +200,7 @@ composants et ne remplace pas les notices complètes.
 
 ## Références
 
-- [Version publiée du Core et empreintes](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.5) · [Toutes les versions](https://github.com/MrMybal/CyCode/releases).
+- [Version publiée du Core et empreintes](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.6) · [Toutes les versions](https://github.com/MrMybal/CyCode/releases).
 - [Sources du Core natif](https://github.com/MrMybal/CyCode/tree/main) · [Suivi des problèmes](https://github.com/MrMybal/CyCode/issues).
 - [CyCodeIDE](https://github.com/MrMybal/CyCodeIDE) · [CyCodeReader](https://github.com/MrMybal/CyCodeReader).
 - [Manuel français](https://mrmybal.github.io/CyCode/Documentation.html#/fr/overview) · [English manual](https://mrmybal.github.io/CyCode/Documentation.html#/en/overview).

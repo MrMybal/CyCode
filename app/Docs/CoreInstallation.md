@@ -4,7 +4,7 @@
 
 ## Distribution {#distribution}
 
-CyCodeCore 0.1.5 is a headless native service with **CyMCPSDK 0.7.0**.
+CyCodeCore 0.1.6 is a headless native service with **CyMCPSDK 0.7.2**.
 Its distribution version is independent of the historical engine contract 0.2.3
 reported by `cycode_cli --version`. Core and MCP run without an IDE window,
 Python server, GPU model or embedded chat.
@@ -45,7 +45,7 @@ program; diff/show disable external text conversion. These changes retain the
 252-operation catalogue and existing engine contract. Production compilation and
 package/data checks do not establish new native runtime or installer acceptance.
 
-Download the [Windows Setup or portable ZIP](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.5).
+Download the [Windows Setup or portable ZIP](https://github.com/MrMybal/CyCode/releases/tag/core-v0.1.6).
 Setup installs per-user and offers the CyCodeCore Manager shortcut. It activates a fresh versioned payload while preserving running engines. Agent configuration is managed separately in Manager.
 
 ## Register a project {#connect}

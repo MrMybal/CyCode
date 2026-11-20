@@ -1,5 +1,30 @@
 # Validation — 2026-11-08
 
+## 2026-11-20 — local MCP access profiles
+
+Windows x64 production Core/CLI and CyUI Manager compile against local CyMCPSDK
+`e562c731a146d599e3404718ea8414bb5b96b66d` (0.7.2), with native tests disabled.
+The explicit `verify_local_access.py` runner passes nine checks on the real
+Engine: URL-only official MCP read/replace/save, schema/revision/workspace guards,
+CLI address-only access, native CLI compatibility, Protected token/role checks,
+saved-profile restart, Local controlled, Token only and unset-profile migration.
+
+The existing native automation runner passes 17 checks; the HTTP/attach/legacy
+compatibility runner passes five. They cover canonical and legacy tools, durable
+jobs, ownership, chunks/spooling, cancellation, shared live buffers, Python
+forwarding and old-data conversion. The Manager/installer/backend/dependency
+data suites pass 49 cases. The bilingual CyDoc export and DOM component checks
+pass. No fixture executable is compiled or graphical application opened.
+Core has no chat UI: actual provider conversations and third-party chat windows
+are outside this validation; their shared MCP transport and generated connection
+files are covered. Linux/macOS execution and running Setup are outside this validation.
+
+Run explicitly with the new production binary and a fresh fixture directory:
+
+```text
+python app/scripts/verify_local_access.py --executable <cycode_cli> --fixture <new-private-directory>
+```
+
 ## 2026-11-19 — native CyMCPSDK migration
 
 See [the source integration](NativeAutomation.md) and the metadata-only

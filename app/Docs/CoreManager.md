@@ -41,6 +41,13 @@ options, connection syntax, durable recovery and measured validation.
 
 ## Agents and skills {#agents}
 
+Current sources add **Local MCP profile**: Free (default), Local controlled,
+Token only and Protected. HTTP Free needs only the local address; the controlled
+profiles retain host rights. Refresh preserves explicit profiles and legacy
+read/edit choices; configurations with no choice migrate to Free. Tool catalogue
+presentation (compact/full) is a separate setting. See the
+[profile table](NativeAutomation.md) for CLI names and transport behavior.
+
 Open **CyCodeCore Manager** from the Start menu after installing Core 0.1.4 or
 later. It replaces CyCodeUpdater. Core's installer no longer asks for a project
 and never writes an agent configuration or installs a personal skill by itself.
@@ -49,8 +56,9 @@ and never writes an agent configuration or installs a personal skill by itself.
 2. Select **Install the CyCode Core skill**, **Configure the local MCP connection**,
    or both. A personal skill alone needs no project. An MCP connection always
    binds a specific existing project; it does not grant access to every folder.
-3. Choose read-only access, or explicitly enable editing/build processes. VCS,
-   native plugins and settings writes remain separate. Native plugins stay off.
+3. Choose the local access profile. Free permits the registered operations;
+   controlled profiles use the selected read-only or edit/build rights. Native
+   plugins stay off unless explicitly enabled by the host.
 4. Select **Preview changes**, review the target paths, then **Apply**. The manager
    retains other servers/settings and makes private backups before writing.
 5. Trust/reload the connection in the selected client. File configuration is not

@@ -5,7 +5,7 @@ description: Core persistant, contrats MCP complets et modifications protégées
 section: API et extensions
 parent: mcp
 order: 261
-sourceRevision: 8
+sourceRevision: 9
 ---
 
 
@@ -14,7 +14,7 @@ sourceRevision: 8
 
 Installez la distribution autonome et le skill IA avec [le guide d’installation](core-installation#distribution).
 
-CyCode Core 0.1.5 expose ses 257 opérations dans le registre CyMCPSDK natif.
+CyCode Core 0.1.6 expose ses 257 opérations dans le registre CyMCPSDK natif.
 Le mode compact annonce cinq outils : `cy_tools_search` recherche une capacité,
 `cy_tools_describe` charge son schéma et `cy_tools_call` appelle son nom canonique.
 `direct-full` expose directement les noms ; `code`/`full` conservent les anciens
@@ -25,8 +25,8 @@ cycode_cli --sdk --workspace <dossier-projet> --connection-state <etat-prive> --
 ```
 
 Aucun serveur MCP Python n’est requis. L’hôte fixe le projet et les droits ;
-la lecture seule est le réglage initial. Les autorisations d’édition, VCS,
-processus, plugins et paramètres restent séparées. L’index aide aux recherches
+Free est le réglage initial des sources actuelles. Les profils contrôlés gardent
+les autorisations distinctes d’édition, VCS, processus, plugins et paramètres. L’index aide aux recherches
 sans clangd ; la navigation compilateur nécessite un serveur installé et le
 véritable contexte de compilation. La disponibilité n’établit pas une couverture
 sémantique exhaustive.
